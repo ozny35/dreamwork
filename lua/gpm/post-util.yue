@@ -87,7 +87,7 @@ do
     import IsBytecode from string
 
     environment.loadstring = ( code, identifier, handleError = true, ignoreBytecode ) ->
-        if not ignoreBytecode and IsBytecode( code )
+        if not ignoreBytecode and byte( code, 1 ) == 0x1B
             if byteCodeSupported
                 return gmbc_load_bytecode( code )
 
@@ -108,7 +108,7 @@ do
                     modes[ byte0 ] = true
 
                 local func
-                if modes[ 0x62 --[[ b ]] ] and IsBytecode( chunk )
+                if modes[ 0x62 --[[ b ]] ] and byte( chunk, 1 ) == 0x1B
                     if byteCodeSupported
                         func = gmbc_load_bytecode( chunk )
 
