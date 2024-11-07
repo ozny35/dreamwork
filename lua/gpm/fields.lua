@@ -427,5 +427,5 @@ function math.geometry.InTriangle( x, y, x1, y1, x2, y2, x3, y3 ) return false e
 function math.geometry.InPoly( x, y, poly ) return false end
 
 ---@class string
-strint = {}
+string = {}
 

@@ -1,7 +1,13 @@
-local _G, gpm, dofile, pairs, detour = ...
+local _G = _G
+---@class gpm
+local gpm = _G.gpm
+local dofile = gpm.dofile
+local pairs = _G.pairs
+local detour = gpm.detour
 local assert, select, ipairs, next, tostring, tonumber, getmetatable, setmetatable, rawget, rawset, pcall, xpcall, getfenv = _G.assert, _G.select, _G.ipairs, _G.next, _G.tostring, _G.tonumber, _G.getmetatable, _G.setmetatable, _G.rawget, _G.rawset, _G.pcall, _G.xpcall, _G.getfenv
 local gpm_PREFIX = gpm.PREFIX
 
+---@class gpm.environment
 local environment = gpm.environment
 if environment == nil then
     environment = dofile( "std/constants.lua", _G, setmetatable )
@@ -569,6 +575,9 @@ local is = dofile( "std/is.lua", getmetatable, is_table, debug, findMetatable, r
 environment.is = is
 
 is_string, is_number, is_bool, is_function = is.string, is.number, is.bool, is["function"]
+
+-- futures library
+local futures = dofile( "std/futures.lua" )
 
 -- os library
 local os = dofile( "std/os.lua", _G.os, system, jit, bit, math.fdiv )
