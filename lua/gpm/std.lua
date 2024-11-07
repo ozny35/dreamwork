@@ -556,27 +556,6 @@ do
 
 end
 
--- null
-do
-
-    local null = _G.newproxy( true )
-
-    local metatable = getmetatable( null )
-    metatable.__metatable_name = "null"
-    metatable.__metatable_id = 0
-    metatable.MetaName = "null"
-    metatable.MetaID = 0
-
-    function metatable.__tostring()
-        return "null"
-    end
-
-    registerMetatable( "null", metatable )
-
-    environment.null = null
-
-end
-
 -- bit library
 local bit = dofile( "std/bit.lua", _G.bit )
 environment.bit = bit
