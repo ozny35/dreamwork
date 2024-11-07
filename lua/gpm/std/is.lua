@@ -2,7 +2,7 @@ local getmetatable, is_table, debug, findMetatable, registerMetatable, coroutine
 local debug_setmetatable = debug.setmetatable
 local library = {}
 
--- nil ( 2 )
+-- nil ( 0 )
 local object = nil
 do
 

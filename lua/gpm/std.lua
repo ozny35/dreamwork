@@ -1,5 +1,5 @@
 local _G, gpm, dofile, pairs, detour = ...
-local assert, select, ipairs, next, tostring, tonumber, getmetatable, setmetatable, rawget, rawset, pcall, xpcall, getfenv = _G.assert, _G.select, _G.ipairs, _G.pairs, _G.next, _G.tostring, _G.tonumber, _G.getmetatable, _G.setmetatable, _G.rawget, _G.rawset, _G.pcall, _G.xpcall, _G.getfenv
+local assert, select, ipairs, next, tostring, tonumber, getmetatable, setmetatable, rawget, rawset, pcall, xpcall, getfenv = _G.assert, _G.select, _G.ipairs, _G.next, _G.tostring, _G.tonumber, _G.getmetatable, _G.setmetatable, _G.rawget, _G.rawset, _G.pcall, _G.xpcall, _G.getfenv
 local gpm_PREFIX = gpm.PREFIX
 
 local environment = gpm.environment
@@ -95,7 +95,7 @@ do
 end
 
 local is_table, is_string, is_number, is_bool, is_function = _G.istable, _G.isstring, _G.isnumber, _G.isbool, _G.isfunction
-local glua_string, glua_table, glua_game, glua_engine, glua_hook = _G.string, _G.table, _G.game, _G.engine, _G.hook
+local glua_string, glua_table, glua_game, glua_engine = _G.string, _G.table, _G.game, _G.engine
 local string_format = glua_string.format
 local table_concat = glua_table.concat
 local system = _G.system
@@ -1135,7 +1135,7 @@ do
 end
 
 if CLIENT_MENU then
-    hook.Add( "OnScreenSizeChanged", gpm_PREFIX .. "::ScreenSize", function( _, __, width, height )
+    hook.add( "OnScreenSizeChanged", gpm_PREFIX .. "::ScreenSize", function( _, __, width, height )
         os.ScreenWidth, os.ScreenHeight = width, height
     end, hook.PRE )
 
