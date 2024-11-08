@@ -1,3 +1,5 @@
+---@meta
+
 ---@class math
 ---@field pi number A variable containing the mathematical constant pi. (3.1415926535898)
 ---@field e number A variable containing the mathematical constant Euler's number. (2.7182818284590)
