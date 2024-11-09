@@ -117,12 +117,14 @@ do
 
     local pairs = _G.pairs
 
+    ---@class gpm.detour
     detour = gpm.detour
     if detour == nil then
         detour = dofile( "detour.lua", pairs )
         gpm.detour = detour
     end
 
+    ---@class gpm.environment
     std = dofile( "std.lua", _G, gpm, dofile, pairs, detour )
 
 end

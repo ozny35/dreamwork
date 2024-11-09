@@ -1,5 +1,5 @@
 local _G, gpm, dofile, pairs, detour = ...
-local assert, select, ipairs, next, tostring, tonumber, getmetatable, setmetatable, rawget, rawset, pcall, xpcall, getfenv = _G.assert, _G.select, _G.ipairs, _G.next, _G.tostring, _G.tonumber, _G.getmetatable, _G.setmetatable, _G.rawget, _G.rawset, _G.pcall, _G.xpcall, _G.getfenv
+local assert, error, select, ipairs, next, tostring, tonumber, getmetatable, setmetatable, rawget, rawset, pcall, xpcall, getfenv = _G.assert, _G.error, _G.select, _G.ipairs, _G.next, _G.tostring, _G.tonumber, _G.getmetatable, _G.setmetatable, _G.rawget, _G.rawset, _G.pcall, _G.xpcall, _G.getfenv
 local gpm_PREFIX = gpm.PREFIX
 
 local environment = gpm.environment
@@ -68,32 +68,6 @@ environment.xpcall = xpcall
 
 -- require - broken in glua
 
--- coroutine library
-local coroutine = dofile( "std/coroutine.lua", _G.coroutine, _G.CurTime )
-environment.coroutine = coroutine
-
-do
-
-    local error, ErrorNoHalt, ErrorNoHaltWithStack = _G.error, _G.ErrorNoHalt, _G.ErrorNoHaltWithStack
-    local coroutine_running = coroutine.running
-
-    -- error
-    function environment.error( message, level )
-        if not coroutine_running() then
-            message = tostring( message )
-        end
-
-        if level == -1 then
-            return ErrorNoHalt( message )
-        elseif level == -2 then
-            return ErrorNoHaltWithStack( message )
-        else
-            return error( message, level )
-        end
-    end
-
-end
-
 local is_table, is_string, is_number, is_bool, is_function = _G.istable, _G.isstring, _G.isnumber, _G.isbool, _G.isfunction
 local glua_string, glua_table, glua_game, glua_engine = _G.string, _G.table, _G.game, _G.engine
 local string_format = glua_string.format
@@ -101,6 +75,7 @@ local table_concat = glua_table.concat
 local system = _G.system
 local jit = _G.jit
 
+-- tonumber
 environment.tonumber = function( value, base )
     local metatable = getmetatable( value )
     if metatable == nil then
@@ -114,6 +89,25 @@ environment.tonumber = function( value, base )
 
     return tonumber( value, base )
 end
+
+-- tobool
+environment.tobool = function( value )
+    local metatable = getmetatable( value )
+    if metatable == nil then
+        return false
+    end
+
+    local fn = metatable.__tobool
+    if is_function( fn ) then
+        return fn( value )
+    end
+
+    return true
+end
+
+-- coroutine library
+local coroutine = dofile( "std/coroutine.lua", _G.coroutine, _G.CurTime )
+environment.coroutine = coroutine
 
 -- jit library
 environment.jit = jit
@@ -583,6 +577,10 @@ local string = dofile( "std/string.lua", glua_string, table_concat, math, tostri
 local string_len = string.len
 environment.string = string
 
+-- crypto library
+local crypto = dofile( "std/crypto.lua", _G, dofile, assert, error, pairs, tostring, type, string, table )
+environment.crypto = crypto
+
 -- utf8 library
 string.utf8 = dofile( "std/utf8.lua", bit, string, table, math, tonumber )
 
@@ -751,6 +749,292 @@ end
 -- console library
 local console = dofile( "std/console.lua", _G, tostring, findMetatable, string_format, getfenv, table.unpack, select )
 environment.console = console
+
+-- error
+do
+
+    local debug_getstack, debug_getupvalue, debug_getlocal = debug.getstack, debug.getupvalue, debug.getlocal
+    local ErrorNoHalt, ErrorNoHaltWithStack = _G.ErrorNoHalt, _G.ErrorNoHaltWithStack
+    local coroutine_running = coroutine.running
+    local string_rep = string.rep
+
+    local callStack, callStackSize = {}, 0
+
+    local captureStack = function( stackPos )
+        return debug_getstack( stackPos or 1 )
+    end
+
+    local pushCallStack = function( stack )
+        local size = callStackSize + 1
+        callStack[ size ] = stack
+        callStackSize = size
+    end
+
+    local popCallStack = function()
+        local pos = callStackSize
+        if pos == 0 then
+            return nil
+        end
+
+        local stack = callStack[ pos ]
+        callStack[ pos ] = nil
+        callStackSize = pos - 1
+        return stack
+    end
+
+    local appendStack = function( stack )
+        return pushCallStack( { stack, callStack[ callStackSize ] } )
+    end
+
+    local mergeStack = function( stack )
+        local pos = #stack
+
+        local currentCallStack = callStack[ callStackSize ]
+        while currentCallStack do
+            local lst = currentCallStack[ 1 ]
+            for i = 1, #lst do
+                local info = lst[ i ]
+                pos = pos + 1
+                stack[ pos ] = info
+            end
+
+            currentCallStack = currentCallStack[ 2 ]
+        end
+
+        return stack
+    end
+
+    local dumpFile
+    do
+
+        local math_min, math_max, math_floor, math_log10, math_huge = math.min, math.max, math.floor, math.log10, math.huge
+        local string_split, string_find, string_sub = string.split, string.find, string.sub
+        local file_Open = _G.file.Open
+        local MsgC = _G.MsgC
+
+        local gray = Color( 180, 180, 180 )
+        local white = Color( 225, 225, 225 )
+        local danger = Color( 239, 68, 68 )
+
+        dumpFile = function( message, fileName, line )
+            if not ( fileName and line ) then
+                return
+            end
+
+            local handler = file_Open( fileName, "rb", "GAME" )
+            if handler == nil then return end
+
+            local str = handler:Read( handler:Size() )
+            handler:Close()
+
+            if string_len( str ) == 0 then
+                return
+            end
+
+            local lines = string_split( str, "\n" )
+            if not ( lines and lines[ line ] ) then
+                return
+            end
+
+            local start = math_max( 1, line - 5 )
+            local finish = math_min( #lines, line + 3 )
+            local numWidth = math_floor( math_log10( finish ) ) + 1
+
+            local longestLine, firstChar = 0, math_huge
+            for i = start, finish do
+                local code = lines[ i ]
+                local pos = string_find( code, "%S" )
+                if pos and pos < firstChar then
+                    firstChar = pos
+                end
+
+                longestLine = math_max( longestLine, string_len( code ) )
+            end
+
+            longestLine = math_min( longestLine - firstChar, 120 )
+            MsgC( gray, string_rep( " ", numWidth + 3 ), string_rep( "_", longestLine + 4 ), "\n", string_rep( " ", numWidth + 2 ), "|\n" )
+
+            local numFormat = " %0" .. numWidth .. "d | "
+            for i = start, finish do
+                local code = lines[ i ]
+
+                MsgC( i == line and white or gray, string_format( numFormat, i ), string_sub( code, firstChar, longestLine + firstChar ), "\n" )
+
+                if i == line then
+                    MsgC(
+                        gray, string_rep(" ", numWidth + 2), "| ", string_sub( code, firstChar, ( string_find( code, "%S" ) or 1 ) - 1 ), danger, "^ ", tostring( message ), "\n",
+                        gray, string_rep(" ", numWidth + 2), "|\n"
+                    )
+                end
+            end
+
+            MsgC( gray, string_rep( " ", numWidth + 2 ), "|\n", string_rep( " ", numWidth + 3 ), string_rep( "¯", longestLine + 4 ), "\n\n" )
+        end
+
+    end
+
+    local errorClass = class(
+        "Error",
+        {
+            ["name"] = "Error",
+            ["new"] = function( self, message, fileName, lineNumber, stackPos )
+                if stackPos == nil then stackPos = 3 end
+
+                self.message = message
+                self.fileName = fileName
+                self.lineNumber = lineNumber
+
+                local stack = captureStack( stackPos )
+                self.stack = stack
+                mergeStack( stack )
+
+                local first = stack[ 1 ]
+                if first == nil then return end
+
+                self.fileName = self.fileName or first.short_src
+                self.lineNumber = self.lineNumber or first.currentline
+
+                if debug_getupvalue and first.func and first.nups and first.nups > 0 then
+                    local upvalues = {}
+                    self.upvalues = upvalues
+
+                    for i = 1, first.nups do
+                        local name, value = debug_getupvalue( first.func, i )
+                        if name == nil then
+                            self.upvalues = nil
+                            break
+                        end
+
+                        upvalues[ i ] = { name, value }
+                    end
+                end
+
+                if debug_getlocal then
+                    local locals, count, i = {}, 0, 1
+                    while true do
+                        local name, value = debug_getlocal( stackPos, i )
+                        if name == nil then break end
+
+                        if name ~= "(*temporary)" then
+                            count = count + 1
+                            locals[ count ] = { name, value }
+                        end
+
+                        i = i + 1
+                    end
+
+                    if count ~= 0 then
+                        self.locals = locals
+                    end
+                end
+            end,
+            ["__tostring"] = function( self )
+                if self.fileName then
+                    return string_format( "%s:%d: %s: %s", self.fileName, self.lineNumber or 0, self.name, self.message )
+                else
+                    return self.name .. ": " .. self.message
+                end
+            end,
+            ["display"] = function( self )
+                if is_string( self ) then
+                    ErrorNoHaltWithStack( self )
+                    return
+                end
+
+                local lines, length = { "\n[ERROR] " .. tostring( self ) }, 1
+
+                local stack = self.stack
+                if stack then
+                    for i = 1, #stack do
+                        local info = stack[ i ]
+                        length = length + 1
+                        lines[ length ] = string_format( "%s %d. %s - %s:%d", string_rep( " ", i ), i, info.name or "unknown", info.short_src, info.currentline or -1 )
+                    end
+                end
+
+                local locals = self.locals
+                if locals then
+                    length = length + 1
+                    lines[ length ] = "\n=== Locals ==="
+
+                    for i = 1, #locals do
+                        local entry = locals[ i ]
+                        length = length + 1
+                        lines[ length ] = string_format( "  - %s = %s", entry[ 1 ], entry[ 2 ] )
+                    end
+                end
+
+                local upvalues = self.upvalues
+                if upvalues ~= nil then
+                    length = length + 1
+                    lines[ length ] = "\n=== Upvalues ==="
+
+                    for i = 1, #upvalues do
+                        local entry = upvalues[ i ]
+                        length = length + 1
+                        lines[ length ] = string_format( "  - %s = %s", entry[ 1 ], entry[ 2 ] )
+                    end
+                end
+
+                length = length + 1
+                lines[ length ] = "\n"
+                ErrorNoHalt( table_concat( lines, "\n", 1, length ) )
+
+                if self.message and self.fileName and self.lineNumber then
+                    dumpFile( self.name .. ": " .. self.message, self.fileName, self.lineNumber )
+                end
+            end
+        },
+        {
+            __inherited = function( self, child )
+                child.__base.name = child.__name or self.name
+            end,
+            callStack = callStack,
+            captureStack = captureStack,
+            pushCallStack = pushCallStack,
+            popCallStack = popCallStack,
+            appendStack = appendStack,
+            mergeStack = mergeStack,
+        }
+    )
+
+    environment.error = setmetatable(
+        {
+            ["NotImplementedError"] = class( "NotImplementedError", nil, nil, errorClass ),
+            ["FutureCancelError"] = class( "FutureCancelError", nil, nil, errorClass ),
+            ["InvalidStateError"] = class( "InvalidStateError", nil, nil, errorClass ),
+            ["CodeCompileError"] = class( "CodeCompileError", nil, nil, errorClass ),
+            ["FileSystemError"] = class( "FileSystemError", nil, nil, errorClass ),
+            ["WebClientError"] = class( "WebClientError", nil, nil, errorClass ),
+            ["RuntimeError"] = class( "RuntimeError", nil, nil, errorClass ),
+            ["PackageError"] = class( "PackageError", nil, nil, errorClass ),
+            ["ModuleError"] = class( "ModuleError", nil, nil, errorClass ),
+            ["SourceError"] = class( "SourceError", nil, nil, errorClass ),
+            ["FutureError"] = class( "FutureError", nil, nil, errorClass ),
+            ["AddonError"] = class( "AddonError", nil, nil, errorClass ),
+            ["RangeError"] = class( "RangeError", nil, nil, errorClass ),
+            ["TypeError"] = class( "TypeError", nil, nil, errorClass ),
+            ["SQLError"] = class( "SQLError", nil, nil, errorClass ),
+            ["Error"] = errorClass
+        },
+        {
+            ["__call"] = function( message, level )
+                if not coroutine_running() then
+                    message = tostring( message )
+                end
+
+                if level == -1 then
+                    return ErrorNoHalt( message )
+                elseif level == -2 then
+                    return ErrorNoHaltWithStack( message )
+                else
+                    return error( message, level )
+                end
+            end
+        }
+    )
+
+end
 
 -- engine library
 local engine = dofile( "std/engine.lua", _G, debug, glua_engine, glua_game, system.IsWindowed, CLIENT_SERVER, CLIENT_MENU, SERVER )
@@ -1097,15 +1381,24 @@ do
         return math_ceil( bitcount( value ) / 8 )
     end
 
+    findMetatable( "nil" ).__tobool = function() return false end
+
     -- boolean
-    findMetatable( "boolean" ).__bitcount = function() return 1 end
+    do
+
+        local metatable = findMetatable( "boolean" )
+        metatable.__bitcount = function() return 1 end
+        metatable.__tobool = function( value ) return value end
+
+    end
 
     -- number
     do
 
         local math_log, math_ln2, math_isfinite = math.log, math.ln2, math.isfinite
+        local metatable = findMetatable( "number" )
 
-        findMetatable( "number" ).__bitcount = function( value )
+        metatable.__bitcount = function( value )
             if math_isfinite( value ) then
                 if ( value % 1 ) == 0 then
                     return math_ceil( math_log( value + 1 ) / math_ln2 ) + ( value < 0 and 1 or 0 )
@@ -1119,11 +1412,25 @@ do
             end
         end
 
+        metatable.__tobool = function( value )
+            return value ~= 0
+        end
+
     end
 
     -- string
-    findMetatable( "string" ).__bitcount = function( value )
-        return string_len( value ) * 8
+    do
+
+        local metatable = findMetatable( "string" )
+
+        metatable.__bitcount = function( value )
+            return string_len( value ) * 8
+        end
+
+        metatable.__tobool = function( value )
+            return value ~= "" and value ~= "0" and value ~= "false"
+        end
+
     end
 
     -- Player
@@ -1136,10 +1443,10 @@ end
 
 if CLIENT_MENU then
     hook.add( "OnScreenSizeChanged", gpm_PREFIX .. "::ScreenSize", function( _, __, width, height )
-        os.ScreenWidth, os.ScreenHeight = width, height
+        os.screenWidth, os.screenHeight = width, height
     end, hook.PRE )
 
-    os.ScreenWidth, os.ScreenHeight = _G.ScrW(), _G.ScrH()
+    os.screenWidth, os.screenHeight = _G.ScrW(), _G.ScrH()
 end
 
 if _G.TYPE_COUNT ~= 44 then

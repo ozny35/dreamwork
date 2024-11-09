@@ -596,6 +596,26 @@ do
 
 end
 
+-- Error ( 45 )
+do
+
+    function library.error( value, name )
+        if name == nil then name = "Error" end
+
+        local metatable = getmetatable( value )
+        if metatable == nil then return false end
+
+        local class = metatable.__class
+        while class ~= nil do
+            if class.__name == name then return true end
+            class = class.__parent
+        end
+
+        return false
+    end
+
+end
+
 -- Color ( 255 )
 do
 
@@ -608,5 +628,6 @@ do
     registerMetatable( "Color", metatable )
 
 end
+
 
 return library
