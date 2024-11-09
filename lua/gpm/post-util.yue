@@ -178,15 +178,6 @@ do
         import Little, Set from io.endianness
         import Read from io.i
 
-        util.LZMA_PROPS_SIZE = 5
-
-        util.CompressedSize = ( binary ) ->
-            if binary == ""
-                return 0
-
-            Little!
-            return Read( nil, sub( binary, 6, 14 ), 8 )
-
         setEndianness = ( isBigEndian ) ->
             if isBigEndian
                 Set( "big" )

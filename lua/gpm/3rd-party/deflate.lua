@@ -1,79 +1,5 @@
---[[
-LibDeflate 1.0.2-release <br>
-Pure Lua compressor and decompressor with high compression ratio using
-DEFLATE/zlib format.
-
-@file deflate.lua
-@author Haoqian He (Github: SafeteeWoW; World of Warcraft: Safetyy-Illidan(US))
-@copyright LibDeflate <2018-2021> Haoqian He
-@license zlib License
-
-This library is implemented according to the following specifications. <br>
-Report a bug if LibDeflate is not fully compliant with those specs. <br>
-Both compressors and decompressors have been implemented in the library.<br>
-1. RFC1950: DEFLATE Compressed Data Format Specification version 1.3 <br>
-https://tools.ietf.org/html/rfc1951 <br>
-2. RFC1951: ZLIB Compressed Data Format Specification version 3.3 <br>
-https://tools.ietf.org/html/rfc1950 <br>
-
-This library requires Lua 5.1/5.2/5.3/5.4 interpreter or LuaJIT v2.0+. <br>
-This library does not have any dependencies. <br>
-<br>
-This file "deflate.lua" is the only source file of
-the library. <br>
-Submit suggestions or report bugs to
-https://github.com/safeteeWow/LibDeflate/issues
-
-zlib License
-
-(C) 2018-2021 Haoqian He
-
-This software is provided 'as-is', without any express or implied
-warranty.  In no event will the authors be held liable for any damages
-arising from the use of this software.
-
-Permission is granted to anyone to use this software for any purpose,
-including commercial applications, and to alter it and redistribute it
-freely, subject to the following restrictions:
-
-1. The origin of this software must not be misrepresented; you must not
-claim that you wrote the original software. If you use this software
-in a product, an acknowledgment in the product documentation would be
-appreciated but is not required.
-2. Altered source versions must be plainly marked as such, and must not be
-misrepresented as being the original software.
-3. This notice may not be removed or altered from any source distribution.
-
-License History:
-1. GNU General Public License Version 3 in v1.0.0 and earlier versions.
-2. GNU Lesser General Public License Version 3 in v1.0.1
-3. the zlib License since v1.0.2
-
-Credits and Disclaimer:
-This library rewrites the code from the algorithm
-and the ideas of the following projects,
-and uses their code to help to test the correctness of this library,
-but their code is not included directly in the library itself.
-Their original licenses shall be comply when used.
-
-1. zlib, by Jean-loup Gailly (compression) and Mark Adler (decompression).
-    http://www.zlib.net/
-    Licensed under zlib License. http://www.zlib.net/zlib_license.html
-    For the compression algorithm.
-2. puff, by Mark Adler. https://github.com/madler/zlib/tree/master/contrib/puff
-    Licensed under zlib License. http://www.zlib.net/zlib_license.html
-    For the decompression algorithm.
-3. LibCompress, by jjsheets and Galmok of European Stormrage (Horde)
-    https://www.wowace.com/projects/libcompress
-    Licensed under GPLv2.
-    https://www.gnu.org/licenses/old-licenses/gpl-2.0.html
-    For the code to create customized codec.
-4. WeakAuras2,
-    https://github.com/WeakAuras/WeakAuras2
-    Licensed under GPLv2.
-    For the 6bit encoding and decoding.
---]]
-
+-- Based on LibDeflate by safeteeWow: https://github.com/safeteeWow/LibDeflate
+local assert, error, pairs, tostring, type, string, table = ...
 local deflate = {}
 
 do
@@ -100,19 +26,15 @@ do
 end
 
 -- localize Lua api for faster access.
-local assert = assert
-local error = error
-local pairs = pairs
 local string_format = string.format
 local string_byte = string.byte
 local string_char = string.char
 local string_find = string.find
 local string_gsub = string.gsub
 local string_sub = string.sub
+
 local table_concat = table.concat
 local table_sort = table.sort
-local tostring = tostring
-local type = type
 
 -- Converts i to 2^i, (0<=i<=32)
 -- This is used to implement bit left shift and bit right shift.
