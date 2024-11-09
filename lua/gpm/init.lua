@@ -125,7 +125,7 @@ do
         gpm.detour = detour
     end
 
-    ---@class gpm.environment
+    ---@class gpm.std
     std = dofile( "std.lua", _G, gpm, dofile, pairs, detour )
 
 end
@@ -133,7 +133,7 @@ end
 -- TODO: net meta methods and __net_write __net_read
 
 
--- local file = environment.file
+-- local file = std.file
 
 -- -- Plugins
 -- do

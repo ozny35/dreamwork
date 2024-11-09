@@ -2,18 +2,18 @@ local _G, gpm, dofile, pairs, detour = ...
 local assert, error, select, ipairs, next, tostring, tonumber, getmetatable, setmetatable, rawget, rawset, pcall, xpcall, getfenv = _G.assert, _G.error, _G.select, _G.ipairs, _G.next, _G.tostring, _G.tonumber, _G.getmetatable, _G.setmetatable, _G.rawget, _G.rawset, _G.pcall, _G.xpcall, _G.getfenv
 local gpm_PREFIX = gpm.PREFIX
 
----@class gpm.environment
-local environment = gpm.environment
-if environment == nil then
-    environment = dofile( "std/constants.lua", _G, setmetatable )
-    gpm.environment = environment
+---@class gpm.std
+local std = gpm.std
+if std == nil then
+    std = dofile( "std/constants.lua", _G, setmetatable )
+    gpm.std = std
 else
     for key, value in pairs( dofile( "std/constants.lua", _G, setmetatable ) ) do
-        environment[ key ] = value
+        std[ key ] = value
     end
 end
 
-local CLIENT, SERVER, MENU, CLIENT_MENU, CLIENT_SERVER = environment.CLIENT, environment.SERVER, environment.MENU, environment.CLIENT_MENU, environment.CLIENT_SERVER
+local CLIENT, SERVER, MENU, CLIENT_MENU, CLIENT_SERVER = std.CLIENT, std.SERVER, std.MENU, std.CLIENT_MENU, std.CLIENT_SERVER
 
 -- ULib support ( There are no words to describe how much I hate Ulysses Team )
 if CLIENT_SERVER and _G.file.Exists( "ulib/shared/hook.lua", "LUA" ) then
@@ -34,32 +34,32 @@ if SERVER then
 end
 
 -- lua globals
-environment.assert = assert
-environment.print = _G.print
-environment.collectgarbage = _G.collectgarbage
+std.assert = assert
+std.print = _G.print
+std.collectgarbage = _G.collectgarbage
 
-environment.getmetatable = getmetatable
-environment.setmetatable = setmetatable
+std.getmetatable = getmetatable
+std.setmetatable = setmetatable
 
-environment.getfenv = getfenv -- removed in Lua 5.2
-environment.setfenv = _G.setfenv -- removed in Lua 5.2
+std.getfenv = getfenv -- removed in Lua 5.2
+std.setfenv = _G.setfenv -- removed in Lua 5.2
 
-environment.rawget = rawget
-environment.rawset = rawset
-environment.rawequal = _G.rawequal
-environment.rawlen = _G.rawlen or function( value ) return #value end
+std.rawget = rawget
+std.rawset = rawset
+std.rawequal = _G.rawequal
+std.rawlen = _G.rawlen or function( value ) return #value end
 
-environment.tostring = tostring
-environment.select = select
+std.tostring = tostring
+std.select = select
 
-environment.inext = ipairs( environment )
-environment.next = next
+std.inext = ipairs( std )
+std.next = next
 
-environment.ipairs = ipairs
-environment.pairs = pairs
+std.ipairs = ipairs
+std.pairs = pairs
 
-environment.pcall = pcall
-environment.xpcall = xpcall
+std.pcall = pcall
+std.xpcall = xpcall
 
 -- dofile - missing in glua
 
@@ -77,7 +77,7 @@ local system = _G.system
 local jit = _G.jit
 
 -- tonumber
-environment.tonumber = function( value, base )
+std.tonumber = function( value, base )
     local metatable = getmetatable( value )
     if metatable == nil then
         return tonumber( value, base )
@@ -92,7 +92,7 @@ environment.tonumber = function( value, base )
 end
 
 -- tobool
-environment.tobool = function( value )
+std.tobool = function( value )
     local metatable = getmetatable( value )
     if metatable == nil then
         return false
@@ -108,14 +108,14 @@ end
 
 -- coroutine library
 local coroutine = dofile( "std/coroutine.lua", _G.coroutine, _G.CurTime )
-environment.coroutine = coroutine
+std.coroutine = coroutine
 
 -- jit library
-environment.jit = jit
+std.jit = jit
 
 -- debug library
 local debug = dofile( "std/debug.lua", glua_string, _G.debug )
-environment.debug = debug
+std.debug = debug
 
 local argument, class, type, findMetatable, registerMetatable
 do
@@ -306,9 +306,9 @@ do
             end
         end
 
-        environment.type = type
+        std.type = type
 
-        environment.isinstance = function( any, a, b, ... )
+        std.isinstance = function( any, a, b, ... )
             if is_string( a ) then
                 if is_string( b ) then
                     a = { a, b, ... }
@@ -332,7 +332,7 @@ do
             return indexes[ glua_type( value ) ] or -1
         end
 
-        environment.TypeID = function( value )
+        std.TypeID = function( value )
             local metatable = getmetatable( value )
             if metatable ~= nil then
                 local id = rawget( metatable, "__metatable_id" )
@@ -401,7 +401,7 @@ do
         return typeError( num, table_concat( args, "/", 1, length ), name )
     end
 
-    environment.argument = argument
+    std.argument = argument
 
     local class__call = function( cls, ... )
         local init = rawget( cls, "__init" )
@@ -539,29 +539,29 @@ do
     end
 
     -- gpm classes
-    environment.class = class
-    environment.extends = classExtends
-    environment.extend = function( parent, name, base, static )
+    std.class = class
+    std.extends = classExtends
+    std.extend = function( parent, name, base, static )
         return class( name, base, static, parent )
     end
 
     -- glua metatables
-    environment.FindMetatable = findMetatable
-    environment.RegisterMetatable = registerMetatable
+    std.FindMetatable = findMetatable
+    std.RegisterMetatable = registerMetatable
 
 end
 
 -- bit library
 local bit = dofile( "std/bit.lua", _G.bit )
-environment.bit = bit
+std.bit = bit
 
 -- math library
 local math = dofile( "std/math.lua", _G.math )
-environment.math = math
+std.math = math
 
 -- is library
 local is = dofile( "std/is.lua", getmetatable, is_table, debug, findMetatable, registerMetatable, coroutine.create, CLIENT, SERVER, CLIENT_SERVER, CLIENT_MENU )
-environment.is = is
+std.is = is
 
 is_string, is_number, is_bool, is_function = is.string, is.number, is.bool, is["function"]
 
@@ -570,30 +570,30 @@ local futures = dofile( "std/futures.lua" )
 
 -- os library
 local os = dofile( "std/os.lua", _G.os, system, jit, bit, math.fdiv )
-environment.os = os
+std.os = os
 
 -- table library
 local table = dofile( "std/table.lua", glua_table, math, glua_string, select, pairs, is_table, is_string, is_function, getmetatable, setmetatable, rawget, next )
-environment.table = table
+std.table = table
 
 -- string library
 local string = dofile( "std/string.lua", glua_string, table_concat, math, tostring, is_number, is_bool, tonumber )
 local string_len = string.len
-environment.string = string
+std.string = string
 
 -- crypto library
 local crypto = dofile( "std/crypto.lua", _G, dofile, assert, error, pairs, tostring, type, string, table )
-environment.crypto = crypto
+std.crypto = crypto
 
 -- utf8 library
 string.utf8 = dofile( "std/utf8.lua", bit, string, table, math, tonumber )
 
 -- Color class
 local Color = dofile( "std/color.lua", _G, class, bit, string, math, is_number, setmetatable, findMetatable( "Color" ) )
-environment.Color = Color
+std.Color = Color
 
 -- Stack class
-environment.Stack = class( "Stack", {
+std.Stack = class( "Stack", {
     ["__tostring"] = function( self )
         return string_format( "Stack: %p [%d/%d]", self, self.pointer, self.size )
     end,
@@ -682,7 +682,7 @@ do
         return nil
     end
 
-    environment.Queue = class( "Queue", {
+    std.Queue = class( "Queue", {
         ["__tostring"] = function( self )
             return string_format( "Queue: %p [%d/%d]", self, self.pointer, self.size )
         end,
@@ -752,7 +752,7 @@ end
 
 -- console library
 local console = dofile( "std/console.lua", _G, tostring, findMetatable, string_format, getfenv, table.unpack, select )
-environment.console = console
+std.console = console
 
 -- error
 do
@@ -1002,7 +1002,7 @@ do
         }
     )
 
-    environment.error = setmetatable(
+    std.error = setmetatable(
         {
             ["NotImplementedError"] = class( "NotImplementedError", nil, nil, errorClass ),
             ["FutureCancelError"] = class( "FutureCancelError", nil, nil, errorClass ),
@@ -1042,27 +1042,27 @@ end
 
 -- engine library
 local engine = dofile( "std/engine.lua", _G, debug, glua_engine, glua_game, system.IsWindowed, CLIENT_SERVER, CLIENT_MENU, SERVER )
-environment.engine = engine
+std.engine = engine
 
 -- level library
-environment.level = dofile( "std/level.lua", glua_game, glua_engine, CLIENT_SERVER, SERVER )
+std.level = dofile( "std/level.lua", glua_game, glua_engine, CLIENT_SERVER, SERVER )
 
 local isDedicatedServer = false
 if CLIENT_SERVER then
 
     -- entity library
-    environment.entity = dofile( "std/entity.lua", _G, math, findMetatable, CLIENT, SERVER, is.entity, detour, class )
+    std.entity = dofile( "std/entity.lua", _G, math, findMetatable, CLIENT, SERVER, is.entity, detour, class )
 
     isDedicatedServer = engine.isDedicatedServer()
 
     -- player library
-    environment.player = dofile( "std/player.lua", _G, error, findMetatable, CLIENT, SERVER, is_string, is_number, isDedicatedServer, glua_game.MaxPlayers, class )
+    std.player = dofile( "std/player.lua", _G, error, findMetatable, CLIENT, SERVER, is_string, is_number, isDedicatedServer, glua_game.MaxPlayers, class )
 
 end
 
 -- hook library
 local hook = dofile( "std/hook.lua", _G, rawset, getfenv, setmetatable, table.isEmpty )
-environment.hook = hook
+std.hook = hook
 
 local isInDebug
 do
@@ -1085,7 +1085,7 @@ do
 
     local key2call = { ["DEVELOPER"] = isInDebug }
 
-    setmetatable( environment, {
+    setmetatable( std, {
         ["__index"] = function( _, key )
             local func = key2call[ key ]
             if func == nil then
@@ -1107,7 +1107,7 @@ do
     local os_date = os.date
 
     local color_white = Color( 255 )
-    environment.color_white = color_white
+    std.color_white = color_white
 
     local infoColor = Color( 70, 135, 255 )
     local warnColor = Color( 255, 130, 90 )
@@ -1208,7 +1208,7 @@ do
         end
     } )
 
-    environment.Logger = Logger
+    std.Logger = Logger
 
     logger = Logger( gpm_PREFIX, Color( 180, 180, 255 ), false )
     gpm.Logger = logger
@@ -1227,7 +1227,7 @@ do
         local string_byte = string.byte
         Material = _G.Material
 
-        function environment.Material( name, parameters )
+        function std.Material( name, parameters )
             if parameters then
                 argument( name, 1, "number", "string" )
 
@@ -1275,7 +1275,7 @@ do
     else
         local string_find = string.find
 
-        function environment.Material( name, parameters )
+        function std.Material( name, parameters )
             if parameters then
                 argument( name, 1, "number", "string" )
 
@@ -1357,7 +1357,7 @@ do
         return false, nil
     end
 
-    environment.loadbinary = loadbinary
+    std.loadbinary = loadbinary
 
 end
 
@@ -1379,9 +1379,9 @@ do
         return 0
     end
 
-    environment.bitcount = bitcount
+    std.bitcount = bitcount
 
-    function environment.bytecount( value )
+    function std.bytecount( value )
         return math_ceil( bitcount( value ) / 8 )
     end
 
@@ -1461,4 +1461,4 @@ if _G._VERSION ~= "Lua 5.1" then
     logger:Warn( "Lua version changed, possible unpredictable behavior. (" .. tostring( _G._VERSION or "missing") .. ")" )
 end
 
-return environment
+return std
