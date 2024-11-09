@@ -1,13 +1,13 @@
 --- Python-like futures, made by Retro
 
----@class gpm.environment
-local environment = gpm.environment
+---@class gpm.std
+local std = gpm.std
 ---@type coroutinelib
-local coroutine = environment.coroutine
+local coroutine = std.coroutine
 
----@class gpm.environment.futures
-local futures = environment.futures or {}
-environment.futures = futures
+---@class gpm.std.futures
+local futures = std.futures or {}
+std.futures = futures
 
 
 futures.RESULT_ERROR = futures.RESULT_ERROR or newproxy(); local RESULT_ERROR = futures.RESULT_ERROR
