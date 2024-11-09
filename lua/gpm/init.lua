@@ -1,4 +1,5 @@
 local version = "2.0.0"
+---@class _G
 local _G = _G
 
 do

@@ -1,3 +1,5 @@
+---@meta
+
 ---@class math
 ---@field pi number A variable containing the mathematical constant pi. (3.1415926535898)
 ---@field e number A variable containing the mathematical constant Euler's number. (2.7182818284590)
@@ -427,5 +429,5 @@ function math.geometry.InTriangle( x, y, x1, y1, x2, y2, x3, y3 ) return false e
 function math.geometry.InPoly( x, y, poly ) return false end
 
 ---@class string
-strint = {}
+string = {}
 
