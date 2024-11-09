@@ -99,7 +99,13 @@ local classes = {}
 
 -- TODO: https://github.com/Facepunch/garrysmod/blob/master/garrysmod/lua/includes/modules/scripted_ents.lua#L256-L260
 scripted_ents.Get = detour.attach( scripted_ents.Get, function( fn, name )
-    return classes[ name ] or fn( name )
+    local value = classes[ name ]
+    if value == nil then
+        return fn( name )
+    end
+
+    classes[ name ] = nil
+    return value
 end )
 
 do
