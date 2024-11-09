@@ -60,14 +60,17 @@ do
 
 end
 
----@class gpm
----@field VERSION string Package manager version in semver format.
----@field PREFIX string Package manager unique prefix.
----@field StartTime number SysTime point when package manager was started.
-local gpm = _G.gpm
-if gpm == nil then
-    gpm = { ["VERSION"] = version, ["PREFIX"] = "gpm@" .. version, ["StartTime"] = 0 }; _G.gpm = gpm
+
+if not gpm then
+    ---@class gpm
+    ---@field VERSION string Package manager version in semver format.
+    ---@field PREFIX string Package manager unique prefix.
+    ---@field StartTime number SysTime point when package manager was started.
+    gpm = { ["VERSION"] = version, ["PREFIX"] = "gpm@" .. version, ["StartTime"] = 0 }
 end
+
+---@class gpm
+local gpm = gpm
 
 gpm.StartTime = _G.SysTime()
 
@@ -126,7 +129,7 @@ do
     end
 
     ---@class gpm.environment
-    std = dofile( "std.lua", _G, gpm, dofile, pairs, detour )
+    std = dofile( "std.lua", _G, dofile, pairs, detour )
 
 end
 
