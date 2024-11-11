@@ -1,8 +1,27 @@
-local _G, class, bit, string, math, isnumber, setmetatable, COLOR = ...
-local string_char, string_byte, string_format, string_len, string_sub = string.char, string.byte, string.format, string.len, string.sub
-local error, Vector, ColorToHSL, HSLToColor, HSVToColor = _G.error, _G.Vector, _G.ColorToHSL, _G.HSLToColor, _G.HSVToColor
-local math_abs, math_clamp, math_lerp, math_min, math_max = math.abs, math.clamp, math.lerp, math.min, math.max
-local bit_band, bit_rshift = bit.band, bit.rshift
+local _G = _G
+local std = _G.gpm.std
+local Vector, ColorToHSL, HSLToColor, HSVToColor = _G.Vector, _G.ColorToHSL, _G.HSLToColor, _G.HSVToColor
+
+local is_number, setmetatable = std.is.number, std.setmetatable
+local COLOR = std.findMetatable( "Color" )
+
+local bit_band, bit_rshift
+do
+    local bit = std.bit
+    bit_band, bit_rshift = bit.band, bit.rshift
+end
+
+local math_abs, math_clamp, math_lerp, math_min, math_max
+do
+    local math = std.math
+    math_abs, math_clamp, math_lerp, math_min, math_max = math.abs, math.clamp, math.lerp, math.min, math.max
+end
+
+local string_char, string_byte, string_format, string_len, string_sub
+do
+    local string = std.string
+    string_char, string_byte, string_format, string_len, string_sub = string.char, string.byte, string.format, string.len, string.sub
+end
 
 local colorCorrection = {
     [ 0 ] = 0, 5, 8, 10, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22,
@@ -85,7 +104,7 @@ local internal = setmetatable(
             }, COLOR )
         end,
         ["__mul"] = function( self, other )
-            if isnumber( other ) then
+            if is_number( other ) then
                 return setmetatable( {
                     ["r"] = math_clamp( self.r * other, 0, 255 ),
                     ["g"] = math_clamp( self.g * other, 0, 255 ),
@@ -102,7 +121,7 @@ local internal = setmetatable(
             end
         end,
         ["__div"] = function( self, other )
-            if isnumber( other ) then
+            if is_number( other ) then
                 return setmetatable( {
                     ["r"] = math_clamp( self.r / other, 0, 255 ),
                     ["g"] = math_clamp( self.g / other, 0, 255 ),
@@ -195,9 +214,9 @@ local internal = setmetatable(
 
 internal.__index = internal
 
-return class( "Color", internal, {
+local external = {
     ["FromHex"] = function( hex )
-        if isnumber( hex ) then
+        if is_number( hex ) then
             return setmetatable( {
                 ["r"] = bit_rshift( bit_band( hex, 0xFF0000 ), 16 ),
                 ["g"] = bit_rshift( bit_band( hex, 0xFF00 ), 8 ),
@@ -242,7 +261,7 @@ return class( "Color", internal, {
                 ["a"] = tonumber( string_sub( hex, 7, 8 ), 16 )
             }, COLOR )
         else
-            error( "Invalid hex", 2 )
+            return setmetatable( { r = 0, g = 0, b = 0, a = 255 }, COLOR )
         end
     end,
     ["FromBinary"] = function( binary, withOutAlpha )
@@ -325,4 +344,18 @@ return class( "Color", internal, {
             ["a"] = withOutAlpha and 255 or math_lerp( frac, a.a, b.a )
         }, COLOR )
     end
-} )
+}
+
+if std.CLIENT then
+
+    local render_ReadPixel = _G.render.ReadPixel
+
+    external.FromScreen = function( x, y, alpha )
+        local r, g, b, a = render_ReadPixel( x, y )
+        return setmetatable( { r = r, g = g, b = b, a = alpha or a }, COLOR )
+    end
+
+end
+
+return std.class( "Color", internal, external )
+

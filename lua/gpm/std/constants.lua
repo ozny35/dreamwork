@@ -1,6 +1,7 @@
-local CLIENT = CLIENT == true
-local SERVER = SERVER == true
-local MENU = MENU_DLL == true
+local _G = _G
+local CLIENT = _G.CLIENT == true
+local SERVER = _G.SERVER == true
+local MENU = _G.MENU_DLL == true
 local CLIENT_MENU = CLIENT or MENU
 local CLIENT_SERVER = CLIENT or SERVER
 
@@ -1606,9 +1607,9 @@ local ACT = {
 
 do
 
-    local util_GetActivityIDByName = util.GetActivityIDByName
+    local util_GetActivityIDByName = _G.util.GetActivityIDByName
 
-    setmetatable( ACT, {
+    _G.setmetatable( ACT, {
         ["__index"] = function( tbl, key )
             local value = util_GetActivityIDByName( "ACT_" .. key )
             tbl[ key ] = value
@@ -1624,7 +1625,7 @@ local constants = {
     ["garrysmod"] = _G,
 
     -- Lua version
-    ["_VERSION"] = _VERSION,
+    ["_VERSION"] = _G._VERSION,
 
     -- realms
     ["CLIENT"] = CLIENT,
@@ -1634,11 +1635,11 @@ local constants = {
     ["CLIENT_SERVER"] = CLIENT_SERVER,
 
     -- https://github.com/Srlion/Hook-Library?tab=readme-ov-file#priorities
-    ["PRE_HOOK"] = PRE_HOOK,
-    ["PRE_HOOK_RETURN"] = PRE_HOOK_RETURN,
-    ["NORMAL_HOOK"] = NORMAL_HOOK,
-    ["POST_HOOK_RETURN"] = POST_HOOK_RETURN,
-    ["POST_HOOK"] = POST_HOOK,
+    ["PRE_HOOK"] = _G.PRE_HOOK,
+    ["PRE_HOOK_RETURN"] = _G.PRE_HOOK_RETURN,
+    ["NORMAL_HOOK"] = _G.NORMAL_HOOK,
+    ["POST_HOOK_RETURN"] = _G.POST_HOOK_RETURN,
+    ["POST_HOOK"] = _G.POST_HOOK,
 
     -- https://wiki.facepunch.com/gmod/Enums/ACT
     ["ACT"] = ACT,
@@ -1754,6 +1755,7 @@ local constants = {
     },
 
     -- Material Parameters
+    -- TODO: Think about this, maybe depricated later
     ["MPAR"] = {
         ["VERTEXLITGENERIC"] = 0x80,
         ["NOCULL"] = 0x40,
