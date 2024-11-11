@@ -1,10 +1,6 @@
 local _G = _G
-local cvars, concommand, GetConVar_Internal, RunConsoleCommand, MsgC = _G.cvars, _G.concommand, _G.GetConVar_Internal, _G.RunConsoleCommand, _G.MsgC
+local tostring, select, getfenv, string_format, cvars, concommand, GetConVar_Internal, RunConsoleCommand, MsgC, unpack = _G.tostring, _G.select, _G.getfenv, _G.string.format, _G.cvars, _G.concommand, _G.GetConVar_Internal, _G.RunConsoleCommand, _G.MsgC, _G.unpack
 local cvars_GetConVarCallbacks, cvars_AddChangeCallback, cvars_RemoveChangeCallback = cvars.GetConVarCallbacks, cvars.AddChangeCallback, cvars.RemoveChangeCallback
-
----@class gpm.std
-local std = _G.gpm.std
-local tostring, string_format, getfenv, table_unpack, select = std.tostring, std.string.format, std.getfenv, std.table.unpack, std.select
 
 local CONVAR = _G.FindMetaTable( "ConVar" )
 local getName, getDefault = CONVAR.GetName, CONVAR.GetDefault
@@ -20,7 +16,7 @@ console.writeLine = function( ... )
     local args, length = { ... }, select( '#', ... ) + 1
     args[ length ] = "\n"
 
-    return MsgC( table_unpack( args, 1, length ) )
+    return MsgC( unpack( args, 1, length ) )
 end
 
 local variable = console.variable
@@ -126,5 +122,4 @@ command.run = RunConsoleCommand
 command.remove = concommand.Remove
 command.getTable = concommand.GetTable
 
--- TODO: fucking lua server
-std.console = console
+return console

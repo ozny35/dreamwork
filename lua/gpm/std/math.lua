@@ -9,6 +9,18 @@ local nan = 0 / 0
 local inf = 1 / 0
 local neg_inf = -inf
 
+local atan = function( y, x )
+    if x == nil then
+        return math_atan( y )
+    elseif y == 0 then
+      return 0.0
+    elseif x == 0 then
+        return math_pi / 2
+    end
+
+    return math_atan( y / x )
+end
+
 ---@class gpm.std.math
 ---@field e number A variable containing the mathematical constant e. (2.7182818284590)
 ---@field ln2 number A variable containing the mathematical constant natural logarithm of 2. (0.69314718055995)
@@ -38,79 +50,65 @@ local math = {
     sqrt2 = math_sqrt( 2.0 ),
     sqrt1_2 = math_sqrt( 0.5 ),
     maxinteger = 0x7FFFFFFF,
-    mininteger = -0x80000000
+    mininteger = -0x80000000,
+
+    -- Lua 5.1 functions
+    ["abs"] = math_abs,
+    ["exp"] = glua_math.exp,
+    ["fmod"] = glua_math.fmod,
+    ["modf"] = glua_math.modf,
+    ["sqrt"] = math_sqrt,
+
+    ["sin"] = glua_math.sin,
+    ["cos"] = glua_math.cos,
+    ["tan"] = glua_math.tan,
+
+    ["asin"] = glua_math.asin,
+    ["acos"] = glua_math.acos,
+    ["atan"] = atan,
+
+    ["atan2"] = glua_math.atan2, -- deprecated in Lua 5.3
+    ["sinh"] = glua_math.sinh, -- deprecated in Lua 5.3
+    ["cosh"] = glua_math.cosh, -- deprecated in Lua 5.3
+    ["tanh"] = glua_math.tanh, -- deprecated in Lua 5.3
+
+    ["min"] = math_min,
+    ["max"] = math_max,
+    ["ceil"] = math_ceil,
+    ["floor"] = math_floor,
+
+    ["log"] = math_log,
+    ["log10"] = glua_math.log10, -- deprecated in Lua 5.3
+
+    ["deg"] = math_deg,
+    ["rad"] = glua_math.rad,
+
+    ["random"] = math_random,
+    ["randomseed"] = glua_math.randomseed,
+
+    ["frexp"] = glua_math.frexp or function( x )
+        if x == 0 then
+            return 0.0, 0.0
+        end
+
+        local exponent = math_floor( math_log( math_abs( x ) ) / ln2 )
+        if exponent > 0.0 then
+            x = x * ( 2.0 ^ -exponent )
+        else
+            x = x / ( 2.0 ^ exponent )
+        end
+
+        if math_abs( x ) >= 1.0 then
+            return x / 2.0, exponent + 1
+        else
+            return x, exponent
+        end
+    end,
+
+    ["ldexp"] = glua_math.ldexp or function( x, exponent )
+        return x * 2.0 ^ exponent
+    end
 }
-
--- Lua 5.1 functions
-math.abs = math_abs
-math.exp = glua_math.exp
-math.fmod = glua_math.fmod
-math.modf = glua_math.modf
-math.sqrt = math_sqrt
-
-math.sin = glua_math.sin
-math.cos = glua_math.cos
-math.tan = glua_math.tan
-
-math.asin = glua_math.asin
-math.acos = glua_math.acos
-
-local atan = function( y, x )
-    if x == nil then
-        return math_atan( y )
-    elseif y == 0 then
-      return 0.0
-    elseif x == 0 then
-        return math_pi / 2
-    end
-
-    return math_atan( y / x )
-end
-
-math.atan = atan
-
-math.atan2 = glua_math.atan2 -- deprecated in Lua 5.3
-math.sinh = glua_math.sinh -- deprecated in Lua 5.3
-math.cosh = glua_math.cosh -- deprecated in Lua 5.3
-math.tanh = glua_math.tanh -- deprecated in Lua 5.3
-
-math.min = math_min
-math.max = math_max
-
-math.ceil = math_ceil
-math.floor = math_floor
-
-math.log = math_log
-math.log10 = glua_math.log10 -- deprecated in Lua 5.3
-
-math.deg = math_deg
-math.rad = glua_math.rad
-
-math.random = math_random
-math.randomseed = glua_math.randomseed
-
-math.frexp = glua_math.frexp or function( x )
-    if x == 0 then
-        return 0.0, 0.0
-    end
-
-    local exponent = math_floor( math_log( math_abs( x ) ) / ln2 )
-    if exponent > 0.0 then
-        x = x * ( 2.0 ^ -exponent )
-    else
-        x = x / ( 2.0 ^ exponent )
-    end
-
-    if math_abs( x ) >= 1.0 then
-        return x / 2.0, exponent + 1
-    else
-        return x, exponent
-    end
-end
-
-math.ldexp = glua_math.ldexp or function( x, exponent )
-    return x * 2.0 ^ exponent
-end
 
 ---Checks if a number is positive or negative infinity.
 ---@param x number The number to check.
@@ -545,10 +543,16 @@ function math.inPoly( x, y, poly )
     return inside
 end
 
+---Converts a bits number to a byte number.
+---@param x number The bits number.
+---@return number bytes The byte number.
 function math.bit2byte( x )
     return math_ceil( x / 8 )
 end
 
+---Converts a byte number to a bits number.
+---@param x number The byte number.
+---@return number bits The bits number.
 function math.byte2bit( x )
     return math_ceil( x ) * 8
 end

@@ -559,11 +559,11 @@ end
 -- bit library
 std.bit = _G.bit
 
----@class gpm.std.math
+-- math library
 local math = include( "std/math.lua" )
 std.math = math
 
----@class gpm.std.is
+-- is library
 local is = include( "std/is.lua" )
 std.is = is
 
@@ -586,6 +586,10 @@ std.table = table
 local string = include( "std/string.lua" )
 local string_len = string.len
 std.string = string
+
+-- console library
+local console = include( "std/console.lua" )
+std.console = console
 
 -- crypto library
 local crypto = include( "std/crypto.lua" )
@@ -755,9 +759,6 @@ do
     } )
 
 end
-
--- TODO: fucking lua server
-local console = include( "std/console.lua" )
 
 -- error
 do

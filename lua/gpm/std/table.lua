@@ -1,8 +1,34 @@
-local table, math, string, select, pairs, is_table, is_string, is_function, getmetatable, setmetatable, rawget, next = ...
-local string_sub, string_find, string_len, string_lower = string.sub, string.find, string.len, string.lower
-local math_random, math_fdiv = math.random, math.fdiv
-local table_remove = table.remove
+local _G = _G
+local glua_table, select, pairs, getmetatable, setmetatable, rawget, next, istable, isstring = _G.table, _G.select, _G.pairs, _G.getmetatable, _G.setmetatable, _G.rawget, _G.next, _G.istable, _G.isstring
 
+local string_sub, string_find, string_len, string_lower
+do
+    local string = _G.string
+    string_sub, string_find, string_len, string_lower = string.sub, string.find, string.len, string.lower
+end
+
+local std = _G.gpm.std
+
+local math_random, math_fdiv
+do
+    local math = std.math
+    math_random, math_fdiv = math.random, math.fdiv
+end
+
+local is_string, is_function
+do
+    local is = std.is
+    is_string, is_function = is.string, is["function"]
+end
+
+local table_remove = glua_table.remove
+
+--- Copies the given table.
+--- @param source table The table to copy.
+--- @param isSequential boolean If true, the table is sequential, i.e. the keys are integers.
+--- @param deepCopy boolean If true, the table is deep copied.
+--- @param copyKeys boolean If true, the keys are copied.
+--- @return table
 local function copy( source, isSequential, deepCopy, copyKeys, copies )
     if copies == nil then copies = {} end
 
@@ -23,7 +49,7 @@ local function copy( source, isSequential, deepCopy, copyKeys, copies )
         if deepCopy then
             for index = 1, #source, 1 do
                 local value = source[ index ]
-                if is_table( value ) then
+                if istable( value ) then
                     value = copy( value, true, true, copyKeys, copies )
                 end
 
@@ -36,11 +62,11 @@ local function copy( source, isSequential, deepCopy, copyKeys, copies )
         end
     elseif deepCopy then
         for key, value in pairs( source ) do
-            if is_table( value ) then
+            if istable( value ) then
                 value = copy( value, false, true, copyKeys, copies )
             end
 
-            if copyKeys and is_table( key ) then
+            if copyKeys and istable( key ) then
                 result[ copy( value, false, true, true, copies ) ] = value
             else
                 result[ key ] = value
@@ -55,6 +81,10 @@ local function copy( source, isSequential, deepCopy, copyKeys, copies )
     return result
 end
 
+--- Checks if two tables are equal.
+--- @param a table The first table to check.
+--- @param b table The second table to check.
+--- @return boolean
 local function equal( a, b )
     if a == b then
         return true
@@ -66,7 +96,7 @@ local function equal( a, b )
             return false
         end
 
-        if not ( getmetatable( value ) or getmetatable( alt ) ) and is_table( value ) and is_table( alt ) then
+        if not ( getmetatable( value ) or getmetatable( alt ) ) and istable( value ) and istable( alt ) then
             return equal( value, alt )
         end
 
@@ -81,7 +111,7 @@ local function equal( a, b )
             return false
         end
 
-        if not ( getmetatable( value ) or getmetatable( alt ) ) and is_table( value ) and is_table( alt ) then
+        if not ( getmetatable( value ) or getmetatable( alt ) ) and istable( value ) and istable( alt ) then
             return equal( value, alt )
         end
 
@@ -93,6 +123,10 @@ local function equal( a, b )
     return true
 end
 
+--- Returns the difference between two tables as a list of keys.
+--- @param a table The first table.
+--- @param b table The second table.
+--- @return table, number
 local function diffKeys( a, b, result, length )
     if result == nil then result = {} end
     if length == nil then length = 0 end
@@ -105,7 +139,7 @@ local function diffKeys( a, b, result, length )
             result[ length ] = key
         end
 
-        if not ( getmetatable( value ) or getmetatable( alt ) ) and is_table( value ) and is_table( alt ) then
+        if not ( getmetatable( value ) or getmetatable( alt ) ) and istable( value ) and istable( alt ) then
             result, length = diffKeys( value, alt, result, length )
         end
 
@@ -122,7 +156,7 @@ local function diffKeys( a, b, result, length )
             result[ length ] = key
         end
 
-        if not ( getmetatable( value ) or getmetatable( alt ) ) and is_table( value ) and is_table( alt ) then
+        if not ( getmetatable( value ) or getmetatable( alt ) ) and istable( value ) and istable( alt ) then
             result, length = diffKeys( value, alt, result, length )
         end
 
@@ -135,6 +169,10 @@ local function diffKeys( a, b, result, length )
     return result, length
 end
 
+--- Returns the difference between two tables as a table with differences.
+--- @param a table The first table.
+--- @param b table The second table.
+--- @return table
 local function diff( a, b )
   local result = {}
 
@@ -144,7 +182,7 @@ local function diff( a, b )
             result[ key ] = { value, alt }
         end
 
-        if not ( getmetatable( value ) or getmetatable( alt ) ) and is_table( value ) and is_table( alt ) then
+        if not ( getmetatable( value ) or getmetatable( alt ) ) and istable( value ) and istable( alt ) then
             result[ key ] = diff( value, alt )
         end
 
@@ -160,7 +198,7 @@ local function diff( a, b )
                 result[ key ] = { value, alt }
             end
 
-            if not ( getmetatable( value ) or getmetatable( alt ) ) and is_table( value ) and is_table( alt ) then
+            if not ( getmetatable( value ) or getmetatable( alt ) ) and istable( value ) and istable( alt ) then
                 result[ key ] = diff( value, alt )
             end
 
@@ -173,17 +211,22 @@ local function diff( a, b )
     return result
 end
 
+--- Converts a table to lowercase.
+--- @param tbl table The table to convert.
+--- @param lowerKeys? boolean Whether to convert keys to lowercase.
+--- @param lowerValues? boolean Whether to convert values to lowercase.
+--- @return table tbl
 local function lower( tbl, lowerKeys, lowerValues )
     for key, value in pairs( tbl ) do
-        if is_table( key ) then
-            lower( key )
+        if istable( key ) then
+            lower( key, lowerKeys, lowerValues )
         elseif lowerKeys and is_string( key ) then
             tbl[ key ] = nil
             key = string_lower( key )
         end
 
-        if is_table( value ) then
-            lower( value )
+        if istable( value ) then
+            lower( value, lowerKeys, lowerValues )
         elseif lowerValues and is_string( value ) then
             value = string_lower( value )
         end
@@ -194,20 +237,20 @@ local function lower( tbl, lowerKeys, lowerValues )
     return tbl
 end
 
-return {
+local table = {
     -- Lua 5.1
-    ["concat"] = table.concat,
-    ["insert"] = table.insert,
-    ["maxn"] = table.maxn, -- removed in Lua 5.2
+    ["concat"] = glua_table.concat,
+    ["insert"] = glua_table.insert,
+    ["maxn"] = glua_table.maxn, -- removed in Lua 5.2
     ["remove"] = table_remove,
-    ["sort"] = table.sort,
+    ["sort"] = glua_table.sort,
 
     -- Lua 5.2
-    ["pack"] = table.pack or function( ... ) return { ["n"] = select( "#", ... ), ... } end,
-    ["unpack"] = table.unpack or _G.unpack,
+    ["pack"] = glua_table.pack or function( ... ) return { ["n"] = select( "#", ... ), ... } end,
+    ["unpack"] = glua_table.unpack or _G.unpack,
 
     -- Lua 5.3
-    ["move"] = table.move or function( source, first, last, offset, destination )
+    ["move"] = glua_table.move or function( source, first, last, offset, destination )
         if destination == nil then destination = source end
 
         for index = 0, last - first, 1 do
@@ -217,251 +260,371 @@ return {
         return destination
     end,
 
-    -- Extensions
-    ["add"] = function( destination, source )
-        local length = #destination
-
-        for index = 1, #source, 1 do
-            destination[ length + index ] = source[ index ]
-        end
-
-        return destination
-    end,
+    -- Customs
+    ["diff"] = diff,
     ["copy"] = copy,
-    ["slice"] = function( tbl, startPos, endPos, step )
-        if startPos == nil then startPos = 1 end
+    ["equal"] = equal,
+    ["lower"] = lower,
+    ["diffKeys"] = diffKeys,
+}
 
-        local length = #tbl
-        if endPos == nil then endPos = length end
-        if startPos > endPos then return {} end
+--- Appends values from one table to another.
+--- @param destination table The destination table.
+--- @param source table The source table.
+--- @return table destination
+function table.append( destination, source )
+    local length = #destination
 
-        if startPos < 0 then
-            startPos = length + startPos + 1
+    for index = 1, #source, 1 do
+        destination[ length + index ] = source[ index ]
+    end
+
+    return destination
+end
+
+--- Returns a slice of the given table.
+--- @param tbl table The table to slice.
+--- @param startPos? number The start position.
+--- @param endPos? number The end position.
+--- @param step? number The step.
+--- @return table, number
+function table.slice( tbl, startPos, endPos, step )
+    if startPos == nil then startPos = 1 end
+
+    local length = #tbl
+    if endPos == nil then endPos = length end
+    if startPos > endPos then
+        return {}, 0
+    end
+
+    if startPos < 0 then
+        startPos = length + startPos + 1
+    end
+
+    if endPos < 0 then
+        endPos = length + endPos + 1
+    end
+
+    local result = {}
+    length = 0
+
+    for index = startPos, endPos, step or 1 do
+        length = length + 1
+        result[ length ] = tbl[ index ]
+    end
+
+    return result, length
+end
+
+--- Injects values from one table to another.
+--- @param source table The source table.
+--- @param first number The first index.
+--- @param last number The last index.
+--- @param offset number The offset.
+--- @param destination? table The destination table.
+--- @return table destination
+function table.inject( source, first, last, offset, destination )
+    if destination == nil then destination = source end
+
+    if offset < 0 then
+        offset = offset + ( #destination + 2 )
+    end
+
+    local steps = last - first
+    for i = #destination, offset, -1 do
+        destination[ steps + i + 1 ] = destination[ i ]
+    end
+
+    for i = 0, steps, 1 do
+        destination[ offset + i ] = source[ first + i ]
+    end
+
+    return destination
+end
+
+--- Remove indexs from the given table by value.
+--- @param tbl table The table.
+--- @param value any The value.
+function table.removeByValue( tbl, value )
+    for index = #tbl, 1, -1 do
+        if tbl[ index ] == value then
+            table_remove( tbl, index )
         end
+    end
 
-        if endPos < 0 then
-            endPos = length + endPos + 1
+    return nil
+end
+
+--- Returns true if the given list (table) contains the given value.
+--- @param tbl table The table.
+--- @param value any The value.
+--- @return boolean
+function table.contains( tbl, value )
+    for index = 1, #tbl, 1 do
+        if tbl[ index ] == value then
+            return true
         end
+    end
 
-        local result = {}
-        length = 0
+    return false
+end
 
-        for index = startPos, endPos, step or 1 do
-            length = length + 1
-            result[ length ] = tbl[ index ]
+--- Returns true if the given table contains the given value.
+--- @param tbl table The table.
+--- @param value any The value.
+--- @return boolean
+function table.hasValue( tbl, value )
+    for _, v in pairs( tbl ) do
+        if v == value then
+            return true
         end
+    end
 
-        return result, length
-    end,
-    ["inject"] = function( source, first, last, offset, destination )
-        if destination == nil then destination = source end
+    return false
+end
 
-        if offset < 0 then
-            offset = offset + ( #destination + 2 )
-        end
+--- Returns list (table) of keys and length of this list.
+--- @param tbl table The table.
+--- @return table, number
+function table.getKeys( tbl )
+    local keys, length = {}, 0
+    for key in pairs( tbl ) do
+        length = length + 1
+        keys[ length ] = key
+    end
 
-        local steps = last - first
-        for i = #destination, offset, -1 do
-            destination[ steps + i + 1 ] = destination[ i ]
-        end
+    return keys, length
+end
 
-        for i = 0, steps, 1 do
-            destination[ offset + i ] = source[ first + i ]
-        end
+--- Returns list (table) of values and length of this list.
+--- @param tbl table The table.
+--- @return table, number
+function table.getValues( tbl )
+    local values, length = {}, 0
+    for _, value in pairs( tbl ) do
+        length = length + 1
+        values[ length ] = value
+    end
 
-        return destination
-    end,
-    ["removeByValue"] = function( tbl, value )
-        for index = #tbl, 1, -1 do
-            if tbl[ index ] == value then
-                table_remove( tbl, index )
-            end
-        end
+    return values, length
+end
 
-        return nil
-    end,
-    ["hasValue"] = function( tbl, value )
-        for index = 1, #tbl, 1 do
-            if tbl[ index ] == value then
-                return true
-            end
-        end
+--- Returns the count of keys in the given table.
+--- @param tbl table The table.
+--- @return number
+function table.count( tbl )
+    local count = 0
+    for _ in pairs( tbl ) do
+        count = count + 1
+    end
 
-        return false
-    end,
-    ["getKeys"] = function( tbl )
+    return count
+end
+
+--- Flips the keys with values in the given list (table).
+--- @param tbl table The table.
+--- @param noCopy? boolean
+--- @return table
+function table.flip( tbl, noCopy )
+    if noCopy then
         local keys, length = {}, 0
         for key in pairs( tbl ) do
             length = length + 1
             keys[ length ] = key
         end
 
-        return keys, length
-    end,
-    ["getValues"] = function( tbl )
-        local values, length = {}, 0
-        for _, value in pairs( tbl ) do
-            length = length + 1
-            values[ length ] = value
-        end
-
-        return values, length
-    end,
-    ["count"] = function( tbl )
-        local count = 0
-        for _ in pairs( tbl ) do
-            count = count + 1
-        end
-
-        return count
-    end,
-    ["flip"] = function( tbl, noCopy )
-        if noCopy then
-            local keys, length = {}, 0
-            for key in pairs( tbl ) do
-                length = length + 1
-                keys[ length ] = key
-            end
-
-            for i = 1, length, 1 do
-                local key = keys[ i ]
-                tbl[ tbl[ key ] ] = key
-                tbl[ key ] = nil
-            end
-
-            return tbl
-        else
-            local result = {}
-            for key, value in pairs( tbl ) do
-                result[ value ] = key
-            end
-
-            return result
-        end
-    end,
-    ["toSequential"] = function( tbl )
-        local result, length = {}, 0
-        for key, value in pairs( tbl ) do
-            length = length + 1
-            result[ length ] = { key, value }
-        end
-
-        return result, length
-    end,
-    ["getValue"] = function( tbl, str )
-        local pointer = 1
-
-        for _ = 1, string_len( str ), 1 do
-            local startPos = string_find( str, ".", pointer, true )
-            if startPos == nil then
-                break
-            else
-                tbl = tbl[ string_sub( str, pointer, startPos - 1 ) ]
-                if tbl == nil then
-                    return nil
-                else
-                    pointer = startPos + 1
-                end
-            end
-        end
-
-        return tbl[ string_sub( str, pointer ) ]
-    end,
-    ["setValue"] = function( tbl, str, value )
-        local pointer = 1
-
-        for _ = 1, string_len( str ), 1 do
-            local startPos = string_find( str, ".", pointer, true )
-            if startPos == nil then
-                break
-            else
-                local key = string_sub( str, pointer, startPos - 1 )
-                pointer = startPos + 1
-
-                if is_table( tbl[ key ] ) then
-                    tbl = tbl[ key ]
-                else
-                    tbl[ key ] = {}
-                end
-            end
-        end
-
-        tbl[ string_sub( str, pointer ) ] = value
-    end,
-    ["isSequential"] = function( tbl )
-        local index = 1
-        for _ in pairs( tbl ) do
-            if tbl[ index ] == nil then
-                return false
-            else
-                index = index + 1
-            end
-        end
-
-        return true
-    end,
-    ["equal"] = equal,
-    ["diffKeys"] = diffKeys,
-    ["diff"] = diff,
-    ["isEmpty"] = function( tbl )
-        return next( tbl ) == nil
-    end,
-    ["empty"] = function( tbl )
-        for key in pairs( tbl ) do
+        for i = 1, length, 1 do
+            local key = keys[ i ]
+            tbl[ tbl[ key ] ] = key
             tbl[ key ] = nil
         end
 
         return tbl
-    end,
-    ["shuffle"] = function( tbl )
-        local j, length = 0, #tbl
-        for i = length, 1, -1 do
-            j = math_random( 1, length )
-            tbl[ i ], tbl[ j ] = tbl[ j ], tbl[ i ]
+    else
+        local result = {}
+        for key, value in pairs( tbl ) do
+            result[ value ] = key
+        end
+
+        return result
+    end
+end
+
+--- Returns list (table) of pairs and length of this list.
+--- @param tbl table The key/value table.
+--- @return table, number
+function table.toPairs( tbl )
+    local result, length = {}, 0
+    for key, value in pairs( tbl ) do
+        length = length + 1
+        result[ length ] = { key, value }
+    end
+
+    return result, length
+end
+
+--- Returns the value of the given key path.
+--- @param tbl table The table.
+--- @param str string The key path.
+--- @return any
+function table.getValue( tbl, str )
+    local pointer = 1
+
+    for _ = 1, string_len( str ), 1 do
+        local startPos = string_find( str, ".", pointer, true )
+        if startPos == nil then
+            break
+        else
+            tbl = tbl[ string_sub( str, pointer, startPos - 1 ) ]
+            if tbl == nil then
+                return nil
+            else
+                pointer = startPos + 1
+            end
+        end
+    end
+
+    return tbl[ string_sub( str, pointer ) ]
+end
+
+--- Sets the value of the given key path.
+--- @param tbl table The table.
+--- @param str string The key path.
+--- @param value any The value.
+function table.setValue( tbl, str, value )
+    local pointer = 1
+
+    for _ = 1, string_len( str ), 1 do
+        local startPos = string_find( str, ".", pointer, true )
+        if startPos == nil then
+            break
+        else
+            local key = string_sub( str, pointer, startPos - 1 )
+            pointer = startPos + 1
+
+            if istable( tbl[ key ] ) then
+                tbl = tbl[ key ]
+            else
+                tbl[ key ] = {}
+            end
+        end
+    end
+
+    tbl[ string_sub( str, pointer ) ] = value
+end
+
+--- Returns true if the given table is sequential.
+--- @param tbl table The table.
+--- @return boolean
+function table.isSequential( tbl )
+    local index = 1
+    for _ in pairs( tbl ) do
+        if tbl[ index ] == nil then
+            return false
+        else
+            index = index + 1
+        end
+    end
+
+    return true
+end
+
+--- Returns true if the given table is empty.
+--- @param tbl table The table.
+--- @return boolean
+function table.isEmpty( tbl )
+    return next( tbl ) == nil
+end
+
+--- Fills the given table with the given value.
+--- @param tbl table The table.
+--- @param endPos? number The end position.
+--- @param startPos? number The start position.
+--- @param value any The value.
+--- @return table
+function table.fill( tbl, endPos, startPos, value )
+    if endPos then
+        if endPos < 0 then
+            endPos = #tbl + endPos + 1
+        end
+
+        for index = startPos or 1, endPos, 1 do
+            tbl[ index ] = value
+        end
+    else
+        for key in pairs( tbl ) do
+            tbl[ key ] = value
+        end
+    end
+
+    return tbl
+end
+
+--- Shuffles the given list (table).
+--- @param tbl table The table.
+--- @return table
+function table.shuffle( tbl )
+    local j, length = 0, #tbl
+    for i = length, 1, -1 do
+        j = math_random( 1, length )
+        tbl[ i ], tbl[ j ] = tbl[ j ], tbl[ i ]
+    end
+
+    return tbl
+end
+
+--- Returns a random value from the given list (table).
+--- @param tbl table The table.
+--- @return any
+function table.random( tbl )
+    local length = #tbl
+    if length == 0 then
+        return nil, -1
+    elseif length == 1 then
+        return tbl[ 1 ], 1
+    else
+        local index = math_random( 1, length )
+        return tbl[ index ], index
+    end
+end
+
+--- Reverses the given list (table).
+--- @param tbl table The table.
+--- @param noCopy? boolean If true, the table will not be copied.
+--- @return table
+function table.reverse( tbl, noCopy )
+    local length = #tbl
+    if noCopy then
+        length = length + 1
+
+        for index = 1, math_fdiv( length, 2 ), 1 do
+            tbl[ index ], tbl[ length - index ] = tbl[ length - index ], tbl[ index ]
         end
 
         return tbl
-    end,
-    ["random"] = function( tbl )
-        local length = #tbl
-        if length == 0 then
-            return nil, -1
-        elseif length == 1 then
-            return tbl[ 1 ], 1
-        else
-            local index = math_random( 1, length )
-            return tbl[ index ], index
-        end
-    end,
-    ["reverse"] = function( tbl, noCopy )
-        local length = #tbl
-        if noCopy then
-            length = length + 1
-
-            for index = 1, math_fdiv( length, 2 ), 1 do
-                tbl[ index ], tbl[ length - index ] = tbl[ length - index ], tbl[ index ]
-            end
-
-            return tbl
-        else
-            local result = {}
-            for index = length, 1, -1 do
-                result[ length - index + 1 ] = tbl[ index ]
-            end
-
-            return result
-        end
-    end,
-    ["lower"] = lower,
-    ["len"] = function( tbl )
-        local metatable = getmetatable( tbl )
-        if metatable ~= nil then
-            local fn = metatable.__len
-            if is_function( fn ) then
-                return fn( tbl )
-            end
+    else
+        local result = {}
+        for index = length, 1, -1 do
+            result[ length - index + 1 ] = tbl[ index ]
         end
 
-        return #tbl
+        return result
     end
-}
+end
+
+--- Returns the length of the given table.
+--- @param tbl table The table.
+--- @return number
+function table.len( tbl )
+    local metatable = getmetatable( tbl )
+    if metatable ~= nil then
+        local fn = metatable.__len
+        if is_function( fn ) then
+            return fn( tbl )
+        end
+    end
+
+    return #tbl
+end
+
+return table
