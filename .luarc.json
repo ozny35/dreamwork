@@ -18,9 +18,8 @@
         "/**/",
         "continue"
     ],
-    "diagnostics.disable": [
-        "duplicate-set-field"
-    ],
+    "diagnostics.globals": ["gpm"],
+    "diagnostics.disable": ["duplicate-set-field"],
     "diagnostics.groupFileStatus": {
         "await": "Any"
     },
