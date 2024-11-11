@@ -1635,10 +1635,15 @@ local constants = {
     ["CLIENT_SERVER"] = CLIENT_SERVER,
 
     -- https://github.com/Srlion/Hook-Library?tab=readme-ov-file#priorities
+    ---@diagnostic disable-next-line: undefined-field
     ["PRE_HOOK"] = _G.PRE_HOOK,
+    ---@diagnostic disable-next-line: undefined-field
     ["PRE_HOOK_RETURN"] = _G.PRE_HOOK_RETURN,
+    ---@diagnostic disable-next-line: undefined-field
     ["NORMAL_HOOK"] = _G.NORMAL_HOOK,
+    ---@diagnostic disable-next-line: undefined-field
     ["POST_HOOK_RETURN"] = _G.POST_HOOK_RETURN,
+    ---@diagnostic disable-next-line: undefined-field
     ["POST_HOOK"] = _G.POST_HOOK,
 
     -- https://wiki.facepunch.com/gmod/Enums/ACT
