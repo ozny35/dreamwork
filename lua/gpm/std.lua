@@ -571,6 +571,7 @@ is_string, is_number, is_function = is.string, is.number, is["function"]
 
 -- futures library
 local futures = include( "std/futures.lua" )
+std.futures = futures
 
 ---@class gpm.std.os
 ---@field screenWidth number The width of the game's window (in pixels).
@@ -1008,6 +1009,8 @@ do
         }
     )
 
+    ---@class gpm.std.error
+    ---@overload fun(message: string, level: nil | `-1` | `-2`)
     std.error = setmetatable(
         {
             ["NotImplementedError"] = class( "NotImplementedError", nil, nil, errorClass ),

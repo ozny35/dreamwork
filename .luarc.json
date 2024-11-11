@@ -21,6 +21,12 @@
     "diagnostics.disable": [
         "duplicate-set-field"
     ],
+    "diagnostics.groupFileStatus": {
+        "await": "Any"
+    },
+    "diagnostics.groupSeverity": {
+        "await": "Error"
+    },
     "workspace.checkThirdParty": false,
     "completion": {
         "requireSeparator": "/"
