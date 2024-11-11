@@ -1,15 +1,33 @@
-local os, system, jit, bit, math_fdiv = ...
-local os_time, os_date = os.time, os.date
-local bit_band, bit_bor, bit_lshift, bit_rshift = bit.band, bit.bit_bor, bit.bit_lshift, bit.rshift
+local _G = _G
+local glua_os, system, jit, bit = _G.os, _G.system, _G.jit, _G.bit
+local glua_os_time, glua_os_date = glua_os.time, glua_os.date
 
-return {
+---@class gpm.std.os
+local os = {
     ["arch"] = jit.arch,
     ["name"] = jit.os,
-    ["clock"] = os.clock,
-    ["date"] = os.date,
-    ["difftime"] = os.difftime,
-    ["time"] = os_time,
-    ["dos2unix"] = function( time, date )
+    ["date"] = glua_os_date,
+    ["time"] = glua_os_time,
+    ["clock"] = glua_os.clock,
+    ["difftime"] = glua_os.difftime,
+    ["flashWindow"] = system.FlashWindow,
+    ["battery"] = system.BatteryPower,
+    ["steamTime"] = system.SteamTime,
+    ["country"] = system.GetCountry,
+    ["hasFocus"] = system.HasFocus,
+    ["appTime"] = system.AppTime,
+    ["uptime"] = system.UpTime
+}
+
+do
+
+    local bit_band, bit_rshift = bit.band, bit.rshift
+
+    --- Converts a DOS date and time to a Unix timestamp.
+    ---@param time number The time to convert.
+    ---@param date number The date to convert.
+    ---@return number seconds The Unix timestamp.
+    function os.dos2unix( time, date )
         local data = { ["year"] = 1980, ["month"] = 1, ["day"] = 1, ["hour"] = 0, ["min"] = 0, ["sec"] = 0 }
 
         if time then
@@ -24,17 +42,25 @@ return {
             data.day = bit_band( date, 0x001F )
         end
 
-        return os_time( data )
-    end,
-    ["unix2dos"] = function( seconds )
-        local data = os_date( "*t", seconds )
+        return glua_os_time( data )
+    end
+
+end
+
+do
+
+    local bit_bor, bit_lshift = bit.bor, bit.lshift
+    local math_fdiv = _G.gpm.std.math.fdiv
+
+    --- Converts a Unix timestamp to a DOS date and time.
+    ---@param seconds number The Unix timestamp to convert.
+    ---@return number time The DOS time.
+    ---@return number date The DOS date.
+    function os.unix2dos( seconds )
+        local data = glua_os_date( "*t", seconds )
         return bit_bor( bit_lshift( data.hour, 11 ), bit_lshift( data.min, 5 ), math_fdiv( data.sec, 2 ) ), bit_bor( bit_lshift( data.year - 1980, 9 ), bit_lshift( data.month, 5 ), data.day )
-    end,
-    ["flashWindow"] = system.FlashWindow,
-    ["battery"] = system.BatteryPower,
-    ["steamTime"] = system.SteamTime,
-    ["country"] = system.GetCountry,
-    ["hasFocus"] = system.HasFocus,
-    ["appTime"] = system.AppTime,
-    ["uptime"] = system.UpTime
-}
+    end
+
+end
+
+return os

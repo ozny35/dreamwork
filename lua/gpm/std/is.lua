@@ -1,6 +1,12 @@
-local getmetatable, is_table, debug, findMetatable, registerMetatable, coroutine_create, CLIENT, SERVER, CLIENT_SERVER, CLIENT_MENU = ...
-local debug_setmetatable = debug.setmetatable
-local library = {}
+local _G = _G
+
+---@class gpm.std
+local std = _G.gpm.std
+local debug_setmetatable = _G.debug.setmetatable
+local getmetatable, findMetatable, registerMetatable = std.getmetatable, std.findMetatable, std.registerMetatable
+
+---@class gpm.std.is
+local is = {}
 
 -- nil ( 0 )
 local object = nil
@@ -14,7 +20,7 @@ do
 
     registerMetatable( "nil", metatable )
 
-    library["nil"] = function( value )
+    is["nil"] = function( value )
         return getmetatable( value ) == metatable
     end
 
@@ -32,7 +38,7 @@ do
 
     registerMetatable( "boolean", metatable )
 
-    function library.bool( value )
+    function is.bool( value )
         return getmetatable( value ) == metatable
     end
 
@@ -52,7 +58,7 @@ do
 
     registerMetatable( "number", metatable )
 
-    function library.number( value )
+    function is.number( value )
         return getmetatable( value ) == metatable
     end
 
@@ -70,17 +76,17 @@ do
 
     registerMetatable( "string", metatable )
 
-    function library.string( value )
+    function is.string( value )
         return getmetatable( value ) == metatable
     end
 
 end
 
 -- table ( 5 )
-library.table = is_table
+is.table = _G.istable
 
 -- function ( 6 )
-object = debug.fempty
+object = std.debug.fempty
 do
 
     local metatable = getmetatable( object )
@@ -92,11 +98,11 @@ do
     registerMetatable( "function", metatable )
 
     -- yeah here we have a little problem with key
-    library["function"] = function( value )
+    is["function"] = function( value )
         return getmetatable( value ) == metatable
     end
 
-    function library.callable( value )
+    function is.callable( value )
         local mtbl = getmetatable( value )
         return mtbl ~= nil and ( mtbl == metatable or getmetatable( mtbl.__call ) == metatable )
     end
@@ -106,7 +112,7 @@ end
 -- userdata ( 7 )
 
 -- thread ( 8 )
-object = coroutine_create( object )
+object = _G.coroutine.create( object )
 do
 
     local metatable = getmetatable( object )
@@ -117,17 +123,17 @@ do
 
     registerMetatable( "thread", metatable )
 
-    function library.thread( value )
+    function is.thread( value )
         return getmetatable( value ) == metatable
     end
 
 end
 
-if CLIENT_SERVER then
+if std.CLIENT_SERVER then
     local ENTITY = findMetatable( "Entity" )
 
     -- Entity ( 9 )
-    function library.entity( value )
+    function is.entity( value )
         local metatable = getmetatable( value )
         return metatable and metatable.__metatable_id == 9
     end
@@ -148,7 +154,7 @@ if CLIENT_SERVER then
         local metatable = findMetatable( "Player" )
         metatable.IsPlayer = returnTrue
 
-        function library.player( value )
+        function is.player( value )
             return getmetatable( value ) == metatable
         end
 
@@ -160,7 +166,7 @@ if CLIENT_SERVER then
         local metatable = findMetatable( "Weapon" )
         metatable.IsWeapon = returnTrue
 
-        function library.weapon( value )
+        function is.weapon( value )
             return getmetatable( value ) == metatable
         end
 
@@ -172,7 +178,7 @@ if CLIENT_SERVER then
         local metatable = findMetatable( "NPC" )
         metatable.IsNPC = returnTrue
 
-        function library.npc( value )
+        function is.npc( value )
             return getmetatable( value ) == metatable
         end
 
@@ -184,7 +190,7 @@ if CLIENT_SERVER then
         local metatable = findMetatable( "NextBot" )
         metatable.IsNextbot = returnTrue
 
-        function library.nextbot( value )
+        function is.nextbot( value )
             return getmetatable( value ) == metatable
         end
 
@@ -196,19 +202,19 @@ if CLIENT_SERVER then
         local metatable = findMetatable( "Vehicle" )
         metatable.IsVehicle = returnTrue
 
-        function library.vehicle( value )
+        function is.vehicle( value )
             return getmetatable( value ) == metatable
         end
 
     end
 
     -- CSEnt ( 9 )
-    if CLIENT then
+    if std.CLIENT then
 
         local metatable = findMetatable( "CSEnt" )
         metatable.IsClientEntity = returnTrue
 
-        function library.clientEntity( value )
+        function is.clientEntity( value )
             return getmetatable( value ) == metatable
         end
 
@@ -219,7 +225,7 @@ if CLIENT_SERVER then
 
         local metatable = findMetatable( "PhysObj" )
 
-        function library.physics( value )
+        function is.physics( value )
             return getmetatable( value ) == metatable
         end
 
@@ -230,7 +236,7 @@ if CLIENT_SERVER then
 
         local metatable = findMetatable( "ISave" )
 
-        function library.save( value )
+        function is.save( value )
             return getmetatable( value ) == metatable
         end
 
@@ -241,7 +247,7 @@ if CLIENT_SERVER then
 
         local metatable = findMetatable( "IRestore" )
 
-        function library.restore( value )
+        function is.restore( value )
             return getmetatable( value ) == metatable
         end
 
@@ -252,7 +258,7 @@ if CLIENT_SERVER then
 
         local metatable = findMetatable( "CTakeDamageInfo" )
 
-        function library.damageInfo( value )
+        function is.damageInfo( value )
             return getmetatable( value ) == metatable
         end
 
@@ -263,7 +269,7 @@ if CLIENT_SERVER then
 
         local metatable = findMetatable( "CEffectData" )
 
-        function library.effectData( value )
+        function is.effectData( value )
             return getmetatable( value ) == metatable
         end
 
@@ -274,7 +280,7 @@ if CLIENT_SERVER then
 
         local metatable = findMetatable( "CMoveData" )
 
-        function library.movedata( value )
+        function is.movedata( value )
             return getmetatable( value ) == metatable
         end
 
@@ -285,7 +291,7 @@ if CLIENT_SERVER then
 
         local metatable = findMetatable( "CUserCmd" )
 
-        function library.usercmd( value )
+        function is.usercmd( value )
             return getmetatable( value ) == metatable
         end
 
@@ -296,7 +302,7 @@ if CLIENT_SERVER then
 
         local metatable = findMetatable( "bf_read" )
 
-        function library.userMessage( value )
+        function is.userMessage( value )
             return getmetatable( value ) == metatable
         end
 
@@ -307,7 +313,7 @@ if CLIENT_SERVER then
 
         local metatable = findMetatable( "PhysCollide" )
 
-        function library.physCollide( value )
+        function is.physCollide( value )
             return getmetatable( value ) == metatable
         end
 
@@ -318,7 +324,7 @@ if CLIENT_SERVER then
 
         local metatable = findMetatable( "SurfaceInfo" )
 
-        function library.surfaceInfo( value )
+        function is.surfaceInfo( value )
             return getmetatable( value ) == metatable
         end
 
@@ -331,7 +337,7 @@ do
 
     local metatable = findMetatable( "Vector" )
 
-    function library.vector( value )
+    function is.vector( value )
         return getmetatable( value ) == metatable
     end
 
@@ -342,20 +348,20 @@ do
 
     local metatable = findMetatable( "Angle" )
 
-    function library.angle( value )
+    function is.angle( value )
         return getmetatable( value ) == metatable
     end
 
 end
 
-if SERVER then
+if std.SERVER then
 
     -- CRecipientFilter ( 18 )
     do
 
         local metatable = findMetatable( "CRecipientFilter" )
 
-        function library.recipientFilter( value )
+        function is.recipientFilter( value )
             return getmetatable( value ) == metatable
         end
     end
@@ -365,7 +371,7 @@ if SERVER then
 
         local metatable = findMetatable( "CLuaLocomotion" )
 
-        function library.locomotion( value )
+        function is.locomotion( value )
             return getmetatable( value ) == metatable
         end
 
@@ -376,7 +382,7 @@ if SERVER then
 
         local metatable = findMetatable( "PathFollower" )
 
-        function library.pathFollower( value )
+        function is.pathFollower( value )
             return getmetatable( value ) == metatable
         end
 
@@ -387,7 +393,7 @@ if SERVER then
 
         local metatable = findMetatable( "CNavArea" )
 
-        function library.navArea( value )
+        function is.navArea( value )
             return getmetatable( value ) == metatable
         end
 
@@ -398,7 +404,7 @@ if SERVER then
 
         local metatable = findMetatable( "CNavLadder" )
 
-        function library.navLadder( value )
+        function is.navLadder( value )
             return getmetatable( value ) == metatable
         end
 
@@ -411,30 +417,20 @@ do
 
     local metatable = findMetatable( "IMaterial" )
 
-    function library.material( value )
+    function is.material( value )
         return getmetatable( value ) == metatable
     end
 
 end
 
--- Panel ( 22 )
-if CLIENT_MENU then
-    local metatable = findMetatable( "Panel" )
-
-    function library.panel( value )
-        return getmetatable( value ) == metatable
-    end
-
-end
-
-if CLIENT then
+if std.CLIENT then
 
     -- CLuaParticle ( 23 )
     do
 
         local metatable = findMetatable( "CLuaParticle" )
 
-        function library.particle( value )
+        function is.particle( value )
             return getmetatable( value ) == metatable
         end
 
@@ -445,7 +441,7 @@ if CLIENT then
 
         local metatable = findMetatable( "CLuaEmitter" )
 
-        function library.emitter( value )
+        function is.emitter( value )
             return getmetatable( value ) == metatable
         end
 
@@ -456,7 +452,7 @@ if CLIENT then
 
         local metatable = findMetatable( "pixelvis_handle_t" )
 
-        function library.pixVis( value )
+        function is.pixVis( value )
             return getmetatable( value ) == metatable
         end
 
@@ -466,7 +462,7 @@ if CLIENT then
     do
         local metatable = findMetatable( "dlight_t" )
 
-        function library.dynamiclight( value )
+        function is.dynamiclight( value )
             return getmetatable( value ) == metatable
         end
 
@@ -477,7 +473,7 @@ if CLIENT then
 
         local metatable = findMetatable( "CNewParticleEffect" )
 
-        function library.effect( value )
+        function is.effect( value )
             return getmetatable( value ) == metatable
         end
 
@@ -488,7 +484,7 @@ if CLIENT then
 
         local metatable = findMetatable( "ProjectedTexture" )
 
-        function library.projectedTexture( value )
+        function is.projectedTexture( value )
             return getmetatable( value ) == metatable
         end
 
@@ -501,7 +497,7 @@ do
 
     local metatable = findMetatable( "ITexture" )
 
-    function library.texture( value )
+    function is.texture( value )
         return getmetatable( value ) == metatable
     end
 
@@ -512,13 +508,24 @@ do
 
     local metatable = findMetatable( "ConVar" )
 
-    function library.convar( value )
+    function is.convar( value )
         return getmetatable( value ) == metatable
     end
 
 end
 
-if CLIENT_MENU then
+if std.CLIENT_MENU then
+
+    -- Panel ( 22 )
+    do
+
+        local metatable = findMetatable( "Panel" )
+
+        function is.panel( value )
+            return getmetatable( value ) == metatable
+        end
+
+    end
 
     -- IMesh ( 28 )
     do
@@ -526,11 +533,11 @@ if CLIENT_MENU then
         local metatable = findMetatable( "IMesh" )
 
         if metatable == nil then
-            function library.mesh( value )
+            function is.mesh( value )
                 return getmetatable( value ) == metatable
             end
         else
-            function library.mesh( value )
+            function is.mesh( value )
                 return false
             end
         end
@@ -542,7 +549,7 @@ if CLIENT_MENU then
 
         local metatable = findMetatable( "IVideoWriter" )
 
-        function library.videoWriter( value )
+        function is.videoWriter( value )
             return getmetatable( value ) == metatable
         end
 
@@ -553,7 +560,7 @@ if CLIENT_MENU then
 
         local metatable = findMetatable( "IGModAudioChannel" )
 
-        function library.audioChannel( value )
+        function is.audioChannel( value )
             return getmetatable( value ) == metatable
         end
 
@@ -566,7 +573,7 @@ do
 
     local metatable = findMetatable( "VMatrix" )
 
-    function library.matrix( value )
+    function is.matrix( value )
         return getmetatable( value ) == metatable
     end
 
@@ -577,7 +584,7 @@ do
 
     local metatable = findMetatable( "CSoundPatch" )
 
-    function library.sound( value )
+    function is.sound( value )
         return getmetatable( value ) == metatable
     end
 
@@ -588,7 +595,7 @@ do
 
     local metatable = findMetatable( "File" )
 
-    function library.file( value )
+    function is.file( value )
         return getmetatable( value ) == metatable
     end
 
@@ -599,7 +606,7 @@ end
 -- Error ( 45 )
 do
 
-    function library.error( value, name )
+    function is.error( value, name )
         if name == nil then name = "Error" end
 
         local metatable = getmetatable( value )
@@ -621,7 +628,7 @@ do
 
     local metatable = findMetatable( "Color" )
 
-    function library.color( value )
+    function is.color( value )
         return getmetatable( value ) == metatable
     end
 
@@ -629,5 +636,4 @@ do
 
 end
 
-
-return library
+return is

@@ -1,18 +1,19 @@
-local _G, dofile, pairs, detour = ...
-local assert, error, select, ipairs, next, tostring, tonumber, getmetatable, setmetatable, rawget, rawset, pcall, xpcall, getfenv = _G.assert, _G.error, _G.select, _G.ipairs, _G.next, _G.tostring, _G.tonumber, _G.getmetatable, _G.setmetatable, _G.rawget, _G.rawset, _G.pcall, _G.xpcall, _G.getfenv
-local gpm_PREFIX = gpm.PREFIX
+local _G = _G
+local assert, error, select, pairs, ipairs, tostring, tonumber, getmetatable, setmetatable, rawget, rawset = _G.assert, _G.error, _G.select, _G.pairs, _G.ipairs, _G.tostring, _G.tonumber, _G.getmetatable, _G.setmetatable, _G.rawget, _G.rawset
+local include = _G.include
 
 ---@class gpm
-local gpm = gpm
+local gpm = _G.gpm
+local gpm_PREFIX = gpm.PREFIX
 
 ---@class gpm.std
 local std = gpm.std
 if std == nil then
     ---@class gpm.std
-    std = dofile( "std/constants.lua", _G, setmetatable )
+    std = include( "std/constants.lua" )
     gpm.std = std
 else
-    for key, value in pairs( dofile( "std/constants.lua", _G, setmetatable ) ) do
+    for key, value in pairs( include( "std/constants.lua" ) ) do
         std[ key ] = value
     end
 end
@@ -21,7 +22,7 @@ local CLIENT, SERVER, MENU, CLIENT_MENU, CLIENT_SERVER = std.CLIENT, std.SERVER,
 
 -- ULib support ( There are no words to describe how much I hate Ulysses Team )
 if CLIENT_SERVER and _G.file.Exists( "ulib/shared/hook.lua", "LUA" ) then
-    _G.include( "ulib/shared/hook.lua" )
+    include( "ulib/shared/hook.lua" )
 end
 
 -- client-side files
@@ -45,7 +46,7 @@ std.collectgarbage = _G.collectgarbage
 std.getmetatable = getmetatable
 std.setmetatable = setmetatable
 
-std.getfenv = getfenv -- removed in Lua 5.2
+std.getfenv = _G.getfenv -- removed in Lua 5.2
 std.setfenv = _G.setfenv -- removed in Lua 5.2
 
 std.rawget = rawget
@@ -57,13 +58,13 @@ std.tostring = tostring
 std.select = select
 
 std.inext = ipairs( std )
-std.next = next
+std.next = _G.next
 
 std.ipairs = ipairs
 std.pairs = pairs
 
-std.pcall = pcall
-std.xpcall = xpcall
+std.pcall = _G.pcall
+std.xpcall = _G.xpcall
 
 -- dofile - missing in glua
 
@@ -73,8 +74,8 @@ std.xpcall = xpcall
 
 -- require - broken in glua
 
-local is_table, is_string, is_number, is_bool, is_function = _G.istable, _G.isstring, _G.isnumber, _G.isbool, _G.isfunction
-local glua_string, glua_table, glua_game, glua_engine = _G.string, _G.table, _G.game, _G.engine
+local is_table, is_string, is_number, is_function = _G.istable, _G.isstring, _G.isnumber, _G.isfunction
+local glua_string, glua_table, glua_game = _G.string, _G.table, _G.game
 local string_format = glua_string.format
 local table_concat = glua_table.concat
 local system = _G.system
@@ -111,14 +112,14 @@ std.tobool = function( value )
 end
 
 -- coroutine library
-local coroutine = dofile( "std/coroutine.lua", _G.coroutine, _G.CurTime )
+local coroutine = _G.coroutine
 std.coroutine = coroutine
 
 -- jit library
 std.jit = jit
 
--- debug library
-local debug = dofile( "std/debug.lua", glua_string, _G.debug )
+---@class gpm.std.debug
+local debug = include( "std/debug.lua" )
 std.debug = debug
 
 local argument, class, type, findMetatable, registerMetatable
@@ -550,50 +551,51 @@ do
     end
 
     -- glua metatables
-    std.FindMetatable = findMetatable
-    std.RegisterMetatable = registerMetatable
+    std.findMetatable = findMetatable
+    std.registerMetatable = registerMetatable
 
 end
 
 -- bit library
-local bit = dofile( "std/bit.lua", _G.bit )
-std.bit = bit
+std.bit = _G.bit
 
--- math library
-local math = dofile( "std/math.lua", _G.math )
+---@class gpm.std.math
+local math = include( "std/math.lua" )
 std.math = math
 
--- is library
-local is = dofile( "std/is.lua", getmetatable, is_table, debug, findMetatable, registerMetatable, coroutine.create, CLIENT, SERVER, CLIENT_SERVER, CLIENT_MENU )
+---@class gpm.std.is
+local is = include( "std/is.lua" )
 std.is = is
 
-is_string, is_number, is_bool, is_function = is.string, is.number, is.bool, is["function"]
+is_string, is_number, is_function = is.string, is.number, is["function"]
 
 -- futures library
-local futures = dofile( "std/futures.lua" )
+local futures = include( "std/futures.lua" )
 
--- os library
-local os = dofile( "std/os.lua", _G.os, system, jit, bit, math.fdiv )
+---@class gpm.std.os
+---@field screenWidth number The width of the game's window (in pixels).
+---@field screenHeight number The height of the game's window (in pixels).
+local os = include( "std/os.lua" )
 std.os = os
 
 -- table library
-local table = dofile( "std/table.lua", glua_table, math, glua_string, select, pairs, is_table, is_string, is_function, getmetatable, setmetatable, rawget, next )
+local table = include( "std/table.lua" )
 std.table = table
 
 -- string library
-local string = dofile( "std/string.lua", glua_string, table_concat, math, tostring, is_number, is_bool, tonumber )
+local string = include( "std/string.lua" )
 local string_len = string.len
 std.string = string
 
 -- crypto library
-local crypto = dofile( "std/crypto.lua", _G, dofile, assert, error, pairs, tostring, type, string, table )
+local crypto = include( "std/crypto.lua" )
 std.crypto = crypto
 
 -- utf8 library
-string.utf8 = dofile( "std/utf8.lua", bit, string, table, math, tonumber )
+string.utf8 = include( "std/utf8.lua" )
 
 -- Color class
-local Color = dofile( "std/color.lua", _G, class, bit, string, math, is_number, setmetatable, findMetatable( "Color" ) )
+local Color = include( "std/color.lua" )
 std.Color = Color
 
 -- Stack class
@@ -754,9 +756,8 @@ do
 
 end
 
--- console library
-local console = dofile( "std/console.lua", _G, tostring, findMetatable, string_format, getfenv, table.unpack, select )
-std.console = console
+-- TODO: fucking lua server
+local console = include( "std/console.lua" )
 
 -- error
 do
@@ -1045,27 +1046,27 @@ do
 end
 
 -- engine library
-local engine = dofile( "std/engine.lua", _G, debug, glua_engine, glua_game, system.IsWindowed, CLIENT_SERVER, CLIENT_MENU, SERVER )
+local engine = include( "std/engine.lua" )
 std.engine = engine
 
 -- level library
-std.level = dofile( "std/level.lua", glua_game, glua_engine, CLIENT_SERVER, SERVER )
+std.level = include( "std/level.lua" )
 
 local isDedicatedServer = false
 if CLIENT_SERVER then
 
     -- entity library
-    std.entity = dofile( "std/entity.lua", _G, math, findMetatable, CLIENT, SERVER, is.entity, detour, class )
+    std.entity = include( "std/entity.lua" )
 
     isDedicatedServer = engine.isDedicatedServer()
 
     -- player library
-    std.player = dofile( "std/player.lua", _G, error, findMetatable, CLIENT, SERVER, is_string, is_number, isDedicatedServer, glua_game.MaxPlayers, class )
+    std.player = include( "std/player.lua" )
 
 end
 
 -- hook library
-local hook = dofile( "std/hook.lua", _G, rawset, getfenv, setmetatable, table.isEmpty )
+local hook = include( "std/hook.lua" )
 std.hook = hook
 
 local isInDebug
