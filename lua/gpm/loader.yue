@@ -1,11 +1,12 @@
 _G = _G
-import CLIENT, SERVER, gpm, pcall, getfenv from _G
+import gpm, pcall, getfenv from _G
 import environment, SendFile from gpm
 
 import async, await, debug, string, path, file, util, pairs, isurl, isstring, argument, URL, ModuleError, error, PackageError, Task from environment
 import NormalizeGamePath, AbsoluteGamePath, Find, LuaPath from file
 import getDirectory, getExtension, replaceExtension from path
 import concat, IsEmpty, Merge from environment.table
+import CLIENT, SERVER, MENU_DLL from environment
 newClass = environment.class
 import getfpath from debug
 import Version from util
@@ -159,6 +160,14 @@ do
                         error ModuleError "module #{@url} was not loaded"
 
                     return @func( ... )
+
+                cache: =>
+                    modules[ @url.href ] = @
+                    return nil
+
+                uncache: =>
+                    modules[ @url.href ] = nil
+                    return nil
             },
             {
                 getAll: ->
@@ -201,13 +210,14 @@ do
     environmentMetatable = { __index: environment }
 
     -- TODO: maybe allow urls and strings instead of just local file asyncompile?
-    parse = async ( filePath, gamePath, config ) ->
-        compileResult = await AsyncCompile( filePath, {}, config, gamePath, true )
+    parse = async ( filePath, gamePath, config, ignoreCache ) ->
+        compileResult = await AsyncCompile( filePath, {}, config, gamePath, true, not ignoreCache )
         -- await Module.cache( "file://" .. compileResult.path, compileResult.content )
         :func = compileResult
 
         info = {}
         setfenv( func, info )
+
         success, result = pcall( func )
         if success
             if istable( result )
@@ -227,7 +237,7 @@ do
 
     emptyTable = {}
 
-    packageRead = async ( url ) ->
+    packageRead = async ( url, ignoreCache ) ->
         if isstring( url )
             url = URL( url )
 
@@ -243,7 +253,7 @@ do
             return nil
 
         cached = packages[ url.href ]
-        if cached
+        if cached and not ignoreCache
             if not cached\done() or not cached\error()
                 return await cached
 
@@ -276,7 +286,7 @@ do
             config[ key ] = value
 
         -- also cache result so next calls will return current package
-        task = Task( parse( filePath, gamePath, config ) )
+        task = Task( parse( filePath, gamePath, config, ignoreCache ) )
         packages[ url.href ] = task
         return await task
 
@@ -412,7 +422,7 @@ do
     import sub from string
 
     DEFAULT_CONDITIONS = {
-        [ SERVER and "server" or CLIENT and "client" or _G.MENU_DLL and "menu" or "default" ]: true,
+        [ SERVER and "server" or CLIENT and "client" or MENU_DLL and "menu" or "default" ]: true,
     }
 
     local packageResolve
@@ -1024,7 +1034,7 @@ do
 
     loader.InstallDependency = installDependency
 
-    resolveDependencies = loader.ResolveDependencies = async ( pkg ) ->
+    resolveDependencies = loader.ResolveDependencies = async ( pkg, isReload ) ->
         unless pkg.dependencies
             return nil
 
@@ -1042,15 +1052,15 @@ do
 
         -- alright, it seems that all dependencies were installed
         -- let's restart server if there is any humans on the servers
-        if getHumanCount() > lastHumanCount
-            RunConsoleCommand( "changelevel", game.GetMap() )
+        if not ( MENU_DLL or isReload ) and getHumanCount! > lastHumanCount
+            _G.RunConsoleCommand( "changelevel", _G.game.GetMap! )
 
         return nil
 
-    initializePackage = async ( pkg ) ->
+    initializePackage = async ( pkg, isReload ) ->
         if SERVER
             -- we are resolving dependencies only on server
-            await resolveDependencies( pkg )
+            await resolveDependencies( pkg, isReload )
 
             -- AddCSLuaFile in pkg.send
             for fileName in *pkg.send
@@ -1070,7 +1080,7 @@ do
     base = URL( "file:///lua/packages/" )
 
     packageReload = async ( name ) ->
-        await initializePackage( await packageRead( URL( name .. "/", base ) ) )
+        await initializePackage( await( packageRead( URL( name .. "/", base ), true ) ), true )
         return nil
 
     hook.Add(
@@ -1081,7 +1091,7 @@ do
             if action ~= 3 or not name
                 return nil
 
-            timer.Create "gpm.filewatch" .. name, 1, 1, ->
+            timer.Create "gpm.filewatch" .. name, 0.1, 1, ->
                 environment.futures.run( packageReload( name ) )
                 return nil
 
@@ -1090,6 +1100,9 @@ do
     )
 
     loader.InitializePackage = initializePackage
+
+    -- _, s = _G.file.Find( "packages/*", LuaPath )
+    -- PrintTable s
 
     loader.Startup = async ->
         if SERVER
