@@ -1,5 +1,8 @@
 -- Based on LibDeflate by safeteeWow: https://github.com/safeteeWow/LibDeflate
-local assert, error, pairs, tostring, type, string, table = ...
+local _G = _G
+local assert, error, pairs, tostring = _G.assert, _G.error, _G.pairs, _G.tostring
+local type = _G.gpm.std.type
+
 local deflate = {}
 
 do
@@ -26,16 +29,18 @@ do
 end
 
 -- localize Lua api for faster access.
-local string_format = string.format
-local string_byte = string.byte
-local string_char = string.char
-local string_find = string.find
-local string_gsub = string.gsub
-local string_sub = string.sub
+local string_format, string_byte, string_char, string_find, string_gsub, string_sub
+do
+    local string = _G.string
+    string_format, string_byte, string_char, string_find, string_gsub, string_sub = string.format, string.byte, string.char, string.find, string.gsub, string.sub
+end
 
-local table_concat = table.concat
-local table_sort = table.sort
 
+local table_concat, table_sort
+do
+    local table = _G.table
+    table_concat, table_sort = table.concat, table.sort
+end
 -- Converts i to 2^i, (0<=i<=32)
 -- This is used to implement bit left shift and bit right shift.
 -- "x >> y" in C:   "(x-x%_pow2[y])/_pow2[y]" in Lua
