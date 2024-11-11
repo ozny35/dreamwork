@@ -1,36 +1,34 @@
 local _G = _G
-local glua_string, glua_debug = _G.string, _G.debug
-local string_sub, string_gsub = glua_string.sub, glua_string.gsub
+local glua_debug = _G.debug
 local debug_getinfo = glua_debug.getinfo
 
-local gsub_formatter = function( _, str )
-    return str
-end
-
 ---@class gpm.std.debug
-local debug = {}
+local debug = {
+    -- LuaJIT
+    ["newproxy"] = _G.newproxy,
 
--- Lua 5.1
-debug.glua_debug = glua_debug.debug
-debug.getfenv = glua_debug.getfenv
-debug.gethook = glua_debug.gethook
-debug.getinfo = debug_getinfo
-debug.getlocal = glua_debug.getlocal
-debug.getmetatable = glua_debug.getmetatable
-debug.getregistry = glua_debug.getregistry
-debug.getupvalue = glua_debug.getupvalue
-debug.setfenv = glua_debug.setfenv
-debug.sethook = glua_debug.sethook
-debug.setlocal = glua_debug.setlocal
-debug.setmetatable = glua_debug.setmetatable
-debug.setupvalue = glua_debug.setupvalue
-debug.traceback = glua_debug.traceback
+    -- Lua 5.1
+    ["debug"] = glua_debug.debug,
+    ["getfenv"] = glua_debug.getfenv,
+    ["gethook"] = glua_debug.gethook,
+    ["getinfo"] = debug_getinfo,
+    ["getlocal"] = glua_debug.getlocal,
+    ["getmetatable"] = glua_debug.getmetatable,
+    ["getregistry"] = glua_debug.getregistry,
+    ["getupvalue"] = glua_debug.getupvalue,
+    ["setfenv"] = glua_debug.setfenv,
+    ["sethook"] = glua_debug.sethook,
+    ["setlocal"] = glua_debug.setlocal,
+    ["setmetatable"] = glua_debug.setmetatable,
+    ["setupvalue"] = glua_debug.setupvalue,
+    ["traceback"] = glua_debug.traceback,
 
--- Lua 5.2
-debug.getuservalue = glua_debug.getuservalue
-debug.setuservalue = glua_debug.setuservalue
-debug.upvalueid = glua_debug.upvalueid
-debug.upvaluejoin = glua_debug.upvaluejoin
+    -- Lua 5.2
+    ["getuservalue"] = glua_debug.getuservalue,
+    ["setuservalue"] = glua_debug.setuservalue,
+    ["upvalueid"] = glua_debug.upvalueid,
+    ["upvaluejoin"] = glua_debug.upvaluejoin,
+}
 
 ---Just empty function, do nothing.
 function debug.fempty() end
@@ -80,17 +78,29 @@ function debug.getfmain()
     return nil
 end
 
----Returns the path to the file in which it was called or an empty string if it could not be found.
----@param location number | function
----@return string path
-function debug.getfpath( location )
-    local info = debug_getinfo( location, "S" )
-    if info.what == "main" then
-        ---@diagnostic disable-next-line: redundant-return-value
-        return string_gsub( string_gsub( string_sub( info.source, 2 ), "^(.-)(lua/.*)$", gsub_formatter ), "^(.-)([%w_]+/gamemode/.*)$", gsub_formatter ), nil
+do
+
+    local string_sub, string_gsub
+    do
+        local glua_string = _G.string
+        string_sub, string_gsub = glua_string.sub, glua_string.gsub
     end
 
-    return ""
+    local gsub_formatter = function( _, str ) return str end
+
+    ---Returns the path to the file in which it was called or an empty string if it could not be found.
+    ---@param location number | function
+    ---@return string path
+    function debug.getfpath( location )
+        local info = debug_getinfo( location, "S" )
+        if info.what == "main" then
+            ---@diagnostic disable-next-line: redundant-return-value
+            return string_gsub( string_gsub( string_sub( info.source, 2 ), "^(.-)(lua/.*)$", gsub_formatter ), "^(.-)([%w_]+/gamemode/.*)$", gsub_formatter ), nil
+        end
+
+        return ""
+    end
+
 end
 
 return debug
