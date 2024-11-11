@@ -42,6 +42,8 @@ do
         return getmetatable( value ) == metatable
     end
 
+    is.boolean = is.bool
+
 end
 
 -- light userdata ( 2 )
