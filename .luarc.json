@@ -1,0 +1,28 @@
+{
+    "$schema": "https://raw.githubusercontent.com/LuaLS/vscode-lua/master/setting/schema.json",
+    "runtime.path": [ "?" ],
+    "runtime.special": { 
+        "include": "require",
+        "IncludeCS": "require"
+    },
+    "runtime.version": "LuaJIT",
+    "workspace.library": [
+        "${addons}/garrysmod/module/library"
+    ],
+    "runtime.nonstandardSymbol": [
+        "!",
+        "!=",
+        "&&",
+        "||",
+        "//",
+        "/**/",
+        "continue"
+    ],
+    "diagnostics.disable": [
+        "duplicate-set-field"
+    ],
+    "workspace.checkThirdParty": false,
+    "completion": {
+        "requireSeparator": "/"
+    }
+}
