@@ -97,10 +97,15 @@ do
 
     registerMetatable( "function", metatable )
 
-    -- yeah here we have a little problem with key
-    is["function"] = function( value )
+    --- Checks if the value is a function
+    ---@param value any
+    ---@return boolean isFunction returns true if the value is a function, otherwise false
+    function is.fn( value )
         return getmetatable( value ) == metatable
     end
+
+    is.func = is.fn
+    is["function"] = is.fn
 
     function is.callable( value )
         local mtbl = getmetatable( value )
