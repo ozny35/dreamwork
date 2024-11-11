@@ -1010,7 +1010,7 @@ do
     )
 
     ---@class gpm.std.error
-    ---@overload fun(message: string, level: nil | `-1` | `-2`)
+    ---@overload fun(message: any, errorLevel: number | `-1` | `-2` | nil)
     std.error = setmetatable(
         {
             ["NotImplementedError"] = class( "NotImplementedError", nil, nil, errorClass ),
