@@ -6,6 +6,7 @@ local _G = _G
 do
 
     local name = _G.GetConVar( _G.SERVER and "hostname" or "name" ):GetString()
+    if name == "unnamed" then name = "stranger" end
 
     local splashes = {
         "eW91dHViZS5jb20vd2F0Y2g/dj1kUXc0dzlXZ1hjUQ==",
