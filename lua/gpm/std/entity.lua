@@ -1,9 +1,9 @@
-local _G, math, findMetatable, CLIENT, SERVER, is_entity, detour, class = ...
-local ents, scripted_ents = _G.ents, _G.scripted_ents
+local _G = _G
+local std = _G.gpm.std
+local ents, scripted_ents, Entity, NULL, ents_GetMapCreatedEntity = _G.ents, _G.scripted_ents, _G.Entity, _G.NULL, ents.GetMapCreatedEntity
 
-local Entity, NULL, ents_GetMapCreatedEntity = _G.Entity, _G.NULL, ents.GetMapCreatedEntity
-
-local ENTITY = findMetatable( "Entity" )
+---@class Entity
+local ENTITY = std.findMetatable( "Entity" )
 local ENTITY_SetModel = ENTITY.SetModel
 
 local library = {
@@ -26,8 +26,13 @@ local library = {
 
 do
 
-    local VECTOR_DistToSqr = findMetatable( "Vector" ).DistToSqr
-    local math_sqrt, math_huge = math.sqrt, math.huge
+    local VECTOR_DistToSqr = std.findMetatable( "Vector" ).DistToSqr
+
+    local math_sqrt, math_huge
+    do
+        local math = std.math
+        math_sqrt, math_huge = math.sqrt, math.huge
+    end
 
     function library.find.closest( entities, origin )
         local closest, closest_distance = nil, 0
@@ -49,10 +54,10 @@ do
 
 end
 
-if CLIENT then
+if std.CLIENT then
     library.create = ents.CreateClientside
     library.createProp = ents.CreateClientProp
-elseif SERVER then
+elseif std.SERVER then
     local ents_Create = ents.Create
     library.create = ents_Create
 
@@ -67,12 +72,14 @@ elseif SERVER then
     -- find in pvs/pas
     do
 
+        local is_entity = std.is.entity
         local find = library.find
         find.inPVS = ents.FindInPVS
 
         local inPAS = ents.FindInPAS
         if inPAS == nil then
-            local FILTER = findMetatable( "CRecipientFilter" )
+            ---@class CRecipientFilter
+            local FILTER = std.findMetatable( "CRecipientFilter" )
             local FILTER_GetPlayers = FILTER.GetPlayers
             local FILTER_AddPAS = FILTER.AddPAS
 
@@ -98,7 +105,7 @@ local entity_create = library.create
 local classes = {}
 
 -- TODO: https://github.com/Facepunch/garrysmod/blob/master/garrysmod/lua/includes/modules/scripted_ents.lua#L256-L260
-scripted_ents.Get = detour.attach( scripted_ents.Get, function( fn, name )
+scripted_ents.Get = _G.gpm.detour.attach( scripted_ents.Get, function( fn, name )
     local value = classes[ name ]
     if value == nil then
         return fn( name )
@@ -145,4 +152,4 @@ ENTITY.new = function( self )
     return true, entity_create( name )
 end
 
-return class( "entity", ENTITY, library )
+return std.class( "entity", ENTITY, library )

@@ -1,10 +1,12 @@
-local _G, rawset, getfenv, setmetatable, table_isEmpty = ...
+local _G = _G
+local std = _G.gpm.std
+local rawset, getfenv, setmetatable, table_isEmpty = std.rawset, std.getfenv, std.setmetatable, std.table.isEmpty
 
 local hook = _G.hook
 local hooks_Add, hooks_Call, hooks_GetTable, hooks_Remove, hooks_Run = hook.Add, hook.Call, hook.GetTable, hook.Remove, hook.Run
 
 local hooksMeta = {
-    ["__index"] = function( tbl, key )
+    __index = function( tbl, key )
         local new = {}
         rawset( tbl, key, new )
         return new
@@ -14,18 +16,25 @@ local hooksMeta = {
 return {
     -- https://github.com/Srlion/Hook-Library?tab=readme-ov-file#priorities
     -- https://github.com/TeamUlysses/ulib/blob/master/lua/ulib/shared/hook.lua#L19
+    ---@diagnostic disable-next-line: undefined-field
     ["PRE"] = _G.PRE_HOOK or -2,
+    ---@diagnostic disable-next-line: undefined-field
     ["PRE_RETURN"] = _G.PRE_HOOK_RETURN or -1,
+    ---@diagnostic disable-next-line: undefined-field
     ["NORMAL"] = _G.NORMAL_HOOK or 0,
+    ---@diagnostic disable-next-line: undefined-field
     ["POST_RETURN"] = _G.POST_HOOK_RETURN or 1,
+    ---@diagnostic disable-next-line: undefined-field
     ["POST"] = _G.POST_HOOK or 2,
     ["add"] = function( eventName, identifier, func, priority )
         local fenv = getfenv( 2 )
         if fenv == nil then
+            ---@diagnostic disable-next-line: redundant-parameter
             return hooks_Add( eventName, identifier, func, priority )
         else
             local pkg = fenv.__package
             if pkg == nil then
+                ---@diagnostic disable-next-line: redundant-parameter
                 return hooks_Add( eventName, identifier, func, priority )
             else
                 local hooks = pkg.__hooks
@@ -35,6 +44,7 @@ return {
                 end
 
                 hooks[ eventName ][ identifier ] = func
+                ---@diagnostic disable-next-line: redundant-parameter
                 return hooks_Add( eventName, pkg.prefix .. identifier, func, priority )
             end
         end

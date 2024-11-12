@@ -1,17 +1,28 @@
-local _G, error, findMetatable, CLIENT, SERVER, is_string, is_number, isDedicatedServer, glua_game_MaxPlayers, class = ...
+local _G = _G
+local std, glua_game = _G.gpm.std, _G.game
+
+local is_string, is_number
+do
+    local is = std.is
+    is_string, is_number = is.string, is.number
+end
+
 local player, NULL, Player = _G.player, _G.NULL, _G.Player
 local player_Iterator = player.Iterator
 
-local PLAYER = findMetatable( "Player" )
+---@class Player
+local PLAYER = std.findMetatable( "Player" )
 
-if SERVER then
+if std.SERVER then
     local PLAYER_IsListenServerHost = PLAYER.IsListenServerHost
     local player_CreateNextBot = player.CreateNextBot
 
     PLAYER.new = function( value )
         if is_string( value ) then
+            ---@diagnostic disable-next-line: param-type-mismatch
             return player_CreateNextBot( value )
         elseif is_number( value ) then
+            ---@diagnostic disable-next-line: param-type-mismatch
             return Player( value )
         else
             for _, ply in player_Iterator() do
@@ -24,13 +35,14 @@ if SERVER then
         end
     end
 
-elseif CLIENT then
+elseif std.CLIENT then
     local LocalPlayer = _G.LocalPlayer
 
     PLAYER.new = function( value )
         if is_string( value ) then
-            return error( "Client cannot create players.", 2 )
+            return std.error( "Client cannot create players.", 2 )
         elseif is_number( value ) then
+            ---@diagnostic disable-next-line: param-type-mismatch
             return Player( value )
         else
             return LocalPlayer()
@@ -39,8 +51,8 @@ elseif CLIENT then
 end
 
 local library = {
-    ["getLimit"] = glua_game_MaxPlayers,
+    ["getLimit"] = glua_game.MaxPlayers,
     ["iterator"] = player_Iterator
 }
 
-return class( "player", PLAYER, library )
+return std.class( "player", PLAYER, library )
