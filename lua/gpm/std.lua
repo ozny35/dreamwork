@@ -839,6 +839,8 @@ do
                 return
             end
 
+            ---@class File
+            ---@diagnostic disable-next-line: assign-type-mismatch
             local handler = file_Open( fileName, "rb", "GAME" )
             if handler == nil then return end
 
