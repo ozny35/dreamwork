@@ -1,7 +1,9 @@
 local _G = _G
-local CLIENT = _G.CLIENT == true
-local SERVER = _G.SERVER == true
+
 local MENU = _G.MENU_DLL == true
+local CLIENT = _G.CLIENT == true and not MENU
+local SERVER = _G.SERVER == true and not MENU
+
 local CLIENT_MENU = CLIENT or MENU
 local CLIENT_SERVER = CLIENT or SERVER
 
