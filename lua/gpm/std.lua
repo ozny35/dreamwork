@@ -9,9 +9,7 @@ local gpm_PREFIX = gpm.PREFIX
 ---@class gpm.std
 local std = gpm.std
 if std == nil then
-    ---@class gpm.std
     std = include( "std/constants.lua" )
-    gpm.std = std
 else
     for key, value in pairs( include( "std/constants.lua" ) ) do
         std[ key ] = value
@@ -1040,7 +1038,7 @@ do
             ["Error"] = errorClass
         },
         {
-            ["__call"] = function( message, level )
+            ["__call"] = function( self, message, level )
                 if not coroutine_running() then
                     message = tostring( message )
                 end
