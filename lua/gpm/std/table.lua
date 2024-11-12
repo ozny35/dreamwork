@@ -1,5 +1,5 @@
 local _G = _G
-local glua_table, select, pairs, getmetatable, setmetatable, rawget, next, istable, isstring = _G.table, _G.select, _G.pairs, _G.getmetatable, _G.setmetatable, _G.rawget, _G.next, _G.istable, _G.isstring
+local glua_table = _G.table
 
 local string_sub, string_find, string_len, string_lower
 do
@@ -8,6 +8,7 @@ do
 end
 
 local std = _G.gpm.std
+local select, pairs, getmetatable, setmetatable, rawget, next = std.select, std.pairs, std.getmetatable, std.setmetatable, std.rawget, std.next
 
 local math_random, math_fdiv
 do
@@ -15,10 +16,10 @@ do
     math_random, math_fdiv = math.random, math.fdiv
 end
 
-local is_string, is_function
+local is_table, is_string, is_function
 do
     local is = std.is
-    is_string, is_function = is.string, is["function"]
+    is_table, is_string, is_function = is.table, is.string, is["function"]
 end
 
 local table_remove = glua_table.remove
@@ -49,7 +50,7 @@ local function copy( source, isSequential, deepCopy, copyKeys, copies )
         if deepCopy then
             for index = 1, #source, 1 do
                 local value = source[ index ]
-                if istable( value ) then
+                if is_table( value ) then
                     value = copy( value, true, true, copyKeys, copies )
                 end
 
@@ -62,11 +63,11 @@ local function copy( source, isSequential, deepCopy, copyKeys, copies )
         end
     elseif deepCopy then
         for key, value in pairs( source ) do
-            if istable( value ) then
+            if is_table( value ) then
                 value = copy( value, false, true, copyKeys, copies )
             end
 
-            if copyKeys and istable( key ) then
+            if copyKeys and is_table( key ) then
                 result[ copy( value, false, true, true, copies ) ] = value
             else
                 result[ key ] = value
@@ -96,7 +97,7 @@ local function equal( a, b )
             return false
         end
 
-        if not ( getmetatable( value ) or getmetatable( alt ) ) and istable( value ) and istable( alt ) then
+        if not ( getmetatable( value ) or getmetatable( alt ) ) and is_table( value ) and is_table( alt ) then
             return equal( value, alt )
         end
 
@@ -111,7 +112,7 @@ local function equal( a, b )
             return false
         end
 
-        if not ( getmetatable( value ) or getmetatable( alt ) ) and istable( value ) and istable( alt ) then
+        if not ( getmetatable( value ) or getmetatable( alt ) ) and is_table( value ) and is_table( alt ) then
             return equal( value, alt )
         end
 
@@ -139,7 +140,7 @@ local function diffKeys( a, b, result, length )
             result[ length ] = key
         end
 
-        if not ( getmetatable( value ) or getmetatable( alt ) ) and istable( value ) and istable( alt ) then
+        if not ( getmetatable( value ) or getmetatable( alt ) ) and is_table( value ) and is_table( alt ) then
             result, length = diffKeys( value, alt, result, length )
         end
 
@@ -156,7 +157,7 @@ local function diffKeys( a, b, result, length )
             result[ length ] = key
         end
 
-        if not ( getmetatable( value ) or getmetatable( alt ) ) and istable( value ) and istable( alt ) then
+        if not ( getmetatable( value ) or getmetatable( alt ) ) and is_table( value ) and is_table( alt ) then
             result, length = diffKeys( value, alt, result, length )
         end
 
@@ -182,7 +183,7 @@ local function diff( a, b )
             result[ key ] = { value, alt }
         end
 
-        if not ( getmetatable( value ) or getmetatable( alt ) ) and istable( value ) and istable( alt ) then
+        if not ( getmetatable( value ) or getmetatable( alt ) ) and is_table( value ) and is_table( alt ) then
             result[ key ] = diff( value, alt )
         end
 
@@ -198,7 +199,7 @@ local function diff( a, b )
                 result[ key ] = { value, alt }
             end
 
-            if not ( getmetatable( value ) or getmetatable( alt ) ) and istable( value ) and istable( alt ) then
+            if not ( getmetatable( value ) or getmetatable( alt ) ) and is_table( value ) and is_table( alt ) then
                 result[ key ] = diff( value, alt )
             end
 
@@ -218,14 +219,14 @@ end
 ---@return table tbl
 local function lower( tbl, lowerKeys, lowerValues )
     for key, value in pairs( tbl ) do
-        if istable( key ) then
+        if is_table( key ) then
             lower( key, lowerKeys, lowerValues )
         elseif lowerKeys and is_string( key ) then
             tbl[ key ] = nil
             key = string_lower( key )
         end
 
-        if istable( value ) then
+        if is_table( value ) then
             lower( value, lowerKeys, lowerValues )
         elseif lowerValues and is_string( value ) then
             value = string_lower( value )
@@ -502,7 +503,7 @@ function table.setValue( tbl, str, value )
             local key = string_sub( str, pointer, startPos - 1 )
             pointer = startPos + 1
 
-            if istable( tbl[ key ] ) then
+            if is_table( tbl[ key ] ) then
                 tbl = tbl[ key ]
             else
                 tbl[ key ] = {}
@@ -575,7 +576,7 @@ end
 
 ---Returns a random value from the given list (table).
 ---@param tbl table The table.
----@return any
+---@return any, number
 function table.random( tbl )
     local length = #tbl
     if length == 0 then

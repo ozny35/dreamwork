@@ -12,7 +12,7 @@ local console = {
 
 console.write = MsgC
 
-console.writeLine = function( ... )
+function console.writeLine( ... )
     local args, length = { ... }, select( '#', ... ) + 1
     args[ length ] = "\n"
 

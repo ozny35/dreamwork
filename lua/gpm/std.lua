@@ -268,7 +268,7 @@ do
                 end
 
                 -- backwards compatibility
-                setmetatable( old, { ["__index"] = new, ["__newindex"] = new } )
+                setmetatable( old, { __index = new, __newindex = new } )
 
                 -- gpm name
                 rawset( new, "__metatable_name", name )
@@ -490,7 +490,7 @@ do
         end
 
         metatable.__index = extends__index
-        setmetatable( base, { ["__index"] = base_parent } )
+        setmetatable( base, { __index = base_parent } )
 
         for key, value in pairs( base_parent ) do
             if string_sub( key, 1, 2 ) == "__" and rawget( base, key ) == nil and not ( key == "__index" and value == base_parent ) then
@@ -513,7 +513,7 @@ do
             rawset( base, "__index", rawget( base, "__index" ) or base )
             rawset( base, "__tostring", rawget( base, "__tostring" ) or tostring_object )
         else
-            base = { ["__tostring"] = tostring_object }
+            base = { __tostring = tostring_object }
             base.__index = base
         end
 
@@ -524,20 +524,20 @@ do
             rawset( static, "__base", base )
         else
             static = {
-                ["__init"] = rawget( base, "new" ),
-                ["__name"] = name,
-                ["__base"] = base
+                __init = rawget( base, "new" ),
+                __name = name,
+                __base = base
             }
         end
 
         rawset( base, "new", nil )
 
         setmetatable( static, {
-            ["__tostring"] = tostring_class,
-            ["__metatable_name"] = "class",
-            ["__call"] = class__call,
-            ["__metatable_id"] = 5,
-            ["__index"] = base
+            __tostring = tostring_class,
+            __metatable_name = "class",
+            __call = class__call,
+            __metatable_id = 5,
+            __index = base
         } )
 
         if parent == nil then
@@ -594,6 +594,113 @@ local string = include( "std/string.lua" )
 local string_len = string.len
 std.string = string
 
+-- Queue class
+do
+
+    --[[
+
+        Queue References:
+            https://github.com/darkwark/queue-lua
+            https://en.wikipedia.org/wiki/Queue_(abstract_data_type)
+
+    --]]
+
+    local function enqueue( self, value )
+        if not self:isFull() then
+            local rear = self.rear + 1
+            self[ rear ] = value
+            self.rear = rear
+        end
+
+        return nil
+    end
+
+    local function dequeue( self )
+        if not self:isEmpty() then
+            local front = self.front
+
+            local value = self[ front ]
+            self[ front ] = nil
+
+            front = front + 1
+            self.front = front
+
+            if ( front * 2 ) >= self.rear then
+                self:optimize()
+            end
+
+            return value
+        end
+
+        return nil
+    end
+
+    std.Queue = class( "Queue", {
+        __tostring = function( self )
+            return string_format( "Queue: %p [%d;%d/%d]", self, self.front, self.rear, self.size )
+        end,
+        new = function( self, size )
+            self.size = ( is_number( size ) and size > 0 ) and size or -1
+            self.front = 1
+            self.rear = 0
+        end,
+        length = function( self )
+            return ( self.rear - self.front ) + 1
+        end,
+        isEmpty = function( self )
+            local rear = self.rear
+            return rear == 0 or self.front > rear
+        end,
+        isFull = function( self )
+            return self:length() == self.size
+        end,
+        enqueue = enqueue,
+        dequeue = dequeue,
+        get = function( self, index )
+            return self[ self.front + index ]
+        end,
+        set = function( self, index, value )
+            self[ self.front + index ] = value
+        end,
+        optimize = function( self )
+            local pointer, buffer = 1, {}
+
+            for index = self.front, self.rear do
+                buffer[ pointer ] = self[ index ]
+                self[ index ] = nil
+                pointer = pointer + 1
+            end
+
+            for index = 1, pointer do
+                self[ index ] = buffer[ index ]
+            end
+
+            self.front = 1
+            self.rear = pointer - 1
+        end,
+        peek = function( self )
+            return self[ self.front ]
+        end,
+        empty = function( self )
+            for index = self.front, self.rear do
+                self[ index ] = nil
+            end
+        end,
+        iterator = function( self )
+            self:optimize()
+
+            local front, rear = self.front - 1, self.rear
+            return function()
+                if rear ~= 0 and front < rear then
+                    front = front + 1
+                    return front, self[ front ]
+                end
+            end
+        end
+    } )
+
+end
+
 -- console library
 local console = include( "std/console.lua" )
 std.console = console
@@ -611,23 +718,23 @@ std.Color = Color
 
 -- Stack class
 std.Stack = class( "Stack", {
-    ["__tostring"] = function( self )
+    __tostring = function( self )
         return string_format( "Stack: %p [%d/%d]", self, self.pointer, self.size )
     end,
-    ["new"] = function( self, size )
+    new = function( self, size )
         self.size = ( is_number( size ) and size > 0 ) and size or -1
         self.pointer = 0
     end,
-    ["IsEmpty"] = function( self )
+    IsEmpty = function( self )
         return self.pointer == 0
     end,
-    ["IsFull"] = function( self )
+    IsFull = function( self )
         return self.pointer == self.size
     end,
-    ["Peek"] = function( self )
+    Peek = function( self )
         return self[ self.pointer ]
     end,
-    ["Push"] = function( self, value )
+    Push = function( self, value )
         local pointer = self.pointer
         if pointer ~= self.size then
             pointer = pointer + 1
@@ -637,7 +744,7 @@ std.Stack = class( "Stack", {
 
         return pointer
     end,
-    ["Pop"] = function( self )
+    Pop = function( self )
         local pointer = self.pointer
         if pointer == 0 then
             return nil
@@ -649,7 +756,7 @@ std.Stack = class( "Stack", {
 
         return value
     end,
-    ["Empty"] = function( self )
+    Empty = function( self )
         for index = 1, self.pointer do
             self[ index ] = nil
         end
@@ -657,115 +764,6 @@ std.Stack = class( "Stack", {
         self.pointer = 0
     end
 } )
-
--- Queue class
-do
-
-    --[[
-
-        Queue References:
-            https://github.com/darkwark/queue-lua
-            https://en.wikipedia.org/wiki/Queue_(abstract_data_type)
-
-    --]]
-
-    local function enqueue( self, value )
-        if not self:IsFull() then
-            local rear = self.rear + 1
-            self[ rear ] = value
-            self.rear = rear
-        end
-
-        return nil
-    end
-
-    local function dequeue( self )
-        if not self:IsEmpty() then
-            local front = self.front
-
-            local value = self[ front ]
-            self[ front ] = nil
-
-            front = front + 1
-            self.front = front
-
-            if ( front * 2 ) >= self.rear then
-                self:Optimize()
-            end
-
-            return value
-        end
-
-        return nil
-    end
-
-    std.Queue = class( "Queue", {
-        ["__tostring"] = function( self )
-            return string_format( "Queue: %p [%d/%d]", self, self.pointer, self.size )
-        end,
-        ["new"] = function( self, size )
-            self.size = ( is_number( size ) and size > 0 ) and size or -1
-            self.front = 1
-            self.rear = 0
-        end,
-        ["Length"] = function( self )
-            return ( self.rear - self.front ) + 1
-        end,
-        ["IsEmpty"] = function( self )
-            local rear = self.rear
-            return rear == 0 or self.front > rear
-        end,
-        ["IsFull"] = function( self )
-            return self:Length() == self.size
-        end,
-        ["Push"] = enqueue,
-        ["Pop"] = dequeue,
-        ["Enqueue"] = enqueue,
-        ["Dequeue"] = dequeue,
-        ["Get"] = function( self, index )
-            return self[ self.front + index ]
-        end,
-        ["Set"] = function( self, index, value )
-            self[ self.front + index ] = value
-        end,
-        ["Optimize"] = function( self )
-            local pointer, buffer = 1, {}
-
-            for index = self.front, self.rear do
-                buffer[ pointer ] = self[ index ]
-                self[ index ] = nil
-                pointer = pointer + 1
-            end
-
-            for index = 1, pointer do
-                self[ index ] = buffer[ index ]
-            end
-
-            self.front = 1
-            self.rear = pointer - 1
-        end,
-        ["Peek"] = function( self )
-            return self[ self.front ]
-        end,
-        ["Empty"] = function( self )
-            for index = self.front, self.rear do
-                self[ index ] = nil
-            end
-        end,
-        ["Iterator"] = function( self )
-            self:Optimize()
-
-            local front, rear = self.front - 1, self.rear
-            return function()
-                if rear ~= 0 and front < rear then
-                    front = front + 1
-                    return front, self[ front ]
-                end
-            end
-        end
-    } )
-
-end
 
 -- error
 do
@@ -895,8 +893,8 @@ do
     local errorClass = class(
         "Error",
         {
-            ["name"] = "Error",
-            ["new"] = function( self, message, fileName, lineNumber, stackPos )
+            name = "Error",
+            new = function( self, message, fileName, lineNumber, stackPos )
                 if stackPos == nil then stackPos = 3 end
 
                 self.message = message
@@ -947,14 +945,14 @@ do
                     end
                 end
             end,
-            ["__tostring"] = function( self )
+            __tostring = function( self )
                 if self.fileName then
                     return string_format( "%s:%d: %s: %s", self.fileName, self.lineNumber or 0, self.name, self.message )
                 else
                     return self.name .. ": " .. self.message
                 end
             end,
-            ["display"] = function( self )
+            display = function( self )
                 if is_string( self ) then
                     ErrorNoHaltWithStack( self )
                     return
@@ -1021,25 +1019,25 @@ do
     ---@overload fun(message: any, errorLevel: number | `-1` | `-2` | nil)
     std.error = setmetatable(
         {
-            ["NotImplementedError"] = class( "NotImplementedError", nil, nil, errorClass ),
-            ["FutureCancelError"] = class( "FutureCancelError", nil, nil, errorClass ),
-            ["InvalidStateError"] = class( "InvalidStateError", nil, nil, errorClass ),
-            ["CodeCompileError"] = class( "CodeCompileError", nil, nil, errorClass ),
-            ["FileSystemError"] = class( "FileSystemError", nil, nil, errorClass ),
-            ["WebClientError"] = class( "WebClientError", nil, nil, errorClass ),
-            ["RuntimeError"] = class( "RuntimeError", nil, nil, errorClass ),
-            ["PackageError"] = class( "PackageError", nil, nil, errorClass ),
-            ["ModuleError"] = class( "ModuleError", nil, nil, errorClass ),
-            ["SourceError"] = class( "SourceError", nil, nil, errorClass ),
-            ["FutureError"] = class( "FutureError", nil, nil, errorClass ),
-            ["AddonError"] = class( "AddonError", nil, nil, errorClass ),
-            ["RangeError"] = class( "RangeError", nil, nil, errorClass ),
-            ["TypeError"] = class( "TypeError", nil, nil, errorClass ),
-            ["SQLError"] = class( "SQLError", nil, nil, errorClass ),
-            ["Error"] = errorClass
+            NotImplementedError = class( "NotImplementedError", nil, nil, errorClass ),
+            FutureCancelError = class( "FutureCancelError", nil, nil, errorClass ),
+            InvalidStateError = class( "InvalidStateError", nil, nil, errorClass ),
+            CodeCompileError = class( "CodeCompileError", nil, nil, errorClass ),
+            FileSystemError = class( "FileSystemError", nil, nil, errorClass ),
+            WebClientError = class( "WebClientError", nil, nil, errorClass ),
+            RuntimeError = class( "RuntimeError", nil, nil, errorClass ),
+            PackageError = class( "PackageError", nil, nil, errorClass ),
+            ModuleError = class( "ModuleError", nil, nil, errorClass ),
+            SourceError = class( "SourceError", nil, nil, errorClass ),
+            FutureError = class( "FutureError", nil, nil, errorClass ),
+            AddonError = class( "AddonError", nil, nil, errorClass ),
+            RangeError = class( "RangeError", nil, nil, errorClass ),
+            TypeError = class( "TypeError", nil, nil, errorClass ),
+            SQLError = class( "SQLError", nil, nil, errorClass ),
+            Error = errorClass
         },
         {
-            ["__call"] = function( self, message, level )
+            __call = function( self, message, level )
                 if not coroutine_running() then
                     message = tostring( message )
                 end
@@ -1100,10 +1098,10 @@ do
         isInDebug = function() return console_variable_getInt( developer ) end
     end
 
-    local key2call = { ["DEVELOPER"] = isInDebug }
+    local key2call = { DEVELOPER = isInDebug }
 
     setmetatable( std, {
-        ["__index"] = function( _, key )
+        __index = function( _, key )
             local func = key2call[ key ]
             if func == nil then
                 return nil
@@ -1177,10 +1175,10 @@ do
     end
 
     local Logger = class( "Logger", {
-        ["__tostring"] = function( self )
+        __tostring = function( self )
             return string_format( "Logger: %p [%s]", self, self.title )
         end,
-        ["new"] = function( self, title, title_color, interpolation, debug_func )
+        new = function( self, title, title_color, interpolation, debug_func )
             argument( title, 1, "string" )
             self.title = title
 
@@ -1206,17 +1204,17 @@ do
 
             self.text_color = primaryTextColor
         end,
-        ["Log"] = log,
-        ["Info"] = function( self, ... )
+        Log = log,
+        Info = function( self, ... )
             return log( self, infoColor, "INFO ", ... )
         end,
-        ["Warn"] = function( self, ... )
+        Warn = function( self, ... )
             return log( self, warnColor, "WARN ", ... )
         end,
-        ["Error"] = function( self, ... )
+        Error = function( self, ... )
             return log( self, errorColor, "ERROR", ... )
         end,
-        ["Debug"] = function( self, ... )
+        Debug = function( self, ... )
             if self:debug_fn() then
                 log( self, debugColor, "DEBUG", ... )
             end
