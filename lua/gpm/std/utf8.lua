@@ -1,4 +1,5 @@
 local std = _G.gpm.std
+local select = std.select
 
 local math_min, math_max
 do
@@ -26,7 +27,10 @@ end
 
 local charpattern = "[%z\x01-\x7F\xC2-\xF4][\x80-\xBF]*"
 
-local utf8byte2char = function( byte )
+---Converts a UTF-8 byte to a character
+---@param byte number
+---@return string
+local function byte2char( byte )
 	if byte < 0x80 then
 		return string_char( byte )
 	elseif byte < 0x800 then
@@ -38,45 +42,56 @@ local utf8byte2char = function( byte )
 	end
 end
 
-local utf8char = function(...)
+---Converts a sequence of UTF-8 bytes to a string
+---@vararg number: The UTF-8 bytes
+---@return string: The resulting string
+local function char_fn( ... )
 	local args = { ... }
-	local length = #args
+	local length = select( "#", ... )
 
 	for index = 1, length do
-		args[ length ] = utf8byte2char( args[ index ] )
+		---@diagnostic disable-next-line: assign-type-mismatch
+		args[ length ] = byte2char( args[ index ] )
 	end
 
 	return table_concat( args, "", 1, length )
 end
 
-local stringPosition = function( number, stringLength )
-	if number > 0 then
-		return math_min( number, stringLength )
+---@param index number
+---@param stringLength number
+---@return number
+local function stringPosition( index, stringLength )
+	if index > 0 then
+		return math_min( index, stringLength )
 	else
-		if number == 0 then
+		if index == 0 then
 			return 1
 		else
-			return math_max( stringLength + number + 1, 1 )
+			return math_max( stringLength + index + 1, 1 )
 		end
 	end
 end
 
-local decode = function( str, stringStart, stringLength )
+---@param str string
+---@param stringStart? number
+---@param stringLength number
+---@return number?, number?, number?
+local function decode( str, stringStart, stringLength )
 	stringStart = stringPosition( stringStart or 1, stringLength )
 
 	local byte1 = string_byte( str, stringStart )
-	if byte1 == nil then return nil end
+	if byte1 == nil then return end
 	if byte1 < 0x80 then return stringStart, stringStart, byte1 end
-	if byte1 > 0xF4 or byte1 < 0xC2 then return nil end
+	if byte1 > 0xF4 or byte1 < 0xC2 then return end
 
 	local contByteCount = byte1 >= 0xF0 and 3 or byte1 >= 0xE0 and 2 or byte1 >= 0xC0 and 1
 	local stringEnd = stringStart + contByteCount
-	if stringLength < stringEnd then return nil end
+	if stringLength < stringEnd then return end
 
 	local bytes, codePoint = { string_byte( str, stringStart + 1, stringEnd ) }, 0
 	for index = 1, #bytes do
 		local byte = bytes[ index ]
-		if bit_band( byte, 0xC0 ) ~= 0x80 then return nil end
+		if bit_band( byte, 0xC0 ) ~= 0x80 then return end
 		codePoint = bit_bor( bit_lshift( codePoint, 6 ), bit_band( byte, 0x3F ) )
 		byte1 = bit_lshift( byte1, 1 )
 	end
@@ -84,7 +99,11 @@ local decode = function( str, stringStart, stringLength )
 	return stringStart, stringEnd, bit_bor( codePoint, bit_lshift( bit_band( byte1, 0x7F ), contByteCount * 5 ) )
 end
 
-local utf8codepoint = function( str, stringStart, stringEnd )
+---@param str string
+---@param stringStart? number
+---@param stringEnd? number
+---@return string
+local function codepoint( str, stringStart, stringEnd )
 	local stringLength = string_len( str )
 	stringStart = stringPosition( stringStart or 1, stringLength )
 	stringEnd = stringPosition( stringEnd or stringStart, stringLength )
@@ -102,7 +121,11 @@ local utf8codepoint = function( str, stringStart, stringEnd )
 	return table_unpack( buffer, 1, length )
 end
 
-local utf8len = function( str, stringStart, stringEnd )
+---@param str string
+---@param stringStart number?
+---@param stringEnd number?
+---@return number
+local function len( str, stringStart, stringEnd )
 	local stringLength = string_len( str )
 	stringStart = stringPosition( stringStart or 1, stringLength )
 	stringEnd = stringPosition( stringEnd or -1, stringLength )
@@ -119,7 +142,7 @@ local utf8len = function( str, stringStart, stringEnd )
 
 	while stringEnd >= stringStart and stringStart <= stringLength do
 		local sequenceStart, sequenceEnd = decode( str, stringStart, stringLength )
-		if sequenceStart == nil then return false, stringStart end
+		if sequenceStart == nil then return length end
 		stringStart = sequenceEnd + 1
 		length = length + 1
 	end
@@ -127,7 +150,11 @@ local utf8len = function( str, stringStart, stringEnd )
 	return length
 end
 
-local utf8offset = function( str, offset, stringStart )
+--- @param str string
+--- @param offset number
+--- @param stringStart? number
+--- @return number?
+local function offset_fn( str, offset, stringStart )
 	local stringLength = string_len( str )
 	local position = stringPosition( stringStart or ( ( offset >= 0 ) and 1 or stringLength ), stringLength )
 
@@ -1123,24 +1150,31 @@ do
 	std.setmetatable( upper2lower, metatable )
 end
 
-local utf8hex2char
+local hex2char
 do
 
 	local tonumber = std.tonumber
 
-	function utf8hex2char( str )
-		return utf8byte2char( tonumber( str, 16 ) )
+	---@param str string
+	---@return string
+	function hex2char( str )
+		return byte2char( tonumber( str, 16 ) )
 	end
 
 end
 
 local escapeChars = { ["\\n"] = "\n", ["\\t"] = "\t", ["\\0"] = "\0" }
 
-local escapeToChar = function( str )
+---@param str string
+---@return string
+local function escapeToChar( str )
 	return escapeChars[ str ] or string_sub( str, 2, 2 )
 end
 
-local stringOffset = function( position, utf8Length )
+---@param position number
+---@param utf8Length number
+---@return number
+local function stringOffset( position, utf8Length )
 	if position < 0 then
 		return math_max( utf8Length + position + 1, 0 )
 	else
@@ -1148,29 +1182,37 @@ local stringOffset = function( position, utf8Length )
 	end
 end
 
-local utf8get = function( str, index, utf8Length )
-	if utf8Length == nil then utf8Length = utf8len( str ) end
+---@param str string
+---@param index number
+---@param utf8Length number
+---@return string
+local function get( str, index, utf8Length )
+	if utf8Length == nil then utf8Length = len( str ) end
 	index = stringOffset( index or 1, utf8Length )
 	if index == 0 then return "" end
 	if index > utf8Length then return "" end
-	return utf8char( utf8codepoint( str, utf8offset( str, index - 1 ) ) )
+	return codepoint( str, offset_fn( str, index - 1 ) )
 end
 
 ---@class gpm.string.utf8
 ---@field charpattern string This is NOT a function, it's a pattern (a string, not a function) which matches exactly one UTF-8 byte sequence, assuming that the subject is a valid UTF-8 string.
 local utf8 = {
 	["charpattern"] = charpattern,
-	["codepoint"] = utf8codepoint,
-	["byte2char"] = utf8byte2char,
-	["hex2char"] = utf8hex2char,
-	["offset"] = utf8offset,
-	["char"] = utf8char,
-	["len"] = utf8len,
-	["get"] = utf8get,
+	["codepoint"] = codepoint,
+	["byte2char"] = byte2char,
+	["hex2char"] = hex2char,
+	["offset"] = offset_fn,
+	["char"] = char_fn,
+	["len"] = len,
+	["get"] = get,
 }
 
+---@param str string
+---@param index number?
+---@param char string
+---@return string
 function utf8.set( str, index, char )
-	local utf8Length = utf8len( str )
+	local utf8Length = len( str )
 	index = stringOffset( index or 1, utf8Length )
 	if index == 0 then return "" end
 
@@ -1180,9 +1222,11 @@ function utf8.set( str, index, char )
 		end
 	end
 
-	return string_sub( str, 1, utf8offset( str, index - 1 ) ) .. char .. string_sub( str, utf8offset( str, index ), utf8Length )
+	return string_sub( str, 1, offset_fn( str, index - 1 ) ) .. char .. string_sub( str, offset_fn( str, index ) or 1, utf8Length )
 end
 
+---@param str string
+---@return function
 function utf8.codes( str )
 	local index, stringLength = 1, string_len( str )
 	return function()
@@ -1196,9 +1240,14 @@ function utf8.codes( str )
 	end
 end
 
+---@param str string
+---@return string
 function utf8.force( str )
 	local stringLength = string_len( str )
-	if stringLength == 0 then return str end
+	if stringLength == 0 then
+		return str
+	end
+
 	local buffer, length, pointer = { }, 0, 1
 
 	repeat
@@ -1209,7 +1258,7 @@ function utf8.force( str )
 			pointer = seqEndPos + 1
 		else
 			length = length + 1
-			buffer[ length ] = utf8char( 0xFFFD )
+			buffer[ length ] = char_fn( 0xFFFD )
 			pointer = pointer + 1
 		end
 	until pointer > stringLength
@@ -1217,13 +1266,17 @@ function utf8.force( str )
 	return table_concat( buffer, "", 1, length )
 end
 
+---@param str string
+---@param charStart number?
+---@param charEnd number?
+---@return string
 local function sub( str, charStart, charEnd )
-	local utf8Length = utf8len( str )
+	local utf8Length = len( str )
 	local buffer, length = {}, 0
 
 	for index = stringOffset( charStart or 1, utf8Length ), stringOffset( charEnd or -1, utf8Length ) do
 		length = length + 1
-		buffer[ length ] = utf8get( str, index, utf8Length )
+		buffer[ length ] = get( str, index, utf8Length )
 	end
 
 	return table_concat( buffer, "", 1, length )
@@ -1232,42 +1285,51 @@ end
 utf8.sub = sub
 utf8.slice = sub
 
+---@param str string
+---@return string
 function utf8.lower( str )
-	local utf8Length = utf8len( str )
+	local utf8Length = len( str )
 	local buffer, length = {}, 0
 
 	for index = 1, utf8Length, 1 do
 		length = length + 1
-		buffer[ length ] = upper2lower[ utf8get( str, index, utf8Length ) ]
+		buffer[ length ] = upper2lower[ get( str, index, utf8Length ) ]
 	end
 
 	return table_concat( buffer, "", 1, length )
 end
 
+---@param str string
+---@return string
 function utf8.upper( str )
-	local utf8Length = utf8len( str )
+	local utf8Length = len( str )
 	local buffer, length = {}, 0
 
 	for index = 1, utf8Length, 1 do
 		length = length + 1
-		buffer[ length ] = lower2upper[ utf8get( str, index, utf8Length ) ]
+		buffer[ length ] = lower2upper[ get( str, index, utf8Length ) ]
 	end
 
 	return table_concat( buffer, "", 1, length )
 end
 
+---@param str string
+---@param isSequence boolean?
+---@return string
 function utf8.escape( str, isSequence )
-	if isSequence == nil then isSequence = false end
-	return string_gsub( string_gsub( str, isSequence and "\\[uU]([0-9a-fA-F]+)" or "[uU]%+([0-9a-fA-F]+)", utf8hex2char ), "\\.", escapeToChar ), nil
+	---@diagnostic disable-next-line: redundant-return-value
+	return string_gsub( string_gsub( str, isSequence and "\\[uU]([0-9a-fA-F]+)" or "[uU]%+([0-9a-fA-F]+)", hex2char ), "\\.", escapeToChar ), nil
 end
 
+---@param str string
+---@return string
 function utf8.reverse( str )
-	local utf8Length = utf8len( str )
+	local utf8Length = len( str )
 	local buffer, length, position = {}, 0, utf8Length
 
 	while position > 0 do
 		length = length + 1
-		buffer[ length ] = utf8get( str, position, utf8Length )
+		buffer[ length ] = get( str, position, utf8Length )
 		position = position - 1
 	end
 
