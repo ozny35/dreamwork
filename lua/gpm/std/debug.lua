@@ -2,36 +2,39 @@ local _G = _G
 local glua_debug = _G.debug
 local debug_getinfo = glua_debug.getinfo
 
+---Just empty function, do nothing.
+local function fempty() end
+
 ---@class gpm.std.debug
 local debug = {
     -- LuaJIT
-    ["newproxy"] = _G.newproxy,
+    newproxy = _G.newproxy,
 
     -- Lua 5.1
-    ["debug"] = glua_debug.debug,
-    ["getfenv"] = glua_debug.getfenv,
-    ["gethook"] = glua_debug.gethook,
-    ["getinfo"] = debug_getinfo,
-    ["getlocal"] = glua_debug.getlocal,
-    ["getmetatable"] = glua_debug.getmetatable,
-    ["getregistry"] = glua_debug.getregistry,
-    ["getupvalue"] = glua_debug.getupvalue,
-    ["setfenv"] = glua_debug.setfenv,
-    ["sethook"] = glua_debug.sethook,
-    ["setlocal"] = glua_debug.setlocal,
-    ["setmetatable"] = glua_debug.setmetatable,
-    ["setupvalue"] = glua_debug.setupvalue,
-    ["traceback"] = glua_debug.traceback,
+    debug = glua_debug.debug,
+    getfenv = glua_debug.getfenv,
+    gethook = glua_debug.gethook,
+    getinfo = debug_getinfo,
+    getlocal = glua_debug.getlocal,
+    getmetatable = glua_debug.getmetatable,
+    getregistry = glua_debug.getregistry,
+    getupvalue = glua_debug.getupvalue or fempty, -- fucked up in menu
+    setfenv = glua_debug.setfenv,
+    sethook = glua_debug.sethook,
+    setlocal = glua_debug.setlocal,
+    setmetatable = glua_debug.setmetatable,
+    setupvalue = glua_debug.setupvalue or fempty, -- fucked up in menu
+    traceback = glua_debug.traceback,
 
     -- Lua 5.2
-    ["getuservalue"] = glua_debug.getuservalue,
-    ["setuservalue"] = glua_debug.setuservalue,
-    ["upvalueid"] = glua_debug.upvalueid,
-    ["upvaluejoin"] = glua_debug.upvaluejoin,
-}
+    getuservalue = glua_debug.getuservalue or fempty, -- fucked up in menu
+    setuservalue = glua_debug.setuservalue or fempty, -- fucked up in menu
+    upvalueid = glua_debug.upvalueid or fempty, -- fucked up in menu
+    upvaluejoin = glua_debug.upvaluejoin or fempty, -- fucked up in menu
 
----Just empty function, do nothing.
-function debug.fempty() end
+    -- Custom
+    fempty = fempty
+}
 
 ---Call function with given arguments.
 ---@param func function
