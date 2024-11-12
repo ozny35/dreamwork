@@ -695,10 +695,10 @@ end
 ---Push an element into a max heap
 ---@param heap table A max heap whose max element is at index 1.
 ---@param e table The element to be pushed. Assume element "e" is a table
---- and comparison is done via its first entry e[1]
+---and comparison is done via its first entry e[1]
 ---@param heap_size number current number of elements in the heap.
---- NOTE: There may be some garbage stored in
---- heap[heap_size+1], heap[heap_size+2], etc..
+---NOTE: There may be some garbage stored in
+---heap[heap_size+1], heap[heap_size+2], etc..
 local function MinHeapPush( heap, e, heap_size )
     heap_size = heap_size + 1
     heap[ heap_size ] = e

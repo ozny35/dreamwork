@@ -1,5 +1,8 @@
-local glua_game, glua_engine, CLIENT_SERVER, SERVER = ...
+local _G = _G
+local glua_game, glua_engine = _G.game, _G.engine
 
+local std = _G.gpm.std
+local CLIENT_SERVER, SERVER = std.CLIENT_SERVER, std.SERVER
 
 local library
 if CLIENT_SERVER then

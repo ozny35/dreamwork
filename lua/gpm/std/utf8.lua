@@ -1275,4 +1275,6 @@ function utf8.reverse( str )
 	return table_concat( buffer, "", 1, length )
 end
 
+-- TODO: Add more functions
+
 return utf8

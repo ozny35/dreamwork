@@ -4,8 +4,8 @@ local util = _G.util
 local crypto = {}
 crypto.deflate = _G.include( "gpm/3rd-party/deflate.lua" )
 
---- @class gpm.std.crypto.lzma
---- @field PROPS_SIZE number The size of the lzma properties.
+---@class gpm.std.crypto.lzma
+---@field PROPS_SIZE number The size of the lzma properties.
 local lzma = { PROPS_SIZE = 5 }
 crypto.lzma = lzma
 
@@ -16,9 +16,9 @@ do
 
     local string_byte = _G.string.byte
 
-    --- Returns the decompressed size of the given string.
-    --- @param str string Compressed string.
-    --- @return number
+    ---Returns the decompressed size of the given string.
+    ---@param str string Compressed string.
+    ---@return number
     function lzma.size( str )
         if str == 0 then
             return 0

@@ -10,9 +10,9 @@ local library = {
 
 do
 
-    local name, fn = debug.getupvalue( _G.Material, 1 )
-    if name ~= "C_Material" then fn = debug.fempty end
-    library.Material = fn or debug.fempty
+    local fnName, fn = debug.getupvalue( _G.Material, 1 )
+    if fnName ~= "C_Material" then fn = nil end
+    library.Material = fn
 
 end
 

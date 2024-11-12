@@ -23,7 +23,7 @@ do
 
     local bit_band, bit_rshift = bit.band, bit.rshift
 
-    --- Converts a DOS date and time to a Unix timestamp.
+    ---Converts a DOS date and time to a Unix timestamp.
     ---@param time number The time to convert.
     ---@param date number The date to convert.
     ---@return number seconds The Unix timestamp.
@@ -52,7 +52,7 @@ do
     local bit_bor, bit_lshift = bit.bor, bit.lshift
     local math_fdiv = _G.gpm.std.math.fdiv
 
-    --- Converts a Unix timestamp to a DOS date and time.
+    ---Converts a Unix timestamp to a DOS date and time.
     ---@param seconds number The Unix timestamp to convert.
     ---@return number time The DOS time.
     ---@return number date The DOS date.

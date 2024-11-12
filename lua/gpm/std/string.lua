@@ -61,11 +61,11 @@ local asciiNumbers = {
     [ 0x39 ] = true -- 9
 }
 
---- Removes leading and trailing matches of a string.
---- @param str string The string.
---- @param pattern? string The pattern to match.
---- @param dir? number The direction to trim. `1` for left, `-1` for right, `0` for both.
---- @return string str The trimmed string.
+---Removes leading and trailing matches of a string.
+---@param str string The string.
+---@param pattern? string The pattern to match.
+---@param dir? number The direction to trim. `1` for left, `-1` for right, `0` for both.
+---@return string str The trimmed string.
 local function trim( str, pattern, dir )
     if pattern == nil then
         pattern = "%s"
@@ -91,12 +91,12 @@ local function trim( str, pattern, dir )
     end
 end
 
---- Replaces all matches of a string.
---- @param str string The string.
---- @param searchable string The pattern to search for.
---- @param replaceable string The string to replace.
---- @param withPattern? boolean Whether to use pattern or not.
---- @return string str The replaced string.
+---Replaces all matches of a string.
+---@param str string The string.
+---@param searchable string The pattern to search for.
+---@param replaceable string The string to replace.
+---@param withPattern? boolean Whether to use pattern or not.
+---@return string str The replaced string.
 local function replace( str, searchable, replaceable, withPattern )
     if withPattern == nil then
         local startPos, endPos = string_find( str, searchable, 1, true )
@@ -112,11 +112,11 @@ local function replace( str, searchable, replaceable, withPattern )
     end
 end
 
---- Splits a string by a byte.
---- @param str string The string.
---- @param byte? number The byte to split by.
---- @return string[] result The split string.
---- @return number length The length of the split string.
+---Splits a string by a byte.
+---@param str string The string.
+---@param byte? number The byte to split by.
+---@return string[] result The split string.
+---@return number length The length of the split string.
 local function byteSplit( str, byte )
     if byte == nil then
         return { str }, 1
@@ -143,10 +143,10 @@ local function byteSplit( str, byte )
     return result, length
 end
 
---- Checks if a string is a domain.
---- @param str string The string.
---- @return boolean isDomain Whether the string is a domain.
---- @return string? error The error message.
+---Checks if a string is a domain.
+---@param str string The string.
+---@return boolean isDomain Whether the string is a domain.
+---@return string? error The error message.
 local function isDomain( str )
     if str == "" then
         return false, "empty string"
@@ -182,11 +182,11 @@ local function isDomain( str )
     end
 end
 
---- Unpacks a string.
---- @param str string The string.
---- @param startPos? number The start position.
---- @param endPos? number The end position.
---- @return ... string
+---Unpacks a string.
+---@param str string The string.
+---@param startPos? number The start position.
+---@param endPos? number The end position.
+---@return ... string
 local function unpack( str, startPos, endPos )
     if startPos == nil then startPos = 1 end
     if endPos == nil then endPos = string_len( str ) end
@@ -197,18 +197,18 @@ local function unpack( str, startPos, endPos )
     end
 end
 
---- Converts a binary string to a decimal number.
---- @param str string The binary string.
---- @return number
+---Converts a binary string to a decimal number.
+---@param str string The binary string.
+---@return number
 local binary2decimal = function( str )
     return tonumber( str, 2 )
 end
 
---- Converts a decimal number to a binary string.
---- @param number number The decimal number.
---- @param complement? boolean Whether to complement the binary string.
---- @return string The binary string.
---- @return number The length of the binary string.
+---Converts a decimal number to a binary string.
+---@param number number The decimal number.
+---@param complement? boolean Whether to complement the binary string.
+---@return string The binary string.
+---@return number The length of the binary string.
 local decimal2binary = function( number, complement )
     if number == 0 then
         if complement then
@@ -248,16 +248,16 @@ local decimal2binary = function( number, complement )
     end
 end
 
---- Converts a hex string to a decimal number.
---- @param str string The hex string.
---- @return number
+---Converts a hex string to a decimal number.
+---@param str string The hex string.
+---@return number
 local hex2decimal = function( str )
     return tonumber( str, 16 )
 end
 
---- Converts a decimal number to a hex string.
---- @param number number The decimal number.
---- @return string
+---Converts a decimal number to a hex string.
+---@param number number The decimal number.
+---@return string
 local decimal2hex = function( number )
     return string_format( "%X", number)
 end
@@ -292,19 +292,19 @@ local string = {
     ["dec2hex"] = decimal2hex,
 }
 
---- Cuts the string into two.
---- @param str string The string.
---- @param index number Cutting index.
---- @return string, string
+---Cuts the string into two.
+---@param str string The string.
+---@param index number Cutting index.
+---@return string, string
 function string.cut( str, index )
     return string_sub( str, 1, index - 1 ), string_sub( str, index, string_len( str ) )
 end
 
---- Inserts a value into the string.
---- @param str string The string.
---- @param index number Insertion index.
---- @param value string The value.
---- @return string
+---Inserts a value into the string.
+---@param str string The string.
+---@param index number Insertion index.
+---@param value string The value.
+---@return string
 function string.insert( str, index, value )
     if value == nil then
         return str .. index
@@ -313,27 +313,27 @@ function string.insert( str, index, value )
     end
 end
 
---- Removes a character from the string by index.
---- @param str string The string.
---- @param index number Removal index.
---- @return string
+---Removes a character from the string by index.
+---@param str string The string.
+---@param index number Removal index.
+---@return string
 function string.remove( str, index )
     if index == nil then index = string_len( str ) end
     return string_sub( str, 1, index - 1 ) .. string_sub( str, index + 1, string_len( str ) )
 end
 
---- Checks if the string starts with the start string.
---- @param str string The string.
---- @param startStr string The start string.
---- @return boolean
+---Checks if the string starts with the start string.
+---@param str string The string.
+---@param startStr string The start string.
+---@return boolean
 function string.startsWith( str, startStr )
     return str == startStr or string_sub( str, 1, string_len( startStr ) ) == startStr
 end
 
---- Checks if the string ends with the end string.
---- @param str string The string.
---- @param endStr string The end string.
---- @return boolean
+---Checks if the string ends with the end string.
+---@param str string The string.
+---@param endStr string The end string.
+---@return boolean
 function string.endsWith( str, endStr )
     if endStr == "" or str == endStr then
         return true
@@ -343,9 +343,9 @@ function string.endsWith( str, endStr )
     end
 end
 
---- Joins the strings.
---- @vararg string The strings to join.
---- @return string
+---Joins the strings.
+---@vararg string The strings to join.
+---@return string
 function string.join( ... )
     local args = { ... }
     local length = #args
@@ -356,10 +356,10 @@ function string.join( ... )
     end
 end
 
---- Concatenates the strings.
---- @param concatenator? string The concatenator.
---- @vararg string The strings to concatenate.
---- @return string
+---Concatenates the strings.
+---@param concatenator? string The concatenator.
+---@vararg string The strings to concatenate.
+---@return string
 function string.concat( concatenator, ... )
     local args = { ... }
     local length = #args
@@ -370,12 +370,12 @@ function string.concat( concatenator, ... )
     end
 end
 
---- Checks if the string contains the searchable string.
---- @param str string The string.
---- @param searchable string The searchable string.
---- @param position? number The position to start from.
---- @param withPattern? boolean If the pattern is used.
---- @return number
+---Checks if the string contains the searchable string.
+---@param str string The string.
+---@param searchable string The searchable string.
+---@param position? number The position to start from.
+---@param withPattern? boolean If the pattern is used.
+---@return number
 function string.indexOf( str, searchable, position, withPattern )
     if searchable == nil then
         return 0
@@ -391,11 +391,11 @@ function string.indexOf( str, searchable, position, withPattern )
     end
 end
 
---- Splits the string.
---- @param str string The string.
---- @param pattern? string The pattern to split by.
---- @param withPattern? boolean If the pattern is used.
---- @return string[] result, number length
+---Splits the string.
+---@param str string The string.
+---@param pattern? string The pattern to split by.
+---@param withPattern? boolean If the pattern is used.
+---@return string[] result, number length
 function string.split( str, pattern, withPattern )
     if pattern == nil then
         return { str }, 1
@@ -428,11 +428,11 @@ function string.split( str, pattern, withPattern )
     end
 end
 
---- Extracts the string.
---- @param str string The string.
---- @param pattern string The pattern to extract by.
---- @param default? string The default value.
---- @return string, string?
+---Extracts the string.
+---@param str string The string.
+---@param pattern string The pattern to extract by.
+---@param default? string The default value.
+---@return string, string?
 function string.extract( str, pattern, default )
     local startPos, endPos, matched = string_find( str, pattern, 1, false )
     if startPos == nil then
@@ -442,11 +442,11 @@ function string.extract( str, pattern, default )
     end
 end
 
---- Returns the number of matches of a string.
---- @param str string The string.
---- @param pattern? string The pattern.
---- @param withPattern? boolean If the pattern is used.
---- @return number
+---Returns the number of matches of a string.
+---@param str string The string.
+---@param pattern? string The pattern.
+---@param withPattern? boolean If the pattern is used.
+---@return number
 function string.count( str, pattern, withPattern )
     if pattern == nil then
         return 0
@@ -470,10 +470,10 @@ function string.count( str, pattern, withPattern )
     end
 end
 
---- Returns the number of occurrences of a byte.
---- @param str string The string.
---- @param byte? number The byte to count.
---- @return number
+---Returns the number of occurrences of a byte.
+---@param str string The string.
+---@param byte? number The byte to count.
+---@return number
 function string.byteCount( str, byte )
     if byte == nil then
         return 0
@@ -494,12 +494,12 @@ function string.byteCount( str, byte )
     end
 end
 
---- Trims a string by a byte.
---- @param str string The string.
---- @param byte? number The byte to trim by.
---- @param dir? number The direction to trim. `1` for left, `-1` for right, `0` for both.
---- @return string str The trimmed string.
---- @return number length The length of the trimmed string.
+---Trims a string by a byte.
+---@param str string The string.
+---@param byte? number The byte to trim by.
+---@param dir? number The direction to trim. `1` for left, `-1` for right, `0` for both.
+---@return string str The trimmed string.
+---@return number length The length of the trimmed string.
 function string.trimByte( str, byte, dir )
     local startPos, endPos = 1, string_len( str )
     if dir == nil then dir = 0 end
@@ -521,12 +521,12 @@ function string.trimByte( str, byte, dir )
     return string_sub( str, startPos, endPos ), endPos - startPos + 1
 end
 
---- Trims a string by bytes.
---- @param str string The string.
---- @param bytes table The bytes to trim by.
---- @param dir? number The direction to trim. `1` for left, `-1` for right, `0` for both.
---- @return string str The trimmed string.
---- @return number length The length of the trimmed string.
+---Trims a string by bytes.
+---@param str string The string.
+---@param bytes table The bytes to trim by.
+---@param dir? number The direction to trim. `1` for left, `-1` for right, `0` for both.
+---@return string str The trimmed string.
+---@return number length The length of the trimmed string.
 function string.trimBytes( str, bytes, dir )
     local startPos, endPos = 1, string_len( str )
     if dir == nil then dir = 0 end
@@ -561,20 +561,20 @@ function string.trimBytes( str, bytes, dir )
     return string_sub( str, startPos, endPos ), endPos - startPos + 1
 end
 
---- Returns the bytes of a string.
---- @param str string The string.
---- @param startPos? number The start position.
---- @param endPos? number The end position.
---- @return table, number
+---Returns the bytes of a string.
+---@param str string The string.
+---@param startPos? number The start position.
+---@param endPos? number The end position.
+---@return table, number
 function string.bytes( str, startPos, endPos )
     if startPos == nil then startPos = 1 end
     if endPos == nil then endPos = string_len( str ) end
     return { string_byte( str, startPos, endPos ) }, ( endPos - startPos ) + 1
 end
 
---- Returns a pattern-safe string.
---- @param str string The string.
---- @return string
+---Returns a pattern-safe string.
+---@param str string The string.
+---@return string
 function string.patternSafe( str )
     local startPos, strLength = 1, string_len( str )
     local result, length = {}, 0
@@ -613,9 +613,9 @@ function string.patternSafe( str )
     return table_concat( result, "", 1, length )
 end
 
---- Returns a SQL-safe string.
---- @param str string The string.
---- @return string
+---Returns a SQL-safe string.
+---@param str string The string.
+---@return string
 function string.sqlSafe( str, noQuotes )
     str = replace( tostring( str ), "'", "''", false )
 
@@ -631,11 +631,11 @@ function string.sqlSafe( str, noQuotes )
     end
 end
 
---- Checks if a string is a number.
---- @param str string The string.
---- @param startPos? number The start position.
---- @param endPos? number The end position.
---- @return boolean
+---Checks if a string is a number.
+---@param str string The string.
+---@param startPos? number The start position.
+---@param endPos? number The end position.
+---@return boolean
 function string.isNumber( str, startPos, endPos )
     if startPos == nil then startPos = 1 end
     if endPos == nil then endPos = string_len( str ) end
@@ -653,24 +653,24 @@ function string.isNumber( str, startPos, endPos )
     return true
 end
 
---- Checks if a string is a URL.
---- @param str string The string.
---- @return boolean
+---Checks if a string is a URL.
+---@param str string The string.
+---@return boolean
 function string.isURL( str )
     return string_match( str, "^%l[%l+-.]+%:[^%z\x01-\x20\x7F-\xFF\"<>^`:{-}]*$" ) ~= nil
 end
 
---- Checks if a string is a SteamID.
---- @param str string The string.
---- @return boolean
+---Checks if a string is a SteamID.
+---@param str string The string.
+---@return boolean
 function string.isSteamID( str )
     return string_match( str, "^STEAM_[0-5]:[01]:%d+$" ) ~= nil
 end
 
---- Checks if a string is an email.
---- @param str string The string.
---- @return boolean isEmail Whether the string is an email.
---- @return string? error The error message.
+---Checks if a string is an email.
+---@param str string The string.
+---@return boolean isEmail Whether the string is an email.
+---@return string? error The error message.
 function string.isEmail( str )
     if str == "" then
         return false, "empty string"
@@ -705,34 +705,34 @@ function string.isEmail( str )
     return isDomain( string_sub( str, lastAt, string_len( str ) ) )
 end
 
---- Returns a character from the string by index.
---- @param str string
---- @param index number
---- @return string
+---Returns a character from the string by index.
+---@param str string
+---@param index number
+---@return string
 function string.get( str, index )
     return string_sub( str, index, index )
 end
 
---- Sets a character in the string by index.
---- @param str string
---- @param index number
---- @param value string
---- @return string
+---Sets a character in the string by index.
+---@param str string
+---@param index number
+---@param value string
+---@return string
 function string.set( str, index, value )
     return string_sub( str, 1, index - 1 ) .. value .. string_sub( str, index + 1, string_len( str ) )
 end
 
---- Converts a hex string to a binary string.
---- @param str string The hex string.
---- @param complement? boolean
---- @return string, number
+---Converts a hex string to a binary string.
+---@param str string The hex string.
+---@param complement? boolean
+---@return string, number
 function string.hex2bin( str, complement )
     return decimal2binary( hex2decimal( str ), complement )
 end
 
---- Converts a binary string to a hex string.
---- @param str string The binary string.
---- @return string
+---Converts a binary string to a hex string.
+---@param str string The binary string.
+---@return string
 function string.bin2hex( str )
     return decimal2hex( binary2decimal( str ) )
 end

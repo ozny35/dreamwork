@@ -1242,78 +1242,63 @@ do
         Material = _G.Material
 
         function std.Material( name, parameters )
-            if parameters then
-                argument( name, 1, "number", "string" )
+            if parameters and parameters > 0 then
+                parameters = string_dec2bin( parameters, true )
 
-                if is_string( parameters ) then
-                    return Material( name, parameters )
-                elseif parameters > 0 then
-                    parameters = string_dec2bin( parameters, true )
+                local buffer = {}
 
-                    local buffer = {}
-
-                    if string_byte( parameters, 1 ) == 0x31 then
-                        buffer[ #buffer + 1 ] = "vertexlitgeneric"
-                    end
-
-                    if string_byte( parameters, 2 ) == 0x31 then
-                        buffer[ #buffer + 1 ] = "nocull"
-                    end
-
-                    if string_byte( parameters, 3 ) == 0x31 then
-                        buffer[ #buffer + 1 ] = "alphatest"
-                    end
-
-                    if string_byte( parameters, 4 ) == 0x31 then
-                        buffer[ #buffer + 1 ] = "mips"
-                    end
-
-                    if string_byte( parameters, 5 ) == 0x31 then
-                        buffer[ #buffer + 1 ] = "noclamp"
-                    end
-
-                    if string_byte( parameters, 6 ) == 0x31 then
-                        buffer[ #buffer + 1 ] = "smooth"
-                    end
-
-                    if string_byte( parameters, 7 ) == 0x31 then
-                        buffer[ #buffer + 1 ] = "ignorez"
-                    end
-
-                    return Material( name, table_concat( buffer, " " ) )
+                if string_byte( parameters, 1 ) == 0x31 then
+                    buffer[ #buffer + 1 ] = "vertexlitgeneric"
                 end
+
+                if string_byte( parameters, 2 ) == 0x31 then
+                    buffer[ #buffer + 1 ] = "nocull"
+                end
+
+                if string_byte( parameters, 3 ) == 0x31 then
+                    buffer[ #buffer + 1 ] = "alphatest"
+                end
+
+                if string_byte( parameters, 4 ) == 0x31 then
+                    buffer[ #buffer + 1 ] = "mips"
+                end
+
+                if string_byte( parameters, 5 ) == 0x31 then
+                    buffer[ #buffer + 1 ] = "noclamp"
+                end
+
+                if string_byte( parameters, 6 ) == 0x31 then
+                    buffer[ #buffer + 1 ] = "smooth"
+                end
+
+                if string_byte( parameters, 7 ) == 0x31 then
+                    buffer[ #buffer + 1 ] = "ignorez"
+                end
+
+                return Material( name, table_concat( buffer, " " ) )
             end
 
             return Material( name )
         end
     else
-        local string_find = string.find
 
+        ---Either returns the material with the given name, or loads the material interpreting the first argument as the path.<br>
+        ---.png, .jpg and other image formats<br><br>
+        ---This function is capable to loading .png or .jpg images, generating a texture and material for them on the fly.<br><br>
+        ---PNG, JPEG, GIF, and TGA files will work, but only if they have the .png or .jpg file extensions (even if the actual image format doesn't match the file extension)
+        ---@param name string The material name or path relative to the materials/ folder.<br>Paths outside the materials/ folder like data/MyImage.jpg or maps/thumb/gm_construct.png will also work for when generating materials.<br>To retrieve a Lua material created with CreateMaterial, just prepend a ! to the material name.
+        ---@param parameters? number A bit flag of material parameters.
+        ---@return IMaterial
         function std.Material( name, parameters )
-            if parameters then
-                argument( name, 1, "number", "string" )
-
-                if is_string( parameters ) then
-                    if parameters == "" then
-                        return Material( name )
-                    end
-
-                    return Material( name,
-                        ( string_find( parameters, "vertexlitgeneric", 1, true ) and "1" or "0" ) ..
-                        ( string_find( parameters, "nocull", 1, true ) and "1" or "0" ) ..
-                        ( string_find( parameters, "alphatest", 1, true ) and "1" or "0" ) ..
-                        ( string_find( parameters, "mips", 1, true ) and "1" or "0" ) ..
-                        ( string_find( parameters, "noclamp", 1, true ) and "1" or "0" ) ..
-                        ( string_find( parameters, "smooth", 1, true ) and "1" or "0" ) ..
-                        ( string_find( parameters, "ignorez", 1, true ) and "1" or "0" )
-                    )
-                elseif parameters > 0 then
-                    return Material( name, string_dec2bin( parameters, true ) )
-                end
+            if parameters and parameters > 0 then
+                ---@diagnostic disable-next-line: return-type-mismatch
+                return Material( name, string_dec2bin( parameters, true ) )
             end
 
+            ---@diagnostic disable-next-line: return-type-mismatch
             return Material( name )
         end
+
     end
 
 end
@@ -1325,7 +1310,7 @@ do
     local file_Exists = _G.file.Exists
     local require = _G.require
 
-    local isEdge = jit.versionnum ~= 20004
+    local isEdge = jit.version_num ~= 20004
     local is32 = jit.arch == "x86"
 
     local head = "lua/bin/gm" .. ( ( CLIENT and not MENU ) and "cl" or "sv" ) .. "_"
@@ -1358,6 +1343,10 @@ do
     local sv_allowcslua = console.variable.get( "sv_allowcslua" )
     local console_variable_getBool = console.variable.getBool
 
+    ---Loads a binary module
+    ---@param name string The binary module name, for example: "chttp"
+    ---@return boolean success: true if the binary module is installed
+    ---@return table? module: the binary module table
     function loadbinary( name )
         if isBinaryModuleInstalled( name ) then
             if console_variable_getBool( sv_allowcslua ) then
@@ -1379,6 +1368,9 @@ do
 
     local math_ceil = math.ceil
 
+    ---Returns the bit count of the given value.
+    ---@param value any: The value to get the bit count of.
+    ---@return number: The bit count of the value.
     local function bitcount( value )
         local metatable = getmetatable( value )
         if metatable == nil then
@@ -1395,6 +1387,9 @@ do
 
     std.bitcount = bitcount
 
+    ---Returns the byte count of the given value.
+    ---@param value any: The value to get the byte count of.
+    ---@return number: The byte count of the value.
     function std.bytecount( value )
         return math_ceil( bitcount( value ) / 8 )
     end
@@ -1467,11 +1462,11 @@ if CLIENT_MENU then
     os.screenWidth, os.screenHeight = _G.ScrW(), _G.ScrH()
 end
 
-if _G.TYPE_COUNT ~= 44 then
+if std.TYPE.COUNT ~= 44 then
     logger:Warn( "Global TYPE_COUNT mismatch, data corruption suspected. (" .. tostring( _G.TYPE_COUNT or "missing" ) .. " ~= 44)"  )
 end
 
-if _G._VERSION ~= "Lua 5.1" then
+if std._VERSION ~= "Lua 5.1" then
     logger:Warn( "Lua version changed, possible unpredictable behavior. (" .. tostring( _G._VERSION or "missing") .. ")" )
 end
 

@@ -99,7 +99,7 @@ do
 
     registerMetatable( "function", metatable )
 
-    --- Checks if the value is a function
+    ---Checks if the value is a function
     ---@param value any
     ---@return boolean isFunction returns true if the value is a function, otherwise false
     function is.fn( value )
