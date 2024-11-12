@@ -1,8 +1,29 @@
-local bit, string, table, math, tonumber = ...
-local math_min, math_max = math.min, math.max
-local table_concat, table_unpack, table_flip = table.concat, table.unpack, table.flip
-local bit_band, bit_bor, bit_lshift, bit_rshift = bit.band, bit.bor, bit.lshift, bit.rshift
-local string_char, string_byte, string_sub, string_gsub, string_gmatch, string_len = string.char, string.byte, string.sub, string.gsub, string.gmatch, string.len
+local _G = _G
+
+local math_min, math_max
+do
+	local math = _G.math
+	math_min, math_max = math.min, math.max
+end
+
+
+local bit_band, bit_bor, bit_lshift, bit_rshift
+do
+	local bit = _G.bit
+	bit_band, bit_bor, bit_lshift, bit_rshift = bit.band, bit.bor, bit.lshift, bit.rshift
+end
+
+local string_char, string_byte, string_sub, string_gsub, string_gmatch, string_len
+do
+	local string = _G.string
+	string_char, string_byte, string_sub, string_gsub, string_gmatch, string_len = string.char, string.byte, string.sub, string.gsub, string.gmatch, string.len
+end
+
+local table_concat, table_unpack, table_flip
+do
+	local table = _G.table
+	table_concat, table_unpack, table_flip = table.concat, table.unpack, table.flip
+end
 
 local charpattern = "[%z\x01-\x7F\xC2-\xF4][\x80-\xBF]*"
 
@@ -1090,14 +1111,28 @@ local lower2upper = {
 	["𐑏"] = "𐐧"
 }
 
-local metatable = { ["__index"] = function( _, key ) return key end }
-setmetatable( lower2upper, metatable )
-
 local upper2lower = table_flip( lower2upper, true )
-setmetatable( upper2lower, metatable )
 
-local utf8hex2char = function( str )
-	return utf8byte2char( tonumber( str, 16 ) )
+do
+	local metatable = {
+		__index = function( _, key )
+			return key
+		end
+	}
+
+	_G.setmetatable( lower2upper, metatable )
+	_G.setmetatable( upper2lower, metatable )
+end
+
+local utf8hex2char
+do
+
+	local tonumber = _G.tonumber
+
+	function utf8hex2char( str )
+		return utf8byte2char( tonumber( str, 16 ) )
+	end
+
 end
 
 local escapeChars = { ["\\n"] = "\n", ["\\t"] = "\t", ["\\0"] = "\0" }
@@ -1122,107 +1157,122 @@ local utf8get = function( str, index, utf8Length )
 	return utf8char( utf8codepoint( str, utf8offset( str, index - 1 ) ) )
 end
 
-return {
+---@class gpm.string.utf8
+---@field charpattern string This is NOT a function, it's a pattern (a string, not a function) which matches exactly one UTF-8 byte sequence, assuming that the subject is a valid UTF-8 string.
+local utf8 = {
 	["charpattern"] = charpattern,
 	["codepoint"] = utf8codepoint,
 	["byte2char"] = utf8byte2char,
+	["hex2char"] = utf8hex2char,
 	["offset"] = utf8offset,
 	["char"] = utf8char,
 	["len"] = utf8len,
 	["get"] = utf8get,
-	["set"] = function( str, index, char )
-		local utf8Length = utf8len( str )
-		index = stringOffset( index or 1, utf8Length )
-		if index == 0 then return "" end
-
-		if index > utf8Length then
-			for i = 1, index - utf8Length, 1 do
-				str = str .. " "
-			end
-		end
-
-		return string_sub( str, 1, utf8offset( str, index - 1 ) ) .. char .. string_sub( str, utf8offset( str, index ), utf8Length )
-	end,
-	["codes"] = function( str )
-		local index, stringLength = 1, string_len( str )
-		return function()
-			if index > stringLength then return nil end
-
-			local stringStart, stringEnd, codePoint = decode( str, index, stringLength )
-			if stringStart == nil then error( "invalid UTF-8 code", 2 ) end
-
-			index = stringEnd + 1
-			return stringStart, codePoint
-		end
-	end,
-	["force"] = function( str )
-		local stringLength = string_len( str )
-		if stringLength == 0 then return str end
-		local buffer, length, pointer = { }, 0, 1
-
-		repeat
-			local seqStartPos, seqEndPos = decode( str, pointer, stringLength )
-			if seqStartPos then
-				length = length + 1
-				buffer[ length ] = string_sub( str, seqStartPos, seqEndPos )
-				pointer = seqEndPos + 1
-			else
-				length = length + 1
-				buffer[ length ] = utf8char( 0xFFFD )
-				pointer = pointer + 1
-			end
-		until pointer > stringLength
-
-		return table_concat( buffer, "", 1, length )
-	end,
-	["sub"] = function( str, charStart, charEnd )
-		local utf8Length = utf8len( str )
-		local buffer, length = {}, 0
-
-		for index = stringOffset( charStart or 1, utf8Length ), stringOffset( charEnd or -1, utf8Length ) do
-			length = length + 1
-			buffer[ length ] = utf8get( str, index, utf8Length )
-		end
-
-		return table_concat( buffer, "", 1, length )
-	end,
-	["lower"] = function( str )
-		local utf8Length = utf8len( str )
-		local buffer, length = {}, 0
-
-		for index = 1, utf8Length, 1 do
-			length = length + 1
-			buffer[ length ] = upper2lower[ utf8get( str, index, utf8Length ) ]
-		end
-
-		return table_concat( buffer, "", 1, length )
-	end,
-	["upper"] = function( str )
-		local utf8Length = utf8len( str )
-		local buffer, length = {}, 0
-
-		for index = 1, utf8Length, 1 do
-			length = length + 1
-			buffer[ length ] = lower2upper[ utf8get( str, index, utf8Length ) ]
-		end
-
-		return table_concat( buffer, "", 1, length )
-	end,
-	["hex2char"] = utf8hex2char,
-	["unicode"] = function( str, isSequence )
-		if isSequence == nil then isSequence = false end
-		return string_gsub( string_gsub( str, isSequence and "\\[uU]([0-9a-fA-F]+)" or "[uU]%+([0-9a-fA-F]+)", utf8hex2char ), "\\.", escapeToChar ), nil
-	end,
-	["reverse"] = function( str )
-		local utf8Length = utf8len( str )
-		local buffer, length, position = {}, 0, utf8Length
-
-		while position > 0 do
-			length = length + 1
-			buffer[ length ] = utf8get( str, position, utf8Length )
-			position = position - 1
-		end
-
-		return table_concat( buffer, "", 1, length )
-	end
 }
+
+function utf8.set( str, index, char )
+	local utf8Length = utf8len( str )
+	index = stringOffset( index or 1, utf8Length )
+	if index == 0 then return "" end
+
+	if index > utf8Length then
+		for _ = 1, index - utf8Length, 1 do
+			str = str .. " "
+		end
+	end
+
+	return string_sub( str, 1, utf8offset( str, index - 1 ) ) .. char .. string_sub( str, utf8offset( str, index ), utf8Length )
+end
+
+function utf8.codes( str )
+	local index, stringLength = 1, string_len( str )
+	return function()
+		if index > stringLength then return nil end
+
+		local stringStart, stringEnd, codePoint = decode( str, index, stringLength )
+		if stringStart == nil then error( "invalid UTF-8 code", 2 ) end
+
+		index = stringEnd + 1
+		return stringStart, codePoint
+	end
+end
+
+function utf8.force( str )
+	local stringLength = string_len( str )
+	if stringLength == 0 then return str end
+	local buffer, length, pointer = { }, 0, 1
+
+	repeat
+		local seqStartPos, seqEndPos = decode( str, pointer, stringLength )
+		if seqStartPos then
+			length = length + 1
+			buffer[ length ] = string_sub( str, seqStartPos, seqEndPos )
+			pointer = seqEndPos + 1
+		else
+			length = length + 1
+			buffer[ length ] = utf8char( 0xFFFD )
+			pointer = pointer + 1
+		end
+	until pointer > stringLength
+
+	return table_concat( buffer, "", 1, length )
+end
+
+local function sub( str, charStart, charEnd )
+	local utf8Length = utf8len( str )
+	local buffer, length = {}, 0
+
+	for index = stringOffset( charStart or 1, utf8Length ), stringOffset( charEnd or -1, utf8Length ) do
+		length = length + 1
+		buffer[ length ] = utf8get( str, index, utf8Length )
+	end
+
+	return table_concat( buffer, "", 1, length )
+end
+
+utf8.sub = sub
+utf8.slice = sub
+
+function utf8.lower( str )
+	local utf8Length = utf8len( str )
+	local buffer, length = {}, 0
+
+	for index = 1, utf8Length, 1 do
+		length = length + 1
+		buffer[ length ] = upper2lower[ utf8get( str, index, utf8Length ) ]
+	end
+
+	return table_concat( buffer, "", 1, length )
+end
+
+function utf8.upper( str )
+	local utf8Length = utf8len( str )
+	local buffer, length = {}, 0
+
+	for index = 1, utf8Length, 1 do
+		length = length + 1
+		buffer[ length ] = lower2upper[ utf8get( str, index, utf8Length ) ]
+	end
+
+	return table_concat( buffer, "", 1, length )
+end
+
+function utf8.escape( str, isSequence )
+	if isSequence == nil then isSequence = false end
+	return string_gsub( string_gsub( str, isSequence and "\\[uU]([0-9a-fA-F]+)" or "[uU]%+([0-9a-fA-F]+)", utf8hex2char ), "\\.", escapeToChar ), nil
+end
+
+function utf8.reverse( str )
+	local utf8Length = utf8len( str )
+	local buffer, length, position = {}, 0, utf8Length
+
+	while position > 0 do
+		length = length + 1
+		buffer[ length ] = utf8get( str, position, utf8Length )
+		position = position - 1
+	end
+
+	return table_concat( buffer, "", 1, length )
+end
+
+return utf8

@@ -1,5 +1,7 @@
-local _G, debug, glua_engine, glua_game, system_IsWindowed, CLIENT_SERVER, CLIENT_MENU, SERVER = ...
-local util = _G.util
+local _G = _G
+local glua_engine, glua_game, glua_util, system_IsWindowed = _G.engine, _G.game, _G.util, _G.system.IsWindowed
+local std = _G.gpm.std
+local debug, CLIENT_SERVER, CLIENT_MENU, SERVER = std.debug, std.CLIENT_SERVER, std.CLIENT_MENU, std.SERVER
 
 local library = {
     ["getTickCount"] = glua_engine.TickCount,
@@ -25,17 +27,17 @@ if CLIENT_SERVER then
     library.getIPAddress = glua_game.GetIPAddress
     library.getTimeScale = glua_game.GetTimeScale
 
-    library.getActivityName = util.GetActivityNameByID
-    library.getActivityID = util.GetActivityIDByName
+    library.getActivityName = glua_util.GetActivityNameByID
+    library.getActivityID = glua_util.GetActivityIDByName
 
-    library.getAnimEventName = util.GetAnimEventNameByID
-    library.getAnimEventID = util.GetAnimEventIDByName
+    library.getAnimEventName = glua_util.GetAnimEventNameByID
+    library.getAnimEventID = glua_util.GetAnimEventIDByName
 
-    library.getModelMeshes = util.GetModelMeshes
-    library.getModelInfo = util.GetModelInfo
+    library.getModelMeshes = glua_util.GetModelMeshes
+    library.getModelInfo = glua_util.GetModelInfo
 
-    library.precacheModel = util.PrecacheModel
-    library.precacheSound = util.PrecacheSound
+    library.precacheModel = glua_util.PrecacheModel
+    library.precacheSound = glua_util.PrecacheSound
 
     -- TODO: Rework server name
     library.getServerName = _G.GetHostName
