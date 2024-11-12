@@ -1,27 +1,26 @@
-local _G = _G
+local std = _G.gpm.std
 
 local math_min, math_max
 do
-	local math = _G.math
+	local math = std.math
 	math_min, math_max = math.min, math.max
 end
 
-
 local bit_band, bit_bor, bit_lshift, bit_rshift
 do
-	local bit = _G.bit
+	local bit = std.bit
 	bit_band, bit_bor, bit_lshift, bit_rshift = bit.band, bit.bor, bit.lshift, bit.rshift
 end
 
 local string_char, string_byte, string_sub, string_gsub, string_gmatch, string_len
 do
-	local string = _G.string
+	local string = std.string
 	string_char, string_byte, string_sub, string_gsub, string_gmatch, string_len = string.char, string.byte, string.sub, string.gsub, string.gmatch, string.len
 end
 
 local table_concat, table_unpack, table_flip
 do
-	local table = _G.table
+	local table = std.table
 	table_concat, table_unpack, table_flip = table.concat, table.unpack, table.flip
 end
 
@@ -1120,14 +1119,14 @@ do
 		end
 	}
 
-	_G.setmetatable( lower2upper, metatable )
-	_G.setmetatable( upper2lower, metatable )
+	std.setmetatable( lower2upper, metatable )
+	std.setmetatable( upper2lower, metatable )
 end
 
 local utf8hex2char
 do
 
-	local tonumber = _G.tonumber
+	local tonumber = std.tonumber
 
 	function utf8hex2char( str )
 		return utf8byte2char( tonumber( str, 16 ) )

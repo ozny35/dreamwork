@@ -29,6 +29,8 @@ end
 if SERVER then
     local AddCSLuaFile = _G.AddCSLuaFile
 
+    AddCSLuaFile( "gpm/3rd-party/deflate.lua" )
+    AddCSLuaFile( "gpm/3rd-party/bigint.lua" )
     AddCSLuaFile( "gpm/detour.lua" )
     AddCSLuaFile( "gpm/std.lua" )
 
