@@ -1786,8 +1786,7 @@ end
 ---The description to compression configuration table. <br>
 ---Any field can be nil to use its default. <br>
 ---Table with keys other than those below is an invalid table.
----@class table
----@name compression_configs
+---@class compression_configs
 ---@field level number: The compression level ranged from 0 to 9. 0 is no compression. 9 is the slowest but best compression. Use nil for default level.
 ---@field strategy string: The compression strategy. "fixed" to only use fixed deflate compression block. "dynamic" to only use dynamic block. "huffman_only" to do no LZ77 compression. Only do huffman compression.
 ---@see deflate.CompressDeflate(str, configs)
