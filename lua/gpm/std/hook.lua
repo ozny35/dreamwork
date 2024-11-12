@@ -1,11 +1,11 @@
 local _G = _G
 local std = _G.gpm.std
-local rawset, getfenv, setmetatable, table_isEmpty = std.rawset, std.getfenv, std.setmetatable, std.table.isEmpty
+local rawset, getfenv, setmetatable, table_isEmpty, is_string = std.rawset, std.getfenv, std.setmetatable, std.table.isEmpty, std.is.string
 
-local hook = _G.hook
-local hooks_Add, hooks_Call, hooks_GetTable, hooks_Remove, hooks_Run = hook.Add, hook.Call, hook.GetTable, hook.Remove, hook.Run
+local glua_hook = _G.hook
+local hook_Add, hook_GetTable, hook_Remove = glua_hook.Add, glua_hook.GetTable, glua_hook.Remove
 
-local hooksMeta = {
+local hookMeta = {
     __index = function( tbl, key )
         local new = {}
         rawset( tbl, key, new )
@@ -13,9 +13,9 @@ local hooksMeta = {
     end
 }
 
-return {
-    -- https://github.com/Srlion/Hook-Library?tab=readme-ov-file#priorities
-    -- https://github.com/TeamUlysses/ulib/blob/master/lua/ulib/shared/hook.lua#L19
+-- https://github.com/Srlion/Hook-Library?tab=readme-ov-file#priorities
+-- https://github.com/TeamUlysses/ulib/blob/master/lua/ulib/shared/hook.lua#L19
+local hook = {
     ---@diagnostic disable-next-line: undefined-field
     ["PRE"] = _G.PRE_HOOK or -2,
     ---@diagnostic disable-next-line: undefined-field
@@ -26,74 +26,99 @@ return {
     ["POST_RETURN"] = _G.POST_HOOK_RETURN or 1,
     ---@diagnostic disable-next-line: undefined-field
     ["POST"] = _G.POST_HOOK or 2,
-    ["add"] = function( eventName, identifier, func, priority )
-        local fenv = getfenv( 2 )
-        if fenv == nil then
-            ---@diagnostic disable-next-line: redundant-parameter
-            return hooks_Add( eventName, identifier, func, priority )
-        else
-            local pkg = fenv.__package
-            if pkg == nil then
-                ---@diagnostic disable-next-line: redundant-parameter
-                return hooks_Add( eventName, identifier, func, priority )
-            else
-                local hooks = pkg.__hooks
-                if hooks == nil then
-                    hooks = setmetatable( {}, hooksMeta )
-                    pkg.__hooks = hooks
-                end
-
-                hooks[ eventName ][ identifier ] = func
-                ---@diagnostic disable-next-line: redundant-parameter
-                return hooks_Add( eventName, pkg.prefix .. identifier, func, priority )
-            end
-        end
-    end,
-    ["call"] = hooks_Call,
-    ["remove"] = function( eventName, identifier )
-        local fenv = getfenv( 2 )
-        if fenv == nil then
-            return hooks_Remove( eventName, identifier )
-        else
-            local pkg = fenv.__package
-            if pkg == nil then
-                return hooks_Remove( eventName, identifier )
-            else
-                local hooks = pkg.__hooks
-                if hooks == nil then
-                    hooks = setmetatable( {}, hooksMeta )
-                    pkg.__hooks = hooks
-                end
-
-                local event = hooks[ eventName ]
-                event[ identifier ] = nil
-
-                if table_isEmpty( event ) then
-                    hooks[ eventName ] = nil
-                end
-
-                return hooks_Remove( eventName, pkg.prefix .. identifier )
-            end
-        end
-    end,
-    ["getTable"] = function()
-        local fenv = getfenv( 2 )
-        if fenv == nil then
-            return hooks_GetTable()
-        else
-            local pkg = fenv.__package
-            if pkg == nil then
-                return hooks_GetTable()
-            else
-                local hooks = pkg.__hooks
-                if hooks == nil then
-                    hooks = setmetatable( {}, hooksMeta )
-                    pkg.__hooks = hooks
-                end
-
-                return hooks
-            end
-        end
-    end,
-    ["run"] = hooks_Run
+    ["call"] = glua_hook.Call,
+    ["run"] = glua_hook.Run
 }
+
+---Add a hook to be called upon the given event occurring.
+---@param eventName string
+---@param identifier string | Entity
+---@param fn function
+---@param priority table | number
+function hook.add( eventName, identifier, fn, priority )
+    if not is_string( eventName ) then
+        ---@diagnostic disable-next-line: redundant-parameter
+        hook_Add( eventName, identifier, fn, priority )
+        return
+    end
+
+    local fenv = getfenv( 2 )
+    if fenv == nil then
+        ---@diagnostic disable-next-line: redundant-parameter
+        hook_Add( eventName, identifier, fn, priority )
+        return
+    end
+
+    local pkg = fenv.__package
+    if pkg == nil then
+        ---@diagnostic disable-next-line: redundant-parameter
+        hook_Add( eventName, identifier, fn, priority )
+        return
+    end
+
+    local hooks = pkg.__hooks
+    if hooks == nil then
+        hooks = setmetatable( {}, hookMeta )
+        pkg.__hooks = hooks
+    end
+
+    hooks[ eventName ][ identifier ] = fn
+    ---@diagnostic disable-next-line: redundant-parameter
+    hook_Add( eventName, pkg.prefix .. identifier, fn, priority )
+end
+
+---Removes the hook with the supplied identifier from the given event.
+---@param eventName string
+---@param identifier string | Entity
+function hook.remove( eventName, identifier )
+    local fenv = getfenv( 2 )
+    if fenv == nil then
+        hook_Remove( eventName, identifier )
+        return
+    end
+
+    local pkg = fenv.__package
+    if pkg == nil then
+        hook_Remove( eventName, identifier )
+        return
+    end
+
+    local hooks = pkg.__hooks
+    if hooks == nil then
+        hooks = setmetatable( {}, hookMeta )
+        pkg.__hooks = hooks
+    end
+
+    local event = hooks[ eventName ]
+    event[ identifier ] = nil
+
+    if table_isEmpty( event ) then
+        hooks[ eventName ] = nil
+    end
+
+    hook_Remove( eventName, pkg.prefix .. identifier )
+end
+
+---Returns a list of all the hooks registered with hook.add
+---@return table
+function hook.getTable()
+    local fenv = getfenv( 2 )
+    if fenv == nil then
+        return hook_GetTable()
+    else
+        local pkg = fenv.__package
+        if pkg == nil then
+            return hook_GetTable()
+        else
+            local hooks = pkg.__hooks
+            if hooks == nil then
+                hooks = setmetatable( {}, hookMeta )
+                pkg.__hook = hooks
+            end
+
+            return hooks
+        end
+    end
+end
+
+return hook
