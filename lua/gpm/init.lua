@@ -27,7 +27,6 @@ do
         "Play SOMA sometime;",
         "Where's fireworks!?",
         "Looking For More ♪",
-        "Now on Yuescript!",
         "I'm watching you.",
         "Faster than ever.",
         "Love Wins Again ♪",
@@ -40,6 +39,7 @@ do
         "Once Again ♪",
         "Data Loss ♪",
         "Sandblast ♪",
+        "Now on LLS!",
         "That's me!",
         "I see you.",
         "Light Up ♪"
