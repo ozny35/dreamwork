@@ -78,7 +78,7 @@ if gpm.detour == nil then
     gpm.detour = include( "detour.lua" )
 end
 
-gpm.std = include( "std.lua" )
+include( "std.lua" )
 
 -- TODO: net meta methods and __net_write __net_read
 -- local file = std.file

@@ -10,6 +10,7 @@ local gpm_PREFIX = gpm.PREFIX
 local std = gpm.std
 if std == nil then
     std = include( "std/constants.lua" )
+    gpm.std = std
 else
     for key, value in pairs( include( "std/constants.lua" ) ) do
         std[ key ] = value
@@ -1471,5 +1472,3 @@ end
 if std._VERSION ~= "Lua 5.1" then
     logger:Warn( "Lua version changed, possible unpredictable behavior. (" .. tostring( _G._VERSION or "missing") .. ")" )
 end
-
-return std
