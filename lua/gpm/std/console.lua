@@ -19,6 +19,47 @@ function console.writeLine( ... )
     return MsgC( unpack( args, 1, length ) )
 end
 
+-- do
+
+--     local vname, vvalue = debug.getupvalue( _G.concommand.GetTable, 1 )
+--     print( vname, vvalue )
+
+--     vvalue[ "FUCK_GARRY"] = function() end
+
+--     local gpm = _G.gpm
+--     local hook_Run = _G.hook.Run
+
+--     local readers = gpm.std.Queue()
+
+--     _G.concommand.Run = gpm.detour.attach( _G.concommand.Run, function( fn, ply, cmd, args, argumentString )
+--         print( fn ,ply, cmd )
+--         if hook_Run( "ConsoleCommand", cmd, ply, args, argumentString ) == false then return false end
+
+--         local reader = readers:dequeue()
+--         if reader ~= nil then
+--             return reader( ply, cmd, args, argumentString )
+--         end
+
+--         return fn( ply, cmd, args, argumentString )
+--     end )
+
+
+--     function console.readLine( str, fn )
+--         -- if str ~= nil then
+--         --     console.write( str )
+--         -- end
+
+--         readers:enqueue( fn )
+--     end
+
+--     -- TODO: Add read and readLine
+
+--     console.readLine( "name: ", function( ply, str )
+--         print( ply, str )
+--     end )
+
+-- end
+
 local variable = console.variable
 
 -- TODO: Rewrite this crap

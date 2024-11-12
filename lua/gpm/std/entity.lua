@@ -115,30 +115,6 @@ scripted_ents.Get = _G.gpm.detour.attach( scripted_ents.Get, function( fn, name 
     return value
 end )
 
-do
-
-    -- TODO: Think about moving this into globals
-    library.weapon = {
-        ["ammo"] = {
-            -- https://wiki.facepunch.com/gmod/game.AddAmmoType
-            -- https://wiki.facepunch.com/gmod/game.BuildAmmoTypes
-            -- https://wiki.facepunch.com/gmod/game.GetAmmoDamageType
-            -- ...
-            -- https://wiki.facepunch.com/gmod/game.GetAmmoTypes
-        }
-    }
-
-end
-
--- do
-
-    -- TODO: create particle class for registry and creation
-
--- end
-
-
--- TODO: Decals lib/class in globals
-
 -- TODO: https://github.com/Facepunch/garrysmod/tree/master/garrysmod/gamemodes/base/entities/entities/base_entity
 
 ENTITY.new = function( self )
