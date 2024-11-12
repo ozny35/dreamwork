@@ -364,11 +364,11 @@ do
 
     local string_sub = glua_string.sub
 
-    --- Validates the type of the argument.
-    --- @param value any The value to validate.
-    --- @param num number The argument number.
-    --- @vararg any The expected types.
-    --- @return any value
+    ---Validates the type of the argument.
+    ---@param value any The value to validate.
+    ---@param num number The argument number.
+    ---@vararg any The expected types.
+    ---@return any value
     function argument( value, num, ... )
         local length = select( "#", ... )
         if length == 0 then
