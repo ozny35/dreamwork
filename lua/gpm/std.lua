@@ -562,6 +562,25 @@ do
 
 end
 
+-- symbol library
+---@class gpm.std.Symbol : userdata
+---@class gpm.std.SymbolClass
+---@overload fun(name: string): gpm.std.Symbol
+local Symbol = std.Symbol or setmetatable( {}, {
+    __call = function(self, ...) return self:new(...) end
+} )
+
+---@private
+function Symbol:new( name )
+    local obj = newproxy( true )
+    local meta = getmetatable( obj )
+    meta.__name = "Symbol(\"" .. tostring( name ) .. "\")"
+    meta.__tostring = function() return meta.__name end
+    return obj
+end
+
+std.Symbol = Symbol
+
 -- bit library
 std.bit = _G.bit
 

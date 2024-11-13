@@ -3,7 +3,8 @@
 local std = gpm.std
 local is = std.is
 local error = std.error
-
+local Symbol = std.Symbol
+local tostring, pcall, xpcall = std.tostring, pcall, xpcall
 ---@type coroutinelib
 local coroutine = std.coroutine
 local timer_Simple = timer.Simple
@@ -13,82 +14,56 @@ local futures = std.futures or {}
 
 ---@enum gpm.std.futures.result
 futures.RESULT = futures.RESULT or {
-    CANCEL = newproxy(true),
-    YIELD = newproxy(true),
-    ERROR = newproxy(true),
-    END = newproxy(true)
+    YIELD = Symbol("futures.RESULT_YIELD"),
+    ERROR = Symbol("futures.RESULT_ERROR"),
+    END =  Symbol("futures.RESULT_END")
 }
 
-for name, value in pairs(futures.RESULT) do
-    local name = "RESULT_" .. name .. string.format("%p", value)
-    local meta = getmetatable(value)
-    meta.__tostring = function() return name end
-end
+---@enum gpm.std.futures.action
+futures.ACTION = futures.ACTION or {
+    CANCEL = Symbol("futures.ACTION_CANCEL"),
+    RESUME = Symbol("futures.ACTION_RESUME"),
+}
 
-local RESULT_CANCEL = futures.RESULT.CANCEL
 local RESULT_YIELD = futures.RESULT.YIELD
 local RESULT_ERROR = futures.RESULT.ERROR
 local RESULT_END = futures.RESULT.END
+local ACTION_CANCEL = futures.ACTION.CANCEL
+local ACTION_RESUME = futures.ACTION.RESUME
+
 
 ---@private
----@type { [thread]: function | thread }
+---@type { [thread]: function }
 futures.listeners = futures.listeners or setmetatable({}, { __mode = "kv" })
+
+---@private 
+---@type { [thread]: thread }
+futures.coroutine_listeners = futures.coroutine_listeners or setmetatable({}, { __mode = "kv" })
 
 ---@alias AsyncIterator<K, V> table<K, V> | nil
 
 futures.running = coroutine.running
 
 
----@param ok boolean
----@return boolean success
----@return any ...
-local function handleTransfer(co, ok, value, ...)
-    if ok then
-        if value == RESULT_ERROR then
-            return false, ...
-        end
-
-        if value == RESULT_CANCEL then
-            return false, "Operation was cancelled"
-        end
-    end
-
-    return ok, value, ...
+local function displayError(message)
+    return error(message, -2)
 end
-
----@async
----@param co thread
----@param ... any
----@return boolean success
----@return any ...
-function futures.transfer(co, ...)
-    local status = coroutine.status(co)
-    if status == "suspended" then
-        return handleTransfer(co, coroutine.resume(co, ...))
-    end
-
-    if status == "normal" then
-        return handleTransfer(co, true,coroutine.yield(...))
-    end
-
-    if status == "running" then
-        return false, "cannot transfer to a running coroutine"
-    end
-
-    return false, "thread is dead"
-end
-
 
 
 ---@async
 ---@param ok boolean
 local function asyncThreadResult(ok, value, ...)
-    local co = coroutine.running()
+    local co = futures.running()
     local callback = futures.listeners[co]
 
     if is.fn(callback) then
         callback(ok, value, ...)
     elseif not ok then
+        -- TODO: use errors instead of this string
+        if is.string(value) and string.find(value, "Operation was cancelled") then
+            return
+        end
+
         error(value, -2)
     end
 end
@@ -96,20 +71,6 @@ end
 ---@async
 local function asyncThread(fn, ...)
     return asyncThreadResult(pcall(fn, ...))
-end
-
----@async
-local function asyncIteratableThread(fn)
-    local ok, err = pcall(fn, coroutine.yield())
-    local listener = futures.listeners[coroutine.running()]
-    if is.thread(listener) then ---@cast listener thread
-        -- TODO: check if error is cancel
-        if ok then
-            futures.transfer(listener, RESULT_END)
-        else
-            futures.transfer(listener, RESULT_ERROR, err)
-        end
-    end
 end
 
 --- Executes a function in a new coroutine
@@ -132,7 +93,7 @@ end
 
 ---@async
 local function handlePending(value, ...)
-    if value == RESULT_CANCEL then
+    if value == ACTION_CANCEL then
         return error("Operation was cancelled")
     end
 
@@ -155,7 +116,7 @@ end
 function futures.cancel(co)
     local status = coroutine.status(co)
     if status == "suspended" then
-       coroutine.resume(co, RESULT_CANCEL)
+       coroutine.resume(co, ACTION_CANCEL)
     end
 end
 
@@ -173,15 +134,87 @@ function futures.sleep(seconds)
 end
 
 
+--- Transfers data between coroutines in symmetrical way
+---@async
+---@param co thread
+---@param ... any
+---@return boolean success
+---@return any ...
+function futures.transfer(co, ...)
+    local status = coroutine.status(co)
+    if status == "suspended" then
+        return coroutine.resume(co, ...)
+    end
+
+    if status == "normal" then
+        return true, coroutine.yield(...)
+    end
+
+    if status == "running" then
+        return false, "cannot transfer to a running coroutine"
+    end
+
+    return false, "thread is dead"
+end
+
+
+---@async
+local function handleYield(ok, value, ...)
+    -- ignore errors, they must be handled by whoever calls us
+    if not ok or value == RESULT_ERROR then
+        return
+    end
+
+    if value == ACTION_CANCEL then
+        return error("Operation was cancelled")
+    end
+
+    if value == ACTION_RESUME then
+        return ...
+    end
+
+    if value ~= nil then
+        error("invalid yield action: " .. tostring(value), -2) -- ErrorNoHaltWithStack
+    end
+
+    -- caller probably went sleeping
+    return handleYield(true, coroutine.yield())
+end
+
+---@async
+function futures.yield(...)
+    local listener = futures.coroutine_listeners[futures.running()]
+    if not listener then
+        -- whaat? we don't have a listener?!
+        error("Operation was cancelled")
+    end
+
+    return handleYield(futures.transfer(listener, RESULT_YIELD, ...))
+end
+
+
+---@async
+local function asyncIteratableThread(fn, ...)
+    coroutine.yield() -- wait until anext wakes us up
+    local ok, err = pcall(fn, ...)
+
+    local listener = futures.coroutine_listeners[futures.running()]
+    if listener then
+        if ok then
+            futures.transfer(listener, RESULT_END)
+        else
+            futures.transfer(listener, RESULT_ERROR, err)
+        end
+    elseif not ok then
+        error(err)
+    end
+end
+
+
 ---@async
 ---@param co thread
 ---@param ok boolean
 local function handleAnext(co, ok, value, ...)
-    -- print("handleAnext")
-    -- print("\tco =", co)
-    -- print("\tok =", ok)
-    -- print("\tvalue =", value, "IS_YIELD=" .. tostring(value == RESULT_YIELD), "IS_END=" .. tostring(value == RESULT_END))
-    -- print("\t... =", ...)
     if not ok then
         return error(ok)
     end
@@ -191,21 +224,25 @@ local function handleAnext(co, ok, value, ...)
     end
 
     if value == RESULT_END then
-        return nil
+        return -- return nothing so for loop with be stopped
     end
 
     if value == RESULT_ERROR then
         return error(...)
     end
 
-    -- thread went sleeping, wait until it wakes us up
+    if value ~= nil then
+        error("invalid anext result: " .. tostring(value), -2) -- ErrorNoHaltWithStack
+    end
+
+    -- iterator went sleeping, wait until it wakes us up
     return handleAnext(co, true, coroutine.yield())
 end
 
 ---@async
 ---@param iterator thread
-local function anext(iterator, ...)
-    return handleAnext(iterator, futures.transfer(iterator, ...))
+function futures.anext(iterator, ...)
+    return handleAnext(iterator, futures.transfer(iterator, ACTION_RESUME, ...))
 end
 
 ---@async
@@ -215,48 +252,26 @@ end
 ---@return thread
 function futures.apairs(iterator, ...)
     local co = coroutine.create(asyncIteratableThread)
-    futures.listeners[co] = futures.running()
+    futures.coroutine_listeners[co] = futures.running()
     coroutine.resume(co, iterator, ...)
 
-    return anext, co
+    return futures.anext, co
 end
 
 
-local function handleYield(ok, value, ...)
-    if not ok then
-        error(value)
-    end
-
-    return value, ...
-end
-
+--- Launches given iterator and collects its results into a table
 ---@async
-function futures.yield(...)
-    local listener = futures.listeners[futures.running()]
-    ---@cast listener thread
-    return handleYield(futures.transfer(listener, RESULT_YIELD, ...))
-end
-
-
----@async
----@return AsyncIterator<integer>
-local function fuck()
-    for i = 1, 5 do
-        futures.yield(i)
-        futures.sleep(1)
+---@generic V
+---@param iterator async fun(...): AsyncIterator<V>
+---@return V[]
+function futures.collect(iterator, ...)
+    local results = {}
+    local i = 1
+    for value in futures.apairs(iterator, ...) do
+        results[i] = value
+        i = i + 1
     end
+    return results
 end
-
----@async
-local function main()
-    print("begin")
-    for k, v in futures.apairs(fuck) do
-        print("result: ", k, SysTime())
-    end
-    print("end")
-end
-
--- futures.run(main)
-
 
 return futures
