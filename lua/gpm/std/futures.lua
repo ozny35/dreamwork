@@ -39,7 +39,7 @@ futures.listeners = futures.listeners or setmetatable({}, { __mode = "kv" })
 futures.running = coroutine.running
 
 
----@param value gpm.std.futures.result
+---@param ok boolean
 ---@return boolean success
 ---@return any ...
 local function handleTransfer(co, ok, value, ...)
@@ -86,13 +86,8 @@ local function asyncThreadResult(ok, value, ...)
     local co = coroutine.running()
     local callback = futures.listeners[co]
 
-    if callback then
-        if is.thread(callback) then
-            ---@cast callback thread
-            futures.transfer(callback, ok and RESULT_END or RESULT_ERROR, value, ...)
-        else
-            callback(ok, value, ...)
-        end
+    if is.fn(callback) then
+        callback(ok, value, ...)
     elseif not ok then
         error(value, -2)
     end
@@ -105,7 +100,16 @@ end
 
 ---@async
 local function asyncIteratableThread(fn)
-    return asyncThreadResult(pcall(fn, coroutine.yield()))
+    local ok, err = pcall(fn, coroutine.yield())
+    local listener = futures.listeners[coroutine.running()]
+    if is.thread(listener) then ---@cast listener thread
+        -- TODO: check if error is cancel
+        if ok then
+            futures.transfer(listener, RESULT_END)
+        else
+            futures.transfer(listener, RESULT_ERROR, err)
+        end
+    end
 end
 
 --- Executes a function in a new coroutine
@@ -149,7 +153,8 @@ end
 
 ---@param co thread
 function futures.cancel(co)
-    if coroutine.status(co) == "suspended" then
+    local status = coroutine.status(co)
+    if status == "suspended" then
        coroutine.resume(co, RESULT_CANCEL)
     end
 end
@@ -200,7 +205,7 @@ end
 ---@async
 ---@param iterator thread
 local function anext(iterator, ...)
-    return handleAnext(iterator, futures.transfer(iterator))
+    return handleAnext(iterator, futures.transfer(iterator, ...))
 end
 
 ---@async
@@ -208,13 +213,12 @@ end
 ---@param iterator async fun(...): AsyncIterator<K, V>
 ---@return async fun(...): K, V
 ---@return thread
----@return ...
 function futures.apairs(iterator, ...)
     local co = coroutine.create(asyncIteratableThread)
-    coroutine.resume(co, iterator)
     futures.listeners[co] = futures.running()
+    coroutine.resume(co, iterator, ...)
 
-    return anext, co, ...
+    return anext, co
 end
 
 
@@ -247,7 +251,7 @@ end
 local function main()
     print("begin")
     for k, v in futures.apairs(fuck) do
-        print(k)
+        print("result: ", k, SysTime())
     end
     print("end")
 end
