@@ -40,7 +40,8 @@ futures.listeners = futures.listeners or setmetatable({}, { __mode = "kv" })
 ---@type { [thread]: thread }
 futures.coroutine_listeners = futures.coroutine_listeners or setmetatable({}, { __mode = "kv" })
 
----@alias AsyncIterator<K, V> table<K, V> | nil
+---@alias gpm.std.futures.AsyncIterator<K, V> table<K, V> | nil
+---@alias gpm.std.futures.Awaitable { await: async fun(...): ... }
 
 futures.running = coroutine.running
 
@@ -247,7 +248,7 @@ end
 
 ---@async
 ---@generic K, V
----@param iterator async fun(...): AsyncIterator<K, V>
+---@param iterator async fun(...): gpm.std.futures.AsyncIterator<K, V>
 ---@return async fun(...): K, V
 ---@return thread
 function futures.apairs(iterator, ...)
@@ -262,7 +263,7 @@ end
 --- Launches given iterator and collects its results into a table
 ---@async
 ---@generic V
----@param iterator async fun(...): AsyncIterator<V>
+---@param iterator async fun(...): gpm.std.futures.AsyncIterator<V>
 ---@return V[]
 function futures.collect(iterator, ...)
     local results = {}
@@ -273,5 +274,184 @@ function futures.collect(iterator, ...)
     end
     return results
 end
+
+do
+    local STATE_PENDING = Symbol("Future.STATE_PENDING")
+    local STATE_FINISHED = Symbol("Future.STATE_FINISHED")
+    local STATE_CANCELLED = Symbol("Future.STATE_CANCELLED")
+
+    ---@class gpm.std.futures.Future
+    ---@field private _state gpm.std.Symbol
+    ---@field private _callbacks function[]
+    ---@field private _result any
+    ---@field private _error any
+    local Future = futures.Future and futures.Future.__base or {}
+
+    ---@private
+    Future.__index = Future
+
+    Future.STATE_PENDING = STATE_PENDING
+    Future.STATE_FINISHED = STATE_FINISHED
+    Future.STATE_CANCELLED = STATE_CANCELLED
+
+    ---@package
+    function Future:__init()
+        self._state = STATE_PENDING
+        self._callbacks = {} ---@type function[]
+    end
+
+    ---@private
+    function Future:__tostring()
+        if self._state == STATE_PENDING then
+            return self.__class.__name .. "( pending )"
+        elseif self._state == STATE_FINISHED then
+            if self._error then
+                return self.__class.__name .. "( finished error = " .. tostring(self._error) .. " )"
+            else
+                return self.__class.__name .. "( finished value = " .. tostring(self._result) .. " )"
+            end
+        elseif self._state == STATE_CANCELLED then
+            return self.__class.__name .. "( cancelled )"
+        end
+        return self.__class.__name .. "( unknown state )"
+    end
+
+    --- Checks if Future is done
+    ---@return boolean
+    function Future:done()
+        return self._state ~= STATE_PENDING
+    end
+
+    --- Checks if Future was cancelled
+    ---@return boolean
+    function Future:cancelled()
+        return self._state == STATE_CANCELLED
+    end
+
+    ---@private
+    function Future:runCallbacks()
+        local callbacks = self._callbacks
+        if not callbacks then
+            return
+        end
+
+        self._callbacks = {}
+        for i = 1, #callbacks do
+            xpcall(callbacks[i], displayError, self)
+        end
+    end
+
+    ---@param fn fun(fut: gpm.std.futures.Future)
+    function Future:addCallback(fn)
+        if self:done() then
+            xpcall(fn, displayError, self)
+        else
+            self._callbacks[#self._callbacks+1] = fn
+        end
+    end
+
+    ---@param fn function
+    function Future:removeCallback(fn)
+        local callbacks = {}
+        for i = 1, #self._callbacks do
+            local cb = self._callbacks[i]
+            if cb ~= fn then
+                callbacks[#callbacks+1] = cb
+            end
+        end
+        self._callbacks = callbacks
+    end
+
+    ---@param result any
+    function Future:setResult(result)
+        if self:done() then
+            error("future is already finished")
+        end
+
+        self._result = result
+        self._state = STATE_FINISHED
+        self:runCallbacks()
+    end
+
+    ---@param err any
+    function Future:setError(err)
+        if self:done() then
+            error("future is already finished")
+        end
+
+        self._error = err
+        self._state = STATE_FINISHED
+        self:runCallbacks()
+    end
+
+    ---@return boolean cancelled
+    function Future:cancel()
+        if self:done() then
+            return false
+        end
+
+        self._state = STATE_CANCELLED
+        self:runCallbacks()
+        return true
+    end
+
+    ---@return unknown?
+    function Future:error()
+        if self:cancelled() then
+            return "future was cancelled"
+        elseif not self:done() then
+            return "future is not finished"
+        end
+
+        return self._error
+    end
+
+    ---@return any
+    function Future:result()
+        if self:cancelled() then
+            return "future was cancelled"
+        elseif not self:done() then
+            return "future is not finished"
+        end
+
+        if self._error then
+            error(self._error)
+        end
+
+        return self._result
+    end
+
+    ---@async
+    ---@return any
+    function Future:await()
+        if not self:done() then
+            local co = futures.running()
+            self:addCallback(function() futures.wakeup(co) end)
+            futures.pending()
+        end
+
+        if not self:done() then
+            error("future hasn't changed it's state wtf???")
+        end
+
+        return self:result()
+    end
+
+    ---@class gpm.std.futures.FutureClass
+    ---@overload fun(): gpm.std.futures.Future
+    local FutureClass = futures.Future or setmetatable({}, {
+        __call = function()
+            local obj = setmetatable({}, Future)
+            obj:__init()
+            return obj
+        end
+    })
+    futures.Future = FutureClass
+
+    FutureClass.__name = "Future"
+    FutureClass.__base = Future
+    Future.__class = FutureClass
+end
+
 
 return futures
