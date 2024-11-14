@@ -1612,7 +1612,7 @@ do
     local util_GetActivityIDByName = _G.util.GetActivityIDByName
 
     _G.setmetatable( ACT, {
-        ["__index"] = function( tbl, key )
+        __index = function( tbl, key )
             local value = util_GetActivityIDByName( "ACT_" .. key )
             tbl[ key ] = value
             return value
@@ -1747,6 +1747,41 @@ local constants = {
         -- Garry's Mod only
         ["LUA_CLIENT"] = 262144,
         ["LUA_SERVER"] = 524288
+    },
+
+    -- https://wiki.facepunch.com/gmod/Enums/NAV
+    ["NAV_TYPE"] = {
+        ["NONE"] = -1,
+        ["GROUND"] = 0,
+        ["JUMP"] = 1,
+        ["FLY"] = 2,
+        ["CLIMB"] = 3
+    },
+
+    -- https://wiki.facepunch.com/gmod/Enums/NAV_MESH
+    ["NAV"] = {
+        ["INVALID"] = 0,
+        ["CROUCH"] = 1,
+        ["JUMP"] = 2,
+        ["PRECISE"] = 4,
+        ["NO_JUMP"] = 8,
+        ["STOP"] = 16,
+        ["RUN"] = 32,
+        ["WALK"] = 64,
+        ["AVOID"] = 128,
+        ["TRANSIENT"] = 256,
+        ["DONT_HIDE"] = 512,
+        ["STAND"] = 1024,
+        ["NO_HOSTAGES"] = 2048,
+        ["STAIRS"] = 4096,
+        ["NO_MERGE"] = 8192,
+        ["OBSTACLE_TOP"] = 16384,
+        ["CLIFF"] = 32768,
+        ["FUNC_COST"] = 536870912,
+        ["BLOCKED_PROPDOOR"] = 268435456,
+        ["BLOCKED_LUA"] = 134217728,
+        ["HAS_ELEVATOR"] = 1073741824,
+        ["NAV_BLOCKER"] = -2147483648
     },
 
     -- Material Parameters
