@@ -41,7 +41,6 @@ end
 
 -- lua globals
 std.assert = assert
-std.print = _G.print
 std.collectgarbage = _G.collectgarbage
 
 std.getmetatable = getmetatable
@@ -82,8 +81,26 @@ local table_concat = glua_table.concat
 local system = _G.system
 local jit = _G.jit
 
--- tonumber
-std.tonumber = function( value, base )
+do
+
+    local print = _G.print
+    std.print = print
+
+    --- Prints a formatted string to the console.<br>
+    --- Basically the same as `print( string.format( str, ... ) )`
+    ---@param str any
+    ---@vararg any
+    function std.printf( str, ... )
+        print( string_format( str, ... ) )
+    end
+
+end
+
+--- Attempts to convert the value to a number.
+---@param value any: The value to convert.
+---@param base number: The base used in the string. Can be any integer between 2 and 36, inclusive. (Default: 10)
+---@return number: The numeric representation of the value with the given base, or `nil` if the conversion failed.
+function std.tonumber( value, base )
     local metatable = getmetatable( value )
     if metatable == nil then
         return tonumber( value, base )
@@ -97,8 +114,10 @@ std.tonumber = function( value, base )
     return tonumber( value, base )
 end
 
--- tobool
-std.tobool = function( value )
+--- Attempts to convert the value to a boolean.
+---@param value any: The value to convert.
+---@return boolean
+function std.tobool( value )
     local metatable = getmetatable( value )
     if metatable == nil then
         return false
@@ -625,33 +644,33 @@ do
     --]]
 
     local function enqueue( self, value )
-        if not self:isFull() then
-            local rear = self.rear + 1
-            self[ rear ] = value
-            self.rear = rear
+        if self:IsFull() then
+            return nil
         end
 
-        return nil
+        local rear = self.rear + 1
+        self[ rear ] = value
+        self.rear = rear
     end
 
     local function dequeue( self )
-        if not self:isEmpty() then
-            local front = self.front
-
-            local value = self[ front ]
-            self[ front ] = nil
-
-            front = front + 1
-            self.front = front
-
-            if ( front * 2 ) >= self.rear then
-                self:optimize()
-            end
-
-            return value
+        if self:IsEmpty() then
+            return nil
         end
 
-        return nil
+        local front = self.front
+
+        local value = self[ front ]
+        self[ front ] = nil
+
+        front = front + 1
+        self.front = front
+
+        if ( front * 2 ) >= self.rear then
+            self:Optimize()
+        end
+
+        return value
     end
 
     std.Queue = class( "Queue", {
@@ -663,25 +682,25 @@ do
             self.front = 1
             self.rear = 0
         end,
-        length = function( self )
+        Length = function( self )
             return ( self.rear - self.front ) + 1
         end,
-        isEmpty = function( self )
+        IsEmpty = function( self )
             local rear = self.rear
             return rear == 0 or self.front > rear
         end,
-        isFull = function( self )
-            return self:length() == self.size
+        IsFull = function( self )
+            return self:Length() == self.size
         end,
-        enqueue = enqueue,
-        dequeue = dequeue,
-        get = function( self, index )
+        Enqueue = enqueue,
+        Dequeue = dequeue,
+        Get = function( self, index )
             return self[ self.front + index ]
         end,
-        set = function( self, index, value )
+        Set = function( self, index, value )
             self[ self.front + index ] = value
         end,
-        optimize = function( self )
+        Optimize = function( self )
             local pointer, buffer = 1, {}
 
             for index = self.front, self.rear do
@@ -697,16 +716,16 @@ do
             self.front = 1
             self.rear = pointer - 1
         end,
-        peek = function( self )
+        Peek = function( self )
             return self[ self.front ]
         end,
-        empty = function( self )
+        Empty = function( self )
             for index = self.front, self.rear do
                 self[ index ] = nil
             end
         end,
-        iterator = function( self )
-            self:optimize()
+        Iterator = function( self )
+            self:Optimize()
 
             local front, rear = self.front - 1, self.rear
             return function()

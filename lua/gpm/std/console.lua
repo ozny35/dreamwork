@@ -5,10 +5,8 @@ local cvars_GetConVarCallbacks, cvars_AddChangeCallback, cvars_RemoveChangeCallb
 local CONVAR = _G.FindMetaTable( "ConVar" )
 local getName, getDefault = CONVAR.GetName, CONVAR.GetDefault
 
-local console = {
-    ["variable"] = {},
-    ["command"] = {}
-}
+---@class gpm.std.console
+local console = {}
 
 console.write = MsgC
 
@@ -60,7 +58,9 @@ end
 
 -- end
 
-local variable = console.variable
+---@class gpm.std.console.variable
+local variable = {}
+console.variable = variable
 
 -- TODO: Rewrite this crap
 variable.getCallbacks = cvars_GetConVarCallbacks
@@ -156,7 +156,9 @@ variable.getHelpText = CONVAR.GetHelpText
 variable.getMin = CONVAR.GetMin
 variable.getMax = CONVAR.GetMax
 
-local command = console.command
+---@class gpm.std.console.command
+local command = {}
+console.command = command
 
 command.add = concommand.Add
 command.run = RunConsoleCommand
