@@ -3,7 +3,6 @@ local std = _G.gpm.std
 local Vector, ColorToHSL, HSLToColor, HSVToColor = _G.Vector, _G.ColorToHSL, _G.HSLToColor, _G.HSVToColor
 
 local is_number, setmetatable = std.is.number, std.setmetatable
-local COLOR = std.findMetatable( "Color" )
 
 local bit_band, bit_rshift
 do
@@ -71,148 +70,155 @@ local colorCorrection = {
 
 local vconst = 1 / 255
 
-local internal = setmetatable(
-    {
-        __tostring = function( self )
-            return string_format( "%d %d %d %d", self.r, self.g, self.b, self.a )
-        end,
-        __eq = function( self, other )
-            return self.r == other.r and self.g == other.g and self.b == other.b and self.a == other.a
-        end,
-        __unm = function( self )
+-- https://github.com/Facepunch/garrysmod/blob/master/garrysmod/lua/includes/util/color.lua
+local base
+
+base = {
+    __tostring = function( self )
+        return string_format( "Color: %p [%d, %d, %d, %d]", self, self.r, self.g, self.b, self.a )
+    end,
+    __eq = function( self, other )
+        return self.r == other.r and self.g == other.g and self.b == other.b and self.a == other.a
+    end,
+    __unm = function( self )
+        return setmetatable( {
+            r = math_clamp( math_abs( 255 - self.r ), 0, 255 ),
+            g = math_clamp( math_abs( 255 - self.g ), 0, 255 ),
+            b = math_clamp( math_abs( 255 - self.b ), 0, 255 ),
+            a = self.a
+        }, base )
+    end,
+    __add = function( self, color )
+        return setmetatable( {
+            r = math_clamp( self.r + color.r, 0, 255 ),
+            g = math_clamp( self.g + color.g, 0, 255 ),
+            b = math_clamp( self.b + color.b, 0, 255 ),
+            a = self.a
+        }, base )
+    end,
+    __sub = function( self, color )
+        return setmetatable( {
+            r = math_clamp( self.r - color.r, 0, 255 ),
+            g = math_clamp( self.g - color.g, 0, 255 ),
+            b = math_clamp( self.b - color.b, 0, 255 ),
+            a = self.a
+        }, base )
+    end,
+    __mul = function( self, other )
+        if is_number( other ) then
             return setmetatable( {
-                r = math_clamp( math_abs( 255 - self.r ), 0, 255 ),
-                g = math_clamp( math_abs( 255 - self.g ), 0, 255 ),
-                b = math_clamp( math_abs( 255 - self.b ), 0, 255 ),
+                r = math_clamp( self.r * other, 0, 255 ),
+                g = math_clamp( self.g * other, 0, 255 ),
+                b = math_clamp( self.b * other, 0, 255 ),
                 a = self.a
-            }, COLOR )
-        end,
-        __add = function( self, color )
+            }, base )
+        else
             return setmetatable( {
-                r = math_clamp( self.r + color.r, 0, 255 ),
-                g = math_clamp( self.g + color.g, 0, 255 ),
-                b = math_clamp( self.b + color.b, 0, 255 ),
+                r = math_clamp( self.r * other.r, 0, 255 ),
+                g = math_clamp( self.g * other.g, 0, 255 ),
+                b = math_clamp( self.b * other.b, 0, 255 ),
                 a = self.a
-            }, COLOR )
-        end,
-        __sub = function( self, color )
-            return setmetatable( {
-                r = math_clamp( self.r - color.r, 0, 255 ),
-                g = math_clamp( self.g - color.g, 0, 255 ),
-                b = math_clamp( self.b - color.b, 0, 255 ),
-                a = self.a
-            }, COLOR )
-        end,
-        __mul = function( self, other )
-            if is_number( other ) then
-                return setmetatable( {
-                    r = math_clamp( self.r * other, 0, 255 ),
-                    g = math_clamp( self.g * other, 0, 255 ),
-                    b = math_clamp( self.b * other, 0, 255 ),
-                    a = self.a
-                }, COLOR )
-            else
-                return setmetatable( {
-                    r = math_clamp( self.r * other.r, 0, 255 ),
-                    g = math_clamp( self.g * other.g, 0, 255 ),
-                    b = math_clamp( self.b * other.b, 0, 255 ),
-                    a = self.a
-                }, COLOR )
-            end
-        end,
-        __div = function( self, other )
-            if is_number( other ) then
-                return setmetatable( {
-                    r = math_clamp( self.r / other, 0, 255 ),
-                    g = math_clamp( self.g / other, 0, 255 ),
-                    b = math_clamp( self.b / other, 0, 255 ),
-                    a = self.a
-                }, COLOR )
-            else
-                return setmetatable( {
-                    r = math_clamp( self.r / other.r, 0, 255 ),
-                    g = math_clamp( self.g / other.g, 0, 255 ),
-                    b = math_clamp( self.b / other.b, 0, 255 ),
-                    a = self.a
-                }, COLOR )
-            end
-        end,
-        __lt = function( self, other )
-            return ( self.r + self.g + self.b + self.a ) < ( other.r + other.g + other.b + other.a )
-        end,
-        __le = function( self, other )
-            return ( self.r + self.g + self.b + self.a ) <= ( other.r + other.g + other.b + other.a )
-        end,
-        __concat = function( self, value )
-            return self:ToHex() .. tostring( value )
-        end,
-        new = function( self, r, g, b, a )
-            r = math_clamp( r or 0, 0, 255 )
-
-            self.r = r
-            self.g = math_clamp( g or r, 0, 255 )
-            self.b = math_clamp( b or r, 0, 255 )
-            self.a = math_clamp( a or 255, 0, 255 )
-        end,
-        DoCorrection = function( self )
-            self.r = colorCorrection[ self.r ]
-            self.g = colorCorrection[ self.g ]
-            self.b = colorCorrection[ self.b ]
-            return self
-        end,
-        Copy = function( self )
-            return setmetatable( { r = self.r, g = self.g, b = self.b, a = self.a }, COLOR )
-        end,
-        ToTable = function( self )
-            return { self.r, self.g, self.b, self.a }
-        end,
-        ToHex = function( self )
-            return string_format("#%02x%02x%02x", self.r, self.g, self.b)
-        end,
-        ToBinary = function( self, withOutAlpha )
-            if withOutAlpha then
-                return string_char( self.r, self.g, self.b )
-            else
-                return string_char( self.r, self.g, self.b, self.a )
-            end
-        end,
-        ToVector = function( self )
-            return Vector( self.r * vconst, self.g * vconst, self.b * vconst )
-        end,
-        ToHSL = ColorToHSL,
-        ToHSV = _G.ColorToHSV,
-        ToHWB = function( self )
-            local hue, saturation, brightness = ColorToHSL( self )
-            return hue, ( 100 - saturation ) * brightness, 100 - brightness
-        end,
-        ToCMYK = function( self )
-            local m = math_max( self.r, self.g, self.b )
-            return ( m - self.r ) / m * 100, ( m - self.g ) / m * 100, ( m - self.b ) / m * 100, math_min( self.r, self.g, self.b ) / 2.55
-        end,
-        Lerp = function( self, color, frac, withOutAlpha )
-            frac = math_clamp( frac, 0, 1 )
-
-            self.r = math_lerp( frac, self.r, color.r )
-            self.g = math_lerp( frac, self.g, color.g )
-            self.b = math_lerp( frac, self.b, color.b )
-
-            if not withOutAlpha then
-                self.a = math_lerp( frac, self.a, color.a )
-            end
-
-            return self
-        end,
-        Invert = function( self )
-            self.r, self.g, self.b = math_clamp( math_abs( 255 - self.r ), 0, 255 ), math_clamp( math_abs( 255 - self.g ), 0, 255 ), math_clamp( math_abs( 255 - self.b ), 0, 255 )
-            return self
+            }, base )
         end
-    },
-    {
-        __index = COLOR
-    }
-)
+    end,
+    __div = function( self, other )
+        if is_number( other ) then
+            return setmetatable( {
+                r = math_clamp( self.r / other, 0, 255 ),
+                g = math_clamp( self.g / other, 0, 255 ),
+                b = math_clamp( self.b / other, 0, 255 ),
+                a = self.a
+            }, base )
+        else
+            return setmetatable( {
+                r = math_clamp( self.r / other.r, 0, 255 ),
+                g = math_clamp( self.g / other.g, 0, 255 ),
+                b = math_clamp( self.b / other.b, 0, 255 ),
+                a = self.a
+            }, base )
+        end
+    end,
+    __lt = function( self, other )
+        return ( self.r + self.g + self.b + self.a ) < ( other.r + other.g + other.b + other.a )
+    end,
+    __le = function( self, other )
+        return ( self.r + self.g + self.b + self.a ) <= ( other.r + other.g + other.b + other.a )
+    end,
+    __concat = function( self, value )
+        return self:ToHex() .. tostring( value )
+    end,
+    new = function( self, r, g, b, a )
+        r = math_clamp( r or 0, 0, 255 )
 
-internal.__index = internal
+        self.r = r
+        self.g = math_clamp( g or r, 0, 255 )
+        self.b = math_clamp( b or r, 0, 255 )
+        self.a = math_clamp( a or 255, 0, 255 )
+    end,
+    Unpack = function( self )
+        return self.r, self.g, self.b, self.a
+    end,
+    SetUnpacked = function( self, r, g, b, a )
+        r = math_clamp( r or 0, 0, 255 )
+
+        self.r = r
+        self.g = math_clamp( g or r, 0, 255 )
+        self.b = math_clamp( b or r, 0, 255 )
+        self.a = math_clamp( a or 255, 0, 255 )
+    end,
+    DoCorrection = function( self )
+        self.r = colorCorrection[ self.r ]
+        self.g = colorCorrection[ self.g ]
+        self.b = colorCorrection[ self.b ]
+        return self
+    end,
+    Copy = function( self )
+        return setmetatable( { r = self.r, g = self.g, b = self.b, a = self.a }, base )
+    end,
+    ToTable = function( self )
+        return { self.r, self.g, self.b, self.a }
+    end,
+    ToHex = function( self )
+        return string_format("#%02x%02x%02x", self.r, self.g, self.b)
+    end,
+    ToBinary = function( self, withOutAlpha )
+        if withOutAlpha then
+            return string_char( self.r, self.g, self.b )
+        else
+            return string_char( self.r, self.g, self.b, self.a )
+        end
+    end,
+    ToVector = function( self )
+        return Vector( self.r * vconst, self.g * vconst, self.b * vconst )
+    end,
+    ToHSL = ColorToHSL,
+    ToHSV = _G.ColorToHSV,
+    ToHWB = function( self )
+        local hue, saturation, brightness = ColorToHSL( self )
+        return hue, ( 100 - saturation ) * brightness, 100 - brightness
+    end,
+    ToCMYK = function( self )
+        local m = math_max( self.r, self.g, self.b )
+        return ( m - self.r ) / m * 100, ( m - self.g ) / m * 100, ( m - self.b ) / m * 100, math_min( self.r, self.g, self.b ) / 2.55
+    end,
+    Lerp = function( self, color, frac, withOutAlpha )
+        frac = math_clamp( frac, 0, 1 )
+
+        self.r = math_lerp( frac, self.r, color.r )
+        self.g = math_lerp( frac, self.g, color.g )
+        self.b = math_lerp( frac, self.b, color.b )
+
+        if not withOutAlpha then
+            self.a = math_lerp( frac, self.a, color.a )
+        end
+
+        return self
+    end,
+    Invert = function( self )
+        self.r, self.g, self.b = math_clamp( math_abs( 255 - self.r ), 0, 255 ), math_clamp( math_abs( 255 - self.g ), 0, 255 ), math_clamp( math_abs( 255 - self.b ), 0, 255 )
+        return self
+    end
+}
 
 local external = {
     FromHex = function( hex )
@@ -222,7 +228,7 @@ local external = {
                 g = bit_rshift( bit_band( hex, 0xFF00 ), 8 ),
                 b = bit_band( hex, 0xFF ),
                 a = 255
-            }, COLOR )
+            }, base )
         end
 
         if string_byte( hex, 1 ) == 0x23 --[[ # ]] then
@@ -237,7 +243,7 @@ local external = {
                 g = tonumber( string_char( g, g ), 16 ),
                 b = tonumber( string_char( b, b ), 16 ),
                 a = 255
-            }, COLOR )
+            }, base )
         elseif length == 4 then
             local r, g, b, a = string_byte( hex, 1, 4 )
             return setmetatable( {
@@ -245,23 +251,23 @@ local external = {
                 g = tonumber( string_char( g, g ), 16 ),
                 b = tonumber( string_char( b, b ), 16 ),
                 a = tonumber( string_char( a, a ), 16 )
-            }, COLOR )
+            }, base )
         elseif length == 6 then
             return setmetatable( {
                 r = tonumber( string_sub( hex, 1, 2 ), 16 ),
                 g = tonumber( string_sub( hex, 3, 4 ), 16 ),
                 b = tonumber( string_sub( hex, 5, 6 ), 16 ),
                 a = 255
-            }, COLOR )
+            }, base )
         elseif length == 8 then
             return setmetatable( {
                 r = tonumber( string_sub( hex, 1, 2 ), 16 ),
                 g = tonumber( string_sub( hex, 3, 4 ), 16 ),
                 b = tonumber( string_sub( hex, 5, 6 ), 16 ),
                 a = tonumber( string_sub( hex, 7, 8 ), 16 )
-            }, COLOR )
+            }, base )
         else
-            return setmetatable( { r = 0, g = 0, b = 0, a = 255 }, COLOR )
+            return setmetatable( { r = 0, g = 0, b = 0, a = 255 }, base )
         end
     end,
     FromBinary = function( binary, withOutAlpha )
@@ -272,28 +278,28 @@ local external = {
                 g = 0,
                 b = 0,
                 a = 255
-            }, COLOR )
+            }, base )
         elseif length == 2 then
             return setmetatable( {
                 r = string_byte( binary, 1 ),
                 g = string_byte( binary, 2 ),
                 b = 0,
                 a = 255
-            }, COLOR )
+            }, base )
         elseif length == 3 then
             return setmetatable( {
                 r = string_byte( binary, 1 ),
                 g = string_byte( binary, 2 ),
                 b = string_byte( binary, 3 ),
                 a = 255
-            }, COLOR )
+            }, base )
         else
             return setmetatable( {
                 r = string_byte( binary, 1 ),
                 g = string_byte( binary, 2 ),
                 b = string_byte( binary, 3 ),
                 a = string_byte( binary, 4 )
-            }, COLOR )
+            }, base )
         end
     end,
     FromVector = function( vector )
@@ -302,19 +308,19 @@ local external = {
             g = vector[ 2 ] * 255,
             b = vector[ 3 ] * 255,
             a = 255
-        }, COLOR )
+        }, base )
     end,
     FromHSL = function( hue, saturation, lightness )
         local tbl = HSLToColor( hue, saturation, lightness )
-        return setmetatable( { r = tbl[ 1 ], g = tbl[ 2 ], b = tbl[ 3 ], a = tbl[ 4 ] }, COLOR )
+        return setmetatable( { r = tbl[ 1 ], g = tbl[ 2 ], b = tbl[ 3 ], a = tbl[ 4 ] }, base )
     end,
     FromHSV = function( hue, saturation, brightness )
         local tbl = HSVToColor( hue, saturation, brightness )
-        return setmetatable( { r = tbl[ 1 ], g = tbl[ 2 ], b = tbl[ 3 ], a = tbl[ 4 ] }, COLOR )
+        return setmetatable( { r = tbl[ 1 ], g = tbl[ 2 ], b = tbl[ 3 ], a = tbl[ 4 ] }, base )
     end,
     FromHWB = function( hue, saturation, brightness )
         local tbl = HSVToColor( hue, 1 - saturation / ( 1 - brightness ), 1 - brightness )
-        return setmetatable( { r = tbl[ 1 ], g = tbl[ 2 ], b = tbl[ 3 ], a = tbl[ 4 ] }, COLOR )
+        return setmetatable( { r = tbl[ 1 ], g = tbl[ 2 ], b = tbl[ 3 ], a = tbl[ 4 ] }, base )
     end,
     FromCMYK = function( cyan, magenta, yellow, black )
         cyan, magenta, yellow, black = cyan * 0.01, magenta * 0.01, yellow * 0.01, black * 0.01
@@ -325,7 +331,7 @@ local external = {
             g = ( 1 - magenta ) * mk * 255,
             b = ( 1 - yellow ) * mk * 255,
             a = 255
-        }, COLOR )
+        }, base )
     end,
     FromTable = function( tbl )
         return setmetatable( {
@@ -333,7 +339,7 @@ local external = {
             g = tbl[ 2 ] or tbl.g,
             b = tbl[ 3 ] or tbl.b,
             a = tbl[ 4 ] or tbl.a
-        }, COLOR )
+        }, base )
     end,
     Lerp = function( frac, a, b, withOutAlpha )
         frac = math_clamp( frac, 0, 1 )
@@ -342,7 +348,7 @@ local external = {
             g = math_lerp( frac, a.g, b.g ),
             b = math_lerp( frac, a.b, b.b ),
             a = withOutAlpha and 255 or math_lerp( frac, a.a, b.a )
-        }, COLOR )
+        }, base )
     end
 }
 
@@ -350,11 +356,11 @@ if std.CLIENT then
 
     local render_ReadPixel = _G.render.ReadPixel
 
-    external.FromScreen = function( x, y, alpha )
+    function external.FromScreen( x, y, alpha )
         local r, g, b, a = render_ReadPixel( x, y )
-        return setmetatable( { r = r, g = g, b = b, a = alpha or a }, COLOR )
+        return setmetatable( { r = r, g = g, b = b, a = alpha or a }, base )
     end
 
 end
 
-return std.class( "Color", internal, external )
+return std.class( "Color", base, external )

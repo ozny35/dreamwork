@@ -633,13 +633,11 @@ end
 -- Color ( 255 )
 do
 
-    local metatable = findMetatable( "Color" )
+    local is_table, is_number = is.table, is.number
 
     function is.color( value )
-        return getmetatable( value ) == metatable
+        return is_table( value ) and is_number( value.r ) and is_number( value.g ) and is_number( value.b ) and is_number( value.a )
     end
-
-    registerMetatable( "Color", metatable )
 
 end
 
