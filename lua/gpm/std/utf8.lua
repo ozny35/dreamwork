@@ -46,12 +46,13 @@ end
 ---@vararg number: The UTF-8 bytes
 ---@return string: The resulting string
 local function char_fn( ... )
-	local args = { ... }
 	local length = select( "#", ... )
+	if length == 0 then return "" end
 
+	local args = { ... }
 	for index = 1, length do
 		---@diagnostic disable-next-line: assign-type-mismatch
-		args[ length ] = byte2char( args[ index ] )
+		args[ index ] = byte2char( args[ index ] )
 	end
 
 	return table_concat( args, "", 1, length )
