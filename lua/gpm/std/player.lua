@@ -7,15 +7,20 @@ do
     is_string, is_number = is.string, is.number
 end
 
-local player, NULL, Player = _G.player, _G.NULL, _G.Player
-local player_Iterator = player.Iterator
+local glua_player, NULL, Player = _G.player, _G.NULL, _G.Player
+local player_Iterator = glua_player.Iterator
 
 ---@class Player
 local PLAYER = std.findMetatable( "Player" )
 
+local player = {
+    ["getLimit"] = glua_game.MaxPlayers,
+    ["iterator"] = player_Iterator
+}
+
 if std.SERVER then
     local PLAYER_IsListenServerHost = PLAYER.IsListenServerHost
-    local player_CreateNextBot = player.CreateNextBot
+    local player_CreateNextBot = glua_player.CreateNextBot
 
     PLAYER.new = function( value )
         if is_string( value ) then
@@ -34,7 +39,6 @@ if std.SERVER then
             return NULL
         end
     end
-
 elseif std.CLIENT then
     local LocalPlayer = _G.LocalPlayer
 
@@ -50,9 +54,4 @@ elseif std.CLIENT then
     end
 end
 
-local library = {
-    ["getLimit"] = glua_game.MaxPlayers,
-    ["iterator"] = player_Iterator
-}
-
-return std.class( "player", PLAYER, library )
+return std.class( "player", PLAYER, player )

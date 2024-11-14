@@ -633,17 +633,13 @@ do
 
             -- Boolean
             ReadBool: =>
-                switch @ReadByte!
-                    when 0
-                        return false
-
-                    when 1
-                        return true
-
-                return nil, "eof"
+                if @EndOfFile!
+                    return nil, "eof"
+                else
+                    return @ReadByte! ~= 0
 
             WriteBool: ( bool ) =>
-                return @WriteByte( bool and 1 or 0 )
+                return @Write( bool and "\1" or "\0" )
 
             -- UInt
             ReadUInt: ( bytes, isBigEndian ) =>
