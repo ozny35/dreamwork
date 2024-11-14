@@ -12,6 +12,7 @@ end
 
 local getfenv, rawget, select = std.getfenv, std.rawget, std.select
 
+---@class gpm.std.path
 local path = {}
 
 local function getFile( filePath )
@@ -188,41 +189,41 @@ local function getCurrentFile( fn )
 
     local filePath = debug_getfpath( fn )
     if string_isURL( filePath ) then
-        -- TOOD: match or url lib
-        --     return URL( filePath ).pathname
+        filePath = string_match( filePath, "^[^/]*([^#?]+).*$" )
+        return string_match( filePath, "^//[^/]+/?(.+)$" ) or filePath
     end
 
     return "/" .. filePath
 end
 
-path["getCurrentFile"] = getCurrentFile
+path.getCurrentFile = getCurrentFile
 
 local function getCurrentDirectory( fn, withTrailingSlash )
     if fn == nil then
         fn = debug_getfmain()
     end
 
-    if withTrailingSlash == nil then
-        withTrailingSlash = true
-    end
-
     if fn then
+        if withTrailingSlash == nil then
+            withTrailingSlash = true
+        end
+
         local fenv = getfenv( fn )
         if fenv then
             local dirPath = rawget( fenv, "__dirname" )
             if dirPath then
                 if withTrailingSlash then
                     dirPath = dirPath .. "/"
+                else
+                    return dirPath
                 end
-
-                return dirPath
             end
         end
 
         local filePath = debug_getfpath( fn )
         if string_isURL( filePath ) then
-            -- TOOD: match or url lib
-            --     return getDirectory( URL( filePath ).pathname, withTrailingSlash )
+            filePath = string_match( filePath, "^[^/]*([^#?]+).*$" )
+            return getDirectory( string_match( filePath, "^//[^/]+/?(.+)$" ) or filePath, withTrailingSlash )
         end
 
         return getDirectory( "/" .. filePath, withTrailingSlash )

@@ -1151,6 +1151,9 @@ do
 
 end
 
+-- path library
+std.path = include( "std/path.lua" )
+
 -- Logger
 local logger
 do
