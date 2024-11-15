@@ -132,8 +132,28 @@ function std.tobool( value )
 end
 
 -- coroutine library
-local coroutine = _G.coroutine
-std.coroutine = coroutine
+local coroutine
+do
+
+    local glua_coroutine = _G.coroutine
+
+    coroutine = {
+        -- lua
+        create = glua_coroutine.create,
+        isyieldable = glua_coroutine.isyieldable,
+        resume = glua_coroutine.resume,
+        running = glua_coroutine.running,
+        status = glua_coroutine.status,
+        wrap = glua_coroutine.wrap,
+        yield = glua_coroutine.yield,
+
+        -- gmod
+        wait = glua_coroutine.wait
+    }
+
+    std.coroutine = coroutine
+
+end
 
 -- jit library
 std.jit = jit
@@ -601,7 +621,26 @@ end
 std.Symbol = Symbol
 
 -- bit library
-std.bit = _G.bit
+do
+
+    local glua_bit = _G.bit
+
+    std.bit = {
+        arshift = glua_bit.arshift,
+        band = glua_bit.band,
+        bnot = glua_bit.bnot,
+        bor = glua_bit.bor,
+        bswap = glua_bit.bswap,
+        bxor = glua_bit.bxor,
+        lshift = glua_bit.lshift,
+        rol = glua_bit.rol,
+        ror = glua_bit.ror,
+        rshift = glua_bit.rshift,
+        tobit = glua_bit.tobit,
+        tohex = glua_bit.tohex
+    }
+
+end
 
 -- math library
 local math = include( "std/math.lua" )
@@ -1273,6 +1312,8 @@ do
     gpm.Logger = logger
 
 end
+
+-- TODO: https://github.com/toxidroma/class-war
 
 -- Material
 do

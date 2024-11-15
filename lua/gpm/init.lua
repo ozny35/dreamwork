@@ -1,5 +1,3 @@
-local version = "2.0.0"
-
 ---@class _G
 local _G = _G
 
@@ -7,6 +5,8 @@ do
 
     local name = _G.GetConVar( _G.SERVER and "hostname" or "name" ):GetString()
     if name == "unnamed" then name = "stranger" end
+
+    local version = "2.0.0"
 
     local splashes = {
         "eW91dHViZS5jb20vd2F0Y2g/dj1kUXc0dzlXZ1hjUQ==",
@@ -60,18 +60,20 @@ do
 
     print( string.format( "\n                                     ___          __            \n                                   /'___`\\      /'__`\\          \n     __    _____     ___ ___      /\\_\\ /\\ \\    /\\ \\/\\ \\         \n   /'_ `\\ /\\ '__`\\ /' __` __`\\    \\/_/// /__   \\ \\ \\ \\ \\        \n  /\\ \\L\\ \\\\ \\ \\L\\ \\/\\ \\/\\ \\/\\ \\      // /_\\ \\ __\\ \\ \\_\\ \\   \n  \\ \\____ \\\\ \\ ,__/\\ \\_\\ \\_\\ \\_\\    /\\______//\\_\\\\ \\____/   \n   \\/___L\\ \\\\ \\ \\/  \\/_/\\/_/\\/_/    \\/_____/ \\/_/ \\/___/    \n     /\\____/ \\ \\_\\                                          \n     \\_/__/   \\/_/                %s                        \n\n  GitHub: https://github.com/Pika-Software\n  Discord: https://discord.gg/Gzak99XGvv\n  Website: https://p1ka.eu\n  Developers: Pika Software\n  License: MIT\n", splash ) )
 
-end
+    if gpm == nil then
+        ---@class gpm
+        ---@field VERSION string Package manager version in semver format.
+        ---@field PREFIX string Package manager unique prefix.
+        ---@field StartTime number SysTime point when package manager was started.
+        gpm = { ["VERSION"] = version, ["PREFIX"] = "gpm@" .. version, ["StartTime"] = 0 }
+    end
 
-if gpm == nil then
-    ---@class gpm
-    ---@field VERSION string Package manager version in semver format.
-    ---@field PREFIX string Package manager unique prefix.
-    ---@field StartTime number SysTime point when package manager was started.
-    gpm = { ["VERSION"] = version, ["PREFIX"] = "gpm@" .. version, ["StartTime"] = 0 }
 end
 
 ---@class gpm
 local gpm = gpm
+local include = _G.include
+
 gpm.StartTime = _G.SysTime()
 
 if gpm.detour == nil then
@@ -81,20 +83,17 @@ end
 
 include( "std.lua" )
 
--- TODO: net meta methods and __net_write __net_read
 -- local file = std.file
 
 -- -- Plugins
 -- do
 
---     local files = file.Find( "gpm/plugins/*.lua", file.LuaPath )
+--     local files = _G.file.Find( "gpm/plugins/*.lua", "LUA" )
 --     for i = 1, #files do
---         dofile( "gpm/plugins/" .. files[ i ] )
+--         include( "gpm/plugins/" .. files[ i ] )
 --     end
 
 -- end
-
--- TODO: https://github.com/toxidroma/class-war
 
 gpm.Logger:Info( "Start-up time: %.4f sec.", SysTime() - gpm.StartTime )
 
