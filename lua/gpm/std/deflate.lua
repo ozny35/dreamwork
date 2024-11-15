@@ -3,6 +3,7 @@ local _G = _G
 local assert, error, pairs, tostring = _G.assert, _G.error, _G.pairs, _G.tostring
 local type = _G.gpm.std.type
 
+---@class gpm.std.crypto.deflate
 local deflate = {
     _VERSION = "1.0.2-release",
     _COPYRIGHT = "LibDeflate " .. _VERSION .. " Copyright (C) 2018-2021 Haoqian He. Licensed under the zlib License",

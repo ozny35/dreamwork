@@ -28,7 +28,7 @@ do
     ---@param date number The date to convert.
     ---@return number seconds The Unix timestamp.
     function os.dos2unix( time, date )
-        local data = { ["year"] = 1980, ["month"] = 1, ["day"] = 1, ["hour"] = 0, ["min"] = 0, ["sec"] = 0 }
+        local data = { year = 1980, month = 1, day = 1, hour = 0, min = 0, sec = 0 }
 
         if time then
             data.hour = bit_rshift( bit_band( time, 0xF800 ), 11 )
@@ -58,6 +58,7 @@ do
     ---@return number date The DOS date.
     function os.unix2dos( seconds )
         local data = glua_os_date( "*t", seconds )
+        ---@diagnostic disable-next-line: param-type-mismatch
         return bit_bor( bit_lshift( data.hour, 11 ), bit_lshift( data.min, 5 ), math_fdiv( data.sec, 2 ) ), bit_bor( bit_lshift( data.year - 1980, 9 ), bit_lshift( data.month, 5 ), data.day )
     end
 
