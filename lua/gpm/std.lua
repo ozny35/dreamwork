@@ -1117,6 +1117,9 @@ end
 local hook = include( "std/hook.lua" )
 std.hook = hook
 
+-- timer library
+std.timer = include( "std/timer.lua" )
+
 local isInDebug
 do
 
