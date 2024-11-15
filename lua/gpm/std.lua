@@ -1132,6 +1132,9 @@ do
 
 end
 
+-- sqlite library
+std.sqlite = include( "std/sqlite.lua" )
+
 -- engine library
 local engine = include( "std/engine.lua" )
 std.engine = engine
