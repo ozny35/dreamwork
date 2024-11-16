@@ -1316,6 +1316,9 @@ do
 
 end
 
+-- version object
+std.Version = include( "std/version.lua" )
+
 -- TODO: https://github.com/toxidroma/class-war
 
 -- Material
