@@ -1,5 +1,5 @@
 local _G = _G
-local assert, error, select, pairs, ipairs, tostring, tonumber, getmetatable, setmetatable, rawget, rawset = _G.assert, _G.error, _G.select, _G.pairs, _G.ipairs, _G.tostring, _G.tonumber, _G.getmetatable, _G.setmetatable, _G.rawget, _G.rawset
+local assert, error, select, pairs, ipairs, tostring, tonumber, getmetatable, setmetatable, rawget, rawset, getfenv, setfenv = _G.assert, _G.error, _G.select, _G.pairs, _G.ipairs, _G.tostring, _G.tonumber, _G.getmetatable, _G.setmetatable, _G.rawget, _G.rawset, _G.getfenv, _G.setfenv
 local include = _G.include
 
 ---@class gpm
@@ -46,8 +46,8 @@ std.collectgarbage = _G.collectgarbage
 std.getmetatable = getmetatable
 std.setmetatable = setmetatable
 
-std.getfenv = _G.getfenv -- removed in Lua 5.2
-std.setfenv = _G.setfenv -- removed in Lua 5.2
+std.getfenv = getfenv -- removed in Lua 5.2
+std.setfenv = setfenv -- removed in Lua 5.2
 
 std.rawget = rawget
 std.rawset = rawset
@@ -668,7 +668,7 @@ std.table = table
 
 -- string library
 local string = include( "std/string.lua" )
-local string_len = string.len
+local string_byte, string_len = string.byte, string.len
 std.string = string
 
 -- Queue class
@@ -1200,7 +1200,7 @@ end
 std.path = include( "std/path.lua" )
 
 -- Logger
-local logger
+local gpm_Logger
 do
 
     local string_gsub, string_sub = string.gsub, string.sub
@@ -1311,8 +1311,8 @@ do
 
     std.Logger = Logger
 
-    logger = Logger( gpm_PREFIX, Color( 180, 180, 255 ), false )
-    gpm.Logger = logger
+    gpm_Logger = Logger( gpm_PREFIX, Color( 180, 180, 255 ), false )
+    gpm.Logger = gpm_Logger
 
 end
 
@@ -1327,7 +1327,6 @@ do
 
     local Material = engine.Material
     if Material == nil then
-        local string_byte = string.byte
         Material = _G.Material
 
         function std.Material( name, parameters )
@@ -1406,11 +1405,7 @@ do
     local tail = "_" .. ( { "osx64", "osx", "linux64", "linux", "win64", "win32" } )[ ( system.IsWindows() and 4 or 0 ) + ( system.IsLinux() and 2 or 0 ) + ( is32 and 1 or 0 ) + 1 ] .. ".dll"
 
     local function isBinaryModuleInstalled( name )
-        argument( name, 1, "string" )
-
-        if name == "" then
-            return false, ""
-        end
+        if name == "" then return false, "" end
 
         local filePath = head .. name .. tail
         if file_Exists( filePath, "MOD" ) then
@@ -1450,6 +1445,81 @@ do
     end
 
     std.loadbinary = loadbinary
+
+end
+
+-- https://github.com/WilliamVenner/gmsv_workshop
+if SERVER and not ( is_table( _G.steamworks ) and is_function( _G.steamworks.DownloadUGC ) ) then
+    loadbinary( "workshop" )
+end
+
+-- https://github.com/willox/gmbc
+loadbinary( "gmbc" )
+
+do
+
+    ---@diagnostic disable-next-line: undefined-field
+    local CompileString, gmbc_load_bytecode = _G.CompileString, _G.gmbc_load_bytecode
+
+    --- Loads a chunk
+    ---@param chunk string | function: The chunk to load, can be a string or a function.
+    ---@param chunkName string?: The chunk name, if chunk is binary the name will be ignored.
+    ---@param mode string?: The string mode controls whether the chunk can be text or binary (that is, a precompiled chunk). It may be the string "b" (only binary chunks), "t" (only text chunks), or "bt" (both binary and text). The default is "bt".
+    ---@param env table?: The environment to load the chunk in.
+    ---@return function?: The loaded chunk
+    ---@return string?: Error message
+    local function load( chunk, chunkName, mode, env )
+        if env == nil then env = getfenv( 2 ) end
+
+        if is_string( chunk ) then
+            if mode == nil then mode = "bt" end
+
+            local fn
+            ---@diagnostic disable-next-line: param-type-mismatch
+            if ( mode == "bt" or mode == "tb" or mode == "b" ) and string_byte( chunk, 1 ) == 0x1B then
+                if gmbc_load_bytecode == nil then
+                    return nil, "bytecode compilation is not supported"
+                else
+                    fn = gmbc_load_bytecode( chunk )
+                end
+            elseif ( mode == "bt" or mode == "tb" or mode == "t" ) then
+                ---@diagnostic disable-next-line: param-type-mismatch
+                fn = CompileString( chunk, chunkName, false )
+                if is_string( fn ) then return nil, fn end
+            end
+
+            if fn == nil then
+                return nil, "wrong load mode"
+            end
+
+            if is_table( env ) then
+                setfenv( fn, env )
+            else
+                return nil, "environment must be a table"
+            end
+
+            return fn
+        elseif is_function( chunk ) then
+            local segment = chunk()
+            if segment == nil then
+                return nil, "first segment is nil"
+            end
+
+            local result, length = {}, 0
+
+            while segment do
+                length = length + 1
+                result[ length ] = segment
+                segment = chunk()
+            end
+
+            return load( table_concat( result, "", 1, length ), chunkName, mode, env )
+        end
+
+        return nil, "wrong chunk type"
+    end
+
+    std.load = load
 
 end
 
@@ -1552,9 +1622,9 @@ if CLIENT_MENU then
 end
 
 if std.TYPE.COUNT ~= 44 then
-    logger:Warn( "Global TYPE_COUNT mismatch, data corruption suspected. (" .. tostring( _G.TYPE_COUNT or "missing" ) .. " ~= 44)"  )
+    gpm_Logger:Warn( "Global TYPE_COUNT mismatch, data corruption suspected. (" .. tostring( _G.TYPE_COUNT or "missing" ) .. " ~= 44)"  )
 end
 
 if std._VERSION ~= "Lua 5.1" then
-    logger:Warn( "Lua version changed, possible unpredictable behavior. (" .. tostring( _G._VERSION or "missing") .. ")" )
+    gpm_Logger:Warn( "Lua version changed, possible unpredictable behavior. (" .. tostring( _G._VERSION or "missing") .. ")" )
 end
