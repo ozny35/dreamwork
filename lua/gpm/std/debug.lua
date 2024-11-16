@@ -1,8 +1,8 @@
 local _G = _G
 local glua_debug = _G.debug
-local debug_getinfo = glua_debug.getinfo
+local debug_getinfo, glua_string = glua_debug.getinfo, _G.string
 
----Just empty function, do nothing.
+--- Just empty function, do nothing.
 local function fempty() end
 
 ---@class gpm.std.debug
@@ -36,7 +36,7 @@ local debug = {
     fempty = fempty
 }
 
----Call function with given arguments.
+--- Call function with given arguments.
 ---@param func function
 ---@vararg any
 ---@return any
@@ -44,7 +44,7 @@ function debug.fcall( func, ... )
     return func( ... )
 end
 
----Returns current stack trace as a table with strings.
+--- Returns current stack trace as a table with strings.
 ---@param startPos? number
 ---@return table stack
 ---@return number length
@@ -64,7 +64,7 @@ function debug.getstack( startPos )
     return stack, length
 end
 
----Returns the function within which the call was made or nil if not found.
+--- Returns the function within which the call was made or `nil` if not found.
 ---@return function | nil
 function debug.getfmain()
     for location = 2, 16, 1 do
@@ -83,15 +83,10 @@ end
 
 do
 
-    local string_sub, string_gsub
-    do
-        local glua_string = _G.string
-        string_sub, string_gsub = glua_string.sub, glua_string.gsub
-    end
-
+    local string_sub, string_gsub = glua_string.sub, glua_string.gsub
     local gsub_formatter = function( _, str ) return str end
 
-    ---Returns the path to the file in which it was called or an empty string if it could not be found.
+    --- Returns the path to the file in which it was called or an empty string if it could not be found.
     ---@param location number | function
     ---@return string path
     function debug.getfpath( location )
@@ -102,6 +97,20 @@ do
         end
 
         return ""
+    end
+
+end
+
+do
+
+    local string_format = glua_string.format
+    local tonumber = _G.tonumber
+
+    --- Returns the memory address of the value.
+    ---@param value any
+    ---@return number?
+    function debug.getpointer( value )
+        return tonumber( string_format( "%p", value ), 16 )
     end
 
 end

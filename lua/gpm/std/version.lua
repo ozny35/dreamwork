@@ -243,6 +243,11 @@ do
 	local names = {}
 	local keys = {}
 
+	function internal:Unpack()
+		local values = keys[ self ]
+		return values[ 1 ], values[ 2 ], values[ 3 ], values[ 4 ], values[ 5 ]
+	end
+
 	local metatable = {
 		__index = function( object, key )
 			return keys[ object ][ key ] or internal[ key ]
@@ -506,7 +511,8 @@ local function sort_fn( a, b )
 	return a > b
 end
 
-return setmetatable( {
+---@class gpm.std.Version
+local Version = {
 	Parse = parse,
 	ToString = function( ... )
 		return numbersToString( parse( ... ) )
@@ -524,7 +530,9 @@ return setmetatable( {
 
 		return nil, -1
 	end
-}, {
+}
+
+return setmetatable( Version, {
 	__call = function( _, ... ) return new_version( ... ) end,
 	__index = internal
 } )

@@ -1316,7 +1316,7 @@ do
 
 end
 
--- version object
+-- Version class
 std.Version = include( "std/version.lua" )
 
 -- TODO: https://github.com/toxidroma/class-war
