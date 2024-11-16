@@ -63,7 +63,7 @@ local asciiNumbers = {
 
 ---Removes leading and trailing matches of a string.
 ---@param str string The string.
----@param pattern? string The pattern to match.
+---@param pattern? string The pattern to match, `%s` for whitespace.
 ---@param dir? number The direction to trim. `1` for left, `-1` for right, `0` for both.
 ---@return string str The trimmed string.
 local function trim( str, pattern, dir )
@@ -264,32 +264,32 @@ end
 
 local string = {
     -- Lua 5.1
-    ["byte"] = glua_string.byte,
-    ["char"] = glua_string.char,
-    ["dump"] = glua_string.dump,
-    ["find"] = string_find,
-    ["format"] = glua_string.format,
-    ["gmatch"] = glua_string.gmatch,
-    ["gsub"] = string_gsub,
-    ["len"] = string_len,
-    ["lower"] = glua_string.lower,
-    ["match"] = string_match,
-    ["rep"] = glua_string.rep,
-    ["reverse"] = glua_string.reverse,
-    ["sub"] = string_sub,
-    ["upper"] = glua_string.upper,
-    ["slice"] = string_sub,
+    byte = glua_string.byte,
+    char = glua_string.char,
+    dump = glua_string.dump,
+    find = string_find,
+    format = glua_string.format,
+    gmatch = glua_string.gmatch,
+    gsub = string_gsub,
+    len = string_len,
+    lower = glua_string.lower,
+    match = string_match,
+    rep = glua_string.rep,
+    reverse = glua_string.reverse,
+    sub = string_sub,
+    upper = glua_string.upper,
+    slice = string_sub,
 
     -- Custom
-    ["trim"] = trim,
-    ["unpack"] = unpack,
-    ["replace"] = replace,
-    ["isDomain"] = isDomain,
-    ["byteSplit"] = byteSplit,
-    ["bin2dec"] = binary2decimal,
-    ["dec2bin"] = decimal2binary,
-    ["hex2dec"] = hex2decimal,
-    ["dec2hex"] = decimal2hex,
+    trim = trim,
+    unpack = unpack,
+    replace = replace,
+    isDomain = isDomain,
+    byteSplit = byteSplit,
+    bin2dec = binary2decimal,
+    dec2bin = decimal2binary,
+    hex2dec = hex2decimal,
+    dec2hex = decimal2hex,
 }
 
 ---Cuts the string into two.
@@ -475,23 +475,17 @@ end
 ---@param byte? number The byte to count.
 ---@return number
 function string.byteCount( str, byte )
-    if byte == nil then
-        return 0
-    else
-        local count, pointer = 0, 1
-        local nextByte = string_byte( str, pointer )
+    if byte == nil or str == "" then return 0 end
 
-        while nextByte ~= nil do
-            if nextByte == byte then
-                count = count + 1
-            else
-                pointer = pointer + 1
-                nextByte = string_byte( str, pointer )
-            end
+    local count = 0
+
+    for index = 1, string_len( str ) do
+        if string_byte( str, index ) == byte then
+            count = count + 1
         end
-
-        return count
     end
+
+    return count
 end
 
 ---Trims a string by a byte.
