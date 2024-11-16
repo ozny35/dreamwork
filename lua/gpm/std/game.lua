@@ -3,21 +3,22 @@ local glua_engine, glua_game, glua_util, system_IsWindowed = _G.engine, _G.game,
 local std = _G.gpm.std
 local debug, CLIENT_SERVER, CLIENT_MENU, SERVER = std.debug, std.CLIENT_SERVER, std.CLIENT_MENU, std.SERVER
 
-local engine = {
-    ["getTickCount"] = glua_engine.TickCount,
-    ["getTickInterval"] = glua_engine.TickInterval
+---@class gpm.std.game
+local game = {
+    getTickCount = glua_engine.TickCount,
+    getTickInterval = glua_engine.TickInterval
 }
 
 do
 
     local fnName, fn = debug.getupvalue( _G.Material, 1 )
     if fnName ~= "C_Material" then fn = nil end
-    engine.Material = fn
+    game.Material = fn
 
 end
 
 if CLIENT_MENU then
-    engine.IsInWindow = system_IsWindowed
+    game.IsInWindow = system_IsWindowed
 
     do
 
@@ -66,45 +67,45 @@ if CLIENT_MENU then
             return tbl, count
         end
 
-        engine.achievement = achievement
+        game.achievement = achievement
 
     end
 
 end
 
 if CLIENT_SERVER then
-    engine.isDedicatedServer = glua_game.IsDedicated
-    engine.isSinglePlayer = glua_game.SinglePlayer
-    engine.getDifficulty = glua_game.GetSkillLevel
-    engine.getIPAddress = glua_game.GetIPAddress
-    engine.getTimeScale = glua_game.GetTimeScale
+    game.isDedicatedServer = glua_game.IsDedicated
+    game.isSinglePlayer = glua_game.SinglePlayer
+    game.getDifficulty = glua_game.GetSkillLevel
+    game.getIPAddress = glua_game.GetIPAddress
+    game.getTimeScale = glua_game.GetTimeScale
 
-    engine.getActivityName = glua_util.GetActivityNameByID
-    engine.getActivityID = glua_util.GetActivityIDByName
+    game.getActivityName = glua_util.GetActivityNameByID
+    game.getActivityID = glua_util.GetActivityIDByName
 
-    engine.getAnimEventName = glua_util.GetAnimEventNameByID
-    engine.getAnimEventID = glua_util.GetAnimEventIDByName
+    game.getAnimEventName = glua_util.GetAnimEventNameByID
+    game.getAnimEventID = glua_util.GetAnimEventIDByName
 
-    engine.getModelMeshes = glua_util.GetModelMeshes
-    engine.getModelInfo = glua_util.GetModelInfo
+    game.getModelMeshes = glua_util.GetModelMeshes
+    game.getModelInfo = glua_util.GetModelInfo
 
-    engine.precacheModel = glua_util.PrecacheModel
-    engine.precacheSound = glua_util.PrecacheSound
+    game.precacheModel = glua_util.PrecacheModel
+    game.precacheSound = glua_util.PrecacheSound
 
     -- TODO: Rework server name
-    engine.getServerName = _G.GetHostName
+    game.getServerName = _G.GetHostName
 end
 
 if SERVER then
-    engine.setDifficulty = glua_game.SetSkillLevel
-    engine.setTimeScale = glua_game.SetTimeScale
+    game.setDifficulty = glua_game.SetSkillLevel
+    game.setTimeScale = glua_game.SetTimeScale
 
     -- TODO: Rework server name
-    engine.setServerName = function( str )
+    game.setServerName = function( str )
 
     end
 
-    engine.exit = glua_engine.CloseServer
+    game.exit = glua_engine.CloseServer
 end
 
-return engine
+return game

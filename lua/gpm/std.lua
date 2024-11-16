@@ -1135,20 +1135,19 @@ end
 -- sqlite library
 std.sqlite = include( "std/sqlite.lua" )
 
--- engine library
-local engine = include( "std/engine.lua" )
-std.engine = engine
+---@class gpm.std.game
+local game = include( "std/game.lua" )
+std.game = game
 
 -- level library
 std.level = include( "std/level.lua" )
 
 local isDedicatedServer = false
 if CLIENT_SERVER then
+    isDedicatedServer = game.isDedicatedServer()
 
     -- entity library
     std.entity = include( "std/entity.lua" )
-
-    isDedicatedServer = engine.isDedicatedServer()
 
     -- player library
     std.player = include( "std/player.lua" )
@@ -1328,7 +1327,7 @@ do
 
     -- TODO: Think about material library
 
-    local Material = engine.Material
+    local Material = game.Material
     if Material == nil then
         Material = _G.Material
 
@@ -1425,7 +1424,7 @@ do
         return false, filePath
     end
 
-    engine.isBinaryModuleInstalled = isBinaryModuleInstalled
+    game.isBinaryModuleInstalled = isBinaryModuleInstalled
 
     local sv_allowcslua = console.variable.get( "sv_allowcslua" )
     local console_variable_getBool = console.variable.getBool
