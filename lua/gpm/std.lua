@@ -379,14 +379,16 @@ do
 
         std.TypeID = function( value )
             local metatable = getmetatable( value )
-            if metatable ~= nil then
+            if metatable == nil then
+                return glua_TypeID( value )
+            else
                 local id = rawget( metatable, "__metatable_id" )
-                if id ~= nil then
+                if id == nil then
+                    return glua_TypeID( value )
+                else
                     return id
                 end
             end
-
-            return glua_TypeID( value )
         end
 
     end
