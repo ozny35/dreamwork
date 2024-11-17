@@ -453,146 +453,83 @@ do
 
     std.argument = argument
 
-    local class__call = function( cls, ... )
-        local init = rawget( cls, "__init" )
-        if init == nil then
-            local parent = rawget( cls, "__parent" )
-            if parent then
-                init = rawget( parent, "__init" )
+    local class = std.class or {}
+    std.class = class
+
+    ---@class gpm.std.Object
+    ---@field __name string name of the object
+    ---@field __class Class class of the object (must be redefined)
+    ---@field __parent gpm.std.Class | nil parent of the class (must be redefined)
+    ---@alias Object gpm.std.Object
+    
+    ---@class gpm.std.Class : gpm.std.Object
+    ---@field __base gpm.std.Object base of the class
+    ---@field __inherited fun(parent: gpm.std.Class, child: gpm.std.Class) | nil called when a class is inherited
+    ---@alias Class gpm.std.Class
+
+    ---@param name string
+    ---@param parent Class | unknown | nil
+    ---@return Object
+    function class.base(name, parent)
+        local base = {}
+        base.__name = name
+        base.__index = base
+
+        if parent then
+            base.__parent = parent
+            setmetatable(base, parent.__base)
+
+            -- copy metamethods from parent
+            for key, value in pairs(parent.__base) do
+                if string_sub(key, 1, 2) == "__" and not (key == "__index" and value == parent.__base) and key ~= "__name" then
+                    base[key] = value
+                end
             end
         end
 
-        local base = rawget( cls, "__base" )
-        if base == nil then
-            return error( "class '" .. tostring( cls ) .. "' has been corrupted", 2 )
+        if not rawget(base, "__init") then
+            rawset(base, "__init", debug.fempty)
         end
 
-        local obj = {}
-        setmetatable( obj, base )
+        return base
+    end
 
-        if init ~= nil then
-            local override, new = init( obj, ... )
-            if override then return new end
-        end
-
+    --- Creates a new object from the given base.
+    ---@param base Object
+    ---@return Object
+    function class.new(base, ...)
+        local obj = setmetatable({}, base)
+        obj:__init(...)
         return obj
     end
 
-    local extends__index = function( cls, key )
-        local base = rawget( cls, "__base" )
-        if base == nil then return nil end
-
-        local value = rawget( base, key )
-        if value == nil then
-            local parent = rawget( cls, "__parent" )
-            if parent then
-                value = parent[ key ]
-            end
-        end
-
-        return value
+    ---@param self Class
+    ---@return Object
+    local function class__call(self, ...)
+        return class.new(self.__base, ...)
     end
 
-    local tostring_object = function( obj )
-        return string_format( "@object '%s': %p", obj.__class.__name, obj )
-    end
+    ---@param base Object
+    ---@return Class
+    function class.create(base)
+        local cls = setmetatable({}, {
+            __index = base,
+            __call = class__call
+        }) ---@cast cls -Object
 
-    local tostring_class = function( cls )
-        return string_format( "@class '%s': %p", cls.__name, cls )
-    end
 
-    local classExtends = function( cls, parent )
-        argument( cls, 1, "class" )
-        argument( parent, 2, "class" )
+        cls.__base = base
+        base.__class = cls
 
-        local base = rawget( cls, "__base" )
-        if base == nil then
-            return error( "class '" .. tostring( cls ) .. "' has been corrupted", 2 )
-        end
-
-        local metatable = getmetatable( cls )
-        if metatable == nil then
-            return error( "metatable of class '" .. tostring( cls ) .. "' has been corrupted", 2 )
-        end
-
-        local base_parent = rawget( parent, "__base" )
-        if base_parent == nil then
-            return error( "invalid parent", 2 )
-        end
-
-        if metatable.__index ~= base then
-            return error( "class '" .. tostring( cls ) .. "' has already been extended", 2 )
-        end
-
-        if rawget( base, "__tostring" ) == tostring_object then
-            rawset( base, "__tostring", nil )
-        end
-
-        metatable.__index = extends__index
-        setmetatable( base, { __index = base_parent } )
-
-        for key, value in pairs( base_parent ) do
-            if string_sub( key, 1, 2 ) == "__" and rawget( base, key ) == nil and not ( key == "__index" and value == base_parent ) then
-                rawset( base, key, value )
-            end
-        end
-
-        local inherited = rawget( parent, "__inherited" )
-        if inherited then inherited( parent, cls ) end
-        rawset( cls, "__parent", parent )
-        rawset( base, "__class", cls )
         return cls
     end
 
-    function class( name, base, static, parent )
-        argument( name, 1, "string" )
-
-        if base then
-            argument( base, 2, "table" )
-            rawset( base, "__index", rawget( base, "__index" ) or base )
-            rawset( base, "__tostring", rawget( base, "__tostring" ) or tostring_object )
-        else
-            base = { __tostring = tostring_object }
-            base.__index = base
+    ---@param cls Class | unknown
+    function class.inherited(cls)
+        local parent = cls.__parent
+        if parent and parent.__inherited then
+            parent.__inherited(parent, cls)
         end
-
-        if static then
-            argument( static, 3, "table")
-            rawset( static, "__init", rawget( base, "new" ) )
-            rawset( static, "__name", name )
-            rawset( static, "__base", base )
-        else
-            static = {
-                __init = rawget( base, "new" ),
-                __name = name,
-                __base = base
-            }
-        end
-
-        rawset( base, "new", nil )
-
-        setmetatable( static, {
-            __tostring = tostring_class,
-            __metatable_name = "class",
-            __call = class__call,
-            __metatable_id = 5,
-            __index = base
-        } )
-
-        if parent == nil then
-            rawset( base, "__class", static )
-        else
-            classExtends( static, parent )
-        end
-
-        return static
-    end
-
-    -- gpm classes
-    std.class = class
-    std.extends = classExtends
-    std.extend = function( parent, name, base, static )
-        return class( name, base, static, parent )
     end
 
     -- glua metatables
@@ -603,22 +540,18 @@ end
 
 -- symbol library
 ---@class gpm.std.Symbol : userdata
----@class gpm.std.SymbolClass
----@overload fun(name: string): gpm.std.Symbol
-local Symbol = std.Symbol or setmetatable( {}, {
-    __call = function(self, ...) return self:new(...) end
-} )
+---@alias Symbol gpm.std.Symbol
 
----@private
-function Symbol:new( name )
+---@param name string
+---@return Symbol
+function std.Symbol(name)
+    ---@class gpm.std.Symbol
     local obj = newproxy( true )
     local meta = getmetatable( obj )
     meta.__name = "Symbol(\"" .. tostring( name ) .. "\")"
     meta.__tostring = function() return meta.__name end
     return obj
 end
-
-std.Symbol = Symbol
 
 -- bit library
 do
@@ -682,6 +615,7 @@ do
 
     --]]
 
+    
     local function enqueue( self, value )
         if self:IsFull() then
             return nil

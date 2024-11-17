@@ -455,6 +455,8 @@ do
     ---@class gpm.std.futures.Future
     local Future = futures.mt.Future
 
+    ---@alias Future gpm.std.futures.Future
+
     ---@class gpm.std.futures.Task : gpm.std.futures.Future
     ---@field private setResult fun(self, result)
     ---@field private setError fun(self, error)
