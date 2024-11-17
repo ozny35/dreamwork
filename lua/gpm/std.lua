@@ -795,6 +795,9 @@ string.utf8 = include( "std/utf8.lua" )
 local Color = include( "std/color.lua" )
 std.Color = Color
 
+-- Bit intenger class
+-- std.BigInt = include( "std/bigint.lua" )
+
 -- Stack class
 std.Stack = class( "Stack", {
     __tostring = function( self )
@@ -1153,6 +1156,9 @@ if CLIENT_SERVER then
 
     -- player library
     std.player = include( "std/player.lua" )
+
+    -- network library
+    -- std.net = include( "std/net.lua" )
 
 end
 
@@ -1527,6 +1533,10 @@ do
 
 end
 
+-- file library
+-- local file = include( "std/file.lua" )
+-- std.file = file
+
 do
 
     local math_ceil = math.ceil
@@ -1607,12 +1617,6 @@ do
             return value ~= "" and value ~= "0" and value ~= "false"
         end
 
-    end
-
-    -- Player
-    if CLIENT_SERVER then
-        local maxplayers_bits = bitcount( glua_game.MaxPlayers() )
-        findMetatable( "Player" ).__bitcount = function() return maxplayers_bits end
     end
 
 end
