@@ -3,6 +3,7 @@
 local std = gpm.std
 local is = std.is
 local error = std.error
+local class = std.class
 local Symbol = std.Symbol
 local tostring, pcall, xpcall = std.tostring, pcall, xpcall
 ---@type coroutinelib
@@ -82,7 +83,6 @@ end
 function futures.run(target, callback, ...)
     local co = coroutine.create(asyncThread)
     futures.listeners[co] = callback
-
     local ok, err = coroutine.resume(co, target, ...)
     if not ok then
         error(err)
@@ -276,44 +276,44 @@ function futures.collect(iterator, ...)
 end
 
 do
-    local STATE_PENDING = Symbol("Future.STATE_PENDING")
-    local STATE_FINISHED = Symbol("Future.STATE_FINISHED")
-    local STATE_CANCELLED = Symbol("Future.STATE_CANCELLED")
-
-    ---@class gpm.std.futures.Future
+    ---@alias Future gpm.std.futures.Future
+    ---@class gpm.std.futures.Future : gpm.std.Object
+    ---@field __class gpm.std.futures.FutureClass
     ---@field private _state gpm.std.Symbol
     ---@field private _callbacks function[]
     ---@field private _result any
     ---@field private _error any
-    local Future = futures.Future and futures.Future.__base or {}
+    local Future = futures.Future and futures.Future.__base or class.base("Future")
 
-    ---@private
-    Future.__index = Future
+    local STATE_PENDING = Future.STATE_PENDING
+    local STATE_FINISHED = Future.STATE_FINISHED
+    local STATE_CANCELLED = Future.STATE_CANCELLED
 
-    Future.STATE_PENDING = STATE_PENDING
-    Future.STATE_FINISHED = STATE_FINISHED
-    Future.STATE_CANCELLED = STATE_CANCELLED
+    Future.STATE_PENDING = STATE_PENDING or Symbol("Future.STATE_PENDING")
+    Future.STATE_FINISHED = STATE_FINISHED or Symbol("Future.STATE_FINISHED")
+    Future.STATE_CANCELLED = STATE_CANCELLED or Symbol("Future.STATE_CANCELLED")
 
-    ---@package
+    ---@protected
     function Future:__init()
         self._state = STATE_PENDING
-        self._callbacks = {} ---@type function[]
+        self._callbacks = {}
     end
 
-    ---@private
+    ---@protected
     function Future:__tostring()
-        if self._state == STATE_PENDING then
-            return self.__class.__name .. "( pending )"
-        elseif self._state == STATE_FINISHED then
-            if self._error then
-                return self.__class.__name .. "( finished error = " .. tostring(self._error) .. " )"
-            else
-                return self.__class.__name .. "( finished value = " .. tostring(self._result) .. " )"
+        if self:done() then
+            if self:cancelled() then
+                return self.__name .. "( cancelled )"
             end
-        elseif self._state == STATE_CANCELLED then
-            return self.__class.__name .. "( cancelled )"
+
+            if self._error then
+                return self.__name .. "( finished error = " .. tostring(self._error) .. " )"
+            else
+                return self.__name .. "( finished value = " .. tostring(self._result) .. " )"
+            end
+        else
+            return self.__name .. "( pending )"
         end
-        return self.__class.__name .. "( unknown state )"
     end
 
     --- Checks if Future is done
@@ -437,21 +437,37 @@ do
         return self:result()
     end
 
-    ---@class gpm.std.futures.FutureClass
+    ---@class gpm.std.futures.FutureClass : gpm.std.futures.Future
+    ---@field __base Future
     ---@overload fun(): gpm.std.futures.Future
-    local FutureClass = futures.Future or setmetatable({}, {
-        __call = function()
-            local obj = setmetatable({}, Future)
-            obj:__init()
-            return obj
-        end
-    })
-    futures.Future = FutureClass
-
-    FutureClass.__name = "Future"
-    FutureClass.__base = Future
-    Future.__class = FutureClass
+    futures.Future = class.create(Future)
 end
 
+do
+    ---@class gpm.std.futures.Task : gpm.std.futures.Future
+    ---@field __class gpm.std.futures.TaskClass
+    ---@field __parent gpm.std.futures.Future
+    ---@field private setResult fun(self, result)
+    ---@field private setError fun(self, error)
+    local Task = futures.Task and futures.Task.__base or class.base("Task", futures.Future)
+
+    ---@protected
+    ---@param fn async fun(...): any
+    function Task:__init(fn, ...)
+        self.__parent.__init(self)
+        futures.run(fn, function(ok, value)
+            if not ok then
+                self:setError(value)
+            else
+                self:setResult(value)
+            end
+        end, ...)
+    end
+
+    ---@class gpm.std.futures.TaskClass : gpm.std.futures.Task
+    ---@field __base gpm.std.futures.Task
+    ---@overload fun(fn: async fun(...): any, ...: any): gpm.std.futures.Task
+    futures.Task = class.create(Task)
+end
 
 return futures
