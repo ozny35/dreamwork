@@ -279,10 +279,10 @@ do
     ---@alias Future gpm.std.futures.Future
     ---@class gpm.std.futures.Future : gpm.std.Object
     ---@field __class gpm.std.futures.FutureClass
-    ---@field protected _state gpm.std.Symbol
-    ---@field protected _callbacks function[]
-    ---@field protected _result any
-    ---@field protected _error any
+    ---@field private _state gpm.std.Symbol
+    ---@field private _callbacks function[]
+    ---@field private _result any
+    ---@field private _error any
     local Future = futures.Future and futures.Future.__base or class.base("Future")
 
     local STATE_PENDING = Future.STATE_PENDING
