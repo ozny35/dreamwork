@@ -664,110 +664,94 @@ std.string = string
 
 -- Queue class
 do
-
-    --[[
-
-        Queue References:
-            https://github.com/darkwark/queue-lua
-            https://en.wikipedia.org/wiki/Queue_(abstract_data_type)
-
-    --]]
-
+    ---@alias Queue gpm.std.Queue
+    ---@class gpm.std.Queue : gpm.std.Object
+    ---@field __class gpm.std.QueueClass
+    ---@field private front integer
+    ---@field private back integer
+    local Queue = std.class.base("Queue")
     
-    local function enqueue( self, value )
-        if self:IsFull() then
-            return nil
-        end
-
-        local rear = self.rear + 1
-        self[ rear ] = value
-        self.rear = rear
+    ---@protected
+    function Queue:__init()
+        self.front = 0
+        self.back = 0
     end
 
-    local function dequeue( self )
-        if self:IsEmpty() then
-            return nil
-        end
-
-        local front = self.front
-
-        local value = self[ front ]
-        self[ front ] = nil
-
-        front = front + 1
-        self.front = front
-
-        if ( front * 2 ) >= self.rear then
-            self:Optimize()
-        end
-
-        return value
+    function Queue:len()
+        return self.front - self.back
     end
 
-    std.Queue = class( "Queue", {
-        __tostring = function( self )
-            return string_format( "Queue: %p [%d;%d/%d]", self, self.front, self.rear, self.size )
-        end,
-        new = function( self, size )
-            self.size = ( is_number( size ) and size > 0 ) and size or -1
-            self.front = 1
-            self.rear = 0
-        end,
-        Length = function( self )
-            return ( self.rear - self.front ) + 1
-        end,
-        IsEmpty = function( self )
-            local rear = self.rear
-            return rear == 0 or self.front > rear
-        end,
-        IsFull = function( self )
-            return self:Length() == self.size
-        end,
-        Enqueue = enqueue,
-        Dequeue = dequeue,
-        Get = function( self, index )
-            return self[ self.front + index ]
-        end,
-        Set = function( self, index, value )
-            self[ self.front + index ] = value
-        end,
-        Optimize = function( self )
-            local pointer, buffer = 1, {}
+    ---@param value any
+    function Queue:append(value)
+        self.front = self.front + 1
+        self[self.front] = value
+    end
 
-            for index = self.front, self.rear do
-                buffer[ pointer ] = self[ index ]
-                self[ index ] = nil
-                pointer = pointer + 1
+    function Queue:pop()
+        if self.back ~= self.front then
+            self.back = self.back + 1
+
+            local value = self[self.back]
+            self[self.back] = nil -- unreference the value
+
+            -- reset pointers if the queue is empty
+            if self.back == self.front then
+                self.front = 0
+                self.back = 0
             end
 
-            for index = 1, pointer do
-                self[ index ] = buffer[ index ]
-            end
-
-            self.front = 1
-            self.rear = pointer - 1
-        end,
-        Peek = function( self )
-            return self[ self.front ]
-        end,
-        Empty = function( self )
-            for index = self.front, self.rear do
-                self[ index ] = nil
-            end
-        end,
-        Iterator = function( self )
-            self:Optimize()
-
-            local front, rear = self.front - 1, self.rear
-            return function()
-                if rear ~= 0 and front < rear then
-                    front = front + 1
-                    return front, self[ front ]
-                end
-            end
+            return value
         end
-    } )
+    end
 
+    function Queue:peek()
+        return self[self.back + 1]
+    end
+
+    ---@param value any
+    function Queue:prepend(value)
+        self[self.back] = value
+        self.back = self.back - 1
+    end
+
+    function Queue:popBack()
+        if self.back ~= self.front then
+            local value = self[self.front]
+            self[self.front] = nil
+
+            self.front = self.front - 1
+
+            -- reset pointers if the queue is empty
+            if self.back == self.front then
+                self.front = 0
+                self.back = 0
+            end
+
+            return value
+        end
+    end
+
+    function Queue:peekBack()
+        return self[self.front]
+    end
+
+    function Queue:clear()
+        for i = self.back + 1, self.front do
+            self[i] = nil
+        end
+
+        self.front = 0
+        self.back = 0
+    end
+
+    function Queue:iterator()
+        return self.pop, self
+    end
+
+    ---@class gpm.std.QueueClass : gpm.std.Queue
+    ---@field __base gpm.std.Queue
+    ---@overload fun(): Queue
+    std.Queue = std.class.create(Queue)
 end
 
 -- console library
