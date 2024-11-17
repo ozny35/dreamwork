@@ -510,7 +510,7 @@ do
     end
 
     ---@param base Object
-    ---@return Class
+    ---@return Class | unknown
     function class.create(base)
         local cls = setmetatable({}, {
             __index = base,

@@ -3,6 +3,7 @@
 local std = gpm.std
 local is = std.is
 local error = std.error
+local class = std.class
 local Symbol = std.Symbol
 local tostring, pcall, xpcall = std.tostring, pcall, xpcall
 ---@type coroutinelib
@@ -31,9 +32,6 @@ local RESULT_END = futures.RESULT.END
 local ACTION_CANCEL = futures.ACTION.CANCEL
 local ACTION_RESUME = futures.ACTION.RESUME
 
-
---- Metatables for future related classes
-futures.mt = {}
 
 ---@private
 ---@type { [thread]: function }
@@ -278,18 +276,14 @@ function futures.collect(iterator, ...)
 end
 
 do
-    ---@class gpm.std.futures.Future
+    ---@alias Future gpm.std.futures.Future
+    ---@class gpm.std.futures.Future : gpm.std.Object
+    ---@field __class gpm.std.futures.FutureClass
     ---@field protected _state gpm.std.Symbol
     ---@field protected _callbacks function[]
     ---@field protected _result any
     ---@field protected _error any
-    local Future = futures.mt.Future or {}
-    futures.mt.Future = Future
-
-    ---@private
-    Future.__index = Future
-
-    Future.__name = "Future"
+    local Future = futures.Future and futures.Future.__base or class.base("Future")
 
     local STATE_PENDING = Future.STATE_PENDING
     local STATE_FINISHED = Future.STATE_FINISHED
@@ -317,6 +311,8 @@ do
             else
                 return self.__name .. "( finished value = " .. tostring(self._result) .. " )"
             end
+        else
+            return self.__name .. "( pending )"
         end
     end
 
@@ -441,37 +437,24 @@ do
         return self:result()
     end
 
-    --- Create a new Future
-    ---@return gpm.std.futures.Future
-    function futures.Future()
-        ---@class gpm.std.futures.Future
-        local obj = setmetatable({}, Future)
-        obj:__init()
-        return obj
-    end
+    ---@class gpm.std.futures.FutureClass : gpm.std.futures.Future
+    ---@field __base Future
+    ---@overload fun(): gpm.std.futures.Future
+    futures.Future = class.create(Future)
 end
 
 do
-    ---@class gpm.std.futures.Future
-    local Future = futures.mt.Future
-
-    ---@alias Future gpm.std.futures.Future
-
     ---@class gpm.std.futures.Task : gpm.std.futures.Future
+    ---@field __class gpm.std.futures.TaskClass
+    ---@field __parent gpm.std.futures.Future
     ---@field private setResult fun(self, result)
     ---@field private setError fun(self, error)
-    local Task = futures.mt.Task or setmetatable({}, Future)
-    futures.mt.Task = Task
-
-    ---@private
-    Task.__index = Task
-    ---@protected
-    Task.__tostring = Future.__tostring
+    local Task = futures.Task and futures.Task.__base or class.base("Task", futures.Future)
 
     ---@protected
     ---@param fn async fun(...): any
     function Task:__init(fn, ...)
-        Future.__init(self)
+        self.__parent.__init(self)
         futures.run(fn, function(ok, value)
             if not ok then
                 self:setError(value)
@@ -481,16 +464,10 @@ do
         end, ...)
     end
 
-    --- Launches a new task with given async function
-    ---@param fn async fun(...): any Async function to run
-    ---@param ... any Arguments to pass into the target function
-    ---@return gpm.std.futures.Task
-    function futures.Task(fn, ...)
-        ---@class gpm.std.futures.Task : gpm.std.futures.Future
-        local obj = setmetatable({}, Task)
-        obj:__init(fn, ...)
-        return obj
-    end
+    ---@class gpm.std.futures.TaskClass : gpm.std.futures.Task
+    ---@field __base gpm.std.futures.Task
+    ---@overload fun(fn: async fun(...): any, ...: any): gpm.std.futures.Task
+    futures.Task = class.create(Task)
 end
 
 return futures
