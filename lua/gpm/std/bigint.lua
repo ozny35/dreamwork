@@ -5,7 +5,6 @@
 ]]
 
 local _G = _G
-local environment = _G.gpm.environment
 
 --##### FORWARD DECLARATIONS #####--
 
@@ -35,54 +34,57 @@ local table_copy
 
 --##### MODULE FUNCTIONS #####--
 
+---@class gpm.std
+local std = _G.gpm.std
+
+local tonumber, getmetatable, setmetatable = std.tonumber, std.getmetatable, std.setmetatable
+local math_floor = std.math.floor
+
 local table_concat, unpack
 do
-    local table = environment.table
+    local table = std.table
     table_concat, unpack = table.concat, table.unpack
 end
 
-local isstring, isnumber, isbool, istable = environment.isstring, environment.isnumber, environment.isbool, environment.istable
-local tonumber, getmetatable, setmetatable = _G.tonumber, _G.getmetatable, _G.setmetatable
-local math_floor = environment.math.floor
+local is_string, is_number, is_bool, is_table
+do
+    local is = std.is
+    is_string, is_number, is_bool, is_table = is.string, is.number, is.bool, is.table
+end
 
 local string_sub, string_len, string_rep, string_byte, string_char, string_format
 do
-    local string = environment.string
+    local string = std.string
     string_sub, string_len, string_rep, string_byte, string_char, string_format = string.sub, string.len, string.rep, string.byte, string.char, string.format
 end
 
 --##### CONSTRUCTORS #####--
 
+---@class gpm.std.BigInt
 local bigint = {}
 
 function bigint_new()
     return setmetatable( { sign = 0, bytes = {}, mutable = false }, bigint_mt )
 end
 
-do
-
-    local type = environment.type
-
-    function bigint_constructor( self, value, base )
-        if isstring( value ) then
-            return bigint_fromstring( self, value, base )
-        end
-
-        if isnumber( value ) then
-            return bigint_fromnumber( self, value )
-        end
-
-        if getmetatable( value ) == bigint_mt then
-            return value
-        end
-
-        if istable( value ) then
-            return bigint_fromarray( self, value, true )
-        end
-
-        error( "cannot construct bigint from type: " .. type( value ) )
+function bigint_constructor( self, value, base )
+    if is_string( value ) then
+        return bigint_fromstring( self, value, base )
     end
 
+    if is_number( value ) then
+        return bigint_fromnumber( self, value )
+    end
+
+    if getmetatable( value ) == bigint_mt then
+        return value
+    end
+
+    if is_table( value ) then
+        return bigint_fromarray( self, value, true )
+    end
+
+    error( "cannot construct bigint from type: " .. std.type( value ) )
 end
 
 -- parse integer from a string
@@ -1485,7 +1487,7 @@ function bigint_ensureInt( obj, minValue, maxValue, default )
         obj = obj:ToNumber()
     end
 
-    if isnumber( obj ) then
+    if is_number( obj ) then
         if obj % 1 ~= 0 then
             if obj < 0 then
                 obj = obj + ( obj % 1 )
@@ -1507,7 +1509,7 @@ function bigint_ensureArray( obj, default )
         return default
     end
 
-    if istable( obj ) and getmetatable( obj ) ~= bigint_mt then
+    if is_table( obj ) and getmetatable( obj ) ~= bigint_mt then
         return obj
     end
 
@@ -1519,7 +1521,7 @@ function bigint_ensureString( obj, default )
         return default
     end
 
-    if isstring( obj ) then
+    if is_string( obj ) then
         return obj
     end
 
@@ -1531,7 +1533,7 @@ function bigint_ensureBool( obj, default )
         return default
     end
 
-    if isbool( obj ) then
+    if is_bool( obj ) then
         return obj
     end
 
@@ -1614,6 +1616,10 @@ end
 
 bigint.MaxNumber = bigint_maxnumber
 
+function bigint_mt.__bitcount()
+    return 64
+end
+
 bigint_mt.new = function( self, ... )
     self.sign = 0
     self.bytes = {}
@@ -1634,8 +1640,6 @@ function bigint.FromArray( array, littleEndian )
     return bigint_fromarray( bigint_new(), array, littleEndian )
 end
 
-environment.BInt = environment.class( "BInt", bigint_mt, bigint )
-
-function environment.IsBInt( obj )
-    return getmetatable( obj ) == bigint_mt
-end
+---@class gpm.std.BigInt
+bigint = std.class( "BigInt", bigint_mt, bigint )
+return bigint

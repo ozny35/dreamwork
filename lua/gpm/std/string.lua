@@ -262,6 +262,7 @@ local decimal2hex = function( number )
     return string_format( "%X", number)
 end
 
+---@class gpm.std.string
 local string = {
     -- Lua 5.1
     byte = glua_string.byte,

@@ -2,12 +2,7 @@ local _G = _G
 local util = _G.util
 
 ---@class gpm.std.crypto
-local crypto = {
-    ---@class gpm.std.crypto.deflate
-    deflate = _G.include( "gpm/3rd-party/deflate.lua" )
-}
-
--- TODO: put struct library here
+local crypto = {}
 
 ---@class gpm.std.crypto.lzma
 ---@field PROPS_SIZE number The size of the lzma properties.

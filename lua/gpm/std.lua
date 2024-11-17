@@ -75,11 +75,10 @@ std.xpcall = _G.xpcall
 -- require - broken in glua
 
 local is_table, is_string, is_number, is_function = _G.istable, _G.isstring, _G.isnumber, _G.isfunction
-local glua_string, glua_table, glua_game = _G.string, _G.table, _G.game
-local string_format = glua_string.format
+local glua_string, glua_table, glua_jit, glua_system = _G.string, _G.table, _G.jit, _G.system
+
+local string_byte, string_len, string_format = glua_string.byte, glua_string.len, glua_string.format
 local table_concat = glua_table.concat
-local system = _G.system
-local jit = _G.jit
 
 do
 
@@ -156,7 +155,7 @@ do
 end
 
 -- jit library
-std.jit = jit
+std.jit = glua_jit
 
 ---@class gpm.std.debug
 local debug = include( "std/debug.lua" )
@@ -463,7 +462,7 @@ do
     ---@field __class Class class of the object (must be defined)
     ---@field __parent gpm.std.Class | nil parent of the class (must be defined)
     ---@alias Object gpm.std.Object
-    
+
     ---@class gpm.std.Class : gpm.std.Object
     ---@field __base gpm.std.Object base of the class (must be defined)
     ---@field __inherited fun(parent: gpm.std.Class, child: gpm.std.Class) | nil called when a class is inherited
@@ -535,7 +534,7 @@ do
     end
 
     --[[
-    
+
         How to use this class system:
 
         1. Define base class (basically a metatable for our cars)
@@ -544,16 +543,16 @@ do
         ---@class gpm.std.Car : gpm.std.Object           <-- do not forget to inherit from gpm.std.Object
         ---@field __class gpm.std.CarClass
         local Car = std.class.base("Car")
-        
+
         ---@protected               <-- do not forget to add protected so __init won't be shown
         function Car:__init()
             self.speed = 0
             self.color = Color(255, 255, 255)
         end
 
-    
+
         2. Define a class, which will be used to create a Car
-    
+
         ---@class gpm.std.CarClass : gpm.std.Car      <-- do not forget to inherit from base
         ---@field __base gpm.std.Car
         ---@overload fun(): Car
@@ -570,7 +569,7 @@ do
 
 
         4. Inherit from the Car class
-    
+
         ---@alias Truck gpm.std.Truck
         ---@class gpm.std.Truck : gpm.std.Car
         ---@field __class gpm.std.TruckClass
@@ -657,9 +656,9 @@ std.os = os
 local table = include( "std/table.lua" )
 std.table = table
 
--- string library
+---@class gpm.std.string
 local string = include( "std/string.lua" )
-local string_byte, string_len = string.byte, string.len
+string.utf8 = include( "std/string.utf8.lua" )
 std.string = string
 
 -- Queue class
@@ -673,7 +672,6 @@ do
 
     --]]
 
-    
     local function enqueue( self, value )
         if self:IsFull() then
             return nil
@@ -774,12 +772,12 @@ end
 local console = include( "std/console.lua" )
 std.console = console
 
--- crypto library
+---@class gpm.std.crypto
 local crypto = include( "std/crypto.lua" )
+crypto.deflate = include( "std/crypto.deflate.lua" )
+-- TODO: struct library
+-- crypto.struct = include( "std/crypto.struct.lua" )
 std.crypto = crypto
-
--- utf8 library
-string.utf8 = include( "std/utf8.lua" )
 
 -- Color class
 local Color = include( "std/color.lua" )
@@ -1398,11 +1396,11 @@ do
     local file_Exists = _G.file.Exists
     local require = _G.require
 
-    local isEdge = jit.version_num ~= 20004
-    local is32 = jit.arch == "x86"
+    local isEdge = glua_jit.version_num ~= 20004
+    local is32 = glua_jit.arch == "x86"
 
     local head = "lua/bin/gm" .. ( ( CLIENT and not MENU ) and "cl" or "sv" ) .. "_"
-    local tail = "_" .. ( { "osx64", "osx", "linux64", "linux", "win64", "win32" } )[ ( system.IsWindows() and 4 or 0 ) + ( system.IsLinux() and 2 or 0 ) + ( is32 and 1 or 0 ) + 1 ] .. ".dll"
+    local tail = "_" .. ( { "osx64", "osx", "linux64", "linux", "win64", "win32" } )[ ( glua_system.IsWindows() and 4 or 0 ) + ( glua_system.IsLinux() and 2 or 0 ) + ( is32 and 1 or 0 ) + 1 ] .. ".dll"
 
     local function isBinaryModuleInstalled( name )
         if name == "" then return false, "" end

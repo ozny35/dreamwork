@@ -13,9 +13,10 @@ local player_Iterator = glua_player.Iterator
 ---@class Player
 local PLAYER = std.findMetatable( "Player" )
 
+---@class gpm.std.player
 local player = {
-    ["getLimit"] = glua_game.MaxPlayers,
-    ["iterator"] = player_Iterator
+    getLimit = glua_game.MaxPlayers,
+    iterator = player_Iterator
 }
 
 if std.SERVER then
@@ -54,4 +55,6 @@ elseif std.CLIENT then
     end
 end
 
-return std.class( "player", PLAYER, player )
+---@class gpm.std.player
+player = std.class( "player", PLAYER, player )
+return player
