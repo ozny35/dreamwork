@@ -634,7 +634,7 @@ do
     ---@field __class gpm.std.QueueClass
     ---@field private front integer
     ---@field private back integer
-    local Queue = std.class.base("Queue")
+    local Queue = class.base("Queue")
 
     ---@protected
     function Queue:__init()
@@ -722,7 +722,7 @@ do
     ---@class gpm.std.QueueClass : gpm.std.Queue
     ---@field __base gpm.std.Queue
     ---@overload fun(): Queue
-    std.Queue = std.class.create(Queue)
+    std.Queue = class.create(Queue)
 end
 
 -- futures library
@@ -898,7 +898,7 @@ do
     ---@field __class gpm.std.ErrorClass
     ---@field __parent gpm.std.Error | nil
     ---@field name string
-    local Error = std.class.base( "Error" )
+    local Error = class.base( "Error" )
 
     ---@protected
     function Error:__index(key)
@@ -1189,7 +1189,7 @@ do
     ---@alias Logger gpm.std.Logger
     ---@class gpm.std.Logger : gpm.std.Object
     ---@field __class gpm.std.LoggerClass
-    local Logger = std.class.base("Logger")
+    local Logger = class.base("Logger")
 
     ---@protected
     ---@param title string
@@ -1274,7 +1274,7 @@ do
     ---@class gpm.std.LoggerClass : gpm.std.Logger
     ---@field __base gpm.std.Logger
     ---@overload fun(title: string, options: gpm.std.LoggerOptions?): Logger
-    std.Logger = std.class.create( Logger )
+    std.Logger = class.create( Logger )
 
     logger = std.Logger( gpm_PREFIX, {
         color = Color( 180, 180, 255 ),
