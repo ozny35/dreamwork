@@ -586,25 +586,6 @@ std.is = is
 
 is_string, is_number, is_function = is.string, is.number, is["function"]
 
--- futures library
-local futures = include( "std/futures.lua" )
-std.futures = futures
-
----@class gpm.std.os
----@field screenWidth number The width of the game's window (in pixels).
----@field screenHeight number The height of the game's window (in pixels).
-local os = include( "std/os.lua" )
-std.os = os
-
--- table library
-local table = include( "std/table.lua" )
-std.table = table
-
----@class gpm.std.string
-local string = include( "std/string.lua" )
-string.utf8 = include( "std/string.utf8.lua" )
-std.string = string
-
 -- Queue class
 do
 
@@ -703,6 +684,25 @@ do
     ---@overload fun(): Queue
     std.Queue = std.class.create(Queue)
 end
+
+-- futures library
+local futures = include( "std/futures.lua" )
+std.futures = futures
+
+---@class gpm.std.os
+---@field screenWidth number The width of the game's window (in pixels).
+---@field screenHeight number The height of the game's window (in pixels).
+local os = include( "std/os.lua" )
+std.os = os
+
+-- table library
+local table = include( "std/table.lua" )
+std.table = table
+
+---@class gpm.std.string
+local string = include( "std/string.lua" )
+string.utf8 = include( "std/string.utf8.lua" )
+std.string = string
 
 -- console library
 local console = include( "std/console.lua" )
