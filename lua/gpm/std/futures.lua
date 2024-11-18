@@ -43,7 +43,10 @@ futures.listeners = futures.listeners or setmetatable({}, { __mode = "kv" })
 futures.coroutine_listeners = futures.coroutine_listeners or setmetatable({}, { __mode = "kv" })
 
 ---@alias gpm.std.futures.AsyncIterator<K, V> table<K, V> | nil
+---@alias AsyncIterator<K, V> gpm.std.futures.AsyncIterator<K, V>
+
 ---@alias gpm.std.futures.Awaitable { await: async fun(...): ... }
+---@alias Awaitable gpm.std.futures.Awaitable
 
 futures.running = coroutine.running
 

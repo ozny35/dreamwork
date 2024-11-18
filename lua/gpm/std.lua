@@ -688,6 +688,11 @@ end
 -- futures library
 local futures = include( "std/futures.lua" )
 std.futures = futures
+std.run = futures.run
+std.yield = futures.yield
+std.apairs = futures.apairs
+std.Future = futures.Future
+std.Task = futures.Task
 
 ---@class gpm.std.os
 ---@field screenWidth number The width of the game's window (in pixels).
