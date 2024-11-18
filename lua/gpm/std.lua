@@ -468,6 +468,11 @@ do
     ---@field __inherited fun(parent: gpm.std.Class, child: gpm.std.Class) | nil called when a class is inherited
     ---@alias Class gpm.std.Class
 
+    ---@param self Object
+    local function base__tostring(self)
+        return string_format("%s: %p", self.__name, self)
+    end
+
     ---@param name string
     ---@param parent Class | unknown | nil
     ---@return Object
@@ -475,10 +480,11 @@ do
         local base = {}
         base.__name = name
         base.__index = base
+        base.__tostring = base__tostring
 
         if parent then
             base.__parent = parent
-            setmetatable(base, parent.__base)
+            setmetatable(base, { __index = parent.__base })
 
             -- copy metamethods from parent
             for key, value in pairs(parent.__base) do
@@ -510,12 +516,18 @@ do
         return class.new(self.__base, ...)
     end
 
+    ---@param self Class
+    local function class__tostring(self)
+        return string_format("%sClass: %p", self.__name, self)
+    end
+
     ---@param base Object
     ---@return Class | unknown
     function class.create(base)
         local cls = setmetatable({}, {
             __index = base,
-            __call = class__call
+            __call = class__call,
+            __tostring = class__tostring
         }) ---@cast cls -Object
 
 
