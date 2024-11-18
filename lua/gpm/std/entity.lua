@@ -6,7 +6,7 @@ local ents, scripted_ents, Entity, NULL, ents_GetMapCreatedEntity = _G.ents, _G.
 local ENTITY = std.findMetatable( "Entity" )
 local ENTITY_SetModel = ENTITY.SetModel
 
-local library = {
+local entity = {
     ["find"] = {
         ["alongRay"] = ents.FindAlongRay,
         ["byClass"] = ents.FindByClass,
@@ -34,7 +34,7 @@ do
         math_sqrt, math_huge = math.sqrt, math.huge
     end
 
-    function library.find.closest( entities, origin )
+    function entity.find.closest( entities, origin )
         local closest, closest_distance = nil, 0
 
         for i = 1, #entities do
@@ -55,25 +55,25 @@ do
 end
 
 if std.CLIENT then
-    library.create = ents.CreateClientside
-    library.createProp = ents.CreateClientProp
+    entity.create = ents.CreateClientside
+    entity.createProp = ents.CreateClientProp
 elseif std.SERVER then
     local ents_Create = ents.Create
-    library.create = ents_Create
+    entity.create = ents_Create
 
-    library.createProp = function( model )
+    entity.createProp = function( model )
         local entity = ents_Create( "prop_physics" )
         ENTITY_SetModel( entity, model or "models/error.mdl" )
         return entity
     end
 
-    library.getEdictCount = ents.GetEdictCount
+    entity.getEdictCount = ents.GetEdictCount
 
     -- find in pvs/pas
     do
 
         local is_entity = std.is.entity
-        local find = library.find
+        local find = entity.find
         find.inPVS = ents.FindInPVS
 
         local inPAS = ents.FindInPAS
@@ -101,7 +101,7 @@ elseif std.SERVER then
 
 end
 
-local entity_create = library.create
+local entity_create = entity.create
 local classes = {}
 
 -- TODO: https://github.com/Facepunch/garrysmod/blob/master/garrysmod/lua/includes/modules/scripted_ents.lua#L256-L260
@@ -128,4 +128,4 @@ ENTITY.new = function( self )
     return true, entity_create( name )
 end
 
-return std.class( "entity", ENTITY, library )
+-- return std.class( "entity", ENTITY, entity )

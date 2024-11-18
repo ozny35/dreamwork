@@ -55,6 +55,6 @@ elseif std.CLIENT then
     end
 end
 
----@class gpm.std.player
-player = std.class( "player", PLAYER, player )
-return player
+-- ---@class gpm.std.player
+-- player = std.class( "player", PLAYER, player )
+-- return player
