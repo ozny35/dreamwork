@@ -5,6 +5,7 @@ local is = std.is
 local error = std.error
 local class = std.class
 local Symbol = std.Symbol
+local Queue = std.Queue
 local tostring, pcall, xpcall = std.tostring, pcall, xpcall
 ---@type coroutinelib
 local coroutine = std.coroutine
@@ -468,6 +469,128 @@ do
     ---@field __base gpm.std.futures.Task
     ---@overload fun(fn: async fun(...): any, ...: any): gpm.std.futures.Task
     futures.Task = class.create(Task)
+end
+
+do
+    ---@alias Channel gpm.std.futures.Channel
+    ---@class gpm.std.futures.Channel : gpm.std.Object
+    ---@field __class gpm.std.futures.ChannelClass
+    ---@field private _maxsize number
+    ---@field private _queue gpm.std.Queue
+    ---@field private _getters gpm.std.Queue
+    ---@field private _setters gpm.std.Queue
+    ---@field private _closed boolean
+    local Channel = futures.Channel and futures.Channel.__base or class.base("Channel")
+
+    ---@protected
+    ---@param maxsize number?
+    function Channel:__init(maxsize)
+        if maxsize and maxsize < 0 then
+            error("maxsize must be greater or equal to 0")
+        end
+
+        self._maxsize = maxsize or 0
+        self._queue = Queue()
+        self._getters = Queue()
+        self._setters = Queue()
+        self._closed = false
+    end
+
+    ---@return number length
+    function Channel:len()
+        return self._queue:len()
+    end
+
+    ---@return boolean isEmpty
+    function Channel:empty()
+        return self._queue:empty()
+    end
+
+    ---@return boolean isFull
+    function Channel:full()
+        if self._maxsize == 0 then
+            return false
+        end
+
+        return self:len() >= self._maxsize
+    end
+
+    function Channel:close()
+        self._closed = true
+
+        -- wake up all getters and setters
+        while not self._getters:empty() do
+            futures.wakeup(self._getters:pop())
+        end
+
+        while not self._setters:empty() do
+            futures.wakeup(self._setters:pop())
+        end
+    end
+
+    ---@return boolean isClosed
+    function Channel:closed()
+        return self._closed
+    end
+
+    ---@param value any
+    ---@return boolean success
+    function Channel:putNow(value)
+        if self:full() or self:closed() or value == nil then
+            return false
+        end
+
+        self._queue:append(value)
+        local getter = self._getters:pop()
+        if getter then
+            futures.wakeup(getter)
+        end
+
+        return true
+    end
+
+    ---@async
+    ---@param value any
+    ---@param wait boolean?
+    ---@return boolean success
+    function Channel:put(value, wait)
+        while wait ~= false and (self:full() and not self:closed()) do
+            self._setters:append(futures.running())
+            futures.pending()
+        end
+
+        return self:putNow(value)
+    end
+
+    function Channel:getNow()
+        if self:empty() or self:closed() then
+            return nil
+        end
+
+        local value = self._queue:pop()
+        local setter = self._setters:pop()
+        if setter then
+            futures.wakeup(setter)
+        end
+
+        return value
+    end
+
+    ---@async
+    ---@param wait boolean?
+    function Channel:get(wait)
+        while wait ~= false and self:empty() and not self:closed() do
+            self._getters:append(futures.running())
+            futures.pending()
+        end
+
+        return self:getNow()
+    end
+
+    ---@class gpm.std.futures.ChannelClass : gpm.std.futures.Channel
+    ---@field __base gpm.std.futures.Channel
+    ---@overload fun(maxsize: number?): gpm.std.futures.Channel
+    futures.Channel = class.create(Channel)
 end
 
 return futures
