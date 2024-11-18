@@ -1242,6 +1242,8 @@ do
     } )
 end
 
+local logger = gpm.logger
+
 -- Version class
 std.Version = include( "std/version.lua" )
 
@@ -1414,7 +1416,10 @@ do
             elseif ( mode == "bt" or mode == "tb" or mode == "t" ) then
                 ---@diagnostic disable-next-line: param-type-mismatch
                 fn = CompileString( chunk, chunkName, false )
-                if is_string( fn ) then return nil, fn end
+                if is_string( fn ) then
+                    ---@cast fn string
+                    return nil, fn
+                end
             end
 
             if fn == nil then
@@ -1549,9 +1554,9 @@ if CLIENT_MENU then
 end
 
 if std.TYPE.COUNT ~= 44 then
-    gpm_Logger:Warn( "Global TYPE_COUNT mismatch, data corruption suspected. (" .. tostring( _G.TYPE_COUNT or "missing" ) .. " ~= 44)"  )
+    logger:warn( "Global TYPE_COUNT mismatch, data corruption suspected. (" .. tostring( _G.TYPE_COUNT or "missing" ) .. " ~= 44)"  )
 end
 
 if std._VERSION ~= "Lua 5.1" then
-    gpm_Logger:Warn( "Lua version changed, possible unpredictable behavior. (" .. tostring( _G._VERSION or "missing") .. ")" )
+    logger:warn( "Lua version changed, possible unpredictable behavior. (" .. tostring( _G._VERSION or "missing") .. ")" )
 end
