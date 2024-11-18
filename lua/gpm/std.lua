@@ -161,7 +161,7 @@ std.jit = glua_jit
 local debug = include( "std/debug.lua" )
 std.debug = debug
 
-local argument, class, type, findMetatable, registerMetatable
+local argument, class
 do
 
     local indexes = {
@@ -240,6 +240,7 @@ do
         end
     end
 
+    local findMetatable
     do
 
         local FindMetaTable = _G.FindMetaTable
@@ -271,13 +272,17 @@ do
             return metatable
         end
 
+        std.findMetatable = findMetatable
+
     end
+
+    local debug_fempty = debug.fempty
 
     do
 
-        local RegisterMetaTable = _G.RegisterMetaTable or debug.fempty
+        local RegisterMetaTable = _G.RegisterMetaTable or debug_fempty
 
-        function registerMetatable( name, new )
+        function std.registerMetatable( name, new )
             assert( is_string( name ), "argument #1 (name) must be a string" )
             assert( is_table( new ), "argument #2 (metatable) must be a table" )
 
@@ -330,6 +335,7 @@ do
 
     end
 
+    local type
     do
 
         local glua_type = _G.type
@@ -454,8 +460,8 @@ do
 
     std.argument = argument
 
-    local class = std.class or {}
-    std.class = class
+    ---@class gpm.std.class
+    class = {}
 
     ---@class gpm.std.Object
     ---@field __name string name of the object
@@ -468,28 +474,39 @@ do
     ---@field __inherited fun(parent: gpm.std.Class, child: gpm.std.Class) | nil called when a class is inherited
     ---@alias Class gpm.std.Class
 
+    ---@param obj Object
+    ---@return string
+    local function tostring_object( obj )
+        return string_format( "@object '%s': %p", getmetatable( obj ).__name, obj )
+    end
+
     ---@param name string
     ---@param parent Class | unknown | nil
     ---@return Object
-    function class.base(name, parent)
-        local base = {}
-        base.__name = name
+    function class.base( name, parent )
+        local base = {
+            __name = name,
+            __tostring = tostring_object
+        }
+
         base.__index = base
 
         if parent then
             base.__parent = parent
-            setmetatable(base, parent.__base)
+
+            local parent_base = rawget( parent, "__base" )
+            if parent_base == nil then
+                error( "parent class has no base", 2 )
+            end
+
+            setmetatable( base, { __index = parent_base } )
 
             -- copy metamethods from parent
-            for key, value in pairs(parent.__base) do
-                if string_sub(key, 1, 2) == "__" and not (key == "__index" and value == parent.__base) and key ~= "__name" then
-                    base[key] = value
+            for key, value in pairs( parent_base ) do
+                if string_sub( key, 1, 2 ) == "__" and not ( key == "__index" and value == parent_base ) and key ~= "__name" then
+                    base[ key ] = value
                 end
             end
-        end
-
-        if not rawget(base, "__init") then
-            rawset(base, "__init", debug.fempty)
         end
 
         return base
@@ -498,60 +515,84 @@ do
     --- Creates a new object from the given base.
     ---@param base Object
     ---@return Object
-    function class.new(base, ...)
-        local obj = setmetatable({}, base)
-        obj:__init(...)
+    local function new( base, ... )
+        local obj = setmetatable( {}, base )
+
+        local fn = rawget( base, "__init" )
+        if is_function( fn ) then
+            fn( obj, ... )
+        end
+
         return obj
     end
 
+    class.new = new
+
     ---@param self Class
     ---@return Object
-    local function class__call(self, ...)
-        return class.new(self.__base, ...)
+    local function class__call( self, ... )
+        local fn = rawget( self, "new" )
+        if is_function( fn ) then
+            return fn( ... )
+        else
+            return new( self.__base, ... )
+        end
+    end
+
+    ---@param cls Class
+    ---@return string
+    local function class__tostring( cls )
+        return string_format( "@class '%s': %p", cls.__base.__name, cls )
     end
 
     ---@param base Object
     ---@return Class | unknown
-    function class.create(base)
-        local cls = setmetatable({}, {
+    function class.create( base )
+        local cls = setmetatable( { __base = base }, {
             __index = base,
-            __call = class__call
-        }) ---@cast cls -Object
+            __call = class__call,
+            __tostring = class__tostring
+        } ) ---@cast cls -Object
 
-
-        cls.__base = base
-        base.__class = cls
-
+        rawset( base, "__class", cls )
         return cls
     end
 
     ---@param cls Class | unknown
-    function class.inherited(cls)
-        local parent = cls.__parent
-        if parent and parent.__inherited then
-            parent.__inherited(parent, cls)
-        end
+    function class.inherited( cls )
+        local base = rawget( cls, "__base" )
+        if base == nil then return end
+
+        local parent = rawget( base, "__parent" )
+        if parent == nil or not parent.__inherited then return end
+        parent:__inherited( cls )
     end
 
-    -- glua metatables
-    std.findMetatable = findMetatable
-    std.registerMetatable = registerMetatable
+    std.class = class
 
 end
 
 -- symbol library
----@class gpm.std.Symbol : userdata
----@alias Symbol gpm.std.Symbol
+do
 
----@param name string
----@return Symbol
-function std.Symbol(name)
-    ---@class gpm.std.Symbol
-    local obj = newproxy( true )
-    local meta = getmetatable( obj )
-    meta.__name = "Symbol(\"" .. tostring( name ) .. "\")"
-    meta.__tostring = function() return meta.__name end
-    return obj
+    ---@class gpm.std.Symbol : userdata
+    ---@alias Symbol gpm.std.Symbol
+
+    local function __tostring( self )
+        return getmetatable( self ).__name
+    end
+
+    ---@param name string
+    ---@return Symbol
+    function std.Symbol( name )
+        ---@class gpm.std.Symbol
+        local obj = debug.newproxy( true )
+        local meta = getmetatable( obj )
+        meta.__name = "Symbol(\"" .. tostring( name ) .. "\")"
+        meta.__tostring = __tostring
+        return obj
+    end
+
 end
 
 -- bit library
@@ -1184,6 +1225,12 @@ do
         console_write( secondaryTextColor, os_date( "%d-%m-%Y %H:%M:%S " ), stateColor, state, color, level, secondaryTextColor, " --> ", self.title_color, title, secondaryTextColor, " : ", self.text_color, str .. "\n")
         return nil
     end
+
+    -- ---@alias Logger gpm.std.Logger
+    -- ---@class gpm.std.Logger : gpm.std.Object
+    -- ---@field __class gpm.std.Logger
+    -- local Logger = std.class.base( "Logger" )
+
 
     local Logger = class( "Logger", {
         __tostring = function( self )
