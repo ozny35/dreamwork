@@ -50,6 +50,7 @@ do
         else
             local logger = fenv.Logger
             if type( logger ) == "Logger" then
+                ---@cast logger Logger
                 logger:Debug( "Executing SQL query: " .. str )
             else
                 gpm_Logger:Debug( "Executing SQL query: " .. str )
