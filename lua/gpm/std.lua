@@ -688,6 +688,12 @@ do
         self.back = 0
     end
 
+    --- Checks if the queue is empty.
+    ---@return boolean isEmpty Returns true if the queue is empty.
+    function Queue:empty()
+        return self.front == self.back
+    end
+
     function Queue:iterator()
         return self.pop, self
     end
