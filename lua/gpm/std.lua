@@ -706,8 +706,9 @@ std.table = table
 
 ---@class gpm.std.string
 local string = include( "std/string.lua" )
-string.utf8 = include( "std/string.utf8.lua" )
 std.string = string
+
+string.utf8 = include( "std/string.utf8.lua" )
 
 -- console library
 local console = include( "std/console.lua" )
