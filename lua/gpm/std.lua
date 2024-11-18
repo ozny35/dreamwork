@@ -853,169 +853,191 @@ do
 
     end
 
-    local errorClass = class(
-        "Error",
-        {
-            name = "Error",
-            new = function( self, message, fileName, lineNumber, stackPos )
-                if stackPos == nil then stackPos = 3 end
+    ---@alias Error gpm.std.Error
+    ---@class gpm.std.Error : gpm.std.Object
+    ---@field __class gpm.std.ErrorClass
+    ---@field __parent gpm.std.Error | nil
+    ---@field name string
+    local Error = std.class.base( "Error" )
 
-                self.message = message
-                self.fileName = fileName
-                self.lineNumber = lineNumber
+    ---@protected
+    function Error:__index(key)
+        if key == "name" then
+            return self.__name
+        end
 
-                local stack = captureStack( stackPos )
-                self.stack = stack
-                mergeStack( stack )
+        return Error[ key ]
+    end
 
-                local first = stack[ 1 ]
-                if first == nil then return end
+    ---@protected
+    function Error:__tostring()
+        if self.fileName then
+            return string_format( "%s:%d: %s: %s", self.fileName, self.lineNumber or 0, self.name, self.message )
+        else
+            return self.name .. ": " .. self.message
+        end
+    end
 
-                self.fileName = self.fileName or first.short_src
-                self.lineNumber = self.lineNumber or first.currentline
+    ---@protected
+    ---@param message string
+    ---@param fileName string?
+    ---@param lineNumber number?
+    ---@param stackPos number?
+    function Error:__init( message, fileName, lineNumber, stackPos )
+        self.message = message
+        self.fileName = fileName
+        self.lineNumber = lineNumber
 
-                if debug_getupvalue and first.func and first.nups and first.nups > 0 then
-                    local upvalues = {}
-                    self.upvalues = upvalues
+        local stack = captureStack( stackPos )
+        self.stack = stack
+        mergeStack( stack )
 
-                    for i = 1, first.nups do
-                        local name, value = debug_getupvalue( first.func, i )
-                        if name == nil then
-                            self.upvalues = nil
-                            break
-                        end
+        local first = stack[ 1 ]
+        if first == nil then return end
 
-                        upvalues[ i ] = { name, value }
-                    end
+        self.fileName = self.fileName or first.short_src
+        self.lineNumber = self.lineNumber or first.currentline
+
+        if debug_getupvalue and first.func and first.nups and first.nups > 0 then
+            local upvalues = {}
+            self.upvalues = upvalues
+
+            for i = 1, first.nups do
+                local name, value = debug_getupvalue( first.func, i )
+                if name == nil then
+                    self.upvalues = nil
+                    break
                 end
 
-                if debug_getlocal then
-                    local locals, count, i = {}, 0, 1
-                    while true do
-                        local name, value = debug_getlocal( stackPos, i )
-                        if name == nil then break end
-
-                        if name ~= "(*temporary)" then
-                            count = count + 1
-                            locals[ count ] = { name, value }
-                        end
-
-                        i = i + 1
-                    end
-
-                    if count ~= 0 then
-                        self.locals = locals
-                    end
-                end
-            end,
-            __tostring = function( self )
-                if self.fileName then
-                    return string_format( "%s:%d: %s: %s", self.fileName, self.lineNumber or 0, self.name, self.message )
-                else
-                    return self.name .. ": " .. self.message
-                end
-            end,
-            display = function( self )
-                if is_string( self ) then
-                    ErrorNoHaltWithStack( self )
-                    return
-                end
-
-                local lines, length = { "\n[ERROR] " .. tostring( self ) }, 1
-
-                local stack = self.stack
-                if stack then
-                    for i = 1, #stack do
-                        local info = stack[ i ]
-                        length = length + 1
-                        lines[ length ] = string_format( "%s %d. %s - %s:%d", string_rep( " ", i ), i, info.name or "unknown", info.short_src, info.currentline or -1 )
-                    end
-                end
-
-                local locals = self.locals
-                if locals then
-                    length = length + 1
-                    lines[ length ] = "\n=== Locals ==="
-
-                    for i = 1, #locals do
-                        local entry = locals[ i ]
-                        length = length + 1
-                        lines[ length ] = string_format( "  - %s = %s", entry[ 1 ], entry[ 2 ] )
-                    end
-                end
-
-                local upvalues = self.upvalues
-                if upvalues ~= nil then
-                    length = length + 1
-                    lines[ length ] = "\n=== Upvalues ==="
-
-                    for i = 1, #upvalues do
-                        local entry = upvalues[ i ]
-                        length = length + 1
-                        lines[ length ] = string_format( "  - %s = %s", entry[ 1 ], entry[ 2 ] )
-                    end
-                end
-
-                length = length + 1
-                lines[ length ] = "\n"
-                ErrorNoHalt( table_concat( lines, "\n", 1, length ) )
-
-                if self.message and self.fileName and self.lineNumber then
-                    dumpFile( self.name .. ": " .. self.message, self.fileName, self.lineNumber )
-                end
+                upvalues[ i ] = { name, value }
             end
-        },
-        {
-            __inherited = function( self, child )
-                child.__base.name = child.__name or self.name
-            end,
-            callStack = callStack,
-            captureStack = captureStack,
-            pushCallStack = pushCallStack,
-            popCallStack = popCallStack,
-            appendStack = appendStack,
-            mergeStack = mergeStack,
-        }
-    )
+        end
+
+        if debug_getlocal then
+            local locals, count, i = {}, 0, 1
+            while true do
+                local name, value = debug_getlocal( stackPos, i )
+                if name == nil then break end
+
+                if name ~= "(*temporary)" then
+                    count = count + 1
+                    locals[ count ] = { name, value }
+                end
+
+                i = i + 1
+            end
+
+            if count ~= 0 then
+                self.locals = locals
+            end
+        end
+    end
+
+    function Error:display()
+        if is_string( self ) then
+            ErrorNoHaltWithStack( self )
+            return
+        end
+
+        local lines, length = { "\n[ERROR] " .. tostring( self ) }, 1
+
+        local stack = self.stack
+        if stack then
+            for i = 1, #stack do
+                local info = stack[ i ]
+                length = length + 1
+                lines[ length ] = string_format( "%s %d. %s - %s:%d", string_rep( " ", i ), i, info.name or "unknown", info.short_src, info.currentline or -1 )
+            end
+        end
+
+        local locals = self.locals
+        if locals then
+            length = length + 1
+            lines[ length ] = "\n=== Locals ==="
+
+            for i = 1, #locals do
+                local entry = locals[ i ]
+                length = length + 1
+                lines[ length ] = string_format( "  - %s = %s", entry[ 1 ], entry[ 2 ] )
+            end
+        end
+
+        local upvalues = self.upvalues
+        if upvalues ~= nil then
+            length = length + 1
+            lines[ length ] = "\n=== Upvalues ==="
+
+            for i = 1, #upvalues do
+                local entry = upvalues[ i ]
+                length = length + 1
+                lines[ length ] = string_format( "  - %s = %s", entry[ 1 ], entry[ 2 ] )
+            end
+        end
+
+        length = length + 1
+        lines[ length ] = "\n"
+        ErrorNoHalt( table_concat( lines, "\n", 1, length ) )
+
+        if self.message and self.fileName and self.lineNumber then
+            dumpFile( self.name .. ": " .. self.message, self.fileName, self.lineNumber )
+        end
+    end
+
+    ---@class gpm.std.ErrorClass : gpm.std.Error
+    ---@field __base gpm.std.Error
+    ---@overload fun(message: string, fileName: string?, lineNumber: number?, stackPos: number?): Error
+    local ErrorClass = std.class.create( Error )
+    std.Error = ErrorClass
+
+    --- Creates a new `Error` with custom name
+    ---@param name string
+    ---@param base Error | nil
+    ---@return Error
+    function ErrorClass.make(name, base)
+        local base = std.class.base(name, base or std.Error)
+        return std.class.create(base) ---@type Error
+    end
+
+    ---@alias gpm.std.ErrorType
+    ---| number # error with level
+    ---| `-1` # ErrorNoHalt
+    ---| `-2` # ErrorNoHaltWithStack
 
     ---@class gpm.std.error
-    ---@overload fun(message: any, errorLevel: number | `-1` | `-2` | nil)
-    std.error = setmetatable(
-        {
-            NotImplementedError = class( "NotImplementedError", nil, nil, errorClass ),
-            FutureCancelError = class( "FutureCancelError", nil, nil, errorClass ),
-            InvalidStateError = class( "InvalidStateError", nil, nil, errorClass ),
-            CodeCompileError = class( "CodeCompileError", nil, nil, errorClass ),
-            FileSystemError = class( "FileSystemError", nil, nil, errorClass ),
-            WebClientError = class( "WebClientError", nil, nil, errorClass ),
-            RuntimeError = class( "RuntimeError", nil, nil, errorClass ),
-            PackageError = class( "PackageError", nil, nil, errorClass ),
-            ModuleError = class( "ModuleError", nil, nil, errorClass ),
-            SourceError = class( "SourceError", nil, nil, errorClass ),
-            FutureError = class( "FutureError", nil, nil, errorClass ),
-            AddonError = class( "AddonError", nil, nil, errorClass ),
-            RangeError = class( "RangeError", nil, nil, errorClass ),
-            TypeError = class( "TypeError", nil, nil, errorClass ),
-            SQLError = class( "SQLError", nil, nil, errorClass ),
-            Error = errorClass
-        },
-        {
-            __call = function( self, message, level )
-                if not coroutine_running() then
-                    message = tostring( message )
-                end
-
-                if level == -1 then
-                    return ErrorNoHalt( message )
-                elseif level == -2 then
-                    return ErrorNoHaltWithStack( message )
-                else
-                    return error( message, level )
-                end
+    ---@overload fun(message: any, errorLevel: gpm.std.ErrorType?)
+    std.error = std.error or setmetatable({}, {
+        ---@param level gpm.std.ErrorType?
+        __call = function(self, message, level)
+            if not coroutine_running() then
+                message = tostring(message)
             end
-        }
-    )
 
+            if level == -1 then
+                return ErrorNoHalt(message)
+            elseif level == -2 then
+                return ErrorNoHaltWithStack(message)
+            else
+                return error(message, level)
+            end
+        end
+    })
+
+    std.error.NotImplementedError = ErrorClass.make("NotImplementedError")
+    std.error.FutureCancelError = ErrorClass.make("FutureCancelError")
+    std.error.InvalidStateError = ErrorClass.make("InvalidStateError")
+    std.error.CodeCompileError = ErrorClass.make("CodeCompileError")
+    std.error.FileSystemError = ErrorClass.make("FileSystemError")
+    std.error.WebClientError = ErrorClass.make("WebClientError")
+    std.error.RuntimeError = ErrorClass.make("RuntimeError")
+    std.error.PackageError = ErrorClass.make("PackageError")
+    std.error.ModuleError = ErrorClass.make("ModuleError")
+    std.error.SourceError = ErrorClass.make("SourceError")
+    std.error.FutureError = ErrorClass.make("FutureError")
+    std.error.AddonError = ErrorClass.make("AddonError")
+    std.error.RangeError = ErrorClass.make("RangeError")
+    std.error.TypeError = ErrorClass.make("TypeError")
+    std.error.SQLError = ErrorClass.make("SQLError")
+    std.error.Error = ErrorClass
 end
 
 -- sqlite library
@@ -1088,7 +1110,6 @@ end
 std.path = include( "std/path.lua" )
 
 -- Logger
-local gpm_Logger
 do
 
     local string_gsub, string_sub = string.gsub, string.sub
@@ -1120,7 +1141,49 @@ do
         stateColor = color_white
     end
 
-    local log = function( self, color, level, str, ... )
+    ---@class gpm.std.LoggerOptions
+    ---@field color? Color
+    ---@field interpolation? boolean
+    ---@field debug? fun(): boolean
+
+    ---@alias Logger gpm.std.Logger
+    ---@class gpm.std.Logger : gpm.std.Object
+    ---@field __class gpm.std.LoggerClass
+    local Logger = std.class.base("Logger")
+
+    ---@protected
+    ---@param title string
+    ---@param options gpm.std.LoggerOptions?
+    function Logger:__init(title, options)
+        argument( title, 1, "string" )
+        self.title = title
+        self.title_color = color_white
+        self.interpolation = true
+        self.debug_fn = isInDebug
+
+        if options then
+            if options.color then
+                -- argument( options.color, 2, "Color" )
+                self.title_color = options.color
+            end
+
+            if options.interpolation ~= nil then
+                self.interpolation = options.interpolation == true
+            end
+
+            if options.debug then
+                argument( options.debug, 2, "function" )
+                self.debug_fn = options.debug
+            end
+        end
+
+        self.text_color = primaryTextColor
+    end
+
+    ---@param color Color
+    ---@param level string
+    ---@param str string
+    function Logger:log(color, level, str, ...)
         if self.interpolation then
             local args = { ... }
             for index = 1, select( '#', ... ) do
@@ -1148,60 +1211,35 @@ do
         return nil
     end
 
-    local Logger = class( "Logger", {
-        __tostring = function( self )
-            return string_format( "Logger: %p [%s]", self, self.title )
-        end,
-        new = function( self, title, title_color, interpolation, debug_func )
-            argument( title, 1, "string" )
-            self.title = title
+    function Logger:info(...)
+        return self:log(infoColor, "INFO ", ...)
+    end
 
-            if title_color == nil then
-                self.title_color = color_white
-            else
-                argument( title_color, 2, "Color" )
-                self.title_color = title_color
-            end
+    function Logger:warn(...)
+        return self:log(warnColor, "WARN ", ...)
+    end
 
-            if interpolation == nil then
-                self.interpolation = true
-            else
-                self.interpolation = interpolation == true
-            end
+    function Logger:error(...)
+        return self:log(errorColor, "ERROR", ...)
+    end
 
-            if debug_func == nil then
-                self.debug_fn = isInDebug
-            else
-                argument( debug_func, 1, "function" )
-                self.debug_fn = debug_func
-            end
-
-            self.text_color = primaryTextColor
-        end,
-        Log = log,
-        Info = function( self, ... )
-            return log( self, infoColor, "INFO ", ... )
-        end,
-        Warn = function( self, ... )
-            return log( self, warnColor, "WARN ", ... )
-        end,
-        Error = function( self, ... )
-            return log( self, errorColor, "ERROR", ... )
-        end,
-        Debug = function( self, ... )
-            if self:debug_fn() then
-                log( self, debugColor, "DEBUG", ... )
-            end
-
-            return nil
+    function Logger:debug(...)
+        if self:debug_fn() then
+            return self:log(debugColor, "DEBUG", ...)
         end
+
+        return nil
+    end
+
+    ---@class gpm.std.LoggerClass : gpm.std.Logger
+    ---@field __base gpm.std.Logger
+    ---@overload fun(title: string, options: gpm.std.LoggerOptions?): Logger
+    std.Logger = std.class.create(Logger)
+
+    gpm.logger = std.Logger( gpm_PREFIX, {
+        color = Color( 180, 180, 255 ),
+        interpolation = false
     } )
-
-    std.Logger = Logger
-
-    gpm_Logger = Logger( gpm_PREFIX, Color( 180, 180, 255 ), false )
-    gpm.Logger = gpm_Logger
-
 end
 
 -- Version class
