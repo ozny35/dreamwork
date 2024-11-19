@@ -1,7 +1,6 @@
 local _G = _G
-local std = _G.gpm.std
-local class = std.class
 local Vector, ColorToHSL, HSLToColor, HSVToColor = _G.Vector, _G.ColorToHSL, _G.HSLToColor, _G.HSVToColor
+local std = _G.gpm.std
 
 local is_number, setmetatable = std.is.number, std.setmetatable
 
@@ -23,6 +22,7 @@ do
     string_char, string_byte, string_format, string_len, string_sub = string.char, string.byte, string.format, string.len, string.sub
 end
 
+-- TODO: Find original author
 local colorCorrection = {
     [ 0 ] = 0, 5, 8, 10, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22,
     22, -- lost 15
@@ -71,8 +71,6 @@ local colorCorrection = {
 
 local vconst = 1 / 255
 
-local ColorClass
-
 -- TODO: write proper documentation
 
 -- https://github.com/Facepunch/garrysmod/blob/master/garrysmod/lua/includes/util/color.lua
@@ -89,14 +87,14 @@ local ColorClass
 ---@operator mul(Color | number): Color
 ---@operator div(Color | number): Color
 ---@operator unm(): Color
-local Color = class.base( "Color" )
+local Color = std.class.base( "Color" )
 
 ---@protected
 ---@param r number?
 ---@param g number?
 ---@param b number?
 ---@param a number?
-function Color:__init(r, g, b, a)
+function Color:__init( r, g, b, a )
     r = math_clamp( r or 0, 0, 255 )
 
     self.r = r
@@ -119,33 +117,42 @@ end
 
 ---@private
 function Color:__unm()
-    return ColorClass(
-        math_clamp( math_abs( 255 - self.r ), 0, 255 ),
-        math_clamp( math_abs( 255 - self.g ), 0, 255 ),
-        math_clamp( math_abs( 255 - self.b ), 0, 255 ),
-        self.a
+    return setmetatable(
+        {
+            r = math_clamp( math_abs( 255 - self.r ), 0, 255 ),
+            g = math_clamp( math_abs( 255 - self.g ), 0, 255 ),
+            b = math_clamp( math_abs( 255 - self.b ), 0, 255 ),
+            a = self.a
+        },
+        Color
     )
 end
 
 ---@private
 ---@param color Color
 function Color:__add( color )
-    return ColorClass(
-        math_clamp( self.r + color.r, 0, 255 ),
-        math_clamp( self.g + color.g, 0, 255 ),
-        math_clamp( self.b + color.b, 0, 255 ),
-        self.a
+    return setmetatable(
+        {
+            r = math_clamp( self.r + color.r, 0, 255 ),
+            g = math_clamp( self.g + color.g, 0, 255 ),
+            b = math_clamp( self.b + color.b, 0, 255 ),
+            a = self.a
+        },
+        Color
     )
 end
 
 ---@private
 ---@param color Color
 function Color:__sub( color )
-    return ColorClass(
-        math_clamp( self.r - color.r, 0, 255 ),
-        math_clamp( self.g - color.g, 0, 255 ),
-        math_clamp( self.b - color.b, 0, 255 ),
-        self.a
+    return setmetatable(
+        {
+            r = math_clamp( self.r - color.r, 0, 255 ),
+            g = math_clamp( self.g - color.g, 0, 255 ),
+            b = math_clamp( self.b - color.b, 0, 255 ),
+            a = self.a
+        },
+        Color
     )
 end
 
@@ -154,18 +161,24 @@ end
 function Color:__mul( other )
     if is_number( other ) then
         ---@cast other number
-        return ColorClass(
-            math_clamp( self.r * other, 0, 255 ),
-            math_clamp( self.g * other, 0, 255 ),
-            math_clamp( self.b * other, 0, 255 ),
-            self.a
+        return setmetatable(
+            {
+                r = math_clamp( self.r * other, 0, 255 ),
+                g = math_clamp( self.g * other, 0, 255 ),
+                b = math_clamp( self.b * other, 0, 255 ),
+                a = self.a
+            },
+            Color
         )
     else
-        return ColorClass(
-            math_clamp( self.r * other.r, 0, 255 ),
-            math_clamp( self.g * other.g, 0, 255 ),
-            math_clamp( self.b * other.b, 0, 255 ),
-            self.a
+        return setmetatable(
+            {
+                r = math_clamp( self.r * other.r, 0, 255 ),
+                g = math_clamp( self.g * other.g, 0, 255 ),
+                b = math_clamp( self.b * other.b, 0, 255 ),
+                a = self.a
+            },
+            Color
         )
     end
 end
@@ -175,18 +188,24 @@ end
 function Color:__div( other )
     if is_number( other ) then
         ---@cast other number
-        return ColorClass(
-            math_clamp( self.r / other, 0, 255 ),
-            math_clamp( self.g / other, 0, 255 ),
-            math_clamp( self.b / other, 0, 255 ),
-            self.a
+        return setmetatable(
+            {
+                r = math_clamp( self.r / other, 0, 255 ),
+                g = math_clamp( self.g / other, 0, 255 ),
+                b = math_clamp( self.b / other, 0, 255 ),
+                a = self.a
+            },
+            Color
         )
     else
-        return ColorClass(
-            math_clamp( self.r / other.r, 0, 255 ),
-            math_clamp( self.g / other.g, 0, 255 ),
-            math_clamp( self.b / other.b, 0, 255 ),
-            self.a
+        return setmetatable(
+            {
+                r = math_clamp( self.r / other.r, 0, 255 ),
+                g = math_clamp( self.g / other.g, 0, 255 ),
+                b = math_clamp( self.b / other.b, 0, 255 ),
+                a = self.a
+            },
+            Color
         )
     end
 end
@@ -238,10 +257,10 @@ function Color:ToTable()
 end
 
 function Color:ToHex()
-    return string_format("#%02x%02x%02x", self.r, self.g, self.b)
+    return string_format( "#%02x%02x%02x", self.r, self.g, self.b )
 end
 
-function Color:ToBinary(withOutAlpha)
+function Color:ToBinary( withOutAlpha )
     if withOutAlpha then
         return string_char( self.r, self.g, self.b )
     else
@@ -271,7 +290,7 @@ function Color:ToCMYK()
     return ( m - self.r ) / m * 100, ( m - self.g ) / m * 100, ( m - self.b ) / m * 100, math_min( self.r, self.g, self.b ) / 2.55
 end
 
-function Color:Lerp(color, frac, withOutAlpha)
+function Color:Lerp( color, frac, withOutAlpha )
     frac = math_clamp( frac, 0, 1 )
 
     self.r = math_lerp( frac, self.r, color.r )
@@ -294,14 +313,18 @@ end
 ---@class gpm.std.ColorClass : gpm.std.Color
 ---@field __base Color
 ---@overload fun(r: number?, g: number?, b: number?, a: number?): gpm.std.Color
-ColorClass = class.create( Color )
+local ColorClass = std.class.create( Color )
 
 function ColorClass.FromHex( hex )
     if is_number( hex ) then
-        return ColorClass(
-            bit_rshift( bit_band( hex, 0xFF0000 ), 16 ),
-            bit_rshift( bit_band( hex, 0xFF00 ), 8 ),
-            bit_band( hex, 0xFF )
+        return setmetatable(
+            {
+                r = bit_rshift( bit_band( hex, 0xFF0000 ), 16 ),
+                g = bit_rshift( bit_band( hex, 0xFF00 ), 8 ),
+                b = bit_band( hex, 0xFF ),
+                a = 255
+            },
+            Color
         )
     end
 
@@ -312,70 +335,121 @@ function ColorClass.FromHex( hex )
     local length = string_len( hex )
     if length == 3 then
         local r, g, b = string_byte( hex, 1, 3 )
-        return ColorClass(
-            tonumber( string_char( r, r ), 16 ),
-            tonumber( string_char( g, g ), 16 ),
-            tonumber( string_char( b, b ), 16 )
+        return setmetatable(
+            {
+                r = tonumber( string_char( r, r ), 16 ),
+                g = tonumber( string_char( g, g ), 16 ),
+                b = tonumber( string_char( b, b ), 16 ),
+                a = 255
+            },
+            Color
         )
     elseif length == 4 then
         local r, g, b, a = string_byte( hex, 1, 4 )
-        return ColorClass(
-            tonumber( string_char( r, r ), 16 ),
-            tonumber( string_char( g, g ), 16 ),
-            tonumber( string_char( b, b ), 16 ),
-            tonumber( string_char( a, a ), 16 )
+        return setmetatable(
+            {
+                r = tonumber( string_char( r, r ), 16 ),
+                g = tonumber( string_char( g, g ), 16 ),
+                b = tonumber( string_char( b, b ), 16 ),
+                a = tonumber( string_char( a, a ), 16 )
+            },
+            Color
         )
     elseif length == 6 then
-        return ColorClass(
-            tonumber( string_sub( hex, 1, 2 ), 16 ),
-            tonumber( string_sub( hex, 3, 4 ), 16 ),
-            tonumber( string_sub( hex, 5, 6 ), 16 )
+        return setmetatable(
+            {
+                r = tonumber( string_sub( hex, 1, 2 ), 16 ),
+                g = tonumber( string_sub( hex, 3, 4 ), 16 ),
+                b = tonumber( string_sub( hex, 5, 6 ), 16 ),
+                a = 255
+            },
+            Color
         )
     elseif length == 8 then
-        return ColorClass(
-            tonumber( string_sub( hex, 1, 2 ), 16 ),
-            tonumber( string_sub( hex, 3, 4 ), 16 ),
-            tonumber( string_sub( hex, 5, 6 ), 16 ),
-            tonumber( string_sub( hex, 7, 8 ), 16 )
+        return setmetatable(
+            {
+                r = tonumber( string_sub( hex, 1, 2 ), 16 ),
+                g = tonumber( string_sub( hex, 3, 4 ), 16 ),
+                b = tonumber( string_sub( hex, 5, 6 ), 16 ),
+                a = tonumber( string_sub( hex, 7, 8 ), 16 )
+            },
+            Color
         )
+    else
+        return setmetatable( { r = 0, g = 0, b = 0, a = 255 }, Color )
     end
-
-    return ColorClass()
 end
 
-function ColorClass.FromBinary(binary, withOutAlpha)
+function ColorClass.FromBinary( binary )
     local length = string_len( binary )
     if length == 1 then
-        return ColorClass( string_byte( binary, 1 ), 0, 0 )
+        return setmetatable(
+            {
+                r = string_byte( binary, 1 ),
+                g = 0,
+                b = 0,
+                a = 255
+            },
+            Color
+        )
     elseif length == 2 then
-        return ColorClass( string_byte( binary, 1 ), string_byte( binary, 2 ), 0 )
+        return setmetatable(
+            {
+                r = string_byte( binary, 1 ),
+                g = string_byte( binary, 2 ),
+                b = 0,
+                a = 255
+            },
+            Color
+        )
     elseif length == 3 then
-        return ColorClass( string_byte( binary, 1 ), string_byte( binary, 2 ), string_byte( binary, 3 ) )
+        return setmetatable(
+            {
+                r = string_byte( binary, 1 ),
+                g = string_byte( binary, 2 ),
+                b = string_byte( binary, 3 ),
+                a = 255
+            },
+            Color
+        )
     else
-        return ColorClass( string_byte( binary, 1 ), string_byte( binary, 2 ), string_byte( binary, 3 ), string_byte( binary, 4 ) )
+        return setmetatable(
+            {
+                r = string_byte( binary, 1 ),
+                g = string_byte( binary, 2 ),
+                b = string_byte( binary, 3 ),
+                a = string_byte( binary, 4 )
+            },
+            Color
+        )
     end
 end
 
-function ColorClass.FromVector(vector)
-    return ColorClass( vector[ 1 ] * 255, vector[ 2 ] * 255, vector[ 3 ] * 255 )
+function ColorClass.FromVector( vector )
+    return setmetatable(
+        {
+            r = vector[ 1 ] * 255,
+            g = vector[ 2 ] * 255,
+            b = vector[ 3 ] * 255,
+            a = 255
+        },
+        Color
+    )
 end
 
-function ColorClass.FromHSL(hue, saturation, lightness)
-    local tbl = HSLToColor( hue, saturation, lightness )
-    return ColorClass( tbl[ 1 ], tbl[ 2 ], tbl[ 3 ], tbl[ 4 ] )
+function ColorClass.FromHSL( hue, saturation, lightness )
+    return setmetatable( HSLToColor( hue, saturation, lightness ), Color )
 end
 
-function ColorClass.FromHSV(hue, saturation, brightness)
-    local tbl = HSVToColor( hue, saturation, brightness )
-    return ColorClass( tbl[ 1 ], tbl[ 2 ], tbl[ 3 ], tbl[ 4 ] )
+function ColorClass.FromHSV( hue, saturation, brightness )
+    return setmetatable( HSVToColor( hue, saturation, brightness ), Color )
 end
 
-function ColorClass.FromHWB(hue, saturation, brightness)
-    local tbl = HSVToColor( hue, 1 - saturation / ( 1 - brightness ), 1 - brightness )
-    return ColorClass( tbl[ 1 ], tbl[ 2 ], tbl[ 3 ], tbl[ 4 ] )
+function ColorClass.FromHWB( hue, saturation, brightness )
+    return setmetatable( HSVToColor( hue, 1 - saturation / ( 1 - brightness ), 1 - brightness ), Color )
 end
 
-function ColorClass.FromCMYK(cyan, magenta, yellow, black)
+function ColorClass.FromCMYK( cyan, magenta, yellow, black )
     cyan, magenta, yellow, black = cyan * 0.01, magenta * 0.01, yellow * 0.01, black * 0.01
 
     local mk = 1 - black
@@ -386,7 +460,7 @@ function ColorClass.FromCMYK(cyan, magenta, yellow, black)
     )
 end
 
-function ColorClass.FromTable(tbl)
+function ColorClass.FromTable( tbl )
     return ColorClass( tbl[ 1 ] or tbl.r, tbl[ 2 ] or tbl.g, tbl[ 3 ] or tbl.b, tbl[ 4 ] or tbl.a )
 end
 
