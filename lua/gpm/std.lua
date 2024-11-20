@@ -476,7 +476,7 @@ do
     ---@param obj Object
     ---@return string
     local function base__tostring( obj )
-        return string_format( "@object '%s': %p", rawget( getmetatable( obj ),  "__name" ), obj )
+        return string_format( "%s: %p", rawget( getmetatable( obj ),  "__name" ), obj )
     end
 
     ---@param name string
@@ -541,7 +541,7 @@ do
     ---@param cls Class
     ---@return string
     local function class__tostring( cls )
-        return string_format( "@class '%s': %p", rawget( rawget( cls, "__base" ), "__name" ), cls )
+        return string_format( "%sClass: %p", rawget( rawget( cls, "__base" ), "__name" ), cls )
     end
 
     ---@param base Object
