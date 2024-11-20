@@ -1,21 +1,454 @@
 local _G = _G
-local tostring, select, getfenv, string_format, cvars, concommand, GetConVar_Internal, RunConsoleCommand, MsgC, unpack = _G.tostring, _G.select, _G.getfenv, _G.string.format, _G.cvars, _G.concommand, _G.GetConVar_Internal, _G.RunConsoleCommand, _G.MsgC, _G.unpack
-local cvars_GetConVarCallbacks, cvars_AddChangeCallback, cvars_RemoveChangeCallback = cvars.GetConVarCallbacks, cvars.AddChangeCallback, cvars.RemoveChangeCallback
+local RunConsoleCommand = _G.RunConsoleCommand
 
+local std = _G.gpm.std
+local is_string = std.is.string
+local string_format = std.string.format
+
+---@type ConVar
 local CONVAR = _G.FindMetaTable( "ConVar" )
 local getName, getDefault = CONVAR.GetName, CONVAR.GetDefault
 
 ---@class gpm.std.console
 local console = {}
 
-console.write = MsgC
+do
 
-function console.writeLine( ... )
-    local args, length = { ... }, select( '#', ... ) + 1
-    args[ length ] = "\n"
+    local unpack = std.table.unpack
+    local select = std.select
+    local MsgC = _G.MsgC
 
-    return MsgC( unpack( args, 1, length ) )
+    console.write = MsgC
+
+    --- Writes a colored message to the console on a new line.
+    ---@param ... string | Color: The message to write to the console.
+    function console.writeLine( ... )
+        local args, length = { ... }, select( '#', ... ) + 1
+        args[ length ] = "\n"
+        MsgC( unpack( args, 1, length ) )
+    end
+
 end
+
+---@class gpm.std.console.variable
+local variable = {
+    create = _G.CreateConVar,
+    exists = _G.ConVarExists
+}
+
+console.variable = variable
+
+do
+
+    local cvars = _G.cvars
+    local cvars_GetConVarCallbacks, cvars_AddChangeCallback, cvars_RemoveChangeCallback = cvars.GetConVarCallbacks, cvars.AddChangeCallback, cvars.RemoveChangeCallback
+    local getfenv = std.getfenv
+
+    -- TODO: Rewrite this crap
+    variable.getCallbacks = cvars_GetConVarCallbacks
+
+    variable.addCallback = function( name, callback, identifier )
+        local fenv = getfenv( 2 )
+        if fenv then
+            local package = fenv.__package
+            if package then
+                local prefix = package.prefix
+                identifier = prefix .. ( identifier or "" )
+            end
+        end
+
+        cvars_AddChangeCallback( name, callback, identifier )
+    end
+
+    variable.removeCallback = function( name, identifier )
+        local fenv = getfenv( 2 )
+        if fenv then
+            local package = fenv.__package
+            if package then
+                local prefix = package.prefix
+                identifier = prefix .. ( identifier or "" )
+            end
+        end
+
+        cvars_RemoveChangeCallback( name, identifier )
+    end
+
+end
+
+local variable_get
+do
+
+    local GetConVar_Internal = _G.GetConVar_Internal
+    local cache = {}
+
+    --- Gets the `ConVar` with the specified name.
+    ---@param name string Name of the `ConVar` to get.
+    ---@return ConVar | nil: The `ConVar` object, or `nil` if no such `ConVar` was found.
+    function variable_get( name )
+        local value = cache[ name ]
+        if value == nil then
+            value = GetConVar_Internal( name )
+            cache[ name ] = value
+        end
+
+        return value
+    end
+
+    variable.get = variable_get
+
+end
+
+do
+
+    local tostring = std.tostring
+
+    --- Sets the value of the ConVar with the specified name.
+    ---@param name string | ConVar: The name or `ConVar` object of the `ConVar` to set.
+    ---@param value any: The value to set.
+    function variable.set( name, value )
+        value = tostring( value )
+
+        if is_string( name ) then
+            ---@cast name string
+            RunConsoleCommand( name, value )
+        else
+            ---@cast name ConVar
+            RunConsoleCommand( getName( name ), value )
+        end
+    end
+
+end
+
+-- get value
+do
+
+    local getString = CONVAR.GetString
+
+    --- Returns the value of the `ConVar` with the specified name.
+    ---@param convar string | ConVar | nil: The name or `ConVar` object of the `ConVar` to get.
+    ---@return string: The value of the `ConVar`.
+    function variable.getString( convar )
+        if is_string( convar ) then
+            ---@cast convar string
+            convar = variable_get( convar )
+        end
+
+        if convar == nil then
+            return ""
+        else
+            ---@cast convar ConVar
+            return getString( convar )
+        end
+    end
+
+end
+
+do
+
+    local getFloat = CONVAR.GetFloat
+
+    --- Returns the value of the `ConVar` with the specified name.
+    ---@param convar string | ConVar | nil: The name or `ConVar` object of the `ConVar` to get.
+    ---@return number: The value of the `ConVar`.
+    function variable.getFloat( convar )
+        if is_string( convar ) then
+            ---@cast convar string
+            convar = variable_get( convar )
+        end
+
+        if convar == nil then
+            return 0
+        else
+            ---@cast convar ConVar
+            return getFloat( convar )
+        end
+    end
+
+end
+
+do
+
+    local getBool = CONVAR.GetBool
+
+    --- Returns the value of the `ConVar` with the specified name.
+    ---@param convar string | ConVar | nil: The name or `ConVar` object of the `ConVar` to get.
+    ---@return boolean: The value of the `ConVar`.
+    function variable.getBool( convar )
+        if is_string( convar ) then
+            ---@cast convar string
+            convar = variable_get( convar )
+        end
+
+        if convar == nil then
+            return false
+        else
+            ---@cast convar ConVar
+            return getBool( convar )
+        end
+    end
+
+end
+
+do
+
+    local getInt = CONVAR.GetInt
+
+    --- Returns the value of the `ConVar` with the specified name.
+    ---@param convar string | ConVar | nil: The name or `ConVar` object of the `ConVar` to get.
+    ---@return number: The value of the `ConVar`.
+    function variable.getInt( convar )
+        if is_string( convar ) then
+            ---@cast convar string
+            convar = variable_get( convar )
+        end
+
+        if convar == nil then
+            return 0
+        else
+            ---@cast convar ConVar
+            return getInt( convar )
+        end
+    end
+
+end
+
+--- Sets the value of the ConVar with the specified name.
+---@param convar string | ConVar: The name or `ConVar` object of the `ConVar` to set.
+---@param value any: The value to set.
+function variable.setString( convar, value )
+    if is_string( convar ) then
+        ---@cast convar string
+        RunConsoleCommand( convar, value )
+    else
+        ---@cast convar ConVar
+        RunConsoleCommand( getName( convar ), value )
+    end
+end
+
+--- Sets the value of the ConVar with the specified name.
+---@param convar string | ConVar: The name or `ConVar` object of the `ConVar` to set.
+---@param value number: The value to set.
+function variable.setFloat( convar, value )
+    local str = string_format( "%f", value )
+
+    if is_string( convar ) then
+        ---@cast convar string
+        RunConsoleCommand( convar, str )
+    else
+        ---@cast convar ConVar
+        RunConsoleCommand( getName( convar ), str )
+    end
+end
+
+--- Sets the value of the ConVar with the specified name.
+---@param convar string | ConVar:
+---@param value boolean:
+function variable.setBool( convar, value )
+    local str = value == true and "1" or "0"
+
+    if is_string( convar ) then
+        ---@cast convar string
+        RunConsoleCommand( convar, str )
+    else
+        ---@cast convar ConVar
+        RunConsoleCommand( getName( convar ), str )
+    end
+end
+
+--- Sets the value of the ConVar with the specified name.
+---@param convar string | ConVar: The name or `ConVar` object of the `ConVar` to set.
+---@param value number: The value to set.
+function variable.setInt( convar, value )
+    local str = string_format( "%d", value )
+    if is_string( convar ) then
+        ---@cast convar string
+        RunConsoleCommand( convar, str )
+    else
+        ---@cast convar ConVar
+        RunConsoleCommand( getName( convar ), value )
+    end
+end
+
+--- Reverts the value of the ConVar with the specified name.
+--- @param convar string | ConVar: The name or `ConVar` object of the `ConVar` to revert to the default value.
+function variable.revert( convar )
+    if is_string( convar ) then
+        ---@cast convar string
+        RunConsoleCommand( convar, variable_get( convar ) )
+    else
+        ---@cast convar ConVar
+        RunConsoleCommand( getName( convar ), getDefault( convar ) )
+    end
+end
+
+--- Returns the name of the ConVar.
+---@param convar string | ConVar: The name or `ConVar` object of the `ConVar` to get name.
+---@return string: The name of the console variable.
+function variable.getName( convar )
+    if is_string( convar ) then
+        ---@cast convar string
+        return convar
+    else
+        ---@cast convar ConVar
+        return getName( convar )
+    end
+end
+
+do
+
+    local getFlags = CONVAR.GetFlags
+
+    --- Returns the `Enums/FCVAR` flags of the ConVar.
+    ---@param convar string | ConVar | nil: The name or `ConVar` object of the `ConVar` to get.
+    ---@return number: The value of the `ConVar`.
+    function variable.getFlags( convar )
+        if is_string( convar ) then
+            ---@cast convar string
+            convar = variable_get( convar )
+        end
+
+        if convar == nil then
+            return 0
+        else
+            ---@cast convar ConVar
+            return getFlags( convar )
+        end
+    end
+
+end
+
+do
+
+    local isFlagSet = CONVAR.IsFlagSet
+
+    --- Returns whether the specified flag is set on the ConVar.
+    ---@param convar string | ConVar | nil: The name or `ConVar` object of the `ConVar` to get.
+    ---@param flag number: The `Enums/FCVAR` flag to test.
+    ---@return boolean: Whether the flag is set or not.
+    function variable.isFlagSet( convar, flag )
+        if is_string( convar ) then
+            ---@cast convar string
+            convar = variable_get( convar )
+        end
+
+        if convar == nil then
+            return false
+        else
+            ---@cast convar ConVar
+            return isFlagSet( convar, flag )
+        end
+    end
+
+end
+
+--- Returns the default value of the ConVar.
+---@param convar string | ConVar | nil: The name or `ConVar` object of the `ConVar` to get.
+---@return string: The default value of the `ConVar`.
+function variable.getDefault( convar )
+    if is_string( convar ) then
+        ---@cast convar string
+        convar = variable_get( convar )
+    end
+
+    if convar == nil then
+        return ""
+    else
+        ---@cast convar ConVar
+        return getDefault( convar )
+    end
+end
+
+do
+
+    local getHelpText = CONVAR.GetHelpText
+
+    --- Returns the help text of the ConVar.
+    ---@param convar string | ConVar | nil: The name or `ConVar` object of the `ConVar` to get.
+    ---@return string: The help text of the `ConVar`.
+    function variable.getHelpText( convar )
+        if is_string( convar ) then
+            ---@cast convar string
+            convar = variable_get( convar )
+        end
+
+        if convar == nil then
+            return ""
+        else
+            ---@cast convar ConVar
+            return getHelpText( convar )
+        end
+    end
+
+end
+
+do
+
+    local getMin, getMax = CONVAR.GetMin, CONVAR.GetMax
+
+    --- Returns the minimum value of the ConVar.
+    ---@param convar string | ConVar | nil: The name or `ConVar` object of the `ConVar` to get.
+    ---@return number?
+    function variable.getMin( convar )
+        if is_string( convar ) then
+            ---@cast convar string
+            convar = variable_get( convar )
+        end
+
+        if convar == nil then
+            return nil
+        else
+            ---@cast convar ConVar
+            return getMin( convar )
+        end
+    end
+
+    --- Returns the maximum value of the ConVar.
+    ---@param convar string | ConVar | nil: The name or `ConVar` object of the `ConVar` to get.
+    ---@return number?
+    function variable.getMax( convar )
+        if is_string( convar ) then
+            ---@cast convar string
+            convar = variable_get( convar )
+        end
+
+        if convar == nil then
+            return nil
+        else
+            ---@cast convar ConVar
+            return getMax( convar )
+        end
+    end
+
+    --- Returns the minimum and maximum values of the ConVar.
+    ---@param convar string | ConVar | nil: The name or `ConVar` object of the `ConVar` to get.
+    ---@return number?, number?: The minimum and maximum values of the `ConVar`.
+    function variable.getBounds( convar )
+        if is_string( convar ) then
+            ---@cast convar string
+            convar = variable_get( convar )
+        end
+
+        if convar == nil then
+            return nil, nil
+        else
+            ---@cast convar ConVar
+            return getMin( convar ), getMax( convar )
+        end
+    end
+
+end
+
+local concommand = _G.concommand
+
+---@class gpm.std.console.command
+local command = {
+    add = concommand.Add,
+    run = RunConsoleCommand,
+    remove = concommand.Remove,
+    getTable = concommand.GetTable
+}
+
+console.command = command
 
 -- do
 
@@ -57,112 +490,5 @@ end
 --     end )
 
 -- end
-
----@class gpm.std.console.variable
-local variable = {}
-console.variable = variable
-
--- TODO: Rewrite this crap
-variable.getCallbacks = cvars_GetConVarCallbacks
-
-variable.addCallback = function( name, callback, identifier )
-    local fenv = getfenv( 2 )
-    if fenv then
-        local package = fenv.__package
-        if package then
-            local prefix = package.prefix
-            identifier = prefix .. ( identifier or "" )
-        end
-    end
-
-    cvars_AddChangeCallback( name, callback, identifier )
-end
-
-variable.removeCallback = function( name, identifier )
-    local fenv = getfenv( 2 )
-    if fenv then
-        local package = fenv.__package
-        if package then
-            local prefix = package.prefix
-            identifier = prefix .. ( identifier or "" )
-        end
-    end
-
-    cvars_RemoveChangeCallback( name, identifier )
-end
-
-variable.create = _G.CreateConVar
-variable.exists = _G.ConVarExists
-
-do
-
-    local cache = {}
-
-    function variable.get( name )
-        local value = cache[ name ]
-        if value == nil then
-            value = GetConVar_Internal( name )
-            cache[ name ] = value
-        end
-
-        return value
-    end
-
-end
-
-variable.set = function( name, value )
-    RunConsoleCommand( name, tostring( value ) )
-    return nil
-end
-
--- get value
-variable.getString = CONVAR.GetString
-variable.getFloat = CONVAR.GetFloat
-variable.getBool = CONVAR.GetBool
-variable.getInt = CONVAR.GetInt
-
--- set value
-variable.setString = function( self, value )
-    RunConsoleCommand( getName( self ), value )
-    return self
-end
-
-variable.setFloat = function( self, value )
-    RunConsoleCommand( getName( self ), string_format( "%f", value ) )
-    return self
-end
-
-variable.setBool = function( self, value )
-    RunConsoleCommand( getName( self ), value == true and "1" or "0" )
-    return self
-end
-
-variable.setInt = function( self, value )
-    RunConsoleCommand( getName( self ), string_format( "%d", value ) )
-    return self
-end
-
-variable.revert = function( self )
-    RunConsoleCommand( getName( self ), getDefault( self ) )
-    return self
-end
-
--- get info
-variable.getName = getName
-variable.getFlags = CONVAR.GetFlags
-variable.isFlagSet = CONVAR.IsFlagSet
-variable.getDefault = getDefault
-variable.getHelpText = CONVAR.GetHelpText
-variable.getMin = CONVAR.GetMin
-variable.getMax = CONVAR.GetMax
-
----@class gpm.std.console.command
-local command = {}
-console.command = command
-
-command.add = concommand.Add
-command.run = RunConsoleCommand
-command.remove = concommand.Remove
-command.getTable = concommand.GetTable
 
 return console

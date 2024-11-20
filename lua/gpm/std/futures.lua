@@ -38,7 +38,7 @@ local ACTION_RESUME = futures.ACTION.RESUME
 ---@type { [thread]: function }
 futures.listeners = futures.listeners or setmetatable({}, { __mode = "kv" })
 
----@private 
+---@private
 ---@type { [thread]: thread }
 futures.coroutine_listeners = futures.coroutine_listeners or setmetatable({}, { __mode = "kv" })
 
