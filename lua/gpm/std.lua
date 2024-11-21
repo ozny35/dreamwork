@@ -30,6 +30,7 @@ if SERVER then
 
     AddCSLuaFile( "gpm/3rd-party/deflate.lua" )
     AddCSLuaFile( "gpm/3rd-party/bigint.lua" )
+    AddCSLuaFile( "gpm/database.lua" )
     AddCSLuaFile( "gpm/detour.lua" )
     AddCSLuaFile( "gpm/std.lua" )
 
@@ -1081,6 +1082,9 @@ end
 
 -- sqlite library
 std.sqlite = include( "std/sqlite.lua" )
+
+-- database functions ( gpm only )
+include( "database.lua" )
 
 ---@class gpm.std.game
 local game = include( "std/game.lua" )
