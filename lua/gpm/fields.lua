@@ -43,3 +43,7 @@ HTTPRequest.timeout = 60
 ---The cache lifetime for the request.
 ---@type number
 HTTPRequest.lifetime = 0
+
+---Whether to use ETag caching.
+---@type boolean
+HTTPRequest.etag = false

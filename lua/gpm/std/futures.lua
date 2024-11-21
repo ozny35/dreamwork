@@ -51,8 +51,8 @@ futures.coroutine_listeners = futures.coroutine_listeners or setmetatable({}, { 
 futures.running = coroutine.running
 
 
-local function displayError(message)
-    return error(message, -2)
+local function displayError( message )
+    return error( message, -2 )
 end
 
 

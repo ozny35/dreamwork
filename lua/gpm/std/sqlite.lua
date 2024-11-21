@@ -11,7 +11,7 @@ local sqlite = {}
 
 --- Returns the last error message from the last query.
 ---@return string: The last error message.
-function sqlite.lastError()
+function sqlite.getLastError()
     return glua_sql.m_strError
 end
 
@@ -187,3 +187,5 @@ do
     end
 
 end
+
+return sqlite
