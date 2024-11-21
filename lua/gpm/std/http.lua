@@ -1,8 +1,19 @@
 local _G = _G
 local gpm = _G.gpm
 local std, Logger = gpm.std, gpm.Logger
-local CLIENT, SERVER, Future = std.CLIENT, std.SERVER, std.Future
-local is_number = std.is.number
+local CLIENT, SERVER, Future, tonumber = std.CLIENT, std.SERVER, std.Future, std.tonumber
+
+local string_gmatch, string_upper
+do
+    local string = std.string
+    string_gmatch, string_upper = string.gmatch, string.upper
+end
+
+local is_number, is_string, is_table
+do
+    local is = std.is
+    is_number, is_string, is_table = is.number, is.string, is.table
+end
 
 local http_client, client_name
 if SERVER and std.loadbinary( "reqwest" ) then
@@ -76,8 +87,22 @@ do
     local variable_create = std.console.variable.create
 
     gpm_http_timeout = variable_create( "gpm_http_lifetime", "10", flags, "Default http timeout for gpm http library.", 0, 300 )
-    gpm_http_lifetime = variable_create( "gpm_http_lifetime", "30", flags, "Cache lifetime for gpm http library in minutes.", 0, 40320 )
+    gpm_http_lifetime = variable_create( "gpm_http_lifetime", "1", flags, "Cache lifetime for gpm http library in minutes.", 0, 40320 )
 
+end
+
+local cache = {}
+
+local json_serialize = std.crypto.json.serialize
+
+local http_cache_get, http_cache_set
+do
+    local http_cache = gpm.http_cache
+    http_cache_get, http_cache_set = http_cache.get, http_cache.set
+end
+
+local function isValidCache( data )
+    return ( SysTime() - data.start ) < data.age
 end
 
 --- Executes an asynchronous http request with the given parameters.
@@ -86,12 +111,20 @@ end
 local function request( parameters )
     local f = Future()
 
-    if not is_number( parameters.timeout ) then
-        parameters.timeout = gpm_http_timeout:GetInt()
+    local url = parameters.url
+    if not is_string( url ) then
+        f:setError( "url must be a string" )
+        return f
     end
 
-    if not is_number( parameters.lifetime ) then
-        parameters.lifetime = gpm_http_lifetime:GetInt() * 60
+    if is_string( parameters.method ) then
+        parameters.method = string_upper( parameters.method )
+    else
+        parameters.method = "GET"
+    end
+
+    if not is_number( parameters.timeout ) then
+        parameters.timeout = gpm_http_timeout:GetInt()
     end
 
     Logger:Debug( "%s HTTP request to '%s', using '%s', with timeout %d seconds.", parameters.method or "GET", parameters.url or "", client_name, parameters.timeout )
@@ -104,12 +137,91 @@ local function request( parameters )
         f:setError( msg )
     end
 
+    -- Cache
+    if parameters.cache then
+        local identifier = json_serialize( {
+            url = parameters.url,
+            method = parameters.method,
+            parameters = parameters.parameters,
+            headers = parameters.headers
+        }, false )
 
-    if make_request( parameters ) then
-        return f
+        local data = cache[ identifier ]
+        if data and isValidCache( data ) then
+            return data[ 1 ]
+        end
+
+        local lifetime = parameters.lifetime
+        parameters.lifetime = nil
+
+        if not is_number( lifetime ) then
+            lifetime = gpm_http_lifetime:GetInt() * 60
+        end
+
+        -- future, start, age
+        data = { f, SysTime(), lifetime }
+        cache[ identifier ] = data
+
+        local success = parameters.success
+
+        function parameters.success( status, body, headers )
+            local cache_control = headers["cache-control"]
+            if cache_control then
+                local options = {}
+                for key, value in string_gmatch( cache_control, "([%w_-]+)=?([%w_-]*)" ) do
+                    options[ key ] = tonumber( value, 10 ) or true
+                end
+
+                if options["no-cache"] or options["no-store"] then
+                    cache[ identifier ] = nil
+                elseif options["s-maxage"] or options["max-age"] then
+                    data[ 3 ] = options["s-maxage"] or options["max-age"]
+                end
+            end
+
+            success( status, body, headers )
+        end
+
+        local failed = parameters.failed
+
+        function parameters.failed( msg )
+            cache[ identifier ] = nil
+            failed( msg )
+        end
     end
 
-    parameters.failed( "failed to connect to http client" )
+    parameters.cache = nil
+
+    -- ETag extension
+    if parameters.etag then
+        local data = http_cache_get( parameters.url )
+        if data then
+            if is_table( parameters.headers ) then
+                parameters.headers[ "If-None-Match" ] = data.etag
+            else
+                parameters.headers = { [ "If-None-Match" ] = data.etag }
+            end
+        end
+
+        local success = parameters.success
+
+        function parameters.success( status, body, headers )
+            if status == 304 then
+                status, body = 200, data and data.content or ""
+            elseif status == 200 and headers.etag then
+                http_cache_set( parameters.url, headers.etag, body )
+            end
+
+            success( status, body, headers )
+        end
+    end
+
+    parameters.etag = nil
+
+    if not make_request( parameters ) then
+        parameters.failed( "failed to connect to http client" )
+    end
+
     return f
 end
 

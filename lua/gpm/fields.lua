@@ -40,9 +40,13 @@ HTTPRequest.type = "text/plain; charset=utf-8"
 ---@type number
 HTTPRequest.timeout = 60
 
+---Whether to cache the response.
+---@type boolean
+HTTPRequest.cache = false
+
 ---The cache lifetime for the request.
 ---@type number
-HTTPRequest.lifetime = 0
+HTTPRequest.lifetime = nil
 
 ---Whether to use ETag caching.
 ---@type boolean
