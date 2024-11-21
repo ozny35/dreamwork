@@ -1045,7 +1045,23 @@ do
 
     ---@class gpm.std.error
     ---@overload fun(message: any, errorLevel: gpm.std.ErrorType?)
-    std.error = std.error or setmetatable( {}, {
+    std.error = std.error or setmetatable( {
+        NotImplementedError = ErrorClass.make( "NotImplementedError" ),
+        FutureCancelError = ErrorClass.make( "FutureCancelError" ),
+        InvalidStateError = ErrorClass.make( "InvalidStateError" ),
+        CodeCompileError = ErrorClass.make( "CodeCompileError" ),
+        FileSystemError = ErrorClass.make( "FileSystemError" ),
+        WebClientError = ErrorClass.make( "WebClientError" ),
+        RuntimeError = ErrorClass.make( "RuntimeError" ),
+        PackageError = ErrorClass.make( "PackageError" ),
+        ModuleError = ErrorClass.make( "ModuleError" ),
+        SourceError = ErrorClass.make( "SourceError" ),
+        FutureError = ErrorClass.make( "FutureError" ),
+        AddonError = ErrorClass.make( "AddonError" ),
+        RangeError = ErrorClass.make( "RangeError" ),
+        TypeError = ErrorClass.make( "TypeError" ),
+        Error = ErrorClass
+    }, {
         ---@param level gpm.std.ErrorType?
         __call = function( self, message, level )
             if not coroutine_running() then
@@ -1062,22 +1078,6 @@ do
         end
     } )
 
-    std.error.NotImplementedError = ErrorClass.make( "NotImplementedError" )
-    std.error.FutureCancelError = ErrorClass.make( "FutureCancelError" )
-    std.error.InvalidStateError = ErrorClass.make( "InvalidStateError" )
-    std.error.CodeCompileError = ErrorClass.make( "CodeCompileError" )
-    std.error.FileSystemError = ErrorClass.make( "FileSystemError" )
-    std.error.WebClientError = ErrorClass.make( "WebClientError" )
-    std.error.RuntimeError = ErrorClass.make( "RuntimeError" )
-    std.error.PackageError = ErrorClass.make( "PackageError" )
-    std.error.ModuleError = ErrorClass.make( "ModuleError" )
-    std.error.SourceError = ErrorClass.make( "SourceError" )
-    std.error.FutureError = ErrorClass.make( "FutureError" )
-    std.error.AddonError = ErrorClass.make( "AddonError" )
-    std.error.RangeError = ErrorClass.make( "RangeError" )
-    std.error.TypeError = ErrorClass.make( "TypeError" )
-    std.error.SQLError = ErrorClass.make( "SQLError" )
-    std.error.Error = ErrorClass
 end
 
 -- sqlite library

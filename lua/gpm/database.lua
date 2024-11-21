@@ -382,7 +382,7 @@ do
 
         gpm.Logger:Info( "Running migration '" .. tostring( migration.name ) .. "'...")
 
-        if xpcall( sqlite_transaction, SQLError.display, migration.execute ) then
+        if xpcall( sqlite_transaction, _G.ErrorNoHaltWithStack, migration.execute ) then
             sqlite_query( "insert into 'gpm.migration_history' (name, timestamp) values (?, ?)", migration.name, os_time() )
             return true
         else

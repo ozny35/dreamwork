@@ -2,7 +2,6 @@ local _G = _G
 
 local std = _G.gpm.std
 local error, string = std.error, std.string
-local SQLError = error.SQLError
 
 local glua_sql = _G.sql
 
@@ -59,7 +58,7 @@ do
 
         local result = sql_Query( str )
         if result == false then
-            error( SQLError( glua_sql.m_strError, nil, nil, 4 ) )
+            error( glua_sql.m_strError, 2 )
         end
 
         return result

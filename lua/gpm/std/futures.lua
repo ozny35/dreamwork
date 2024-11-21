@@ -481,6 +481,7 @@ do
 end
 
 do
+
     ---@alias Channel gpm.std.futures.Channel
     ---@class gpm.std.futures.Channel : gpm.std.Object
     ---@field __class gpm.std.futures.ChannelClass
@@ -600,6 +601,7 @@ do
     ---@field __base gpm.std.futures.Channel
     ---@overload fun(maxsize: number?): gpm.std.futures.Channel
     futures.Channel = class.create(Channel)
+
 end
 
 return futures
