@@ -255,10 +255,10 @@ end
 ---@param iterator async fun(...): gpm.std.futures.AsyncIterator<K, V>
 ---@return async fun(...): K, V
 ---@return thread
-function futures.apairs(iterator, ...)
-    local co = coroutine.create(asyncIteratableThread)
-    futures.coroutine_listeners[co] = futures.running()
-    coroutine.resume(co, iterator, ...)
+function futures.apairs( iterator, ... )
+    local co = coroutine.create( asyncIteratableThread)
+    futures.coroutine_listeners[ co ] = futures.running()
+    coroutine.resume( co, iterator, ... )
 
     return futures.anext, co
 end
@@ -268,18 +268,20 @@ end
 ---@async
 ---@generic V
 ---@param iterator async fun(...): gpm.std.futures.AsyncIterator<V>
----@return V[]
-function futures.collect(iterator, ...)
-    local results = {}
-    local i = 1
-    for value in futures.apairs(iterator, ...) do
-        results[i] = value
-        i = i + 1
+---@return V[] results
+---@return number length
+function futures.collect( iterator, ... )
+    local results, length = {}, 0
+    for value in futures.apairs( iterator, ... ) do
+        length = length + 1
+        results[ length ] = value
     end
-    return results
+
+    return results, length
 end
 
 do
+
     ---@alias Future gpm.std.futures.Future
     ---@class gpm.std.futures.Future : gpm.std.Object
     ---@field __class gpm.std.futures.FutureClass
@@ -346,30 +348,31 @@ do
     end
 
     ---@param fn fun(fut: gpm.std.futures.Future)
-    function Future:addCallback(fn)
+    function Future:addCallback( fn )
         if self:done() then
-            xpcall(fn, displayError, self)
+            xpcall( fn, displayError, self )
         else
-            self._callbacks[#self._callbacks+1] = fn
+            self._callbacks[ #self._callbacks + 1 ] = fn
         end
     end
 
     ---@param fn function
-    function Future:removeCallback(fn)
+    function Future:removeCallback( fn )
         local callbacks = {}
         for i = 1, #self._callbacks do
-            local cb = self._callbacks[i]
+            local cb = self._callbacks[ i ]
             if cb ~= fn then
-                callbacks[#callbacks+1] = cb
+                callbacks[ #callbacks + 1 ] = cb
             end
         end
+
         self._callbacks = callbacks
     end
 
     ---@param result any
-    function Future:setResult(result)
+    function Future:setResult( result )
         if self:done() then
-            error("future is already finished")
+            error( "future is already finished", 2 )
         end
 
         self._result = result
@@ -378,9 +381,9 @@ do
     end
 
     ---@param err any
-    function Future:setError(err)
+    function Future:setError( err )
         if self:done() then
-            error("future is already finished")
+            error( "future is already finished", 2 )
         end
 
         self._error = err
@@ -419,7 +422,7 @@ do
         end
 
         if self._error then
-            error(self._error)
+            error( self._error )
         end
 
         return self._result
@@ -445,9 +448,11 @@ do
     ---@field __base Future
     ---@overload fun(): gpm.std.futures.Future
     futures.Future = class.create(Future)
+
 end
 
 do
+
     ---@class gpm.std.futures.Task : gpm.std.futures.Future
     ---@field __class gpm.std.futures.TaskClass
     ---@field __parent gpm.std.futures.Future
@@ -472,6 +477,7 @@ do
     ---@field __base gpm.std.futures.Task
     ---@overload fun(fn: async fun(...): any, ...: any): gpm.std.futures.Task
     futures.Task = class.create(Task)
+
 end
 
 do

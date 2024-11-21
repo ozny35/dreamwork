@@ -1499,6 +1499,9 @@ do
 
 end
 
+-- http client class
+std.HttpClient = include( "std/http.lua" )
+
 -- file library
 -- local file = include( "std/file.lua" )
 -- std.file = file
