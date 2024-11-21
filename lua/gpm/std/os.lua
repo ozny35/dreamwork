@@ -4,19 +4,19 @@ local glua_os_time, glua_os_date = glua_os.time, glua_os.date
 
 ---@class gpm.std.os
 local os = {
-    ["arch"] = jit.arch,
-    ["name"] = jit.os,
-    ["date"] = glua_os_date,
-    ["time"] = glua_os_time,
-    ["clock"] = glua_os.clock,
-    ["difftime"] = glua_os.difftime,
-    ["flashWindow"] = system.FlashWindow,
-    ["battery"] = system.BatteryPower,
-    ["steamTime"] = system.SteamTime,
-    ["country"] = system.GetCountry,
-    ["hasFocus"] = system.HasFocus,
-    ["appTime"] = system.AppTime,
-    ["uptime"] = system.UpTime
+    arch = jit.arch,
+    name = jit.os,
+    date = glua_os_date,
+    time = glua_os_time,
+    clock = glua_os.clock,
+    difftime = glua_os.difftime,
+    flashWindow = system.FlashWindow,
+    battery = system.BatteryPower,
+    steamTime = system.SteamTime,
+    country = system.GetCountry,
+    hasFocus = system.HasFocus,
+    appTime = system.AppTime,
+    uptime = system.UpTime
 }
 
 do
