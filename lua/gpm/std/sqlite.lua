@@ -90,7 +90,7 @@ do
 
     --- Executes a SQL query with parameters.
     ---@param str string: The SQL query to execute.
-    ---@vararg string?: The parameters to use in the query.
+    ---@vararg string: The parameters to use in the query.
     ---@return table?: The result of the query.
     function query( str, ... )
         local args, counter = { ... }, 0

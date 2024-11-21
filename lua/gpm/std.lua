@@ -1405,8 +1405,8 @@ do
     ---@return table? module: the binary module table
     function loadbinary( name )
         if isBinaryModuleInstalled( name ) then
-            if console_variable_getBool( sv_allowcslua ) then
-                console.variable.setBool( sv_allowcslua, "0" )
+            if sv_allowcslua and console_variable_getBool( sv_allowcslua ) then
+                console.variable.setBool( sv_allowcslua, false )
             end
 
             require( name )
