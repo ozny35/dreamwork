@@ -1624,176 +1624,176 @@ end
 ---@class gpm.std
 local constants = {
     -- garry environment ( hell )
-    ["garrysmod"] = _G,
+    garrysmod = _G,
 
     -- Lua version
-    ["_VERSION"] = _G._VERSION,
+    _VERSION = _G._VERSION,
 
     -- realms
-    ["CLIENT"] = CLIENT,
-    ["SERVER"] = SERVER,
-    ["MENU"] = MENU,
-    ["CLIENT_MENU"] = CLIENT_MENU,
-    ["CLIENT_SERVER"] = CLIENT_SERVER,
+    CLIENT = CLIENT,
+    SERVER = SERVER,
+    MENU = MENU,
+    CLIENT_MENU = CLIENT_MENU,
+    CLIENT_SERVER = CLIENT_SERVER,
 
     -- https://wiki.facepunch.com/gmod/Enums/ACT
-    ["ACT"] = ACT,
+    ACT = ACT,
 
     -- https://wiki.facepunch.com/gmod/Enums/BLENDFUNC
-    ["BLENDFUNC"] = {
-        ["ADD"] = 0,
-        ["SUBTRACT"] = 1,
-        ["REVERSE_SUBTRACT"] = 2,
-        ["MIN"] = 3,
-        ["MAX"] = 4
+    BLENDFUNC = {
+        ADD = 0,
+        SUBTRACT = 1,
+        REVERSE_SUBTRACT = 2,
+        MIN = 3,
+        MAX = 4
     },
 
     -- https://wiki.facepunch.com/gmod/Enums/TYPE
-    ["TYPE"] = {
-        ["NONE"] = -1,
-        ["INVALID"] = -1,
-        ["NIL"] = 0,
-        ["BOOL"] = 1,
-        ["LIGHTUSERDATA"] = 2,
-        ["NUMBER"] = 3,
-        ["STRING"] = 4,
-        ["TABLE"] = 5,
-        ["FUNCTION"] = 6,
-        ["USERDATA"] = 7,
-        ["THREAD"] = 8,
-        ["ENTITY"] = 9,
-        ["VECTOR"] = 10,
-        ["ANGLE"] = 11,
-        ["PHYSOBJ"] = 12,
-        ["SAVE"] = 13,
-        ["RESTORE"] = 14,
-        ["DAMAGEINFO"] = 15,
-        ["EFFECTDATA"] = 16,
-        ["MOVEDATA"] = 17,
-        ["RECIPIENTFILTER"] = 18,
-        ["USERCMD"] = 19,
-        ["SCRIPTEDVEHICLE"] = 20,
-        ["MATERIAL"] = 21,
-        ["PANEL"] = 22,
-        ["PARTICLE"] = 23,
-        ["PARTICLEEMITTER"] = 24,
-        ["TEXTURE"] = 25,
-        ["USERMSG"] = 26,
-        ["CONVAR"] = 27,
-        ["IMESH"] = 28,
-        ["MATRIX"] = 29,
-        ["SOUND"] = 30,
-        ["PIXELVISHANDLE"] = 31,
-        ["DLIGHT"] = 32,
-        ["VIDEO"] = 33,
-        ["FILE"] = 34,
-        ["LOCOMOTION"] = 35,
-        ["PATH"] = 36,
-        ["NAVAREA"] = 37,
-        ["SOUNDHANDLE"] = 38,
-        ["NAVLADDER"] = 39,
-        ["PARTICLESYSTEM"] = 40,
-        ["PROJECTEDTEXTURE"] = 41,
-        ["PHYSCOLLIDE"] = 42,
-        ["SURFACEINFO"] = 43,
-        ["COUNT"] = 44,
-        ["COLOR"] = 255
+    TYPE = {
+        NONE = -1,
+        INVALID = -1,
+        NIL = 0,
+        BOOL = 1,
+        LIGHTUSERDATA = 2,
+        NUMBER = 3,
+        STRING = 4,
+        TABLE = 5,
+        FUNCTION = 6,
+        USERDATA = 7,
+        THREAD = 8,
+        ENTITY = 9,
+        VECTOR = 10,
+        ANGLE = 11,
+        PHYSOBJ = 12,
+        SAVE = 13,
+        RESTORE = 14,
+        DAMAGEINFO = 15,
+        EFFECTDATA = 16,
+        MOVEDATA = 17,
+        RECIPIENTFILTER = 18,
+        USERCMD = 19,
+        SCRIPTEDVEHICLE = 20,
+        MATERIAL = 21,
+        PANEL = 22,
+        PARTICLE = 23,
+        PARTICLEEMITTER = 24,
+        TEXTURE = 25,
+        USERMSG = 26,
+        CONVAR = 27,
+        IMESH = 28,
+        MATRIX = 29,
+        SOUND = 30,
+        PIXELVISHANDLE = 31,
+        DLIGHT = 32,
+        VIDEO = 33,
+        FILE = 34,
+        LOCOMOTION = 35,
+        PATH = 36,
+        NAVAREA = 37,
+        SOUNDHANDLE = 38,
+        NAVLADDER = 39,
+        PARTICLESYSTEM = 40,
+        PROJECTEDTEXTURE = 41,
+        PHYSCOLLIDE = 42,
+        SURFACEINFO = 43,
+        COUNT = 44,
+        COLOR = 255
     },
 
     -- https://github.com/ValveSoftware/source-sdk-2013/blob/0d8dceea4310fde5706b3ce1c70609d72a38efdf/sp/src/public/tier1/iconvar.h#L39
     -- https://developer.valvesoftware.com/wiki/Developer_Console_Control#The_FCVAR_flags
     -- https://wiki.facepunch.com/gmod/Enums/FCVAR
-    ["FCVAR"] = {
+    FCVAR = {
         -- The default, no flags at all
-        ["NONE"] = 0,
+        NONE = 0,
 
         -- ConVar Systems
-        ["UNREGISTERED"] = 1,
-        ["DEVELOPMENTONLY"] = 2,
-        ["GAMEDLL"] = 4,
-        ["CLIENTDLL"] = 8,
-        ["HIDDEN"] = 16,
+        UNREGISTERED = 1,
+        DEVELOPMENTONLY = 2,
+        GAMEDLL = 4,
+        CLIENTDLL = 8,
+        HIDDEN = 16,
 
         -- ConVar only
-        ["PROTECTED"] = 32,
-        ["SPONLY"] = 64,
-        ["ARCHIVE"] = 128,
-        ["NOTIFY"] = 256,
-        ["USERINFO"] = 512,
-        ["CHEAT"] = 16384,
+        PROTECTED = 32,
+        SPONLY = 64,
+        ARCHIVE = 128,
+        NOTIFY = 256,
+        USERINFO = 512,
+        CHEAT = 16384,
 
-        ["PRINTABLEONLY"] = 1024,
-        ["UNLOGGED"] = 2048,
-        ["NEVER_AS_STRING"] = 4096,
+        PRINTABLEONLY = 1024,
+        UNLOGGED = 2048,
+        NEVER_AS_STRING = 4096,
 
-        ["REPLICATED"] = 8192,
-        ["DEMO"] = 65536,
-        ["DONTRECORD"] = 131072,
-        ["RELOAD_MATERIALS"] = 1048576,
-        ["RELOAD_TEXTURES"] = 2097152,
+        REPLICATED = 8192,
+        DEMO = 65536,
+        DONTRECORD = 131072,
+        RELOAD_MATERIALS = 1048576,
+        RELOAD_TEXTURES = 2097152,
 
-        ["NOT_CONNECTED"] = 4194304,
-        ["MATERIAL_SYSTEM_THREAD"] = 8388608,
-        ["ARCHIVE_XBOX"] = 16777216,
+        NOT_CONNECTED = 4194304,
+        MATERIAL_SYSTEM_THREAD = 8388608,
+        ARCHIVE_XBOX = 16777216,
 
-        ["ACCESSIBLE_FROM_THREADS"] = 33554432,
+        ACCESSIBLE_FROM_THREADS = 33554432,
 
-        ["SERVER_CAN_EXECUTE"] = 268435456,
-        ["SERVER_CANNOT_QUERY"] = 536870912,
-        ["CLIENTCMD_CAN_EXECUTE"] = 1073741824,
+        SERVER_CAN_EXECUTE = 268435456,
+        SERVER_CANNOT_QUERY = 536870912,
+        CLIENTCMD_CAN_EXECUTE = 1073741824,
 
-        ["MATERIAL_THREAD_MASK"] = 11534336,
+        MATERIAL_THREAD_MASK = 11534336,
 
         -- Garry's Mod only
-        ["LUA_CLIENT"] = 262144,
-        ["LUA_SERVER"] = 524288
+        LUA_CLIENT = 262144,
+        LUA_SERVER = 524288
     },
 
     -- https://wiki.facepunch.com/gmod/Enums/NAV
-    ["NAV_TYPE"] = {
-        ["NONE"] = -1,
-        ["GROUND"] = 0,
-        ["JUMP"] = 1,
-        ["FLY"] = 2,
-        ["CLIMB"] = 3
+    NAV_TYPE = {
+        NONE = -1,
+        GROUND = 0,
+        JUMP = 1,
+        FLY = 2,
+        CLIMB = 3
     },
 
     -- https://wiki.facepunch.com/gmod/Enums/NAV_MESH
-    ["NAV"] = {
-        ["INVALID"] = 0,
-        ["CROUCH"] = 1,
-        ["JUMP"] = 2,
-        ["PRECISE"] = 4,
-        ["NO_JUMP"] = 8,
-        ["STOP"] = 16,
-        ["RUN"] = 32,
-        ["WALK"] = 64,
-        ["AVOID"] = 128,
-        ["TRANSIENT"] = 256,
-        ["DONT_HIDE"] = 512,
-        ["STAND"] = 1024,
-        ["NO_HOSTAGES"] = 2048,
-        ["STAIRS"] = 4096,
-        ["NO_MERGE"] = 8192,
-        ["OBSTACLE_TOP"] = 16384,
-        ["CLIFF"] = 32768,
-        ["FUNC_COST"] = 536870912,
-        ["BLOCKED_PROPDOOR"] = 268435456,
-        ["BLOCKED_LUA"] = 134217728,
-        ["HAS_ELEVATOR"] = 1073741824,
-        ["NAV_BLOCKER"] = -2147483648
+    NAV = {
+        INVALID = 0,
+        CROUCH = 1,
+        JUMP = 2,
+        PRECISE = 4,
+        NO_JUMP = 8,
+        STOP = 16,
+        RUN = 32,
+        WALK = 64,
+        AVOID = 128,
+        TRANSIENT = 256,
+        DONT_HIDE = 512,
+        STAND = 1024,
+        NO_HOSTAGES = 2048,
+        STAIRS = 4096,
+        NO_MERGE = 8192,
+        OBSTACLE_TOP = 16384,
+        CLIFF = 32768,
+        FUNC_COST = 536870912,
+        BLOCKED_PROPDOOR = 268435456,
+        BLOCKED_LUA = 134217728,
+        HAS_ELEVATOR = 1073741824,
+        NAV_BLOCKER = -2147483648
     },
 
     -- Material Parameters
     -- TODO: Think about this, maybe depricated later
-    ["MPAR"] = {
-        ["VERTEXLITGENERIC"] = 0x80,
-        ["NOCULL"] = 0x40,
-        ["ALPHATEST"] = 0x20,
-        ["MIPS"] = 0x10,
-        ["NOCLAMP"] = 0x8,
-        ["SMOOTH"] = 0x4,
-        ["IGNOREZ"] = 0x2
+    MPAR = {
+        VERTEXLITGENERIC = 0x80,
+        NOCULL = 0x40,
+        ALPHATEST = 0x20,
+        MIPS = 0x10,
+        NOCLAMP = 0x8,
+        SMOOTH = 0x4,
+        IGNOREZ = 0x2
     }
 
 }
@@ -1803,50 +1803,50 @@ constants._G = constants
 if SERVER then
     -- https://wiki.facepunch.com/gmod/Enums/AIMR
     constants.AIMR = {
-        ["CHANGE_TYPE"] = 1,
-        ["OK"] = 0,
-        ["BLOCKED_ENTITY"] = -1,
-        ["BLOCKED_WORLD"] = -2,
-        ["BLOCKED_NPC"] = -3,
-        ["ILLEGAL"] = -4
+        CHANGE_TYPE = 1,
+        OK = 0,
+        BLOCKED_ENTITY = -1,
+        BLOCKED_WORLD = -2,
+        BLOCKED_NPC = -3,
+        ILLEGAL = -4
     }
 end
 
 if CLIENT_SERVER then
     -- https://wiki.facepunch.com/gmod/Enums/AMMO
     constants.AMMO = {
-        ["FORCE_DROP_IF_CARRIED"] = 1,
-        ["INTERPRET_PLRDAMAGE_AS_DAMAGE_TO_PLAYER"] = 2
+        FORCE_DROP_IF_CARRIED = 1,
+        INTERPRET_PLRDAMAGE_AS_DAMAGE_TO_PLAYER = 2
     }
 end
 
 if CLIENT then
     -- https://wiki.facepunch.com/gmod/Enums/ANALOG
     constants.ANALOG = {
-        ["MOUSE_X"] = 0,
-        ["MOUSE_Y"] = 1,
-        ["MOUSE_WHEEL"] = 3,
-        ["JOY_X"] = 4,
-        ["JOY_Y"] = 5,
-        ["JOY_Z"] = 6,
-        ["JOY_R"] = 7,
-        ["JOY_U"] = 8,
-        ["JOY_V"] = 9
+        MOUSE_X = 0,
+        MOUSE_Y = 1,
+        MOUSE_WHEEL = 3,
+        JOY_X = 4,
+        JOY_Y = 5,
+        JOY_Z = 6,
+        JOY_R = 7,
+        JOY_U = 8,
+        JOY_V = 9
     }
 
     -- https://wiki.facepunch.com/gmod/Enums/BLEND
     constants.BLEND = {
-        ["ZERO"] = 0,
-        ["ONE"] = 1,
-        ["DST_COLOR"] = 2,
-        ["ONE_MINUS_DST_COLOR"] = 3,
-        ["SRC_ALPHA"] = 4,
-        ["ONE_MINUS_SRC_ALPHA"] = 5,
-        ["DST_ALPHA"] = 6,
-        ["ONE_MINUS_DST_ALPHA"] = 7,
-        ["SRC_ALPHA_SATURATE"] = 8,
-        ["SRC_COLOR"] = 9,
-        ["ONE_MINUS_SRC_COLOR"] = 10
+        ZERO = 0,
+        ONE = 1,
+        DST_COLOR = 2,
+        ONE_MINUS_DST_COLOR = 3,
+        SRC_ALPHA = 4,
+        ONE_MINUS_SRC_ALPHA = 5,
+        DST_ALPHA = 6,
+        ONE_MINUS_DST_ALPHA = 7,
+        SRC_ALPHA_SATURATE = 8,
+        SRC_COLOR = 9,
+        ONE_MINUS_SRC_COLOR = 10
     }
 end
 
