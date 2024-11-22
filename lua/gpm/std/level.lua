@@ -111,6 +111,7 @@ if SERVER then
     level.getState = glua_game.GetGlobalState
     level.setState = glua_game.SetGlobalState
     level.getNextMap = glua_game.GetMapNext
+    level.sendCommand = _G.hammer.SendCommand
 end
 
 return level

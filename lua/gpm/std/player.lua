@@ -53,7 +53,50 @@ elseif std.CLIENT then
             return LocalPlayer()
         end
     end
+
+    do
+
+        local command_run = std.console.command.run
+        local glua_chat = _G.chat
+
+        ---@class gpm.std.player.chat
+        local chat = {
+            playSound = glua_chat.PlaySound
+        }
+
+        local key2key = {
+            getPosition = "GetChatBoxPos",
+            getSize = "GetChatBoxSize",
+            addText = "AddText",
+            close = "Close",
+            open = "Open"
+        }
+
+        setmetatable( chat, {
+            __index = function( _, key )
+                return glua_chat[ key2key[ key ] or -1 ]
+            end
+        } )
+
+        --- Sends a message to the player chat.
+        ---@param text string: The message's content.
+        ---@param teamChat boolean?: Whether the message should be sent as team chat.
+        function chat.say( text, teamChat )
+            command_run( teamChat and "say_team" or "say", text )
+        end
+
+        player.chat = chat
+
+    end
+
 end
+
+-- TODO: https://wiki.facepunch.com/gmod/team
+---@class gpm.std.player.team
+local team = {}
+
+player.team = team
+
 
 -- ---@class gpm.std.player
 -- player = std.class( "player", PLAYER, player )
