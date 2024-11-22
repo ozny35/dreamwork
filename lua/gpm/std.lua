@@ -28,8 +28,6 @@ end
 if SERVER then
     local AddCSLuaFile = _G.AddCSLuaFile
 
-    AddCSLuaFile( "gpm/3rd-party/deflate.lua" )
-    AddCSLuaFile( "gpm/3rd-party/bigint.lua" )
     AddCSLuaFile( "gpm/database.lua" )
     AddCSLuaFile( "gpm/detour.lua" )
     AddCSLuaFile( "gpm/std.lua" )
@@ -1224,9 +1222,6 @@ do
     } )
 
 end
-
--- path library
-std.path = include( "std/path.lua" )
 
 -- Logger
 local logger

@@ -14,7 +14,7 @@ end
 
 local getfenv, rawget, select = std.getfenv, std.rawget, std.select
 
----@class gpm.std.path
+---@class gpm.std.file.path
 local path = {}
 
 --- Get the file name with extension from filePath.

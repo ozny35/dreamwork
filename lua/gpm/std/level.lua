@@ -9,13 +9,13 @@ local level
 
 if CLIENT_SERVER then
     level = {
-        ["cleanup"] = glua_game.CleanUpMap,
-        ["getEntity"] = glua_game.GetWorld,
+        cleanup = glua_game.CleanUpMap,
+        getEntity = glua_game.GetWorld,
 
-        ["removeClientRagdolls"] = glua_game.RemoveRagdolls,
+        removeClientRagdolls = glua_game.RemoveRagdolls,
 
-        ["getName"] = glua_game.GetMap,
-        ["startSpot"] = glua_game.StartSpot,
+        getName = glua_game.GetMap,
+        startSpot = glua_game.StartSpot,
     }
 
     local file_Exists = _G.file.Exists
@@ -97,7 +97,7 @@ if CLIENT_SERVER then
     end
 else
     level = {
-        ["getName"] = glua_game.GetMap
+        getName = glua_game.GetMap
     }
 end
 
