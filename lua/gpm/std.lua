@@ -1097,6 +1097,9 @@ local isDedicatedServer = false
 if CLIENT_SERVER then
     isDedicatedServer = game.isDedicatedServer()
 
+    -- physics library
+    std.physics = include( "std/physics.lua" )
+
     -- entity library
     std.entity = include( "std/entity.lua" )
 
