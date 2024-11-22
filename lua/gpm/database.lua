@@ -99,10 +99,10 @@ if std.SERVER then
 
     ---@param value table | number | string
     ---@return number?
-    local function getRepositoryId( value )
+    local function getRepositoryID( value )
         if is_table( value ) then
             ---@cast value table
-            return value.id or getRepositoryId( value.url )
+            return value.id or getRepositoryID( value.url )
         elseif is_number( value ) then
             ---@cast value number
             return value
@@ -113,55 +113,55 @@ if std.SERVER then
     end
 
     function repositories.removeRepository( repository )
-        local repositoryId = getRepositoryId( repository )
-        if repositoryId == nil then
+        local repositoryID = getRepositoryID( repository )
+        if repositoryID == nil then
             error( "invalid repository '" .. tostring( repository ) .. "' was given as #1 argument" )
         end
 
-        local repositoryIdStr = tostring( repositoryId )
-        repositoryId = nil
+        local repositoryIDStr = tostring( repositoryID )
+        repositoryID = nil
         repository = nil
 
         sqlite_transaction( function()
             -- delete all versions, packages and repository
-            local packages = sqlite_query( "select id from 'gpm.packages' where repositoryId=?", repositoryIdStr )
+            local packages = sqlite_query( "select id from 'gpm.packages' where repositoryID=?", repositoryIDStr )
             if packages == nil then return end
 
             for i = 1, #packages do
-                local packageId = packages[ i ].id
-                sqlite_query( "delete from 'gpm.package_versions' where packageId=?; delete from 'gpm.packages' where id=?", packageId, packageId )
+                local packageID = packages[ i ].id
+                sqlite_query( "delete from 'gpm.package_versions' where packageID=?; delete from 'gpm.packages' where id=?", packageID, packageID )
             end
 
-            sqlite_query( "delete from 'gpm.repositories' where id=?", repositoryIdStr )
+            sqlite_query( "delete from 'gpm.repositories' where id=?", repositoryIDStr )
         end )
     end
 
     function repositories.getPackage( repository, name )
-        local repositoryId = getRepositoryId( repository )
-        if repositoryId == nil then
+        local repositoryID = getRepositoryID( repository )
+        if repositoryID == nil then
             error( "invalid repository '" .. tostring( repository ) .. "' was given as #1 argument" )
         end
 
         repository = nil
 
-        local pkg = sqlite_queryOne( "select * from 'gpm.packages' where name=? and repositoryId=?", name, tostring( repositoryId ) )
+        local pkg = sqlite_queryOne( "select * from 'gpm.packages' where name=? and repositoryID=?", name, tostring( repositoryID ) )
         if pkg == nil then return end
-        repositoryId = nil
+        repositoryID = nil
 
-        pkg.versions = sqlite_query( "select version, metadata from 'gpm.package_versions' where packageId=?", pkg.id )
+        pkg.versions = sqlite_query( "select version, metadata from 'gpm.package_versions' where packageID=?", pkg.id )
         return pkg
     end
 
     function repositories.getPackages( repository )
-        local repositoryId = getRepositoryId( repository )
-        if repositoryId == nil then
+        local repositoryID = getRepositoryID( repository )
+        if repositoryID == nil then
             error( "invalid repository '" .. tostring( repository ) .. "' was given as #1 argument" )
         end
 
         repository = nil
 
-        local packages = sqlite_query( "select * from 'gpm.packages' where repositoryId=?", tostring( repositoryId ) )
-        repositoryId = nil
+        local packages = sqlite_query( "select * from 'gpm.packages' where repositoryID=?", tostring( repositoryID ) )
+        repositoryID = nil
 
         if packages == nil then
             return {}
@@ -170,23 +170,23 @@ if std.SERVER then
         -- fetch versions for each package
         for i = 1, #packages do
             local pkg = packages[ i ]
-            pkg.versions = sqlite_query( "select version, metadata from 'gpm.package_versions' where packageId=?", pkg.id )
+            pkg.versions = sqlite_query( "select version, metadata from 'gpm.package_versions' where packageID=?", pkg.id )
         end
 
         return packages
     end
 
     function repositories.updateRepository( repository, packages )
-        local repositoryId = getRepositoryId( repository )
-        if repositoryId == nil then
+        local repositoryID = getRepositoryID( repository )
+        if repositoryID == nil then
             error( "invalid repository '" .. tostring( repository ) .. "' was given as #1 argument" )
         end
 
-        local repositoryIdStr = tostring( repositoryId )
-        repositoryId = nil
+        local repositoryIDStr = tostring( repositoryID )
+        repositoryID = nil
         repository = nil
 
-        local oldPackages = sqlite_query( "select id, name from 'gpm.packages' where repositoryId=?", repositoryIdStr ) or {}
+        local oldPackages = sqlite_query( "select id, name from 'gpm.packages' where repositoryID=?", repositoryIDStr ) or {}
         for i = 1, #oldPackages do
             local package = oldPackages[ i ]
             oldPackages[ package.name ] = package.id
@@ -194,15 +194,15 @@ if std.SERVER then
 
         return sqlite_transaction( function()
             for name, pkg in pairs( packages ) do
-                sqlite_query( "insert or replace into 'gpm.packages' (name, url, type, repositoryId) values (?, ?, ?, ?)", pkg.name, pkg.url, pkg.type, repositoryIdStr )
+                sqlite_query( "insert or replace into 'gpm.packages' (name, url, type, repositoryID) values (?, ?, ?, ?)", pkg.name, pkg.url, pkg.type, repositoryIDStr )
 
-                local packageId = sqlite_queryValue( "select id from 'gpm.packages' where name=? and repositoryId=?", pkg.name, repositoryIdStr )
-                sqlite_query( "delete from 'gpm.package_versions' where packageId=?", packageId )
+                local packageID = sqlite_queryValue( "select id from 'gpm.packages' where name=? and repositoryID=?", pkg.name, repositoryIDStr )
+                sqlite_query( "delete from 'gpm.package_versions' where packageID=?", packageID )
 
                 local versions = pkg.versions
                 for i = 1, #versions do
                     local package = versions[ i ]
-                    sqlite_query( "insert into 'gpm.package_versions' (version, metadata, packageId) values (?, ?, ?)", package.version, package.metadata, packageId )
+                    sqlite_query( "insert into 'gpm.package_versions' (version, metadata, packageID) values (?, ?, ?)", package.version, package.metadata, packageID )
                 end
 
                 oldPackages[ name ] = nil
@@ -210,7 +210,7 @@ if std.SERVER then
 
             -- remove old packages
             for _, id in pairs( oldPackages ) do
-                sqlite_query( "delete from 'gpm.package_versions' where packageId=?; delete from 'gpm.packages' where id=?", id, id )
+                sqlite_query( "delete from 'gpm.package_versions' where packageID=?; delete from 'gpm.packages' where id=?", id, id )
             end
         end )
     end
@@ -316,10 +316,10 @@ local migrations = {
                         name text not null,
                         url text not null,
                         type int not null,
-                        repositoryId integer,
+                        repositoryID integer,
 
-                        foreign key(repositoryId) references 'gpm.repositories' (id)
-                        unique(name, repositoryId) on conflict replace
+                        foreign key(repositoryID) references 'gpm.repositories' (id)
+                        unique(name, repositoryID) on conflict replace
                     )
                 ]] )
 
@@ -327,10 +327,10 @@ local migrations = {
                     create table 'gpm.package_versions' (
                         version text not null,
                         metadata text,
-                        packageId integer not null,
+                        packageID integer not null,
 
-                        foreign key(packageId) references 'gpm.packages' (id)
-                        unique(version, packageId) on conflict replace
+                        foreign key(packageID) references 'gpm.packages' (id)
+                        unique(version, packageID) on conflict replace
                     )
                 ]] )
             end

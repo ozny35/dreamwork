@@ -1784,6 +1784,54 @@ local constants = {
         NAV_BLOCKER = -2147483648
     },
 
+    -- https://wiki.facepunch.com/gmod/Enums/MAT
+    -- https://developer.valvesoftware.com/wiki/Material_Types
+    MAT = {
+        ANTLION = 65,
+        A = 65,
+        BLOODYFLESH = 66,
+        B = 66,
+        CONCRETE = 67,
+        C = 67,
+        DIRT = 68,
+        D = 68,
+        EGGSHELL = 69,
+        E = 69,
+        FLESH = 70,
+        F = 70,
+        GRATE = 71,
+        G = 71,
+        ALIENFLESH = 72,
+        H = 72,
+        CLIP = 73,
+        I = 73,
+        SNOW = 74,
+        J = 74,
+        PLASTIC = 76,
+        L = 76,
+        METAL = 77,
+        M = 77,
+        SAND = 78,
+        N = 78,
+        FOLIAGE = 79,
+        O = 79,
+        COMPUTER = 80,
+        P = 80,
+        SLOSH = 83,
+        S = 83,
+        TILE = 84,
+        T = 84,
+        GRASS = 85,
+        VENT = 86,
+        V = 86,
+        WOOD = 87,
+        W = 87,
+        DEFAULT = 88,
+        GLASS = 89,
+        Y = 89,
+        WARPSHIELD = 90
+    },
+
     -- Material Parameters
     -- TODO: Think about this, maybe depricated later
     MPAR = {
