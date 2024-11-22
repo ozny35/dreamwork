@@ -4,7 +4,7 @@ local _G = _G
 local matproxy = {}
 
 
--- TODO: https://github.com/Facepunch/garrysmod/blob/master/garrysmod/lua/includes/modules/matproxy.lua#L20-L45
+-- TODO: https://github.com/Facepunch/garrysmod/blob/master/garrysmod/lua/includes/modules/matproxy.lua
 
 
 
