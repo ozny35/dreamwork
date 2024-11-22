@@ -19,7 +19,7 @@ do
 end
 
 if CLIENT_MENU then
-    game.IsInWindow = system_IsWindowed
+    game.isInWindow = system_IsWindowed
 
     do
 
