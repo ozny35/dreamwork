@@ -10,7 +10,9 @@ local CONVAR = _G.FindMetaTable( "ConVar" )
 local getName, getDefault = CONVAR.GetName, CONVAR.GetDefault
 
 ---@class gpm.std.console
-local console = {}
+local console = {
+    show = _G.gui.ShowConsole
+}
 
 do
 
