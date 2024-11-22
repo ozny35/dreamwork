@@ -60,8 +60,7 @@ do
         [ MAT.T ] = "T",
         [ MAT.V ] = "V",
         [ MAT.W ] = "W",
-        [ MAT.Y ] = "Y",
-        [ MAT.Z ] = "Z",
+        [ MAT.Y ] = "Y"
     }
 
     -- https://wiki.facepunch.com/gmod/Structures/SurfacePropertyData

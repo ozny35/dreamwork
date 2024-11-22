@@ -40,9 +40,79 @@ if SERVER then
     end
 end
 
+do
+
+    local collectgarbage = _G.collectgarbage
+
+    --- Lua manages memory automatically by running a garbage collector to collect all dead objects (that is, objects that are no longer accessible from Lua).<br>
+    --- All memory used by Lua is subject to automatic management: strings, tables, userdata, functions, threads, internal structures, etc.<br>
+    ---@class gpm.std.gc
+    local gc = {}
+
+    --- Performs a full garbage-collection cycle.
+    function gc.collect()
+        collectgarbage( "collect" )
+    end
+
+    --- The value has a fractional part, so that it multiplied by 1024 gives the exact number of bytes in use by Lua (except for overflows).
+    ---@return number: The total memory in use by Lua in Kbytes.
+    function gc.count()
+        return collectgarbage( "count" )
+    end
+
+    --- Stops automatic execution of the garbage collector.
+    --- The collector will run only when explicitly invoked, until a call to restart it.
+    function gc.stop()
+        collectgarbage( "stop" )
+    end
+
+    -- Restarts automatic execution of the garbage collector.
+    function gc.restart()
+        collectgarbage( "restart" )
+    end
+
+    --- Returns a boolean that tells whether the collector is running (i.e., not stopped).
+    ---@return boolean: Returns true if the collector is running, false otherwise.
+    function gc.isRunning()
+        return collectgarbage( "isrunning" )
+    end
+
+    --- The garbage-collector pause controls how long the collector waits before starting a new cycle.
+    --- Larger values make the collector less aggressive.
+    ---
+    --- Values smaller than 100 mean the collector will not wait to start a new cycle.
+    --- A value of 200 means that the collector waits for the total memory in use to double before starting a new cycle.
+    ---@param value number: The new value for the pause of the collector.
+    ---@return boolean: The previous value for pause.
+    function gc.setPause( value )
+        return collectgarbage( "setpause", value )
+    end
+
+    --- The garbage-collector step multiplier controls the relative speed of the collector relative to memory allocation.
+    --- Larger values make the collector more aggressive but also increase the size of each incremental step.
+    ---
+    --- You should not use values smaller than 100, because they make the collector too slow and can result in the collector never finishing a cycle.
+    --- The default is 200, which means that the collector runs at "twice" the speed of memory allocation.
+    ---@param size number: With a zero value, the collector will perform one basic (indivisible) step.<br>For non-zero values, the collector will perform as if that amount of memory (in KBytes) had been allocated by Lua.
+    ---@return boolean: Returns `true` if the step finished a collection cycle.
+    function gc.step( size )
+        return collectgarbage( "step", size )
+    end
+
+    --- If you set the step multiplier to a very large number (larger than 10% of the maximum number of bytes that the program may use), the collector behaves like a stop-the-world collector.<br>If you then set the pause to 200, the collector behaves as in old Lua versions, doing a complete collection every time Lua doubles its memory usage.
+    ---@param value number: The new value for the step multiplier of the collector.
+    ---@return number: The previous value for step.
+    function gc.setStepMultiplier( value )
+        return collectgarbage( "setstepmul", value )
+    end
+
+    std.gc = gc
+
+end
+
 -- lua globals
 std.assert = assert
-std.collectgarbage = _G.collectgarbage
+-- std.collectgarbage = _G.collectgarbage - Replaced by std.gc
 
 std.getmetatable = getmetatable
 std.setmetatable = setmetatable
@@ -486,6 +556,8 @@ do
     function class.base( name, parent )
         local base = {
             __name = name,
+            __metatable_id = 5,
+            __metatable_name = name,
             __tostring = base__tostring
         }
 
@@ -550,8 +622,10 @@ do
     function class.create( base )
         local cls = setmetatable( { __base = base }, {
             __index = base,
+            __metatable_id = 5,
             __call = class__call,
-            __tostring = class__tostring
+            __tostring = class__tostring,
+            __metatable_name = rawget( base, "__name" ) .. "Class"
         } ) ---@cast cls -Object
 
         rawset( base, "__class", cls )
@@ -1080,12 +1154,6 @@ do
 
 end
 
--- sqlite library
-std.sqlite = include( "std/sqlite.lua" )
-
--- database functions ( gpm only )
-include( "database.lua" )
-
 ---@class gpm.std.game
 local game = include( "std/game.lua" )
 std.game = game
@@ -1124,6 +1192,7 @@ do
     local developer = console.variable.get( "developer" )
 
     -- TODO: Think about engine lib in menu
+    local getDeveloper
     if isDedicatedServer then
         local value = developer and developer:GetInt() or 0
 
@@ -1131,13 +1200,17 @@ do
             value = tonumber( str, 10 )
         end, gpm_PREFIX .. "::Developer" )
 
-        isInDebug = function() return value end
+        getDeveloper = function() return value end
     else
         local console_variable_getInt = console.variable.getInt
-        isInDebug = function() return console_variable_getInt( developer ) end
+        getDeveloper = function() return console_variable_getInt( developer ) end
     end
 
-    local key2call = { DEVELOPER = isInDebug }
+    function isInDebug()
+        return getDeveloper() > 0
+    end
+
+    local key2call = { DEVELOPER = getDeveloper }
 
     setmetatable( std, {
         __index = function( _, key )
@@ -1291,6 +1364,12 @@ do
     gpm.Logger = logger
 
 end
+
+-- sqlite library
+std.sqlite = include( "std/sqlite.lua" )
+
+-- database functions ( gpm only )
+include( "database.lua" )
 
 -- Version class
 std.Version = include( "std/version.lua" )
