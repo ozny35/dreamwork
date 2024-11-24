@@ -227,4 +227,29 @@ end
 
 http.request = request
 
+if std.MENU then
+
+    local json_deserialize = std.crypto.json.deserialize
+    local GetAPIManifest = _G.GetAPIManifest
+
+    function http.getFacepunchManifest()
+        local f = Future()
+
+        GetAPIManifest( function( json )
+            if is_string( json ) then
+                local data = json_deserialize( json, false, false )
+                if data ~= nil then
+                    f:setResult( data )
+                    return
+                end
+            end
+
+            f:setError( "failed to get facepunch manifest" )
+        end )
+
+        return f
+    end
+
+end
+
 return http
