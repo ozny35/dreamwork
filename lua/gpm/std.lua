@@ -799,8 +799,6 @@ std.Future = futures.Future
 std.Task = futures.Task
 
 ---@class gpm.std.os
----@field screenWidth number The width of the game's window (in pixels).
----@field screenHeight number The height of the game's window (in pixels).
 local os = include( "std/os.lua" )
 std.os = os
 
@@ -1668,14 +1666,6 @@ do
 
     end
 
-end
-
-if CLIENT_MENU then
-    hook.add( "OnScreenSizeChanged", gpm_PREFIX .. "::ScreenSize", function( _, __, width, height )
-        os.screenWidth, os.screenHeight = width, height
-    end, hook.PRE )
-
-    os.screenWidth, os.screenHeight = _G.ScrW(), _G.ScrH()
 end
 
 if std.TYPE.COUNT ~= 44 then

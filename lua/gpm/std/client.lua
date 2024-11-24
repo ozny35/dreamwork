@@ -1,7 +1,10 @@
 local _G = _G
-local std = _G.gpm.std
+local gpm = _G.gpm
+local std = gpm.std
 
 ---@class gpm.std.client
+---@field ScreenWidth number: The width of the game's window (in pixels).
+---@field ScreenHeight number: The height of the game's window (in pixels).
 local client = {
     openURL = _G.gui.OpenURL
 }
@@ -51,5 +54,18 @@ do
     end
 
 end
+
+do
+
+    local hook = std.hook
+
+    hook.add( "OnScreenSizeChanged", gpm.PREFIX .. "::ScreenSize", function( old_width, old_height, width, height )
+        client.ScreenWidth, client.ScreenHeight = width, height
+        hook.run( "ScreenSizeChanged", width, height, old_width, old_height )
+    end, hook.PRE )
+
+end
+
+client.ScreenWidth, client.ScreenHeight = _G.ScrW(), _G.ScrH()
 
 return client
