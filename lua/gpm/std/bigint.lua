@@ -5,11 +5,24 @@
 ]]
 
 local _G = _G
+local std = _G.gpm.std
+
+local bigint_digits = {
+    "0", "1", "2",
+    "3", "4", "5",
+    "6", "7", "8",
+    "9", "a", "b",
+    "c", "d", "e",
+    "f", "g", "h",
+    "i", "j", "k",
+    "l", "m", "n",
+    "o", "p", "q",
+    "r", "s", "t",
+    "u", "v", "w",
+    "x", "y", "z"
+}
 
 --##### FORWARD DECLARATIONS #####--
-
-local bigint_mt
-local bigint_digits
 local bigint_comparatorMap
 
 local bigint_maxnumber
@@ -34,9 +47,6 @@ local table_copy
 
 --##### MODULE FUNCTIONS #####--
 
----@class gpm.std
-local std = _G.gpm.std
-
 local tonumber, getmetatable, setmetatable = std.tonumber, std.getmetatable, std.setmetatable
 local math_floor = std.math.floor
 
@@ -60,11 +70,18 @@ end
 
 --##### CONSTRUCTORS #####--
 
----@class gpm.std.BigInt
-local bigint = {}
+---@alias Car gpm.std.BigInt
+---@class gpm.std.BigInt : gpm.std.Object
+---@field __class gpm.std.BigIntClass
+local BigInt = std.class.base( "BigInt" )
+
+---@class gpm.std.BigIntClass : gpm.std.BigInt
+---@field __base gpm.std.BigInt
+---@overload fun(): BigInt
+local BigIntClass = std.class.create( BigInt )
 
 function bigint_new()
-    return setmetatable( { sign = 0, bytes = {}, mutable = false }, bigint_mt )
+    return setmetatable( { sign = 0, bytes = {}, mutable = false }, BigInt )
 end
 
 function bigint_constructor( self, value, base )
@@ -76,7 +93,7 @@ function bigint_constructor( self, value, base )
         return bigint_fromnumber( self, value )
     end
 
-    if getmetatable( value ) == bigint_mt then
+    if getmetatable( value ) == BigInt then
         return value
     end
 
@@ -203,7 +220,7 @@ function bigint_fromarray( self, array, littleEndian )
     return self
 end
 
-function bigint.FromBytes( binary, littleEndian )
+function BigIntClass.FromBytes( binary, littleEndian )
     binary = bigint_ensureString( binary )
     littleEndian = bigint_ensureBool( littleEndian, false )
 
@@ -212,14 +229,14 @@ function bigint.FromBytes( binary, littleEndian )
         table_reverse( bytes )
     end
 
-    local obj = setmetatable( { sign = 1, bytes = bytes, mutable = false }, bigint_mt )
+    local obj = setmetatable( { sign = 1, bytes = bytes, mutable = false }, BigInt )
     bigint_rstrip( obj )
     return obj
 end
 
 --##### ARITHMETIC OPERATORS #####--
 
-function bigint:Unm()
+function BigInt:Unm()
     if self.sign == 0 then
         return self
     end
@@ -229,7 +246,7 @@ function bigint:Unm()
     return this
 end
 
-function bigint:Abs()
+function BigInt:Abs()
     if self.sign >= 0 then
         return self
     end
@@ -239,7 +256,7 @@ function bigint:Abs()
     return this
 end
 
-function bigint:SetSign( sign )
+function BigInt:SetSign( sign )
     sign = bigint_ensureInt( sign, -1, 1 )
 
     if self.sign == 0 or sign == self.sign then
@@ -255,7 +272,7 @@ function bigint:SetSign( sign )
     error( "invalid sign", 2 )
 end
 
-function bigint:Add( other )
+function BigInt:Add( other )
     other = bigint_ensureBigInt( other )
 
     -- addition of 0
@@ -289,7 +306,7 @@ function bigint:Add( other )
     end
 
     -- perform operation
-    local this = self:CopyIfImmutable()
+    local new = self:CopyIfImmutable()
 
     local bytes, otherBytes
     if swapOrder then
@@ -311,13 +328,13 @@ function bigint:Add( other )
 
         local sum = byte + otherByte + carry
         if not subtract and sum >= 256 then
-            this.bytes[ i ] = sum - 256
+            new.bytes[ i ] = sum - 256
             carry = 1
         elseif subtract and sum < 0 then
-            this.bytes[ i ] = sum + 256
+            new.bytes[ i ] = sum + 256
             carry = -1
         else
-            this.bytes[ i ] = sum
+            new.bytes[ i ] = sum
             carry = 0
         end
 
@@ -326,7 +343,7 @@ function bigint:Add( other )
             if swapOrder then
                 -- just need to copy remaining bytes
                 for j = i + 1, byteCount, 1 do
-                    this.bytes[ j ] = bytes[ j ]
+                    new.bytes[ j ] = bytes[ j ]
                 end
             end
 
@@ -335,26 +352,26 @@ function bigint:Add( other )
     end
 
     if carry > 0 then
-        this.bytes[ byteCount + 1 ] = carry
+        new.bytes[ byteCount + 1 ] = carry
     end
 
     if subtract then
-        bigint_rstrip( this )
+        bigint_rstrip( new )
     end
 
     if changeSign then
-        this.sign = -this.sign
+        new.sign = -new.sign
     end
 
-    return this
+    return new
 end
 
-function bigint:Sub( other )
+function BigInt:Sub( other )
     other = bigint_ensureBigInt( other )
     return self:Add( other:Unm() )
 end
 
-function bigint:Mul( other )
+function BigInt:Mul( other )
     other = bigint_ensureBigInt( other )
 
     -- multiplication by 0
@@ -432,7 +449,7 @@ function bigint:Mul( other )
     return this
 end
 
-function bigint:DivWithRemainder( other, ignoreRemainder )
+function BigInt:DivWithRemainder( other, ignoreRemainder )
     other = bigint_ensureBigInt( other )
     ignoreRemainder = bigint_ensureBool( ignoreRemainder, false )
 
@@ -559,17 +576,17 @@ function bigint:DivWithRemainder( other, ignoreRemainder )
     return another, this
 end
 
-function bigint:Div( other )
+function BigInt:Div( other )
     local quotient, _ = self:DivWithRemainder( other, true )
     return quotient
 end
 
-function bigint:Mod( other )
+function BigInt:Mod( other )
     local _, remainder = self:DivWithRemainder( other )
     return remainder
 end
 
-function bigint:Pow( other )
+function BigInt:Pow( other )
     other = bigint_ensureBigInt( other )
 
     if other.sign == 0 then
@@ -589,8 +606,7 @@ function bigint:Pow( other )
     local power = self:ExactLog2()
     if power ~= nil then
         -- assumes other isn't so big that precision becomes an issue
-        local shift = ( other:ToNumber() - 1 ) * power
-        return self:Shl( shift ):SetSign( sign )
+        return self:Shl( ( other:ToNumber() - 1 ) * power ):SetSign( sign )
     end
 
     -- multiply by self repeatedly
@@ -615,7 +631,7 @@ function bigint:Pow( other )
 end
 
 -- calculate log2 by finding highest 1 bit
-function bigint:Log2()
+function BigInt:Log2()
     if self.sign == 0 then
         return nil
     end
@@ -633,7 +649,7 @@ function bigint:Log2()
 end
 
 -- return log2 if it's an integer, else nil
-function bigint:ExactLog2()
+function BigInt:ExactLog2()
     if self.sign == 0 then
         return nil
     end
@@ -668,7 +684,7 @@ end
 
 --##### BITWISE OPERATORS #####--
 
-function bigint:Shr( n )
+function BigInt:Shr( n )
     n = bigint_ensureInt( n )
 
     if self.sign == 0 or n == 0 then
@@ -725,7 +741,7 @@ function bigint:Shr( n )
     return this
 end
 
-function bigint:Shl( n )
+function BigInt:Shl( n )
     n = bigint_ensureInt( n )
 
     if self.sign == 0 or n == 0 then
@@ -776,7 +792,7 @@ function bigint:Shl( n )
     return this
 end
 
-function bigint:Bor( other )
+function BigInt:Bor( other )
     other = bigint_ensureBigInt( other )
 
     if other.sign == 0 then
@@ -829,7 +845,7 @@ function bigint:Bor( other )
     return this or self
 end
 
-function bigint:Band( other )
+function BigInt:Band( other )
     other = bigint_ensureBigInt( other )
 
     if self.sign == 0 then
@@ -888,7 +904,7 @@ function bigint:Band( other )
     return this
 end
 
-function bigint:Bxor( other )
+function BigInt:Bxor( other )
     other = bigint_ensureBigInt( other )
 
     if other.sign == 0 then
@@ -935,7 +951,7 @@ function bigint:Bxor( other )
     return this
 end
 
-function bigint:Bnot( size )
+function BigInt:Bnot( size )
     local this = self:CopyIfImmutable()
     local byteCount = #self.bytes
 
@@ -972,7 +988,7 @@ function bigint:Bnot( size )
     return this
 end
 
-function bigint:SetBits( ... )
+function BigInt:SetBits( ... )
     local arg = {...}
 
     local count = #arg
@@ -1021,7 +1037,7 @@ function bigint:SetBits( ... )
     return this or self
 end
 
-function bigint:UnsetBits( ... )
+function BigInt:UnsetBits( ... )
     local arg = {...}
     if self.sign == 0 then
         return self
@@ -1061,7 +1077,7 @@ function bigint:UnsetBits( ... )
     return this
 end
 
-function bigint:GetBit( i )
+function BigInt:GetBit( i )
     i = bigint_ensureInt( i, 1 )
     if i < 1 then
         return nil
@@ -1084,7 +1100,7 @@ function bigint:GetBit( i )
 end
 
 -- convert 2's complement unsigned number to signed
-function bigint:CastSigned( size )
+function BigInt:CastSigned( size )
     local byteCount = #self.bytes
     size = bigint_ensureInt( size, 1, nil, byteCount )
 
@@ -1113,7 +1129,7 @@ function bigint:CastSigned( size )
 end
 
 -- convert 2's complement signed number to unsigned
-function bigint:CastUnsigned( size )
+function BigInt:CastUnsigned( size )
     local byteCount = #self.bytes
     size = bigint_ensureInt( size, 1, nil, byteCount )
 
@@ -1143,7 +1159,7 @@ end
 --##### EQUALITY OPERATORS #####--
 
 -- compare unsigned
-function bigint:CompareU( other )
+function BigInt:CompareU( other )
     other = bigint_ensureBigInt( other )
 
     local byteCount = #self.bytes
@@ -1166,28 +1182,56 @@ function bigint:CompareU( other )
     return 0
 end
 
-function bigint:Compare( other )
-    other = bigint_ensureBigInt( other )
+do
 
-    if self.sign > other.sign then
-        return 1
-    elseif self.sign < other.sign then
-        return -1
-    end
+    local function compare( a, b )
+        local other = bigint_ensureBigInt( b )
 
-    local ucomp = self:CompareU( other )
-    if ucomp == 0 then
+        if a.sign > other.sign then
+            return 1
+        elseif a.sign < other.sign then
+            return -1
+        end
+
+        local ucomp = a:CompareU( other )
+        if ucomp == 0 then
+            return 0
+        elseif a.sign == 1 then
+            return ucomp
+        elseif a.sign == -1 then
+            return -ucomp
+        end
+
         return 0
-    elseif self.sign == 1 then
-        return ucomp
-    elseif self.sign == -1 then
-        return -ucomp
     end
 
-    return 0
+    function BigInt:Eq( other )
+        return compare( self, other ) == 0
+    end
+
+    function BigInt:Ne( other )
+        return compare( self, other ) ~= 0
+    end
+
+    function BigInt:Lt( other )
+        return compare( self, other ) == -1
+    end
+
+    function BigInt:Le( other )
+        return compare( self, other ) <= 0
+    end
+
+    function BigInt:Gt( other )
+        return compare( self, other ) == 1
+    end
+
+    function BigInt:Ge( other )
+        return compare( self, other ) >= 0
+    end
+
 end
 
-function bigint:CompareOp( other, op )
+function BigInt:CompareOp( other, op )
     local comparator = bigint_comparatorMap[ op ]
     if comparator == nil then
         error( "invalid argument; expected comparison operator", 2 )
@@ -1196,34 +1240,10 @@ function bigint:CompareOp( other, op )
     return comparator( self, other )
 end
 
-function bigint:Eq( other )
-    return self:Compare( other ) == 0
-end
-
-function bigint:Ne( other )
-    return self:Compare( other ) ~= 0
-end
-
-function bigint:Lt( other )
-    return self:Compare( other ) == -1
-end
-
-function bigint:Le( other )
-    return self:Compare( other ) <= 0
-end
-
-function bigint:Gt( other )
-    return self:Compare( other ) == 1
-end
-
-function bigint:Ge( other )
-    return self:Compare( other ) >= 0
-end
-
 --##### CONVERSION #####--
 
 -- convert to string of bytes
-function bigint:ToBytes( size, littleEndian )
+function BigInt:ToBytes( size, littleEndian )
     littleEndian = bigint_ensureBool( littleEndian, false )
 
     -- avoid copying array
@@ -1260,7 +1280,7 @@ function bigint:ToBytes( size, littleEndian )
     return byteStr
 end
 
-function bigint:ToNumber()
+function BigInt:ToNumber()
     if self:CompareU( bigint_maxnumber ) == 1 then
         error( "integer too big to convert to lua number", 2 )
     end
@@ -1273,12 +1293,12 @@ function bigint:ToNumber()
     return total * self.sign
 end
 
-function bigint:ToBool()
+function BigInt:__tobool()
     return self.sign ~= 0
 end
 
 -- fast hex base conversion
-function bigint:ToHex( noPrefix )
+function BigInt:ToHex( noPrefix )
     noPrefix = bigint_ensureBool( noPrefix, false )
 
     if self.sign == 0 then
@@ -1305,7 +1325,7 @@ function bigint:ToHex( noPrefix )
 end
 
 -- fast bin base conversion
-function bigint:ToBin( noPrefix )
+function BigInt:ToBin( noPrefix )
     noPrefix = bigint_ensureBool( noPrefix, false )
 
     if self.sign == 0 then
@@ -1350,12 +1370,12 @@ function bigint:ToBin( noPrefix )
     return result
 end
 
-function bigint:ToDec()
+function BigInt:ToDec()
     return self:ToBase( 10 )
 end
 
 -- general base conversion
-function bigint:ToBase( base )
+function BigInt:ToBase( base )
     base = bigint_ensureInt( base, 1, 36 )
 
     if base == 2 then
@@ -1411,33 +1431,31 @@ local function ensureSelfIsBigInt( f )
     end
 end
 
-bigint_mt = {
-    __index = bigint,
-    __unm = bigint.Unm,
-    __add = ensureSelfIsBigInt( bigint.Add ),
-    __sub = ensureSelfIsBigInt( bigint.Sub ),
-    __mul = ensureSelfIsBigInt( bigint.Mul ),
-    __div = ensureSelfIsBigInt( bigint.Div ),
-    __mod = ensureSelfIsBigInt( bigint.Mod ),
-    __pow = ensureSelfIsBigInt( bigint.Pow ),
-    __eq = ensureSelfIsBigInt( bigint.Eq ),
-    __lt = ensureSelfIsBigInt( bigint.Lt ),
-    __le = ensureSelfIsBigInt( bigint.Le ),
+BigInt.__unm = BigInt.Unm
+BigInt.__add = ensureSelfIsBigInt( BigInt.Add )
+BigInt.__sub = ensureSelfIsBigInt( BigInt.Sub )
+BigInt.__mul = ensureSelfIsBigInt( BigInt.Mul )
+BigInt.__div = ensureSelfIsBigInt( BigInt.Div )
+BigInt.__mod = ensureSelfIsBigInt( BigInt.Mod )
+BigInt.__pow = ensureSelfIsBigInt( BigInt.Pow )
+BigInt.__eq = ensureSelfIsBigInt( BigInt.Eq )
+BigInt.__lt = ensureSelfIsBigInt( BigInt.Lt )
+BigInt.__le = ensureSelfIsBigInt( BigInt.Le )
 
-    -- not supported in 5.1
-    __idiv = ensureSelfIsBigInt( bigint.Div ),
-    __band = ensureSelfIsBigInt( bigint.Band ),
-    __bor = ensureSelfIsBigInt( bigint.Bor ),
-    __bxor = ensureSelfIsBigInt( bigint.Bxor ),
-    __bnot = function( self ) return self:Bnot() end,
-    __shl = ensureSelfIsBigInt( bigint.Shl ),
-    __shr = ensureSelfIsBigInt( bigint.Shr ),
-    __tostring = bigint.ToDec
-}
+BigInt.__idiv = ensureSelfIsBigInt( BigInt.Div )
+BigInt.__tostring = BigInt.ToDec
+
+-- not supported in 5.1
+BigInt.__band = ensureSelfIsBigInt( BigInt.Band )
+BigInt.__bor = ensureSelfIsBigInt( BigInt.Bor )
+BigInt.__bxor = ensureSelfIsBigInt( BigInt.Bxor )
+BigInt.__bnot = function( self ) return self:Bnot() end
+BigInt.__shl = ensureSelfIsBigInt( BigInt.Shl )
+BigInt.__shr = ensureSelfIsBigInt( BigInt.Shr )
 
 --##### HELPERS #####--
 
-function bigint:Copy()
+function BigInt:Copy()
     local copy = bigint_new()
     table_copy( copy.bytes, self.bytes )
     copy.sign = self.sign
@@ -1446,15 +1464,15 @@ end
 
 -- return a copy if immutable or self otherwise
 -- if other is not nil, copy it instead
-function bigint:CopyIfImmutable()
+function BigInt:CopyIfImmutable()
     return self.mutable and self or self:Copy()
 end
 
-function bigint:IsEven()
+function BigInt:IsEven()
     return self.sign == 0 or self.bytes[ 1 ] % 2 == 0
 end
 
-function bigint:IsOne()
+function BigInt:IsOne()
     return self.bytes[ 2 ] == nil and self.bytes[ 1 ] == 1
 end
 
@@ -1471,7 +1489,7 @@ function bigint_rstrip( self )
 end
 
 function bigint_ensureBigInt( obj )
-    if getmetatable( obj ) == bigint_mt then
+    if getmetatable( obj ) == BigInt then
         return obj
     end
 
@@ -1483,7 +1501,7 @@ function bigint_ensureInt( obj, minValue, maxValue, default )
         return default
     end
 
-    if getmetatable( obj ) == bigint_mt then
+    if getmetatable( obj ) == BigInt then
         obj = obj:ToNumber()
     end
 
@@ -1509,7 +1527,7 @@ function bigint_ensureArray( obj, default )
         return default
     end
 
-    if is_table( obj ) and getmetatable( obj ) ~= bigint_mt then
+    if is_table( obj ) and getmetatable( obj ) ~= BigInt then
         return obj
     end
 
@@ -1570,40 +1588,25 @@ function table_copy( t1, t2 )
     return t1
 end
 
-bigint_digits = {
-    "0", "1", "2",
-    "3", "4", "5",
-    "6", "7", "8",
-    "9", "a", "b",
-    "c", "d", "e",
-    "f", "g", "h",
-    "i", "j", "k",
-    "l", "m", "n",
-    "o", "p", "q",
-    "r", "s", "t",
-    "u", "v", "w",
-    "x", "y", "z"
-}
-
 bigint_comparatorMap = {
-    ["=="] = bigint.Eq,
-    ["~="] = bigint.Ne,
-    ["<"] = bigint.Lt,
-    [">"] = bigint.Gt,
-    ["<="] = bigint.Le,
-    [">="] = bigint.Ge
+    ["=="] = BigInt.Eq,
+    ["~="] = BigInt.Ne,
+    ["<"] = BigInt.Lt,
+    [">"] = BigInt.Gt,
+    ["<="] = BigInt.Le,
+    [">="] = BigInt.Ge
 }
 
 bigint_zero = bigint_new()
-bigint.Zero = bigint_zero
+BigIntClass.Zero = bigint_zero
 
 bigint_one = bigint_fromnumber( bigint_new(), 1 )
-bigint.One = bigint_one
+BigIntClass.One = bigint_one
 
 bigint_negone = bigint_fromnumber( bigint_new(), -1 )
-bigint.NegOne = bigint_negone
+BigIntClass.NegOne = bigint_negone
 
-bigint.Two = bigint_fromnumber( bigint_new(), 2 )
+BigIntClass.Two = bigint_fromnumber( bigint_new(), 2 )
 
 -- determine the max accurate integer supported by this build of Lua
 if 0x1000000 == 0x1000001 then
@@ -1614,13 +1617,13 @@ else
     bigint_maxnumber = bigint_fromstring( bigint_new(), "0x1FFFFFFFFFFFFF" )
 end
 
-bigint.MaxNumber = bigint_maxnumber
+BigIntClass.MaxNumber = bigint_maxnumber
 
-function bigint_mt.__bitcount()
+function BigInt.__bitcount()
     return 64
 end
 
-bigint_mt.new = function( self, ... )
+BigInt.new = function( self, ... )
     self.sign = 0
     self.bytes = {}
     self.mutable = false
@@ -1628,18 +1631,16 @@ bigint_mt.new = function( self, ... )
     return nil
 end
 
-function bigint.FromString( value, base )
+function BigIntClass.FromString( value, base )
     return bigint_fromstring( bigint_new(), value, base )
 end
 
-function bigint.FromNumber( value )
+function BigIntClass.FromNumber( value )
     return bigint_fromnumber( bigint_new(), value )
 end
 
-function bigint.FromArray( array, littleEndian )
+function BigIntClass.FromArray( array, littleEndian )
     return bigint_fromarray( bigint_new(), array, littleEndian )
 end
 
----@class gpm.std.BigInt
-bigint = std.class( "BigInt", bigint_mt, bigint )
-return bigint
+return BigIntClass
