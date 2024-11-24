@@ -6,23 +6,28 @@ local ents, scripted_ents, Entity, NULL, ents_GetMapCreatedEntity = _G.ents, _G.
 local ENTITY = std.findMetatable( "Entity" )
 local ENTITY_SetModel = ENTITY.SetModel
 
+---@class gpm.std.entity
 local entity = {
-    ["find"] = {
-        ["alongRay"] = ents.FindAlongRay,
-        ["byClass"] = ents.FindByClass,
-        ["byModel"] = ents.FindByModel,
-        ["byName"] = ents.FindByName,
-        ["inBox"] = ents.FindInBox,
-        ["inCone"] = ents.FindInCone,
-        ["inSphere"] = ents.FindInSphere
-    },
-    ["useByName"] = ents.FireTargets,
-    ["getCount"] = ents.GetCount,
-    ["getAll"] = ents.GetAll,
-    ["get"] = function( index, useMapCreationID )
+    useByName = ents.FireTargets,
+    getCount = ents.GetCount,
+    getAll = ents.GetAll,
+    get = function( index, useMapCreationID )
         return ( useMapCreationID and ents_GetMapCreatedEntity or Entity )( index )
     end
 }
+
+---@class gpm.std.entity.find
+local find = {
+    alongRay = ents.FindAlongRay,
+    byClass = ents.FindByClass,
+    byModel = ents.FindByModel,
+    byName = ents.FindByName,
+    inBox = ents.FindInBox,
+    inCone = ents.FindInCone,
+    inSphere = ents.FindInSphere
+}
+
+entity.find = find
 
 do
 
@@ -34,14 +39,14 @@ do
         math_sqrt, math_huge = math.sqrt, math.huge
     end
 
-    function entity.find.closest( entities, origin )
+    function find.closest( entities, origin )
         local closest, closest_distance = nil, 0
 
         for i = 1, #entities do
-            local entity = entities[ i ]
-            local distance = VECTOR_DistToSqr( origin, entity:GetPos() )
+            local value = entities[ i ]
+            local distance = VECTOR_DistToSqr( origin, value:GetPos() )
             if closest == nil or distance < closest_distance then
-                closest, closest_distance = entity, distance
+                closest, closest_distance = value, distance
             end
         end
 
@@ -54,6 +59,13 @@ do
 
 end
 
+---@class gpm.std.entity.damage
+local damage = {}
+
+-- https://wiki.facepunch.com/gmod/Global.DamageInfo
+
+entity.damage = damage
+
 if std.CLIENT then
     entity.create = ents.CreateClientside
     entity.createProp = ents.CreateClientProp
@@ -62,9 +74,9 @@ elseif std.SERVER then
     entity.create = ents_Create
 
     entity.createProp = function( model )
-        local entity = ents_Create( "prop_physics" )
-        ENTITY_SetModel( entity, model or "models/error.mdl" )
-        return entity
+        local obj = ents_Create( "prop_physics" )
+        ENTITY_SetModel( obj, model or "models/error.mdl" )
+        return obj
     end
 
     entity.getEdictCount = ents.GetEdictCount
@@ -73,7 +85,6 @@ elseif std.SERVER then
     do
 
         local is_entity = std.is.entity
-        local find = entity.find
         find.inPVS = ents.FindInPVS
 
         local inPAS = ents.FindInPAS
@@ -86,7 +97,7 @@ elseif std.SERVER then
             local RecipientFilter = _G.RecipientFilter
             local ENTITY_EyePos = ENTITY.EyePos
 
-            find.inPAS = function( viewPoint )
+            function find.inPAS( viewPoint )
                 local filter = RecipientFilter()
                 if is_entity( viewPoint ) then
                     viewPoint = ENTITY_EyePos( viewPoint )
