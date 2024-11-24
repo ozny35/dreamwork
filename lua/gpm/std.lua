@@ -678,26 +678,7 @@ do
 end
 
 -- bit library
-do
-
-    local glua_bit = _G.bit
-
-    std.bit = {
-        arshift = glua_bit.arshift,
-        band = glua_bit.band,
-        bnot = glua_bit.bnot,
-        bor = glua_bit.bor,
-        bswap = glua_bit.bswap,
-        bxor = glua_bit.bxor,
-        lshift = glua_bit.lshift,
-        rol = glua_bit.rol,
-        ror = glua_bit.ror,
-        rshift = glua_bit.rshift,
-        tobit = glua_bit.tobit,
-        tohex = glua_bit.tohex
-    }
-
-end
+std.bit = include( "std/bit.lua" )
 
 -- math library
 local math = include( "std/math.lua" )
