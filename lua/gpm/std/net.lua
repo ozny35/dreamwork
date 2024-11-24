@@ -508,4 +508,8 @@ end
 -- TODO: https://wiki.facepunch.com/gmod/umsg
 -- TODO: https://wiki.facepunch.com/gmod/Global.SuppressHostEvents
 
+-- TODO: https://wiki.facepunch.com/gmod/util.NetworkIDToString
+-- TODO: https://wiki.facepunch.com/gmod/util.NetworkStringToID
+-- TODO: https://wiki.facepunch.com/gmod/util.AddNetworkString
+
 return net

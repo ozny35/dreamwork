@@ -112,6 +112,8 @@ elseif std.SERVER then
 
 end
 
+-- TODO: Add https://wiki.facepunch.com/gmod/util.SpriteTrail
+
 local entity_create = entity.create
 local classes = {}
 
