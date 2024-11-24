@@ -5,8 +5,14 @@ local std = _G.gpm.std
 local debug_setmetatable = _G.debug.setmetatable
 local getmetatable, findMetatable, registerMetatable = std.getmetatable, std.findMetatable, std.registerMetatable
 
+--- Table of functions to check the type of a value.
 ---@class gpm.std.is
 local is = {}
+
+-- Table of functions to check the validity of a value.
+---@class gpm.std.is.valid
+local valid = {}
+is.valid = valid
 
 -- nil ( 0 )
 local object = nil
@@ -137,6 +143,17 @@ do
 end
 
 if std.CLIENT_SERVER then
+    do
+
+        local util = _G.util
+
+        valid.prop = util.IsValidProp
+        valid.model = util.IsValidModel
+        valid.ragdoll = util.IsValidRagdoll
+
+    end
+
+    ---@class Entity
     local ENTITY = findMetatable( "Entity" )
 
     -- Entity ( 9 )
@@ -145,21 +162,27 @@ if std.CLIENT_SERVER then
         return metatable and metatable.__metatable_id == 9
     end
 
-    local function returnTrue() return true end
-    local function returnFalse() return false end
+    local valid_entity
+    do
 
-    ENTITY.IsClientEntity = returnFalse
-    ENTITY.IsVehicle = returnFalse
-    ENTITY.IsNextbot = returnFalse
-    ENTITY.IsPlayer = returnFalse
-    ENTITY.IsWeapon = returnFalse
-    ENTITY.IsNPC = returnFalse
+        local IsValid = ENTITY.IsValid
+
+        --- Checks if the entity is valid.
+        ---@param entity Entity: The entity to check.
+        ---@return boolean: Returns `true` if the entity is valid, otherwise `false`.
+        function valid_entity( entity )
+            return entity and IsValid( entity )
+        end
+
+        valid.entity = valid_entity
+
+    end
 
     -- Player ( 9 )
     do
 
+        ---@class Player
         local metatable = findMetatable( "Player" )
-        metatable.IsPlayer = returnTrue
 
         function is.player( value )
             return getmetatable( value ) == metatable
@@ -170,8 +193,8 @@ if std.CLIENT_SERVER then
     -- Weapon ( 9 )
     do
 
+        ---@class Weapon
         local metatable = findMetatable( "Weapon" )
-        metatable.IsWeapon = returnTrue
 
         function is.weapon( value )
             return getmetatable( value ) == metatable
@@ -182,8 +205,8 @@ if std.CLIENT_SERVER then
     -- NPC ( 9 )
     do
 
+        ---@class NPC
         local metatable = findMetatable( "NPC" )
-        metatable.IsNPC = returnTrue
 
         function is.npc( value )
             return getmetatable( value ) == metatable
@@ -194,8 +217,8 @@ if std.CLIENT_SERVER then
     -- NextBot ( 9 )
     do
 
+        ---@class NextBot
         local metatable = findMetatable( "NextBot" )
-        metatable.IsNextbot = returnTrue
 
         function is.nextbot( value )
             return getmetatable( value ) == metatable
@@ -206,11 +229,17 @@ if std.CLIENT_SERVER then
     -- Vehicle ( 9 )
     do
 
+        ---@class Vehicle
         local metatable = findMetatable( "Vehicle" )
-        metatable.IsVehicle = returnTrue
 
         function is.vehicle( value )
             return getmetatable( value ) == metatable
+        end
+
+        local IsValidVehicle = metatable.IsValidVehicle
+
+        function valid.vehicle( vehicle )
+            return valid_entity( vehicle ) and IsValidVehicle( vehicle )
         end
 
     end
@@ -218,8 +247,8 @@ if std.CLIENT_SERVER then
     -- CSEnt ( 9 )
     if std.CLIENT then
 
+        ---@class CSEnt
         local metatable = findMetatable( "CSEnt" )
-        metatable.IsClientEntity = returnTrue
 
         function is.clientEntity( value )
             return getmetatable( value ) == metatable
@@ -230,10 +259,17 @@ if std.CLIENT_SERVER then
     -- PhysObj ( 12 )
     do
 
+        ---@class PhysObj
         local metatable = findMetatable( "PhysObj" )
 
         function is.physics( value )
             return getmetatable( value ) == metatable
+        end
+
+        local IsValid = metatable.IsValid
+
+        function valid.physics( physics )
+            return getmetatable( physics ) == metatable and IsValid( physics )
         end
 
     end
@@ -241,6 +277,7 @@ if std.CLIENT_SERVER then
     -- ISave ( 13 )
     do
 
+        ---@class ISave
         local metatable = findMetatable( "ISave" )
 
         function is.save( value )
@@ -252,6 +289,7 @@ if std.CLIENT_SERVER then
     -- IRestore ( 14 )
     do
 
+        ---@class IRestore
         local metatable = findMetatable( "IRestore" )
 
         function is.restore( value )
@@ -263,6 +301,7 @@ if std.CLIENT_SERVER then
     -- CTakeDamageInfo ( 15 )
     do
 
+        ---@class CTakeDamageInfo
         local metatable = findMetatable( "CTakeDamageInfo" )
 
         function is.damageInfo( value )
@@ -274,6 +313,7 @@ if std.CLIENT_SERVER then
     -- CEffectData ( 16 )
     do
 
+        ---@class CEffectData
         local metatable = findMetatable( "CEffectData" )
 
         function is.effectData( value )
@@ -285,6 +325,7 @@ if std.CLIENT_SERVER then
     -- CMoveData ( 17 )
     do
 
+        ---@class CMoveData
         local metatable = findMetatable( "CMoveData" )
 
         function is.movedata( value )
@@ -296,6 +337,7 @@ if std.CLIENT_SERVER then
     -- CUserCmd ( 19 )
     do
 
+        ---@class CUserCmd
         local metatable = findMetatable( "CUserCmd" )
 
         function is.usercmd( value )
@@ -307,6 +349,7 @@ if std.CLIENT_SERVER then
     -- bf_read ( 26 )
     do
 
+        ---@class bf_read
         local metatable = findMetatable( "bf_read" )
 
         function is.userMessage( value )
@@ -318,10 +361,17 @@ if std.CLIENT_SERVER then
     -- PhysCollide ( 32 )
     do
 
+        ---@class PhysCollide
         local metatable = findMetatable( "PhysCollide" )
 
         function is.physCollide( value )
             return getmetatable( value ) == metatable
+        end
+
+        local IsValid = metatable.IsValid
+
+        function valid.physCollide( physCollide )
+            return getmetatable( physCollide ) == metatable and IsValid( physCollide )
         end
 
     end
@@ -329,6 +379,7 @@ if std.CLIENT_SERVER then
     -- SurfaceInfo ( 33 )
     do
 
+        ---@class SurfaceInfo
         local metatable = findMetatable( "SurfaceInfo" )
 
         function is.surfaceInfo( value )
@@ -342,6 +393,7 @@ end
 -- Vector ( 10 )
 do
 
+    ---@class Vector
     local metatable = findMetatable( "Vector" )
 
     function is.vector( value )
@@ -353,6 +405,7 @@ end
 -- Angle ( 11 )
 do
 
+    ---@class Angle
     local metatable = findMetatable( "Angle" )
 
     function is.angle( value )
@@ -366,6 +419,7 @@ if std.SERVER then
     -- CRecipientFilter ( 18 )
     do
 
+        ---@class CRecipientFilter
         local metatable = findMetatable( "CRecipientFilter" )
 
         function is.recipientFilter( value )
@@ -376,6 +430,7 @@ if std.SERVER then
     -- CLuaLocomotion ( 35 )
     do
 
+        ---@class CLuaLocomotion
         local metatable = findMetatable( "CLuaLocomotion" )
 
         function is.locomotion( value )
@@ -387,10 +442,17 @@ if std.SERVER then
     -- PathFollower ( 36 )
     do
 
+        ---@class PathFollower
         local metatable = findMetatable( "PathFollower" )
 
         function is.pathFollower( value )
             return getmetatable( value ) == metatable
+        end
+
+        local IsValid = metatable.IsValid
+
+        function valid.pathFollower( pathFollower )
+            return getmetatable( pathFollower ) == metatable and IsValid( pathFollower )
         end
 
     end
@@ -398,10 +460,17 @@ if std.SERVER then
     -- CNavArea ( 37 )
     do
 
+        ---@class CNavArea
         local metatable = findMetatable( "CNavArea" )
 
         function is.navArea( value )
             return getmetatable( value ) == metatable
+        end
+
+        local IsValid = metatable.IsValid
+
+        function valid.navArea( navArea )
+            return getmetatable( navArea ) == metatable and IsValid( navArea )
         end
 
     end
@@ -409,10 +478,17 @@ if std.SERVER then
     -- CNavLadder ( 39 )
     do
 
+        ---@class CNavLadder
         local metatable = findMetatable( "CNavLadder" )
 
         function is.navLadder( value )
             return getmetatable( value ) == metatable
+        end
+
+        local IsValid = metatable.IsValid
+
+        function valid.navLadder( navLadder )
+            return getmetatable( navLadder ) == metatable and IsValid( navLadder )
         end
 
     end
@@ -422,6 +498,7 @@ end
 -- IMaterial ( 21 )
 do
 
+    ---@class IMaterial
     local metatable = findMetatable( "IMaterial" )
 
     function is.material( value )
@@ -435,6 +512,7 @@ if std.CLIENT then
     -- CLuaParticle ( 23 )
     do
 
+        ---@class CLuaParticle
         local metatable = findMetatable( "CLuaParticle" )
 
         function is.particle( value )
@@ -446,10 +524,17 @@ if std.CLIENT then
     -- CLuaEmitter ( 24 )
     do
 
+        ---@class CLuaEmitter
         local metatable = findMetatable( "CLuaEmitter" )
 
         function is.emitter( value )
             return getmetatable( value ) == metatable
+        end
+
+        local IsValid = metatable.IsValid
+
+        function valid.emitter( emitter )
+            return getmetatable( emitter ) == metatable and IsValid( emitter )
         end
 
     end
@@ -457,6 +542,7 @@ if std.CLIENT then
     -- pixelvis_handle_t ( 31 )
     do
 
+        ---@class pixelvis_handle_t
         local metatable = findMetatable( "pixelvis_handle_t" )
 
         function is.pixVis( value )
@@ -467,6 +553,8 @@ if std.CLIENT then
 
     -- Dynamic Light ( 32 )
     do
+
+        ---@class dlight_t
         local metatable = findMetatable( "dlight_t" )
 
         function is.dynamiclight( value )
@@ -478,10 +566,17 @@ if std.CLIENT then
     -- CNewParticleEffect ( 34 )
     do
 
+        ---@class CNewParticleEffect
         local metatable = findMetatable( "CNewParticleEffect" )
 
-        function is.effect( value )
+        function is.particleEffect( value )
             return getmetatable( value ) == metatable
+        end
+
+        local IsValid = metatable.IsValid
+
+        function valid.particleEffect( particleEffect )
+            return getmetatable( particleEffect ) == metatable and IsValid( particleEffect )
         end
 
     end
@@ -489,10 +584,17 @@ if std.CLIENT then
     -- ProjectedTexture ( 38 )
     do
 
+        ---@class ProjectedTexture
         local metatable = findMetatable( "ProjectedTexture" )
 
         function is.projectedTexture( value )
             return getmetatable( value ) == metatable
+        end
+
+        local IsValid = metatable.IsValid
+
+        function valid.projectedTexture( projectedTexture )
+            return getmetatable( projectedTexture ) == metatable and IsValid( projectedTexture )
         end
 
     end
@@ -502,6 +604,7 @@ end
 -- ITexture ( 25 )
 do
 
+    ---@class ITexture
     local metatable = findMetatable( "ITexture" )
 
     function is.texture( value )
@@ -513,6 +616,7 @@ end
 -- ConVar ( 27 )
 do
 
+    ---@class ConVar
     local metatable = findMetatable( "ConVar" )
 
     function is.convar( value )
@@ -526,10 +630,17 @@ if std.CLIENT_MENU then
     -- Panel ( 22 )
     do
 
+        ---@class Panel
         local metatable = findMetatable( "Panel" )
 
         function is.panel( value )
             return getmetatable( value ) == metatable
+        end
+
+        local IsValid = metatable.IsValid
+
+        function valid.panel( panel )
+            return getmetatable( panel ) == metatable and IsValid( panel )
         end
 
     end
@@ -537,15 +648,20 @@ if std.CLIENT_MENU then
     -- IMesh ( 28 )
     do
 
+        ---@class IMesh
         local metatable = findMetatable( "IMesh" )
 
         if metatable == nil then
+            function is.mesh() return false end
+        else
             function is.mesh( value )
                 return getmetatable( value ) == metatable
             end
-        else
-            function is.mesh( value )
-                return false
+
+            local IsValid = metatable.IsValid
+
+            function valid.mesh( mesh )
+                return getmetatable( mesh ) == metatable and IsValid( mesh )
             end
         end
 
@@ -554,6 +670,7 @@ if std.CLIENT_MENU then
     -- IVideoWriter ( 33 )
     do
 
+        ---@class IVideoWriter
         local metatable = findMetatable( "IVideoWriter" )
 
         function is.videoWriter( value )
@@ -565,10 +682,17 @@ if std.CLIENT_MENU then
     -- IGModAudioChannel ( 38 )
     do
 
+        ---@class IGModAudioChannel
         local metatable = findMetatable( "IGModAudioChannel" )
 
         function is.audioChannel( value )
             return getmetatable( value ) == metatable
+        end
+
+        local IsValid = metatable.IsValid
+
+        function valid.audioChannel( audioChannel )
+            return getmetatable( audioChannel ) == metatable and IsValid( audioChannel )
         end
 
     end
@@ -578,6 +702,7 @@ end
 -- VMatrix ( 29 )
 do
 
+    ---@class VMatrix
     local metatable = findMetatable( "VMatrix" )
 
     function is.matrix( value )
@@ -589,6 +714,7 @@ end
 -- CSoundPatch ( 30 )
 do
 
+    ---@class CSoundPatch
     local metatable = findMetatable( "CSoundPatch" )
 
     function is.sound( value )
@@ -600,6 +726,7 @@ end
 -- File ( 34 )
 do
 
+    ---@class File
     local metatable = findMetatable( "File" )
 
     function is.file( value )
