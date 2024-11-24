@@ -2,13 +2,81 @@ local _G = _G
 local glua_engine, glua_game, glua_util, system_IsWindowed = _G.engine, _G.game, _G.util, _G.system.IsWindowed
 
 local std = _G.gpm.std
-local debug, CLIENT_SERVER, CLIENT_MENU, SERVER = std.debug, std.CLIENT_SERVER, std.CLIENT_MENU, std.SERVER
+local debug = std.debug
 
 ---@class gpm.std.game
 local game = {
+    getSystemTime = _G.SysTime,
+    addDebugInfo = _G.DebugInfo,
+    getFrameTime = _G.FrameTime,
     getTickCount = glua_engine.TickCount,
     getTickInterval = glua_engine.TickInterval
 }
+
+do
+
+    local getAll = glua_engine.GetGames
+
+    --- Returns an array of tables corresponding to all games from which Garry's Mod supports mounting content.
+    ---@return table: Array of tables with the following fields: `appid`, `title`, `folder`, `owned`, `installed`, `mounted`.
+    function game.getAll()
+        local games = getAll()
+
+        for i = 1, #games do
+            local data = games[ i ]
+            data.appid = data.depot
+            data.depot = nil
+        end
+
+        return games
+    end
+
+    --- Checks whether or not a game is currently mounted.
+    ---@param appID number: Steam AppID of the game.
+    ---@return boolean: Returns `true` if the game is mounted, `false` otherwise.
+    function game.isMounted( appID )
+        local games = getAll()
+
+        for i = 1, #games do
+            if games[ i ].depot == appID then
+                return games[ i ].mounted == true
+            end
+        end
+
+        return false
+    end
+
+end
+
+if std.MENU then
+
+    local SetMounted = glua_game.SetMounted
+    local tostring = std.tostring
+
+    --- Mounts a game on the client.
+    ---@param appID number: Steam AppID of the game.
+    function game.mount( appID )
+        SetMounted( tostring( appID ), true )
+    end
+
+    --- Unmounts a game on the client.
+    ---@param appID number: Steam AppID of the game.
+    function game.unmount( appID )
+        SetMounted( tostring( appID ), false )
+    end
+
+end
+
+do
+
+    local UnPredictedCurTime = _G.UnPredictedCurTime
+    local CurTime = _G.CurTime
+
+    function game.getCurrentTime( ignorePrediction )
+        return ignorePrediction and UnPredictedCurTime() or CurTime()
+    end
+
+end
 
 do
 
@@ -18,8 +86,28 @@ do
 
 end
 
-if CLIENT_MENU then
+if std.CLIENT_MENU then
     game.isInWindow = system_IsWindowed
+
+    do
+
+        ---@class gpm.std.game.demo
+        local demo = {
+            getTotalPlaybackTicks = glua_engine.GetDemoPlaybackTotalTicks,
+            getPlaybackStartTick = glua_engine.GetDemoPlaybackStartTick,
+            getPlaybackSpeed = glua_engine.GetDemoPlaybackTimeScale,
+            getPlaybackTick = glua_engine.GetDemoPlaybackTick,
+            isRecording = glua_engine.IsRecordingDemo,
+            isPlaying = glua_engine.IsPlayingDemo
+        }
+
+        if std.MENU then
+            demo.getFileDetails = _G.GetDemoFileDetails
+        end
+
+        game.demo = demo
+
+    end
 
     do
 
@@ -74,12 +162,18 @@ if CLIENT_MENU then
 
 end
 
-if CLIENT_SERVER then
+if std.CLIENT then
+    game.getTimeoutInfo = _G.GetTimeoutInfo
+end
+
+if std.CLIENT_SERVER then
+    game.getAbsoluteFrameTime = glua_engine.AbsoluteFrameTime
     game.isDedicatedServer = glua_game.IsDedicated
     game.isSinglePlayer = glua_game.SinglePlayer
     game.getDifficulty = glua_game.GetSkillLevel
     game.getIPAddress = glua_game.GetIPAddress
     game.getTimeScale = glua_game.GetTimeScale
+    game.getRealTime = _G.RealTime
 
     game.getActivityName = glua_util.GetActivityNameByID
     game.getActivityID = glua_util.GetActivityIDByName
@@ -96,13 +190,20 @@ if CLIENT_SERVER then
     game.precacheModel = glua_util.PrecacheModel
     game.precacheSound = glua_util.PrecacheSound
 
+    if std.SERVER then
+        game.precacheScene = _G.PrecacheScene
+    end
+
+    game.getFrameNumber = _G.FrameNumber
+
     -- TODO: Rework server name
     game.getServerName = _G.GetHostName
 end
 
-if SERVER then
+if std.SERVER then
     game.setDifficulty = glua_game.SetSkillLevel
     game.setTimeScale = glua_game.SetTimeScale
+    game.print = _G.PrintMessage
 
     -- TODO: Rework server name
     game.setServerName = function( str )
