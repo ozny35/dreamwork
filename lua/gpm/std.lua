@@ -17,7 +17,7 @@ else
     end
 end
 
-local CLIENT, SERVER, MENU, CLIENT_MENU, CLIENT_SERVER = std.CLIENT, std.SERVER, std.MENU, std.CLIENT_MENU, std.CLIENT_SERVER
+local CLIENT, SERVER, MENU, CLIENT_MENU, CLIENT_SERVER, SERVER_MENU = std.CLIENT, std.SERVER, std.MENU, std.CLIENT_MENU, std.CLIENT_SERVER, std.SERVER_MENU
 
 -- ULib support ( There are no words to describe how much I hate Ulysses Team )
 if CLIENT_SERVER and _G.file.Exists( "ulib/shared/hook.lua", "LUA" ) then
@@ -1166,6 +1166,14 @@ if CLIENT_SERVER then
     -- network library
     -- std.net = include( "std/net.lua" )
 
+end
+
+if CLIENT_MENU then
+    std.client = include( "std/client.lua" )
+end
+
+if SERVER_MENU then
+    std.server = include( "std/server.lua" )
 end
 
 -- hook library
