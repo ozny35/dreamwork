@@ -18,6 +18,13 @@ if CLIENT_SERVER then
         startSpot = glua_game.StartSpot,
     }
 
+    --[[
+
+        TODO: Add https://wiki.facepunch.com/gmod/render.RedownloadAllLightmaps
+
+    ]]
+
+
     local file_Exists = _G.file.Exists
 
     --- Checks if a map/level exists.

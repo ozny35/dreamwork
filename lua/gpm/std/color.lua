@@ -485,4 +485,6 @@ if std.CLIENT then
     end
 end
 
+-- TODO: https://wiki.facepunch.com/gmod/Global.NamedColor
+
 return ColorClass

@@ -506,5 +506,6 @@ end
 
 -- TODO: https://wiki.facepunch.com/gmod/usermessage
 -- TODO: https://wiki.facepunch.com/gmod/umsg
+-- TODO: https://wiki.facepunch.com/gmod/Global.SuppressHostEvents
 
 return net

@@ -90,6 +90,9 @@ if CLIENT_SERVER then
     game.getModelMeshes = glua_util.GetModelMeshes
     game.getModelInfo = glua_util.GetModelInfo
 
+    -- TODO: https://wiki.facepunch.com/gmod/Global.PrecacheSentenceFile
+    -- TODO: https://wiki.facepunch.com/gmod/Global.PrecacheSentenceGroup
+
     game.precacheModel = glua_util.PrecacheModel
     game.precacheSound = glua_util.PrecacheSound
 

@@ -24,6 +24,16 @@ if CLIENT_SERVER and _G.file.Exists( "ulib/shared/hook.lua", "LUA" ) then
     include( "ulib/shared/hook.lua" )
 end
 
+-- TODO: put https://wiki.facepunch.com/gmod/Global.DynamicLight somewhere
+-- TODO: put https://wiki.facepunch.com/gmod/Global.ProjectedTexture somewhere
+-- TODO: put https://wiki.facepunch.com/gmod/Global.IsFirstTimePredicted somewhere
+-- TODO: put https://wiki.facepunch.com/gmod/Global.RecipientFilter somewhere
+-- TODO: put https://wiki.facepunch.com/gmod/Global.ClientsideScene somewhere
+-- TODO: put https://wiki.facepunch.com/gmod/Global.Localize somewher
+-- TODO: put https://wiki.facepunch.com/gmod/Global.Path somewhere
+
+-- TODO: Write "VideoRecorder" class ( https://wiki.facepunch.com/gmod/video.Record )
+
 -- client-side files
 if SERVER then
     local AddCSLuaFile = _G.AddCSLuaFile
