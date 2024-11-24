@@ -61,7 +61,8 @@ elseif std.CLIENT then
 
         ---@class gpm.std.player.chat
         local chat = {
-            playSound = glua_chat.PlaySound
+            playSound = glua_chat.PlaySound,
+            filterText = _G.util.FilterText
         }
 
         local key2key = {

@@ -10,6 +10,7 @@ local ENTITY_SetModel = ENTITY.SetModel
 local entity = {
     useByName = ents.FireTargets,
     getCount = ents.GetCount,
+    iterator = ents.Iterator,
     getAll = ents.GetAll,
     get = function( index, useMapCreationID )
         return ( useMapCreationID and ents_GetMapCreatedEntity or Entity )( index )
