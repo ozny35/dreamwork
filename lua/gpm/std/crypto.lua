@@ -36,8 +36,18 @@ do
 
 end
 
+--- The KeyValues format is used in the Source engine to store meta data for resources, scripts, materials, VGUI elements, and more..
+---@class gpm.std.crypto.vdf
+crypto.vdf = { deserialize = util.KeyValuesToTable, serialize = util.TableToKeyValues }
+
+--- The JSON format is used to store data in a human-readable format.
+---@class gpm.std.crypto.json
 crypto.json = { deserialize = util.JSONToTable, serialize = util.TableToJSON }
+
+--- The base64 format is used to encode data as a string of characters.
+---@class gpm.std.crypto.base64
 crypto.base64 = { decode = util.Base64Decode, encode = util.Base64Encode }
+
 crypto.sha256 = util.SHA256
 crypto.crc32 = util.CRC
 crypto.sha1 = util.SHA1
