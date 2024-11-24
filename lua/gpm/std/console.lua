@@ -1,7 +1,6 @@
 local _G = _G
-local RunConsoleCommand = _G.RunConsoleCommand
-
 local std = _G.gpm.std
+local select = std.select
 local is_string = std.is.string
 local string_format = std.string.format
 
@@ -16,10 +15,87 @@ if std.MENU then
     console.show = _G.gui.ShowConsole
 end
 
+local command_run
+do
+
+    local concommand = _G.concommand
+
+    if std.MENU then
+        local RunGameUICommand = _G.RunGameUICommand
+        local table_concat = std.table.concat
+
+        --- Executes the given console command with the parameters.
+        ---@param cmd string: The name of the console command.
+        ---@vararg string: The parameters to use in the command.
+        function command_run( cmd, ... )
+            local arg_count = select( "#", ... )
+            if arg_count == 0 then
+                RunGameUICommand( "engine '" .. cmd .. "'" )
+            else
+                RunGameUICommand( "engine '" .. table_concat( { cmd, ... }, " ", 1, arg_count + 1 ) .. "'" )
+            end
+        end
+    else
+        command_run = _G.RunConsoleCommand
+    end
+
+    ---@class gpm.std.console.command
+    local command = {
+        add = concommand.Add,
+        run = command_run,
+        remove = concommand.Remove,
+        getTable = concommand.GetTable,
+        isBlocked = _G.IsConCommandBlocked
+    }
+
+    console.command = command
+
+    -- do
+
+    --     local vname, vvalue = debug.getupvalue( _G.concommand.GetTable, 1 )
+    --     print( vname, vvalue )
+
+    --     vvalue[ "FUCK_GARRY"] = function() end
+
+    --     local gpm = _G.gpm
+    --     local hook_Run = _G.hook.Run
+
+    --     local readers = gpm.std.Queue()
+
+    --     _G.concommand.Run = gpm.detour.attach( _G.concommand.Run, function( fn, ply, cmd, args, argumentString )
+    --         print( fn ,ply, cmd )
+    --         if hook_Run( "ConsoleCommand", cmd, ply, args, argumentString ) == false then return false end
+
+    --         local reader = readers:dequeue()
+    --         if reader ~= nil then
+    --             return reader( ply, cmd, args, argumentString )
+    --         end
+
+    --         return fn( ply, cmd, args, argumentString )
+    --     end )
+
+
+    --     function console.readLine( str, fn )
+    --         -- if str ~= nil then
+    --         --     console.write( str )
+    --         -- end
+
+    --         readers:enqueue( fn )
+    --     end
+
+    --     -- TODO: Add read and readLine
+
+    --     console.readLine( "name: ", function( ply, str )
+    --         print( ply, str )
+    --     end )
+
+    -- end
+
+end
+
 do
 
     local unpack = std.table.unpack
-    local select = std.select
     local MsgC = _G.MsgC
 
     console.write = MsgC
@@ -114,10 +190,10 @@ do
 
         if is_string( name ) then
             ---@cast name string
-            RunConsoleCommand( name, value )
+            command_run( name, value )
         else
             ---@cast name ConVar
-            RunConsoleCommand( getName( name ), value )
+            command_run( getName( name ), value )
         end
     end
 
@@ -222,10 +298,10 @@ end
 function variable.setString( convar, value )
     if is_string( convar ) then
         ---@cast convar string
-        RunConsoleCommand( convar, value )
+        command_run( convar, value )
     else
         ---@cast convar ConVar
-        RunConsoleCommand( getName( convar ), value )
+        command_run( getName( convar ), value )
     end
 end
 
@@ -237,10 +313,10 @@ function variable.setFloat( convar, value )
 
     if is_string( convar ) then
         ---@cast convar string
-        RunConsoleCommand( convar, str )
+        command_run( convar, str )
     else
         ---@cast convar ConVar
-        RunConsoleCommand( getName( convar ), str )
+        command_run( getName( convar ), str )
     end
 end
 
@@ -252,10 +328,10 @@ function variable.setBool( convar, value )
 
     if is_string( convar ) then
         ---@cast convar string
-        RunConsoleCommand( convar, str )
+        command_run( convar, str )
     else
         ---@cast convar ConVar
-        RunConsoleCommand( getName( convar ), str )
+        command_run( getName( convar ), str )
     end
 end
 
@@ -266,10 +342,10 @@ function variable.setInt( convar, value )
     local str = string_format( "%d", value )
     if is_string( convar ) then
         ---@cast convar string
-        RunConsoleCommand( convar, str )
+        command_run( convar, str )
     else
         ---@cast convar ConVar
-        RunConsoleCommand( getName( convar ), value )
+        command_run( getName( convar ), value )
     end
 end
 
@@ -278,10 +354,10 @@ end
 function variable.revert( convar )
     if is_string( convar ) then
         ---@cast convar string
-        RunConsoleCommand( convar, variable_get( convar ) )
+        command_run( convar, variable_get( convar ) )
     else
         ---@cast convar ConVar
-        RunConsoleCommand( getName( convar ), getDefault( convar ) )
+        command_run( getName( convar ), getDefault( convar ) )
     end
 end
 
@@ -441,58 +517,5 @@ do
     end
 
 end
-
-local concommand = _G.concommand
-
----@class gpm.std.console.command
-local command = {
-    add = concommand.Add,
-    run = RunConsoleCommand,
-    remove = concommand.Remove,
-    getTable = concommand.GetTable
-}
-
-console.command = command
-
--- do
-
---     local vname, vvalue = debug.getupvalue( _G.concommand.GetTable, 1 )
---     print( vname, vvalue )
-
---     vvalue[ "FUCK_GARRY"] = function() end
-
---     local gpm = _G.gpm
---     local hook_Run = _G.hook.Run
-
---     local readers = gpm.std.Queue()
-
---     _G.concommand.Run = gpm.detour.attach( _G.concommand.Run, function( fn, ply, cmd, args, argumentString )
---         print( fn ,ply, cmd )
---         if hook_Run( "ConsoleCommand", cmd, ply, args, argumentString ) == false then return false end
-
---         local reader = readers:dequeue()
---         if reader ~= nil then
---             return reader( ply, cmd, args, argumentString )
---         end
-
---         return fn( ply, cmd, args, argumentString )
---     end )
-
-
---     function console.readLine( str, fn )
---         -- if str ~= nil then
---         --     console.write( str )
---         -- end
-
---         readers:enqueue( fn )
---     end
-
---     -- TODO: Add read and readLine
-
---     console.readLine( "name: ", function( ply, str )
---         print( ply, str )
---     end )
-
--- end
 
 return console
