@@ -108,7 +108,6 @@ else
     }
 end
 
-
 if SERVER then
     level.getCounter = glua_game.GetGlobalCounter
     level.setCounter = glua_game.SetGlobalCounter
@@ -120,5 +119,15 @@ if SERVER then
     level.getNextMap = glua_game.GetMapNext
     level.sendCommand = _G.hammer.SendCommand
 end
+
+---@class gpm.std.level.save
+local save = {}
+
+if std.MENU then
+    save.getFileDetails = _G.GetSaveFileDetails
+end
+
+-- TODO: https://wiki.facepunch.com/gmod/engine.WriteSave
+level.save = save
 
 return level
