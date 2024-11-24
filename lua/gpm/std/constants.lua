@@ -5,6 +5,7 @@ local CLIENT = _G.CLIENT == true and not MENU
 local SERVER = _G.SERVER == true and not MENU
 
 local CLIENT_MENU = CLIENT or MENU
+local SERVER_MENU = SERVER or MENU
 local CLIENT_SERVER = CLIENT or SERVER
 
 local ACT = {
@@ -1622,6 +1623,7 @@ do
 end
 
 ---@class gpm.std
+---@field BRANCH string: A variable containing a string indicating which (Beta) Branch of the game you are using.
 local constants = {
     -- garry environment ( hell )
     garrysmod = _G,
@@ -1629,12 +1631,19 @@ local constants = {
     -- Lua version
     _VERSION = _G._VERSION,
 
+    -- game branch
+    BRANCH = _G.BRANCH or "unknown",
+
     -- realms
     CLIENT = CLIENT,
     SERVER = SERVER,
     MENU = MENU,
+
+    -- extra realms
     CLIENT_MENU = CLIENT_MENU,
+    SERVER_MENU = SERVER_MENU,
     CLIENT_SERVER = CLIENT_SERVER,
+    SHARED = CLIENT_SERVER,
 
     -- https://wiki.facepunch.com/gmod/Enums/ACT
     ACT = ACT,
