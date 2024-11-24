@@ -1,23 +1,33 @@
 local _G = _G
-local glua_os, system, jit, bit = _G.os, _G.system, _G.jit, _G.bit
+local std = _G.gpm.std
+local glua_os, glua_system = _G.os, _G.system
 local glua_os_time, glua_os_date = glua_os.time, glua_os.date
 
 ---@class gpm.std.os
 local os = {
-    arch = jit.arch,
-    name = jit.os,
+    name = std.jit.os,
+    arch = std.jit.arch,
     date = glua_os_date,
     time = glua_os_time,
     clock = glua_os.clock,
     difftime = glua_os.difftime,
-    flashWindow = system.FlashWindow,
-    battery = system.BatteryPower,
-    steamTime = system.SteamTime,
-    country = system.GetCountry,
-    hasFocus = system.HasFocus,
-    appTime = system.AppTime,
-    uptime = system.UpTime
+    uptime = glua_system.UpTime,
+    appTime = glua_system.AppTime,
+    hasFocus = glua_system.HasFocus,
+    country = glua_system.GetCountry,
+    steamTime = glua_system.SteamTime,
+    battery = glua_system.BatteryPower,
+    flashWindow = glua_system.FlashWindow,
+    setClipboardText = _G.SetClipboardText
 }
+
+if std.MENU then
+    os.openFolder = _G.OpenFolder
+else
+    os.openFolder = std.debug.fempty
+end
+
+local bit = std.bit
 
 do
 
@@ -58,7 +68,7 @@ do
     ---@return number date The DOS date.
     function os.unix2dos( seconds )
         local data = glua_os_date( "*t", seconds )
-        ---@diagnostic disable-next-line: param-type-mismatch
+        ---@diagnostic disable-next-line: param-type-mismatch, return-type-mismatch
         return bit_bor( bit_lshift( data.hour, 11 ), bit_lshift( data.min, 5 ), math_fdiv( data.sec, 2 ) ), bit_bor( bit_lshift( data.year - 1980, 9 ), bit_lshift( data.month, 5 ), data.day )
     end
 
