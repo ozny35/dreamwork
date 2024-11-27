@@ -1190,6 +1190,13 @@ if CLIENT_SERVER then
 
 end
 
+-- hook library
+local hook = include( "std/hook.lua" )
+std.hook = hook
+
+-- timer library
+std.timer = include( "std/timer.lua" )
+
 if CLIENT_MENU then
     std.client = include( "std/client.lua" )
 end
@@ -1197,13 +1204,6 @@ end
 if SERVER_MENU then
     std.server = include( "std/server.lua" )
 end
-
--- hook library
-local hook = include( "std/hook.lua" )
-std.hook = hook
-
--- timer library
-std.timer = include( "std/timer.lua" )
 
 local isInDebug
 do
