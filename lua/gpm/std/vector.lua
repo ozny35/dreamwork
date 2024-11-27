@@ -36,3 +36,13 @@
     https://wiki.facepunch.com/gmod/util.IsSphereIntersectingSphere
 
 ]]
+
+local _G = _G
+
+---@class gpm.std.vector
+local vector = {
+    localToWorld = _G.LocalToWorld,
+    worldToLocal = _G.WorldToLocal
+}
+
+return vector

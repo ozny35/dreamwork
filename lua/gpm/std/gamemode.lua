@@ -9,7 +9,7 @@ local gamemode = {
 
 --[[
 
-https://wiki.facepunch.com/gmod/Global.DeriveGamemode
+    https://wiki.facepunch.com/gmod/Global.DeriveGamemode
 
 ]]
 
