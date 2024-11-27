@@ -24,7 +24,7 @@ end
 
 local table_remove = glua_table.remove
 
----Copies the given table.
+--- Copies the given table.
 ---@param source table The table to copy.
 ---@param isSequential boolean If true, the table is sequential, i.e. the keys are integers.
 ---@param deepCopy boolean If true, the table is deep copied.
@@ -82,7 +82,7 @@ local function copy( source, isSequential, deepCopy, copyKeys, copies )
     return result
 end
 
----Checks if two tables are equal.
+--- Checks if two tables are equal.
 ---@param a table The first table to check.
 ---@param b table The second table to check.
 ---@return boolean
@@ -124,7 +124,7 @@ local function equal( a, b )
     return true
 end
 
----Returns the difference between two tables as a list of keys.
+--- Returns the difference between two tables as a list of keys.
 ---@param a table The first table.
 ---@param b table The second table.
 ---@return table, number
@@ -170,7 +170,7 @@ local function diffKeys( a, b, result, length )
     return result, length
 end
 
----Returns the difference between two tables as a table with differences.
+--- Returns the difference between two tables as a table with differences.
 ---@param a table The first table.
 ---@param b table The second table.
 ---@return table
@@ -212,7 +212,7 @@ local function diff( a, b )
     return result
 end
 
----Converts a table to lowercase.
+--- Converts a table to lowercase.
 ---@param tbl table The table to convert.
 ---@param lowerKeys? boolean Whether to convert keys to lowercase.
 ---@param lowerValues? boolean Whether to convert values to lowercase.
@@ -269,7 +269,7 @@ local table = {
     ["diffKeys"] = diffKeys,
 }
 
----Appends values from one table to another.
+--- Appends values from one table to another.
 ---@param destination table The destination table.
 ---@param source table The source table.
 ---@return table destination
@@ -283,7 +283,7 @@ function table.append( destination, source )
     return destination
 end
 
----Returns a slice of the given table.
+--- Returns a slice of the given table.
 ---@param tbl table The table to slice.
 ---@param startPos? number The start position.
 ---@param endPos? number The end position.
@@ -317,7 +317,7 @@ function table.slice( tbl, startPos, endPos, step )
     return result, length
 end
 
----Injects values from one table to another.
+--- Injects values from one table to another.
 ---@param source table The source table.
 ---@param first number The first index.
 ---@param last number The last index.
@@ -343,7 +343,7 @@ function table.inject( source, first, last, offset, destination )
     return destination
 end
 
----Remove indexs from the given table by value.
+--- Remove indexs from the given table by value.
 ---@param tbl table The table.
 ---@param value any The value.
 function table.removeByValue( tbl, value )
@@ -356,7 +356,7 @@ function table.removeByValue( tbl, value )
     return nil
 end
 
----Returns true if the given list (table) contains the given value.
+--- Returns true if the given list (table) contains the given value.
 ---@param tbl table The table.
 ---@param value any The value.
 ---@return boolean
@@ -370,7 +370,7 @@ function table.contains( tbl, value )
     return false
 end
 
----Returns true if the given table contains the given value.
+--- Returns true if the given table contains the given value.
 ---@param tbl table The table.
 ---@param value any The value.
 ---@return boolean
@@ -384,7 +384,7 @@ function table.hasValue( tbl, value )
     return false
 end
 
----Returns list (table) of keys and length of this list.
+--- Returns list (table) of keys and length of this list.
 ---@param tbl table The table.
 ---@return table, number
 function table.getKeys( tbl )
@@ -397,7 +397,7 @@ function table.getKeys( tbl )
     return keys, length
 end
 
----Returns list (table) of values and length of this list.
+--- Returns list (table) of values and length of this list.
 ---@param tbl table The table.
 ---@return table, number
 function table.getValues( tbl )
@@ -410,7 +410,7 @@ function table.getValues( tbl )
     return values, length
 end
 
----Returns the count of keys in the given table.
+--- Returns the count of keys in the given table.
 ---@param tbl table The table.
 ---@return number
 function table.count( tbl )
@@ -422,7 +422,7 @@ function table.count( tbl )
     return count
 end
 
----Flips the keys with values in the given list (table).
+--- Flips the keys with values in the given list (table).
 ---@param tbl table The table.
 ---@param noCopy? boolean
 ---@return table
@@ -451,7 +451,7 @@ function table.flip( tbl, noCopy )
     end
 end
 
----Returns list (table) of pairs and length of this list.
+--- Returns list (table) of pairs and length of this list.
 ---@param tbl table The key/value table.
 ---@return table, number
 function table.toPairs( tbl )
@@ -464,7 +464,7 @@ function table.toPairs( tbl )
     return result, length
 end
 
----Returns the value of the given key path.
+--- Returns the value of the given key path.
 ---@param tbl table The table.
 ---@param str string The key path.
 ---@return any
@@ -488,7 +488,7 @@ function table.getValue( tbl, str )
     return tbl[ string_sub( str, pointer ) ]
 end
 
----Sets the value of the given key path.
+--- Sets the value of the given key path.
 ---@param tbl table The table.
 ---@param str string The key path.
 ---@param value any The value.
@@ -514,7 +514,7 @@ function table.setValue( tbl, str, value )
     tbl[ string_sub( str, pointer ) ] = value
 end
 
----Returns true if the given table is sequential.
+--- Returns true if the given table is sequential.
 ---@param tbl table The table.
 ---@return boolean
 function table.isSequential( tbl )
@@ -530,14 +530,14 @@ function table.isSequential( tbl )
     return true
 end
 
----Returns true if the given table is empty.
+--- Returns true if the given table is empty.
 ---@param tbl table The table.
 ---@return boolean
 function table.isEmpty( tbl )
     return next( tbl ) == nil
 end
 
----Fills the given table with the given value.
+--- Fills the given table with the given value.
 ---@param tbl table The table.
 ---@param endPos? number The end position.
 ---@param startPos? number The start position.
@@ -561,7 +561,7 @@ function table.fill( tbl, endPos, startPos, value )
     return tbl
 end
 
----Shuffles the given list (table).
+--- Shuffles the given list (table).
 ---@param tbl table The table.
 ---@return table
 function table.shuffle( tbl )
@@ -574,7 +574,7 @@ function table.shuffle( tbl )
     return tbl
 end
 
----Returns a random value from the given list (table).
+--- Returns a random value from the given list (table).
 ---@param tbl table The table.
 ---@return any, number
 function table.random( tbl )
@@ -589,7 +589,7 @@ function table.random( tbl )
     end
 end
 
----Reverses the given list (table).
+--- Reverses the given list (table).
 ---@param tbl table The table.
 ---@param noCopy? boolean If true, the table will not be copied.
 ---@return table
@@ -613,7 +613,7 @@ function table.reverse( tbl, noCopy )
     end
 end
 
----Returns the length of the given table.
+--- Returns the length of the given table.
 ---@param tbl table The table.
 ---@return number
 function table.len( tbl )
