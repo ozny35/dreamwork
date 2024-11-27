@@ -594,14 +594,33 @@ do
     end
 
     --- Creates a new object from the given base.
-    ---@param base Object
-    ---@return Object
+    ---@param base Object: The base object, aka metatable.
+    ---@vararg any: Arguments to pass to the constructor.
+    ---@return Object: The new object.
     local function new( base, ... )
-        local obj = setmetatable( {}, base )
+        if base == nil then
+            error( "base is missing", 2 )
+        end
 
-        local fn = rawget( base, "__init" )
-        if is_function( fn ) then
-            fn( obj, ... )
+        local cls = rawget( base, "__class" )
+        if cls == nil then
+            error( "base has no class", 2 )
+        end
+
+        local new_fn = rawget( cls, "__new" )
+        if is_function( new_fn ) then
+            local obj = new_fn( base, ... )
+            if obj ~= nil then
+                return obj
+            end
+        end
+
+        local obj = {}
+        setmetatable( obj, base )
+
+        local init_fn = rawget( base, "__init" )
+        if is_function( init_fn ) then
+            init_fn( obj, ... )
         end
 
         return obj
@@ -612,12 +631,7 @@ do
     ---@param self Class
     ---@return Object
     local function class__call( self, ... )
-        local fn = rawget( self, "new" )
-        if is_function( fn ) then
-            return fn( ... )
-        else
-            return new( self.__base, ... )
-        end
+        return new( rawget( self, "__base" ), ... )
     end
 
     ---@param cls Class
@@ -629,7 +643,16 @@ do
     ---@param base Object
     ---@return Class | unknown
     function class.create( base )
-        local cls = setmetatable( { __base = base }, {
+        local cls = {
+            __base = base
+        }
+
+        local parent = rawget( base, "__parent" )
+        if parent then
+            cls.__new = rawget( parent, "__new" )
+        end
+
+        setmetatable( cls, {
             __index = base,
             __metatable_id = 5,
             __call = class__call,
