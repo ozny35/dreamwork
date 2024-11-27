@@ -722,7 +722,7 @@ do
     ---@field __class gpm.std.QueueClass
     ---@field private front integer
     ---@field private back integer
-    local Queue = class.base("Queue")
+    local Queue = class.base( "Queue" )
 
     ---@protected
     function Queue:__init()
@@ -730,67 +730,87 @@ do
         self.back = 0
     end
 
-    function Queue:len()
+    --- Returns the length of the queue.
+    ---@return number
+    local function len( self )
         return self.front - self.back
     end
 
+    Queue.__len = len
+    Queue.GetLength = len
+
+    --- Appends a value to the end of the queue.
     ---@param value any
-    function Queue:append(value)
-        self.front = self.front + 1
-        self[self.front] = value
+    function Queue:Append( value )
+        local front = self.front + 1
+        self[ front ] = value
+        self.front = front
     end
 
-    function Queue:pop()
-        if self.back ~= self.front then
-            self.back = self.back + 1
+    function Queue:Pop()
+        local back, front = self.back, self.front
+        if back == front then return nil end
 
-            local value = self[self.back]
-            self[self.back] = nil -- unreference the value
+        back = back + 1
 
-            -- reset pointers if the queue is empty
-            if self.back == self.front then
-                self.front = 0
-                self.back = 0
-            end
+        local value = self[ back ]
+        self[ back ] = nil -- unreference the value
 
-            return value
+        -- reset pointers if the queue is empty
+        if back == front then
+            self.front = 0
+            self.back = 0
+        else
+            self.back = back
         end
+
+        return value
     end
 
-    function Queue:peek()
-        return self[self.back + 1]
+    --- Returns the value at the front of the queue.
+    --- @return any
+    function Queue:Peek()
+        return self[ self.back + 1 ]
     end
 
     ---@param value any
-    function Queue:prepend(value)
-        self[self.back] = value
-        self.back = self.back - 1
+    function Queue:Prepend( value )
+        local back = self.back
+        self[ back ] = value
+        self.back = back - 1
     end
 
-    function Queue:popBack()
-        if self.back ~= self.front then
-            local value = self[self.front]
-            self[self.front] = nil
+    --- Removes and returns the value at the back of the queue.
+    ---@return any
+    function Queue:PopBack()
+        local back, front = self.back, self.front
+        if back == front then return nil end
 
-            self.front = self.front - 1
+        local value = self[ front ]
+        self[ front ] = nil -- unreference the value
 
-            -- reset pointers if the queue is empty
-            if self.back == self.front then
-                self.front = 0
-                self.back = 0
-            end
+        front = front - 1
 
-            return value
+        -- reset pointers if the queue is empty
+        if back == front then
+            self.front = 0
+            self.back = 0
+        else
+            self.front = front
         end
+
+        return value
     end
 
-    function Queue:peekBack()
-        return self[self.front]
+    --- Returns the value at the back of the queue.
+    ---@return unknown
+    function Queue:PeekBack()
+        return self[ self.front ]
     end
 
-    function Queue:clear()
-        for i = self.back + 1, self.front do
-            self[i] = nil
+    function Queue:Clear()
+        for i = self.back + 1, self.front, 1 do
+            self[ i ] = nil
         end
 
         self.front = 0
@@ -799,18 +819,20 @@ do
 
     --- Checks if the queue is empty.
     ---@return boolean isEmpty Returns true if the queue is empty.
-    function Queue:empty()
+    function Queue:IsEmpty()
         return self.front == self.back
     end
 
-    function Queue:iterator()
-        return self.pop, self
+    --- Returns an iterator for the queue.
+    function Queue:Iterator()
+        return self.Pop, self
     end
 
     ---@class gpm.std.QueueClass : gpm.std.Queue
     ---@field __base gpm.std.Queue
     ---@overload fun(): Queue
-    std.Queue = class.create(Queue)
+    std.Queue = class.create( Queue )
+
 end
 
 -- futures library
