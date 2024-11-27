@@ -747,6 +747,8 @@ do
         self.front = front
     end
 
+    --- Removes and returns the value at the front of the queue.
+    ---@return any
     function Queue:Pop()
         local back, front = self.back, self.front
         if back == front then return nil end

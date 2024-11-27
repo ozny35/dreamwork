@@ -1,5 +1,8 @@
 --- Python-like futures, made by Retro
 
+local _G = _G
+local ErrorNoHaltWithStack = _G.ErrorNoHaltWithStack
+
 local std = gpm.std
 local is = std.is
 local error = std.error
@@ -16,15 +19,15 @@ local futures = std.futures or {}
 
 ---@enum gpm.std.futures.result
 futures.RESULT = futures.RESULT or {
-    YIELD = Symbol("futures.RESULT_YIELD"),
-    ERROR = Symbol("futures.RESULT_ERROR"),
-    END =  Symbol("futures.RESULT_END")
+    YIELD = Symbol( "futures.RESULT_YIELD" ),
+    ERROR = Symbol( "futures.RESULT_ERROR" ),
+    END =  Symbol( "futures.RESULT_END" )
 }
 
 ---@enum gpm.std.futures.action
 futures.ACTION = futures.ACTION or {
-    CANCEL = Symbol("futures.ACTION_CANCEL"),
-    RESUME = Symbol("futures.ACTION_RESUME"),
+    CANCEL = Symbol( "futures.ACTION_CANCEL" ),
+    RESUME = Symbol( "futures.ACTION_RESUME" ),
 }
 
 local RESULT_YIELD = futures.RESULT.YIELD
@@ -58,25 +61,23 @@ end
 
 ---@async
 ---@param ok boolean
-local function asyncThreadResult(ok, value, ...)
-    local co = futures.running()
-    local callback = futures.listeners[co]
-
-    if is.fn(callback) then
-        callback(ok, value, ...)
+local function asyncThreadResult( ok, value, ... )
+    local fn = futures.listeners[ futures.running() ]
+    if is.fn( fn ) then
+        fn( ok, value, ... )
     elseif not ok then
         -- TODO: use errors instead of this string
-        if is.string(value) and string.find(value, "Operation was cancelled") then
+        if is.string( value ) and string.find( value, "Operation was cancelled" ) then
             return
         end
 
-        error(value, -2)
+        ErrorNoHaltWithStack( value )
     end
 end
 
 ---@async
-local function asyncThread(fn, ...)
-    return asyncThreadResult(pcall(fn, ...))
+local function asyncThread( fn, ... )
+    return asyncThreadResult( pcall( fn, ... ) )
 end
 
 --- Executes a function in a new coroutine
@@ -84,56 +85,56 @@ end
 ---@param callback fun(ok: boolean, ...)?
 ---@param ... any Arguments to pass into the target function
 ---@return thread
-function futures.run(target, callback, ...)
-    local co = coroutine.create(asyncThread)
-    futures.listeners[co] = callback
-    local ok, err = coroutine.resume(co, target, ...)
-    if not ok then
-        error(err)
-    end
+function futures.run( target, callback, ... )
+    local co = coroutine.create( asyncThread )
+    futures.listeners[ co ] = callback
 
-    return co
+    local ok, err = coroutine.resume( co, target, ... )
+    if ok then
+        return co
+    else
+        error( err )
+    end
 end
 
 
 ---@async
-local function handlePending(value, ...)
+local function handlePending( value, ... )
     if value == ACTION_CANCEL then
-        return error("Operation was cancelled")
+        return error( "Operation was cancelled" )
+    else
+        return value, ...
     end
-
-    return value, ...
 end
 
 ---@async
 ---@return ...
 function futures.pending()
-    return handlePending(coroutine.yield())
+    return handlePending( coroutine.yield() )
 end
 
 ---@param co thread
-function futures.wakeup(co, ...)
-    coroutine.resume(co, ...)
+function futures.wakeup( co, ... )
+    coroutine.resume( co, ... )
 end
 
 
 ---@param co thread
-function futures.cancel(co)
-    local status = coroutine.status(co)
-    if status == "suspended" then
-       coroutine.resume(co, ACTION_CANCEL)
+function futures.cancel( co )
+    if coroutine.status( co ) == "suspended" then
+        coroutine.resume( co, ACTION_CANCEL )
     end
 end
 
 
 ---@async
 ---@param seconds number
-function futures.sleep(seconds)
+function futures.sleep( seconds )
     local co = futures.running()
 
-    timer_Simple(seconds, function()
-        futures.wakeup(co)
-    end)
+    timer_Simple( seconds, function()
+        futures.wakeup( co )
+    end )
 
     return futures.pending()
 end
@@ -145,109 +146,94 @@ end
 ---@param ... any
 ---@return boolean success
 ---@return any ...
-function futures.transfer(co, ...)
-    local status = coroutine.status(co)
+function futures.transfer( co, ... )
+    local status = coroutine.status( co )
     if status == "suspended" then
-        return coroutine.resume(co, ...)
-    end
-
-    if status == "normal" then
+        return coroutine.resume( co, ... )
+    elseif status == "normal" then
         return true, coroutine.yield(...)
-    end
-
-    if status == "running" then
+    elseif status == "running" then
         return false, "cannot transfer to a running coroutine"
+    else
+        return false, "thread is dead"
     end
-
-    return false, "thread is dead"
 end
 
 
 ---@async
-local function handleYield(ok, value, ...)
+local function handleYield( ok, value, ... )
     -- ignore errors, they must be handled by whoever calls us
     if not ok or value == RESULT_ERROR then
         return
     end
 
     if value == ACTION_CANCEL then
-        return error("Operation was cancelled")
-    end
-
-    if value == ACTION_RESUME then
+        return error( "Operation was cancelled" )
+    elseif value == ACTION_RESUME then
         return ...
+    elseif value ~= nil then
+        ErrorNoHaltWithStack( "invalid yield action: " .. tostring( value ) )
+    else
+        -- caller probably went sleeping
+        return handleYield( true, coroutine.yield() )
     end
-
-    if value ~= nil then
-        error("invalid yield action: " .. tostring(value), -2) -- ErrorNoHaltWithStack
-    end
-
-    -- caller probably went sleeping
-    return handleYield(true, coroutine.yield())
 end
 
 ---@async
-function futures.yield(...)
-    local listener = futures.coroutine_listeners[futures.running()]
-    if not listener then
+function futures.yield( ... )
+    local listener = futures.coroutine_listeners[ futures.running() ]
+    if listener then
+        return handleYield( futures.transfer( listener, RESULT_YIELD, ... ) )
+    else
         -- whaat? we don't have a listener?!
-        error("Operation was cancelled")
+        error( "Operation was cancelled" )
     end
-
-    return handleYield(futures.transfer(listener, RESULT_YIELD, ...))
 end
 
 
 ---@async
-local function asyncIteratableThread(fn, ...)
+local function asyncIteratableThread( fn, ... )
     coroutine.yield() -- wait until anext wakes us up
-    local ok, err = pcall(fn, ...)
+    local ok, err = pcall( fn, ... )
 
-    local listener = futures.coroutine_listeners[futures.running()]
+    local listener = futures.coroutine_listeners[ futures.running() ]
     if listener then
         if ok then
-            futures.transfer(listener, RESULT_END)
+            futures.transfer( listener, RESULT_END )
         else
-            futures.transfer(listener, RESULT_ERROR, err)
+            futures.transfer( listener, RESULT_ERROR, err )
         end
     elseif not ok then
-        error(err)
+        error( err )
     end
 end
-
 
 ---@async
 ---@param co thread
 ---@param ok boolean
-local function handleAnext(co, ok, value, ...)
+local function handleAnext( co, ok, value, ... )
     if not ok then
-        return error(ok)
+        return error( ok )
     end
 
     if value == RESULT_YIELD then
         return ...
-    end
-
-    if value == RESULT_END then
+    elseif value == RESULT_END then
         return -- return nothing so for loop with be stopped
-    end
-
-    if value == RESULT_ERROR then
-        return error(...)
-    end
-
-    if value ~= nil then
-        error("invalid anext result: " .. tostring(value), -2) -- ErrorNoHaltWithStack
+    elseif value == RESULT_ERROR then
+        return error( ... )
+    elseif value ~= nil then
+        ErrorNoHaltWithStack( "invalid anext result: " .. tostring( value ) )
     end
 
     -- iterator went sleeping, wait until it wakes us up
-    return handleAnext(co, true, coroutine.yield())
+    return handleAnext( co, true, coroutine.yield() )
 end
 
 ---@async
 ---@param iterator thread
-function futures.anext(iterator, ...)
-    return handleAnext(iterator, futures.transfer(iterator, ACTION_RESUME, ...))
+function futures.anext( iterator, ... )
+    return handleAnext( iterator, futures.transfer( iterator, ACTION_RESUME, ... ) )
 end
 
 ---@async
@@ -259,7 +245,6 @@ function futures.apairs( iterator, ... )
     local co = coroutine.create( asyncIteratableThread)
     futures.coroutine_listeners[ co ] = futures.running()
     coroutine.resume( co, iterator, ... )
-
     return futures.anext, co
 end
 
@@ -295,9 +280,9 @@ do
     local STATE_FINISHED = Future.STATE_FINISHED
     local STATE_CANCELLED = Future.STATE_CANCELLED
 
-    Future.STATE_PENDING = STATE_PENDING or Symbol("Future.STATE_PENDING")
-    Future.STATE_FINISHED = STATE_FINISHED or Symbol("Future.STATE_FINISHED")
-    Future.STATE_CANCELLED = STATE_CANCELLED or Symbol("Future.STATE_CANCELLED")
+    Future.STATE_PENDING = STATE_PENDING or Symbol( "Future.STATE_PENDING" )
+    Future.STATE_FINISHED = STATE_FINISHED or Symbol( "Future.STATE_FINISHED" )
+    Future.STATE_CANCELLED = STATE_CANCELLED or Symbol( "Future.STATE_CANCELLED" )
 
     ---@protected
     function Future:__init()
@@ -310,12 +295,10 @@ do
         if self:done() then
             if self:cancelled() then
                 return self.__name .. "( cancelled )"
-            end
-
-            if self._error then
-                return self.__name .. "( finished error = " .. tostring(self._error) .. " )"
+            elseif self._error then
+                return self.__name .. "( finished error = " .. tostring( self._error ) .. " )"
             else
-                return self.__name .. "( finished value = " .. tostring(self._result) .. " )"
+                return self.__name .. "( finished value = " .. tostring( self._result ) .. " )"
             end
         else
             return self.__name .. "( pending )"
@@ -337,13 +320,15 @@ do
     ---@private
     function Future:runCallbacks()
         local callbacks = self._callbacks
+
+        -- TODO: is this can be nil or false? or why this is here
         if not callbacks then
             return
         end
 
         self._callbacks = {}
-        for i = 1, #callbacks do
-            xpcall(callbacks[i], displayError, self)
+        for i = 1, #callbacks, 1 do
+            xpcall( callbacks[ i ], displayError, self )
         end
     end
 
@@ -423,9 +408,9 @@ do
 
         if self._error then
             error( self._error )
+        else
+            return self._result
         end
-
-        return self._result
     end
 
     ---@async
@@ -433,21 +418,21 @@ do
     function Future:await()
         if not self:done() then
             local co = futures.running()
-            self:addCallback(function() futures.wakeup(co) end)
+            self:addCallback( function() futures.wakeup( co ) end )
             futures.pending()
         end
 
-        if not self:done() then
-            error("future hasn't changed it's state wtf???")
+        if self:done() then
+            return self:result()
+        else
+            error( "future hasn't changed it's state wtf???" )
         end
-
-        return self:result()
     end
 
     ---@class gpm.std.futures.FutureClass : gpm.std.futures.Future
     ---@field __base Future
     ---@overload fun(): gpm.std.futures.Future
-    futures.Future = class.create(Future)
+    futures.Future = class.create( Future )
 
 end
 
@@ -458,25 +443,26 @@ do
     ---@field __parent gpm.std.futures.Future
     ---@field private setResult fun(self, result)
     ---@field private setError fun(self, error)
-    local Task = futures.Task and futures.Task.__base or class.base("Task", futures.Future)
+    local Task = futures.Task and futures.Task.__base or class.base( "Task", futures.Future )
 
     ---@protected
     ---@param fn async fun(...): any
-    function Task:__init(fn, ...)
-        self.__parent.__init(self)
-        futures.run(fn, function(ok, value)
-            if not ok then
-                self:setError(value)
+    function Task:__init( fn, ... )
+        self.__parent.__init( self )
+
+        futures.run( fn, function( ok, value )
+            if ok then
+                self:setResult( value )
             else
-                self:setResult(value)
+                self:setError( value )
             end
-        end, ...)
+        end, ... )
     end
 
     ---@class gpm.std.futures.TaskClass : gpm.std.futures.Task
     ---@field __base gpm.std.futures.Task
     ---@overload fun(fn: async fun(...): any, ...: any): gpm.std.futures.Task
-    futures.Task = class.create(Task)
+    futures.Task = class.create( Task )
 
 end
 
@@ -490,16 +476,16 @@ do
     ---@field private _getters gpm.std.Queue
     ---@field private _setters gpm.std.Queue
     ---@field private _closed boolean
-    local Channel = futures.Channel and futures.Channel.__base or class.base("Channel")
+    local Channel = futures.Channel and futures.Channel.__base or class.base( "Channel" )
 
     ---@protected
-    ---@param maxsize number?
-    function Channel:__init(maxsize)
-        if maxsize and maxsize < 0 then
-            error("maxsize must be greater or equal to 0")
+    ---@param maxSize number?
+    function Channel:__init( maxSize )
+        if maxSize and maxSize < 0 then
+            error( "maxSize must be greater or equal to 0" )
         end
 
-        self._maxsize = maxsize or 0
+        self._maxsize = maxSize or 0
         self._queue = Queue()
         self._getters = Queue()
         self._setters = Queue()
@@ -508,12 +494,12 @@ do
 
     ---@return number length
     function Channel:len()
-        return self._queue:len()
+        return self._queue:GetLength()
     end
 
     ---@return boolean isEmpty
     function Channel:empty()
-        return self._queue:empty()
+        return self._queue:IsEmpty()
     end
 
     ---@return boolean isFull
@@ -529,12 +515,12 @@ do
         self._closed = true
 
         -- wake up all getters and setters
-        while not self._getters:empty() do
-            futures.wakeup(self._getters:pop())
+        while not self._getters:IsEmpty() do
+            futures.wakeup( self._getters:Pop() )
         end
 
-        while not self._setters:empty() do
-            futures.wakeup(self._setters:pop())
+        while not self._setters:IsEmpty() do
+            futures.wakeup( self._setters:Pop() )
         end
     end
 
@@ -545,15 +531,16 @@ do
 
     ---@param value any
     ---@return boolean success
-    function Channel:putNow(value)
+    function Channel:putNow( value )
         if self:full() or self:closed() or value == nil then
             return false
         end
 
-        self._queue:append(value)
-        local getter = self._getters:pop()
+        self._queue:Append( value )
+
+        local getter = self._getters:Pop()
         if getter then
-            futures.wakeup(getter)
+            futures.wakeup( getter )
         end
 
         return true
@@ -563,9 +550,9 @@ do
     ---@param value any
     ---@param wait boolean?
     ---@return boolean success
-    function Channel:put(value, wait)
-        while wait ~= false and (self:full() and not self:closed()) do
-            self._setters:append(futures.running())
+    function Channel:put( value, wait )
+        while wait ~= false and ( self:full() and not self:closed() ) do
+            self._setters:Append( futures.running() )
             futures.pending()
         end
 
@@ -577,10 +564,11 @@ do
             return nil
         end
 
-        local value = self._queue:pop()
-        local setter = self._setters:pop()
+        local value = self._queue:Pop()
+
+        local setter = self._setters:Pop()
         if setter then
-            futures.wakeup(setter)
+            futures.wakeup( setter )
         end
 
         return value
@@ -588,9 +576,9 @@ do
 
     ---@async
     ---@param wait boolean?
-    function Channel:get(wait)
+    function Channel:get( wait )
         while wait ~= false and self:empty() and not self:closed() do
-            self._getters:append(futures.running())
+            self._getters:Append( futures.running() )
             futures.pending()
         end
 
@@ -600,8 +588,10 @@ do
     ---@class gpm.std.futures.ChannelClass : gpm.std.futures.Channel
     ---@field __base gpm.std.futures.Channel
     ---@overload fun(maxsize: number?): gpm.std.futures.Channel
-    futures.Channel = class.create(Channel)
+    futures.Channel = class.create( Channel )
 
 end
+
+--- TODO: add description for all classes in this file
 
 return futures
