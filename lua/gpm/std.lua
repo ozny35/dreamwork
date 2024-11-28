@@ -554,15 +554,15 @@ do
     ---@field __inherited fun(parent: gpm.std.Class, child: gpm.std.Class) | nil called when a class is inherited
     ---@alias Class gpm.std.Class
 
-    ---@param obj Object
-    ---@return string
+    ---@param obj Object: The object to convert to a string.
+    ---@return string: The string representation of the object.
     local function base__tostring( obj )
         return string_format( "%s: %p", rawget( getmetatable( obj ),  "__name" ), obj )
     end
 
-    ---@param name string
-    ---@param parent Class | unknown | nil
-    ---@return Object
+    ---@param name string: name of the class.
+    ---@param parent Class | unknown | nil: parent of the class.
+    ---@return Object: The base of the class.
     function class.base( name, parent )
         local base = {
             __name = name,
@@ -594,14 +594,26 @@ do
         return base
     end
 
+    --- Calls the base initialization function, <b>if it exists</b>, and returns the given object.
+    ---@param obj table | userdata: The object to initialize.
+    ---@param base Object: The base object, aka metatable.
+    ---@param ... any: Arguments to pass to the constructor.
+    ---@return Object | userdata: The initialized object.
     local function init( obj, base, ... )
+        local init_fn = rawget( base, "__init" )
+        if is_function( init_fn ) then
+            init_fn( obj, ... )
+        end
 
+        return obj
     end
+
+    class.init = init
 
     --- Creates a new object from the given base.
     ---@param base Object: The base object, aka metatable.
     ---@vararg any: Arguments to pass to the constructor.
-    ---@return Object: The new object.
+    ---@return Object | userdata: The new object.
     local function new( base, ... )
         if base == nil then
             error( "base is missing", 2 )
@@ -620,33 +632,25 @@ do
             end
         end
 
-        local obj = {}
-        setmetatable( obj, base )
-
-        local init_fn = rawget( base, "__init" )
-        if is_function( init_fn ) then
-            init_fn( obj, ... )
-        end
-
-        return obj
+        return init( setmetatable( {}, base ), base, ... )
     end
 
     class.new = new
 
-    ---@param self Class
-    ---@return Object
+    ---@param self Class: The class.
+    ---@return Object | userdata: The new object.
     local function class__call( self, ... )
         return new( rawget( self, "__base" ), ... )
     end
 
-    ---@param cls Class
-    ---@return string
+    ---@param cls Class: The class.
+    ---@return string: The string representation of the class.
     local function class__tostring( cls )
         return string_format( "%sClass: %p", rawget( rawget( cls, "__base" ), "__name" ), cls )
     end
 
-    ---@param base Object
-    ---@return Class | unknown
+    ---@param base Object: The base object, aka metatable.
+    ---@return Class | unknown: The class.
     function class.create( base )
         local cls = {
             __base = base
@@ -669,7 +673,7 @@ do
         return cls
     end
 
-    ---@param cls Class | unknown
+    ---@param cls Class | unknown: The class.
     function class.inherited( cls )
         local base = rawget( cls, "__base" )
         if base == nil then return end
@@ -693,8 +697,8 @@ do
         return getmetatable( self ).__name
     end
 
-    ---@param name string
-    ---@return Symbol
+    ---@param name string: The name of the symbol.
+    ---@return Symbol: The new symbol.
     function std.Symbol( name )
         ---@class gpm.std.Symbol
         local obj = debug.newproxy( true )
