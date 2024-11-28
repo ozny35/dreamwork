@@ -1,8 +1,4 @@
 --- Python-like futures, made by Retro
-
-local _G = _G
-local ErrorNoHaltWithStack = _G.ErrorNoHaltWithStack
-
 local std = gpm.std
 local is = std.is
 local error = std.error
@@ -71,7 +67,7 @@ local function asyncThreadResult( ok, value, ... )
             return
         end
 
-        ErrorNoHaltWithStack( value )
+        error( value, -2 )
     end
 end
 
@@ -172,7 +168,7 @@ local function handleYield( ok, value, ... )
     elseif value == ACTION_RESUME then
         return ...
     elseif value ~= nil then
-        ErrorNoHaltWithStack( "invalid yield action: " .. tostring( value ) )
+        error( "invalid yield action: " .. tostring( value ), -2 )
     else
         -- caller probably went sleeping
         return handleYield( true, coroutine.yield() )
@@ -223,7 +219,7 @@ local function handleAnext( co, ok, value, ... )
     elseif value == RESULT_ERROR then
         return error( ... )
     elseif value ~= nil then
-        ErrorNoHaltWithStack( "invalid anext result: " .. tostring( value ) )
+        error( "invalid anext result: " .. tostring( value ), -2 )
     end
 
     -- iterator went sleeping, wait until it wakes us up
