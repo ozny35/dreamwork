@@ -32,6 +32,7 @@ end
 -- TODO: put https://wiki.facepunch.com/gmod/Global.Localize somewher
 -- TODO: put https://wiki.facepunch.com/gmod/Global.Path somewhere
 -- TODO: put https://wiki.facepunch.com/gmod/util.ScreenShake somewhere
+-- TODO: put https://wiki.facepunch.com/gmod/Global.AddonMaterial somewhere
 
 -- TODO: Write "VideoRecorder" class ( https://wiki.facepunch.com/gmod/video.Record )
 

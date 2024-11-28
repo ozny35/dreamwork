@@ -18,8 +18,6 @@ end
 local command_run
 do
 
-    local concommand = _G.concommand
-
     if std.MENU then
         local RunGameUICommand = _G.RunGameUICommand
         local table_concat = std.table.concat
@@ -39,57 +37,26 @@ do
         command_run = _G.RunConsoleCommand
     end
 
+    local AddConsoleCommand = _G.AddConsoleCommand
+
+    -- TODO: make own concommands with AddConsoleCommand
+
     ---@class gpm.std.console.command
     local command = {
-        add = concommand.Add,
         run = command_run,
-        remove = concommand.Remove,
-        getTable = concommand.GetTable,
         isBlocked = _G.IsConCommandBlocked
     }
 
+    function command.create()
+
+        -- AddConsoleCommand
+    end
+
+    function command.remove()
+
+    end
+
     console.command = command
-
-    -- do
-
-    --     local vname, vvalue = debug.getupvalue( _G.concommand.GetTable, 1 )
-    --     print( vname, vvalue )
-
-    --     vvalue[ "FUCK_GARRY"] = function() end
-
-    --     local gpm = _G.gpm
-    --     local hook_Run = _G.hook.Run
-
-    --     local readers = gpm.std.Queue()
-
-    --     _G.concommand.Run = gpm.detour.attach( _G.concommand.Run, function( fn, ply, cmd, args, argumentString )
-    --         print( fn ,ply, cmd )
-    --         if hook_Run( "ConsoleCommand", cmd, ply, args, argumentString ) == false then return false end
-
-    --         local reader = readers:dequeue()
-    --         if reader ~= nil then
-    --             return reader( ply, cmd, args, argumentString )
-    --         end
-
-    --         return fn( ply, cmd, args, argumentString )
-    --     end )
-
-
-    --     function console.readLine( str, fn )
-    --         -- if str ~= nil then
-    --         --     console.write( str )
-    --         -- end
-
-    --         readers:enqueue( fn )
-    --     end
-
-    --     -- TODO: Add read and readLine
-
-    --     console.readLine( "name: ", function( ply, str )
-    --         print( ply, str )
-    --     end )
-
-    -- end
 
 end
 
@@ -120,38 +87,37 @@ console.variable = variable
 
 do
 
-    local cvars = _G.cvars
-    local cvars_GetConVarCallbacks, cvars_AddChangeCallback, cvars_RemoveChangeCallback = cvars.GetConVarCallbacks, cvars.AddChangeCallback, cvars.RemoveChangeCallback
-    local getfenv = std.getfenv
+    -- local debug_getfpackage = std.debug.getfpackage
+
+    -- TODO: make own callbacks for cvars
+
+    _G.cvars.OnConVarChanged = gpm.detour.attach( _G.cvars.OnConVarChanged, function( fn, name, old, new )
+
+        return fn( name, old, new )
+    end )
 
     -- TODO: Rewrite this crap
-    variable.getCallbacks = cvars_GetConVarCallbacks
+    -- variable.getCallbacks = cvars_GetConVarCallbacks
 
-    variable.addCallback = function( name, callback, identifier )
-        local fenv = getfenv( 2 )
-        if fenv then
-            local package = fenv.__package
-            if package then
-                local prefix = package.prefix
-                identifier = prefix .. ( identifier or "" )
-            end
-        end
+    -- variable.addCallback = function( name, callback, identifier )
+    --     local package = debug_getfpackage( 2 )
+    --     if package == nil then
+    --         -- cvars_AddChangeCallback( name, callback, identifier )
+    --     else
+    --         local prefix = package.prefix
+    --         identifier = prefix .. ( identifier or "" )
+    --     end
+    -- end
 
-        cvars_AddChangeCallback( name, callback, identifier )
-    end
-
-    variable.removeCallback = function( name, identifier )
-        local fenv = getfenv( 2 )
-        if fenv then
-            local package = fenv.__package
-            if package then
-                local prefix = package.prefix
-                identifier = prefix .. ( identifier or "" )
-            end
-        end
-
-        cvars_RemoveChangeCallback( name, identifier )
-    end
+    -- variable.removeCallback = function( name, identifier )
+    --     local package = debug_getfpackage( 2 )
+    --     if package == nil then
+    --         -- cvars_RemoveChangeCallback( name, identifier )
+    --     else
+    --         local prefix = package.prefix
+    --         identifier = prefix .. ( identifier or "" )
+    --     end
+    -- end
 
 end
 

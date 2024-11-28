@@ -23,17 +23,16 @@ end
 level.exists = exists
 
 if std.CLIENT_SERVER then
-    level.cleanup = glua_game.CleanUpMap
     level.getEntity = glua_game.GetWorld
+
+    level.cleanup = glua_game.CleanUpMap
+    level.cleanupRagdolls = glua_game.RemoveRagdolls -- idk what to do with this
 
     level.traceLine = glua_util.TraceLine
     level.traceHull = glua_util.TraceHull
     level.traceEntity = glua_util.TraceEntityHull
 
-    level.removeClientRagdolls = glua_game.RemoveRagdolls
-
-    level.startSpot = glua_game.StartSpot
-
+    level.getStartSpot = glua_game.StartSpot
     level.getContents = glua_util.PointContents
 
     --[[

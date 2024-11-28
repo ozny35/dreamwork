@@ -115,6 +115,10 @@ end
 
 -- TODO: Add https://wiki.facepunch.com/gmod/util.SpriteTrail
 
+-- TODO: Add https://wiki.facepunch.com/gmod/Global.ClientsideModel
+-- TODO: Add https://wiki.facepunch.com/gmod/Global.ClientsideRagdoll
+-- TODO: Add https://wiki.facepunch.com/gmod/Global.ClientsideScene
+
 local entity_create = entity.create
 local classes = {}
 
