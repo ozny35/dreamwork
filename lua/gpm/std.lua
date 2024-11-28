@@ -594,6 +594,10 @@ do
         return base
     end
 
+    local function init( obj, base, ... )
+
+    end
+
     --- Creates a new object from the given base.
     ---@param base Object: The base object, aka metatable.
     ---@vararg any: Arguments to pass to the constructor.
