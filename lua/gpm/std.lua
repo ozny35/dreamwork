@@ -1222,8 +1222,16 @@ std.hook = hook
 -- timer library
 std.timer = include( "std/timer.lua" )
 
+-- http client class
+std.http = include( "std/http.lua" )
+
+-- file library
+local file = include( "std/file.lua" )
+std.file = file
+
 if CLIENT_MENU then
     std.client = include( "std/client.lua" )
+    std.menu = include( "std/menu.lua" )
 end
 
 if SERVER_MENU then
@@ -1625,13 +1633,6 @@ do
     std.load = load
 
 end
-
--- http client class
-std.HttpClient = include( "std/http.lua" )
-
--- file library
--- local file = include( "std/file.lua" )
--- std.file = file
 
 do
 
