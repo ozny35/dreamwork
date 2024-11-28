@@ -1,15 +1,19 @@
 local _G = _G
 local std = _G.gpm.std
+local glua_vgui = _G.vgui
 
 --[[
 
 https://wiki.facepunch.com/gmod/Global.DisableClipping
 
-
+https://wiki.facepunch.com/gmod/vgui
 
 ]]
 
-local panel = {}
+local panel = {
+    getMain = glua_vgui.GetWorldPanel,
+    getHovered = vgui.GetHoveredPanel
+}
 
 if std.CLIENT then
     panel.getHUD = _G.GetHUDPanel

@@ -3,6 +3,7 @@ local std = _G.gpm.std
 local select = std.select
 local is_string = std.is.string
 local string_format = std.string.format
+local RunConsoleCommand = _G.RunConsoleCommand
 
 ---@type ConVar
 local CONVAR = _G.FindMetaTable( "ConVar" )
@@ -15,27 +16,15 @@ if std.MENU then
     console.show = _G.gui.ShowConsole
 end
 
-local command_run
+function console.hide()
+    RunConsoleCommand( "hideconsole" )
+end
+
+function console.toggle()
+    RunConsoleCommand( "toggleconsole" )
+end
+
 do
-
-    if std.MENU then
-        local RunGameUICommand = _G.RunGameUICommand
-        local table_concat = std.table.concat
-
-        --- Executes the given console command with the parameters.
-        ---@param cmd string: The name of the console command.
-        ---@vararg string: The parameters to use in the command.
-        function command_run( cmd, ... )
-            local arg_count = select( "#", ... )
-            if arg_count == 0 then
-                RunGameUICommand( "engine '" .. cmd .. "'" )
-            else
-                RunGameUICommand( "engine '" .. table_concat( { cmd, ... }, " ", 1, arg_count + 1 ) .. "'" )
-            end
-        end
-    else
-        command_run = _G.RunConsoleCommand
-    end
 
     local AddConsoleCommand = _G.AddConsoleCommand
 
@@ -43,8 +32,8 @@ do
 
     ---@class gpm.std.console.command
     local command = {
-        run = command_run,
-        isBlocked = _G.IsConCommandBlocked
+        run = RunConsoleCommand,
+        isBlacklisted = _G.IsConCommandBlocked
     }
 
     function command.create()
@@ -156,10 +145,10 @@ do
 
         if is_string( name ) then
             ---@cast name string
-            command_run( name, value )
+            RunConsoleCommand( name, value )
         else
             ---@cast name ConVar
-            command_run( getName( name ), value )
+            RunConsoleCommand( getName( name ), value )
         end
     end
 
@@ -264,10 +253,10 @@ end
 function variable.setString( convar, value )
     if is_string( convar ) then
         ---@cast convar string
-        command_run( convar, value )
+        RunConsoleCommand( convar, value )
     else
         ---@cast convar ConVar
-        command_run( getName( convar ), value )
+        RunConsoleCommand( getName( convar ), value )
     end
 end
 
@@ -279,10 +268,10 @@ function variable.setFloat( convar, value )
 
     if is_string( convar ) then
         ---@cast convar string
-        command_run( convar, str )
+        RunConsoleCommand( convar, str )
     else
         ---@cast convar ConVar
-        command_run( getName( convar ), str )
+        RunConsoleCommand( getName( convar ), str )
     end
 end
 
@@ -294,10 +283,10 @@ function variable.setBool( convar, value )
 
     if is_string( convar ) then
         ---@cast convar string
-        command_run( convar, str )
+        RunConsoleCommand( convar, str )
     else
         ---@cast convar ConVar
-        command_run( getName( convar ), str )
+        RunConsoleCommand( getName( convar ), str )
     end
 end
 
@@ -308,10 +297,10 @@ function variable.setInt( convar, value )
     local str = string_format( "%d", value )
     if is_string( convar ) then
         ---@cast convar string
-        command_run( convar, str )
+        RunConsoleCommand( convar, str )
     else
         ---@cast convar ConVar
-        command_run( getName( convar ), value )
+        RunConsoleCommand( getName( convar ), value )
     end
 end
 
@@ -320,10 +309,10 @@ end
 function variable.revert( convar )
     if is_string( convar ) then
         ---@cast convar string
-        command_run( convar, variable_get( convar ) )
+        RunConsoleCommand( convar, variable_get( convar ) )
     else
         ---@cast convar ConVar
-        command_run( getName( convar ), getDefault( convar ) )
+        RunConsoleCommand( getName( convar ), getDefault( convar ) )
     end
 end
 

@@ -125,6 +125,10 @@ do
 
 end
 
+function file.find( filePath )
+    return file_Find( normalizeGamePath( filePath ) )
+end
+
 do
 
     local engine_GetAddons = _G.engine.GetAddons
