@@ -101,16 +101,47 @@ do
 
 end
 
+local std = _G.gpm.std
+
 do
 
     local string_format = glua_string.format
-    local tonumber = _G.tonumber
+    local tonumber = std.tonumber
 
     --- Returns the memory address of the value.
     ---@param value any
     ---@return number?
     function debug.getpointer( value )
         return tonumber( string_format( "%p", value ), 16 )
+    end
+
+end
+
+do
+
+    local getfenv = std.getfenv
+
+    --- Returns the function package or `nil` if not found.
+    ---@param location function | number: The function or stack level.
+    ---@return Package?
+    function debug.getfpackage( location )
+        -- TODO: Check this after creating the package class
+        local fenv = getfenv( location )
+        return fenv == nil and nil or fenv.__package
+    end
+
+end
+
+do
+
+    local setfenv = std.setfenv
+
+    --- Sets the function package.
+    ---@param location function | number: The function or stack level.
+    ---@param package Package
+    function debug.setfpackage( location, package )
+        -- TODO: Check this after creating the package class
+        setfenv( location, package.env )
     end
 
 end
