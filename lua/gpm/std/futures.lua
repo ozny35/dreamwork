@@ -619,6 +619,24 @@ end
 
 do
 
+    ---@diagnostic disable-next-line: duplicate-doc-alias
+    ---@alias Task gpm.std.futures.Task
+    --- Task is a Future wrapper around futures.run(...) to retrieve result of async function
+    --- when task is created, it will immediately run given function
+    --- 
+    --- ## Example
+    --- ```lua
+    --- local function request( url )
+    ---     -- asynchronous work....
+    ---     return body
+    --- end
+    --- 
+    --- local task = futures.Task( request, "https://example.com" )
+    --- task:addCallback( function( task )
+    ---     local body = task:result()
+    ---     print( body ) -- <!DOCTYPE html>...
+    --- end )
+    --- ```
     ---@class gpm.std.futures.Task : gpm.std.futures.Future
     ---@field __class gpm.std.futures.TaskClass
     ---@field __parent gpm.std.futures.Future
@@ -636,6 +654,7 @@ do
                 self:setResult( value )
             else
                 self:setError( value )
+                -- TODO: check if error is cancel
             end
         end, ... )
     end
