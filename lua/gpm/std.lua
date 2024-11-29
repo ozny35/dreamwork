@@ -1230,6 +1230,63 @@ std.hook = hook
 -- timer library
 std.timer = include( "std/timer.lua" )
 
+-- loadbinary
+local loadbinary
+do
+
+    local file_Exists = _G.file.Exists
+    local require = _G.require
+
+    local isEdge = glua_jit.version_num ~= 20004
+    local is32 = glua_jit.arch == "x86"
+
+    local head = "lua/bin/gm" .. ( ( CLIENT and not MENU ) and "cl" or "sv" ) .. "_"
+    local tail = "_" .. ( { "osx64", "osx", "linux64", "linux", "win64", "win32" } )[ ( glua_system.IsWindows() and 4 or 0 ) + ( glua_system.IsLinux() and 2 or 0 ) + ( is32 and 1 or 0 ) + 1 ] .. ".dll"
+
+    local function isBinaryModuleInstalled( name )
+        if name == "" then return false, "" end
+
+        local filePath = head .. name .. tail
+        if file_Exists( filePath, "MOD" ) then
+            return true, filePath
+        end
+
+        if isEdge and is32 and tail == "_linux.dll" then
+            filePath = head .. name .. "_linux32.dll"
+            if file_Exists( filePath, "MOD" ) then
+                return true, filePath
+            end
+        end
+
+        return false, filePath
+    end
+
+    game.isBinaryModuleInstalled = isBinaryModuleInstalled
+
+    local sv_allowcslua = console.variable.get( "sv_allowcslua" )
+    local console_variable_getBool = console.variable.getBool
+
+    ---Loads a binary module
+    ---@param name string The binary module name, for example: "chttp"
+    ---@return boolean success: true if the binary module is installed
+    ---@return table? module: the binary module table
+    function loadbinary( name )
+        if isBinaryModuleInstalled( name ) then
+            if sv_allowcslua and console_variable_getBool( sv_allowcslua ) then
+                console.variable.setBool( sv_allowcslua, false )
+            end
+
+            require( name )
+            return true, _G[ name ]
+        end
+
+        return false, nil
+    end
+
+    std.loadbinary = loadbinary
+
+end
+
 -- http client class
 std.http = include( "std/http.lua" )
 
@@ -1503,63 +1560,6 @@ do
         end
 
     end
-
-end
-
--- loadbinary
-local loadbinary
-do
-
-    local file_Exists = _G.file.Exists
-    local require = _G.require
-
-    local isEdge = glua_jit.version_num ~= 20004
-    local is32 = glua_jit.arch == "x86"
-
-    local head = "lua/bin/gm" .. ( ( CLIENT and not MENU ) and "cl" or "sv" ) .. "_"
-    local tail = "_" .. ( { "osx64", "osx", "linux64", "linux", "win64", "win32" } )[ ( glua_system.IsWindows() and 4 or 0 ) + ( glua_system.IsLinux() and 2 or 0 ) + ( is32 and 1 or 0 ) + 1 ] .. ".dll"
-
-    local function isBinaryModuleInstalled( name )
-        if name == "" then return false, "" end
-
-        local filePath = head .. name .. tail
-        if file_Exists( filePath, "MOD" ) then
-            return true, filePath
-        end
-
-        if isEdge and is32 and tail == "_linux.dll" then
-            filePath = head .. name .. "_linux32.dll"
-            if file_Exists( filePath, "MOD" ) then
-                return true, filePath
-            end
-        end
-
-        return false, filePath
-    end
-
-    game.isBinaryModuleInstalled = isBinaryModuleInstalled
-
-    local sv_allowcslua = console.variable.get( "sv_allowcslua" )
-    local console_variable_getBool = console.variable.getBool
-
-    ---Loads a binary module
-    ---@param name string The binary module name, for example: "chttp"
-    ---@return boolean success: true if the binary module is installed
-    ---@return table? module: the binary module table
-    function loadbinary( name )
-        if isBinaryModuleInstalled( name ) then
-            if sv_allowcslua and console_variable_getBool( sv_allowcslua ) then
-                console.variable.setBool( sv_allowcslua, false )
-            end
-
-            require( name )
-            return true, _G[ name ]
-        end
-
-        return false, nil
-    end
-
-    std.loadbinary = loadbinary
 
 end
 
