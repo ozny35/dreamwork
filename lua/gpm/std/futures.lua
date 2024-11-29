@@ -270,6 +270,20 @@ function futures.collect( iterator, ... )
     return results, length
 end
 
+--- Collects all values from async iterator into a table
+---@async
+---@generic K, V
+---@param iterator async fun(...): gpm.std.futures.AsyncIterator<K, V>
+---@return table<K, V> result
+function futures.collectTable( iterator, ... )
+    local result = {}
+    for k, v in futures.apairs( iterator, ... ) do
+        result[ k ] = v
+    end
+
+    return result
+end
+
 do
 
     ---@alias Future gpm.std.futures.Future
