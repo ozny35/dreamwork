@@ -6,7 +6,8 @@ local glua_gui = _G.gui
 local menu = {
     isVisible = glua_gui.IsGameUIVisible,
     open = glua_gui.ActivateGameUI,
-    close = glua_gui.HideGameUI,
+    ---@diagnostic disable-next-line: deprecated
+    close = glua_gui.HideGameUI or std.debug.fempty,
     openURL = glua_gui.OpenURL
 }
 
