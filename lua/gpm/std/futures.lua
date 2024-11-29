@@ -400,6 +400,33 @@ end
 do
 
     ---@alias Future gpm.std.futures.Future
+
+    --- Futures are objects that hold the result that can be assigned asynchronously
+    --- they can be awaited to get the result
+    --- or add callback with :addCallback(...) method
+    --- 
+    --- ```lua
+    --- local fut = futures.Future()
+    --- 
+    --- fut:addCallback( function( fut )
+    ---     print( fut:result() ) -- "hello world"
+    --- end )
+    --- 
+    --- fut:setResult( "hello world" )
+    --- 
+    --- -- or you can await it
+    --- 
+    --- ---@async
+    --- local function main()
+    ---     print( fut:await() ) -- "hello world"
+    --- end
+    --- 
+    --- futures.run( main )
+    --- 
+    --- -- also you can set error or cancel it
+    --- fut:setError( "something went wrong" )
+    --- fut:cancel()
+    --- ```
     ---@class gpm.std.futures.Future : gpm.std.Object
     ---@field __class gpm.std.futures.FutureClass
     ---@field private _state gpm.std.Symbol
@@ -437,13 +464,13 @@ do
         end
     end
 
-    --- Checks if Future is done
+    --- Returns true if Future is finished (or cancelled)
     ---@return boolean
     function Future:done()
         return self._state ~= STATE_PENDING
     end
 
-    --- Checks if Future was cancelled
+    --- Returns true if Future was cancelled
     ---@return boolean
     function Future:cancelled()
         return self._state == STATE_CANCELLED
@@ -464,6 +491,9 @@ do
         end
     end
 
+    --- Adds callback that will be called when future is done
+    --- if future is already done, callback will be called immediately
+    ---@see gpm.std.futures.Future.removeCallback for removing callback
     ---@param fn fun(fut: gpm.std.futures.Future)
     function Future:addCallback( fn )
         if self:done() then
@@ -473,6 +503,8 @@ do
         end
     end
 
+    --- Removes callback that was previously added with :addCallback
+    ---@see gpm.std.futures.Future.addCallback for adding callback
     ---@param fn function
     function Future:removeCallback( fn )
         local callbacks = {}
@@ -486,6 +518,10 @@ do
         self._callbacks = callbacks
     end
 
+    --- Sets result of the Future, marks it as finished, and runs all callbacks
+    --- if future is already finished, error will be thrown
+    ---@see gpm.std.futures.Future.result to retrieve result
+    ---@see gpm.std.futures.Future.await to asynchronously retrieve result
     ---@param result any
     function Future:setResult( result )
         if self:done() then
@@ -497,6 +533,8 @@ do
         self:runCallbacks()
     end
 
+    --- Sets error of the Future, marks it as finished, and runs all callbacks
+    --- if future is already finished, error will be thrown
     ---@param err any
     function Future:setError( err )
         if self:done() then
@@ -508,6 +546,8 @@ do
         self:runCallbacks()
     end
 
+    --- Tries to cancel future, if it's already done, returns false
+    --- otherwise marks it as cancelled, runs all callbacks and returns true
     ---@return boolean cancelled
     function Future:cancel()
         if self:done() then
@@ -519,6 +559,10 @@ do
         return true
     end
 
+    --- Returns error if future is finished and has error
+    --- otherwise returns nil
+    --- if future is not finished or cancelled, returns error
+    ---@see gpm.std.futures.Future.setError
     ---@return unknown?
     function Future:error()
         if self:cancelled() then
@@ -530,12 +574,15 @@ do
         return self._error
     end
 
+    --- Returns result if future is finished
+    --- otherwise throws an error
+    ---@see gpm.std.futures.Future.setResult
     ---@return any
     function Future:result()
         if self:cancelled() then
-            return "future was cancelled"
+            return error( "future was cancelled" )
         elseif not self:done() then
-            return "future is not finished"
+            return error( "future is not finished" )
         end
 
         if self._error then
@@ -545,6 +592,8 @@ do
         end
     end
 
+    --- Await until future will be finished
+    --- if it contains an error, then it will be thrown
     ---@async
     ---@return any
     function Future:await()
