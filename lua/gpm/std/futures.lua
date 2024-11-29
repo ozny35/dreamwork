@@ -13,6 +13,9 @@ local timer_Simple = timer.Simple
 ---@class gpm.std.futures
 local futures = std.futures or {}
 
+-- TODO: use errors instead of string
+-- TODO: make cancel error
+
 ---@package
 ---@enum gpm.std.futures.result
 futures.RESULT = futures.RESULT or {
@@ -43,6 +46,8 @@ futures.listeners = futures.listeners or setmetatable({}, { __mode = "kv" })
 ---@type { [thread]: thread }
 futures.coroutine_listeners = futures.coroutine_listeners or setmetatable({}, { __mode = "kv" })
 
+--- Abstract type that is used to type hint async functions
+---@see gpm.std.futures.apairs for example
 ---@alias gpm.std.futures.AsyncIterator<K, V> table<K, V> | nil
 ---@alias AsyncIterator<K, V> gpm.std.futures.AsyncIterator<K, V>
 
@@ -79,6 +84,29 @@ local function asyncThread( fn, ... )
 end
 
 --- Executes a function in a new coroutine
+--- you can use this function to call async functions even in sync code
+--- callback will be called when function returned or errored
+--- it will be called with these arguments:
+--- * ok: boolean - whether the function returned without errors
+--- * ... - return values of the function (or error message)
+--- 
+--- ## Example
+--- ```lua
+--- ---@async
+--- local function asyncFunction( a, b )
+---     futures.sleep( 1 )
+---     return 
+--- end
+--- 
+--- futures.run( asyncFunction, function( ok, result )
+---     if ok then
+---         print( "result:", result ) -- result: 4
+---     else
+---         print( "error:", result )
+---     end
+--- end, 2, 2 ) -- 2 and 2 are arguments for asyncFunction
+--- ```
+---@see gpm.std.futures.cancel you can cancel returned coroutine from this function
 ---@param target async fun(...):...
 ---@param callback fun(ok: boolean, ...)?
 ---@param ... any Arguments to pass into the target function
@@ -99,24 +127,74 @@ end
 ---@async
 local function handlePending( value, ... )
     if value == ACTION_CANCEL then
-        return error( "Operation was cancelled" )
+        return error( "Operation was cancelled" ) -- TODO: use error
     else
         return value, ...
     end
 end
 
+--- Puts current coroutine to sleep until futures.wakeup is called
+--- can be used to wait for some event
+--- 
+--- ## Example
+--- ```lua
+--- ---@async
+--- local function request( url )
+---     local co = futures.running()
+--- 
+---     http.Fetch( url, function( body, size, headers, code )
+---         futures.wakeup( co, body )
+---     end)
+--- 
+---     return futures.pending() -- this will return all arguments passed to futures.wakeup
+--- end
+--- 
+--- local function main()
+---     local body = request( "https://example.com" )
+---     print( body ) -- <!DOCTYPE html>...
+--- end
+--- 
+--- futures.run( main )
+--- ```
+---@see gpm.std.futures.wakeup
 ---@async
 ---@return ...
 function futures.pending()
     return handlePending( coroutine.yield() )
 end
 
+--- Used to wake up pending coroutine
+---@see gpm.std.futures.pending for example
 ---@param co thread
 function futures.wakeup( co, ... )
     coroutine.resume( co, ... )
 end
 
 
+--- Cancels execution of passed coroutine
+--- CancelError will be thrown in coroutine
+--- 
+--- NB! pcall inside coroutine can catch this error
+--- so coroutine may not be cancelled because of pcall
+--- 
+--- ## Example
+--- ```lua
+--- ---@async
+--- local function work()
+---     while true do
+---        print( "working" )
+---        futures.sleep( 1 )
+---     end
+--- end
+--- 
+--- local co = futures.run( work, function(ok, value )
+---     -- because we cancelled coroutine
+---     -- ok will be false
+---     -- value will be CancelError
+--- end)
+--- 
+--- futures.cancel( co ) -- this will stop coroutine from executing
+--- ```
 ---@param co thread
 function futures.cancel( co )
     local status = coroutine.status( co )
@@ -132,6 +210,10 @@ function futures.cancel( co )
 end
 
 
+--- Puts current coroutine to sleep for given amount of seconds
+--- uses internally timer.Simple
+---@see gpm.std.futures.pending
+---@see gpm.std.futures.wakeup
 ---@async
 ---@param seconds number
 function futures.sleep( seconds )
@@ -146,6 +228,9 @@ end
 
 
 --- Transfers data between coroutines in symmetrical way
+--- used in asynchronous iterators
+--- you probably should not use it
+---@see gpm.std.futures.apairs for example
 ---@async
 ---@param co thread
 ---@param ... any
@@ -173,7 +258,7 @@ local function handleYield( ok, value, ... )
     end
 
     if value == ACTION_CANCEL then
-        return error( "Operation was cancelled" )
+        return error( "Operation was cancelled" ) -- TODO: use error
     elseif value == ACTION_RESUME then
         return ...
     elseif value ~= nil then
@@ -184,6 +269,8 @@ local function handleYield( ok, value, ... )
     end
 end
 
+--- Yields given arguments to the apairs listener
+---@see gpm.std.futures.apairs for example
 ---@async
 function futures.yield( ... )
     local listener = futures.coroutine_listeners[ futures.running() ]
@@ -191,7 +278,7 @@ function futures.yield( ... )
         return handleYield( futures.transfer( listener, RESULT_YIELD, ... ) )
     else
         -- whaat? we don't have a listener?!
-        error( "Operation was cancelled" )
+        error( "Operation was cancelled" ) -- TODO: use error
     end
 end
 
@@ -235,12 +322,38 @@ local function handleAnext( co, ok, value, ... )
     return handleAnext( co, true, coroutine.yield() )
 end
 
+--- Retrieves next value from async iterator coroutine
+--- this function returned by apairs
+--- you probably should not use it
+---@see gpm.std.futures.apairs for example
 ---@async
 ---@param iterator thread
 function futures.anext( iterator, ... )
     return handleAnext( iterator, futures.transfer( iterator, ACTION_RESUME, ... ) )
 end
 
+--- Iterates over async iterator, calling it with given arguments
+--- 
+--- ## Example
+--- ```lua
+--- ---@async
+--- ---@return AsyncIterator<number>
+--- local function count( from, to )
+---     for i = from, to do
+---         futures.yield( i )
+---     end
+--- end
+--- 
+--- local function main()
+---     for i in futures.apairs( count, 1, 5 ) do
+---         print( i ) -- 1, 2, 3, 4, 5
+---     end
+--- end
+--- 
+--- futures.run( main )
+--- ```
+---@see gpm.std.futures.yield
+---@see gpm.std.futures.AsyncIterator
 ---@async
 ---@generic K, V
 ---@param iterator async fun(...): gpm.std.futures.AsyncIterator<K, V>
@@ -254,7 +367,7 @@ function futures.apairs( iterator, ... )
 end
 
 
---- Launches given iterator and collects its results into a table
+--- Collects all values from async iterator into a list
 ---@async
 ---@generic V
 ---@param iterator async fun(...): gpm.std.futures.AsyncIterator<V>
@@ -611,6 +724,6 @@ do
 
 end
 
---- TODO: add description for all classes in this file
+--- TODO: add helper function, i.e. futures.all, futures.any
 
 return futures
