@@ -240,18 +240,18 @@ end
 
 local table = {
     -- Lua 5.1
-    ["concat"] = glua_table.concat,
-    ["insert"] = glua_table.insert,
-    ["maxn"] = glua_table.maxn, -- removed in Lua 5.2
-    ["remove"] = table_remove,
-    ["sort"] = glua_table.sort,
+    concat = glua_table.concat,
+    insert = glua_table.insert,
+    maxn = glua_table.maxn, -- removed in Lua 5.2
+    remove = table_remove,
+    sort = glua_table.sort,
 
     -- Lua 5.2
-    ["pack"] = glua_table.pack or function( ... ) return { ["n"] = select( "#", ... ), ... } end,
-    ["unpack"] = glua_table.unpack or _G.unpack,
+    pack = glua_table.pack or function( ... ) return { n = select( "#", ... ), ... } end,
+    unpack = glua_table.unpack or _G.unpack,
 
     -- Lua 5.3
-    ["move"] = glua_table.move or function( source, first, last, offset, destination )
+    move = glua_table.move or function( source, first, last, offset, destination )
         if destination == nil then destination = source end
 
         for index = 0, last - first, 1 do
@@ -261,12 +261,12 @@ local table = {
         return destination
     end,
 
-    -- Customs
-    ["diff"] = diff,
-    ["copy"] = copy,
-    ["equal"] = equal,
-    ["lower"] = lower,
-    ["diffKeys"] = diffKeys,
+    -- Custom functions
+    diff = diff,
+    copy = copy,
+    equal = equal,
+    lower = lower,
+    diffKeys = diffKeys
 }
 
 --- Appends values from one table to another.

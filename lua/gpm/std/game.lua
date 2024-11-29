@@ -171,7 +171,7 @@ if std.CLIENT_SERVER then
     game.isDedicatedServer = glua_game.IsDedicated
     game.isSinglePlayer = glua_game.SinglePlayer
     game.getDifficulty = glua_game.GetSkillLevel
-    game.getIPAddress = glua_game.GetIPAddress
+    game.getIPAddress = glua_game.GetIPAddress -- TODO: Move to server.
     game.getTimeScale = glua_game.GetTimeScale
     game.getRealTime = _G.RealTime
 

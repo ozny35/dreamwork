@@ -200,7 +200,7 @@ end
 --- Converts a binary string to a decimal number.
 ---@param str string The binary string.
 ---@return number
-local binary2decimal = function( str )
+local function binary2decimal( str )
     return tonumber( str, 2 )
 end
 
@@ -209,7 +209,7 @@ end
 ---@param complement? boolean Whether to complement the binary string.
 ---@return string The binary string.
 ---@return number The length of the binary string.
-local decimal2binary = function( number, complement )
+local function decimal2binary( number, complement )
     if number == 0 then
         if complement then
             return "00000000", 8
@@ -251,14 +251,14 @@ end
 --- Converts a hex string to a decimal number.
 ---@param str string The hex string.
 ---@return number
-local hex2decimal = function( str )
+local function hex2decimal( str )
     return tonumber( str, 16 )
 end
 
 --- Converts a decimal number to a hex string.
 ---@param number number The decimal number.
 ---@return string
-local decimal2hex = function( number )
+local function decimal2hex( number )
     return string_format( "%X", number)
 end
 

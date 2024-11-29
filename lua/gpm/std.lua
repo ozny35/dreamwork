@@ -1477,8 +1477,8 @@ local file = include( "std/file.lua" )
 std.file = file
 
 if CLIENT_MENU then
-    std.client = include( "std/client.lua" )
     std.menu = include( "std/menu.lua" )
+    std.client = include( "std/client.lua" )
 end
 
 if SERVER_MENU then
