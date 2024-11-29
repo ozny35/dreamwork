@@ -119,8 +119,15 @@ end
 
 ---@param co thread
 function futures.cancel( co )
-    if coroutine.status( co ) == "suspended" then
+    local status = coroutine.status( co )
+    if status == "suspended" then
         coroutine.resume( co, ACTION_CANCEL )
+    elseif status == "normal" and futures.running() then
+        -- let's hope that passed coroutine resumed us
+        ---@diagnostic disable-next-line: await-in-sync
+        coroutine.yield( ACTION_CANCEL )
+    elseif status == "running" then
+        error( "Operation was cancelled" ) -- TODO: use error
     end
 end
 
