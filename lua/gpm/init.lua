@@ -95,6 +95,6 @@ include( "std.lua" )
 
 -- end
 
-gpm.logger:info( "Start-up time: %.4f sec.", SysTime() - gpm.StartTime )
+gpm.Logger:Info( "Start-up time: %.4f sec.", SysTime() - gpm.StartTime )
 
 return gpm
