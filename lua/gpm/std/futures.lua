@@ -13,6 +13,7 @@ local timer_Simple = timer.Simple
 ---@class gpm.std.futures
 local futures = std.futures or {}
 
+---@package
 ---@enum gpm.std.futures.result
 futures.RESULT = futures.RESULT or {
     YIELD = Symbol( "futures.RESULT_YIELD" ),
@@ -20,6 +21,7 @@ futures.RESULT = futures.RESULT or {
     END =  Symbol( "futures.RESULT_END" )
 }
 
+---@package
 ---@enum gpm.std.futures.action
 futures.ACTION = futures.ACTION or {
     CANCEL = Symbol( "futures.ACTION_CANCEL" ),
