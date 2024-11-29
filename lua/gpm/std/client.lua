@@ -1,6 +1,10 @@
 local _G = _G
 local gpm = _G.gpm
 local std = gpm.std
+local file = std.file
+local path = file.path
+local string = std.string
+local tonumber = std.tonumber
 
 ---@class gpm.std.client
 ---@field ScreenWidth number: The width of the game's window (in pixels).
@@ -43,6 +47,31 @@ do
 
     function client.retry()
         command_run( "retry" )
+    end
+
+    --- Take a screenshot.
+    ---@param quality integer: The quality of the screenshot (0-100), only used if `useTGA` is `false`.
+    ---@param fileName string: The name of the screenshot.
+    function client.screencap( quality, fileName )
+        if std.menu.isVisible() then
+            return false, "The menu is open, can't take a screenshot."
+        end
+
+        if fileName == nil then
+            fileName = std.level.getName()
+        end
+
+        local files = file.find( "/screenshots/" .. fileName .. "*.jpg" )
+        local last_one, count = files[ #files ], nil
+        if last_one == nil then
+            count = 0
+        else
+            count = ( tonumber( string.sub( path.stripExtension( last_one, false ), #fileName + 2 ), 10 ) or 0 ) + 1
+        end
+
+        fileName = string.format( "%s_%04d", fileName, count )
+        command_run( "jpeg", fileName, quality or 90 )
+        return true, "/screenshots/" .. fileName .. ".jpg"
     end
 
     if std.CLIENT then
