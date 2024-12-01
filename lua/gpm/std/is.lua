@@ -11,8 +11,17 @@ local is = {}
 
 -- Table of functions to check the validity of a value.
 ---@class gpm.std.is.valid
+---@overload fun(value: any): boolean
 local valid = {}
 is.valid = valid
+
+---@diagnostic disable-next-line: param-type-mismatch
+setmetatable( valid, {
+    __call = function( _, value )
+        local metatable = getmetatable( value )
+        return ( metatable and metatable.__isvalid and metatable.__isvalid( value ) ) == true
+    end
+} )
 
 -- nil ( 0 )
 local object = nil
@@ -26,6 +35,9 @@ do
 
     registerMetatable( "nil", metatable )
 
+    --- Checks if the value type is `nil`.
+    ---@param value any: The value to check.
+    ---@return boolean: Returns `true` if the value type is `nil`, otherwise `false`.
     is["nil"] = function( value )
         return getmetatable( value ) == metatable
     end
@@ -44,6 +56,9 @@ do
 
     registerMetatable( "boolean", metatable )
 
+    --- Checks if the value type is a `boolean`.
+    ---@param value any: The value to check.
+    ---@return boolean: Returns `true` if the value is a boolean, otherwise `false`.
     function is.bool( value )
         return getmetatable( value ) == metatable
     end
@@ -66,6 +81,9 @@ do
 
     registerMetatable( "number", metatable )
 
+    --- Checks if the value type is a `number`.
+    ---@param value any: The value to check.
+    ---@return boolean: Returns `true` if the value is a number, otherwise `false`.
     function is.number( value )
         return getmetatable( value ) == metatable
     end
@@ -84,6 +102,9 @@ do
 
     registerMetatable( "string", metatable )
 
+    --- Checks if the value type is a `string`.
+    ---@param value any: The value to check.
+    ---@return boolean: Returns `true` if the value is a string, otherwise `false`.
     function is.string( value )
         return getmetatable( value ) == metatable
     end
@@ -105,7 +126,7 @@ do
 
     registerMetatable( "function", metatable )
 
-    ---Checks if the value is a function
+    --- Checks if the value type is a `function`.
     ---@param value any
     ---@return boolean isFunction returns true if the value is a function, otherwise false
     function is.fn( value )
@@ -115,6 +136,9 @@ do
     is.func = is.fn
     is["function"] = is.fn
 
+    --- Checks if the value is callable.
+    ---@param value any: The value to check.
+    ---@return boolean: Returns `true` if the value is can be called (like a function), otherwise `false`.
     function is.callable( value )
         local mtbl = getmetatable( value )
         return mtbl ~= nil and ( mtbl == metatable or getmetatable( mtbl.__call ) == metatable )
@@ -136,6 +160,9 @@ do
 
     registerMetatable( "thread", metatable )
 
+    --- Checks if the value type is a `thread`.
+    ---@param value any: The value to check.
+    ---@return boolean: Returns `true` if the value is a thread, otherwise `false`.
     function is.thread( value )
         return getmetatable( value ) == metatable
     end
@@ -156,27 +183,15 @@ if std.CLIENT_SERVER then
     ---@class Entity
     local ENTITY = findMetatable( "Entity" )
 
-    -- Entity ( 9 )
+    --- Checks if the value type is an `entity`.
+    ---@param value any: The value to check.
+    ---@return boolean: Returns `true` if the value is an entity (SENT, Player, Weapon, NPC, Vehicle, CSEnt, and NextBot), otherwise `false`.
     function is.entity( value )
         local metatable = getmetatable( value )
         return metatable and metatable.__metatable_id == 9
     end
 
-    local valid_entity
-    do
-
-        local IsValid = ENTITY.IsValid
-
-        --- Checks if the entity is valid.
-        ---@param entity Entity: The entity to check.
-        ---@return boolean: Returns `true` if the entity is valid, otherwise `false`.
-        function valid_entity( entity )
-            return entity and IsValid( entity )
-        end
-
-        valid.entity = valid_entity
-
-    end
+    valid.entity = ENTITY.IsValid
 
     -- Player ( 9 )
     do
@@ -184,6 +199,9 @@ if std.CLIENT_SERVER then
         ---@class Player
         local metatable = findMetatable( "Player" )
 
+        --- Checks if the value type is a `player`.
+        ---@param value any: The value to check.
+        ---@return boolean: Returns `true` if the value is a player, otherwise `false`.
         function is.player( value )
             return getmetatable( value ) == metatable
         end
@@ -196,6 +214,9 @@ if std.CLIENT_SERVER then
         ---@class Weapon
         local metatable = findMetatable( "Weapon" )
 
+        --- Checks if the value type is a `weapon`.
+        ---@param value any: The value to check.
+        ---@return boolean: Returns `true` if the value is a weapon, otherwise `false`.
         function is.weapon( value )
             return getmetatable( value ) == metatable
         end
@@ -208,6 +229,9 @@ if std.CLIENT_SERVER then
         ---@class NPC
         local metatable = findMetatable( "NPC" )
 
+        --- Checks if the value type is an `npc`.
+        ---@param value any: The value to check.
+        ---@return boolean: Returns `true` if the value is an NPC, otherwise `false`.
         function is.npc( value )
             return getmetatable( value ) == metatable
         end
@@ -220,6 +244,9 @@ if std.CLIENT_SERVER then
         ---@class NextBot
         local metatable = findMetatable( "NextBot" )
 
+        --- Checks if the value type is a `nextbot`.
+        ---@param value any: The value to check.
+        ---@return boolean
         function is.nextbot( value )
             return getmetatable( value ) == metatable
         end
@@ -232,15 +259,14 @@ if std.CLIENT_SERVER then
         ---@class Vehicle
         local metatable = findMetatable( "Vehicle" )
 
+        --- Checks if the value type is a `vehicle`.
+        ---@param value any: The value to check.
+        ---@return boolean: Returns `true` if the value is a vehicle, otherwise `false`.
         function is.vehicle( value )
             return getmetatable( value ) == metatable
         end
 
-        local IsValidVehicle = metatable.IsValidVehicle
-
-        function valid.vehicle( vehicle )
-            return valid_entity( vehicle ) and IsValidVehicle( vehicle )
-        end
+        valid.vehicle = metatable.IsValidVehicle
 
     end
 
@@ -250,6 +276,9 @@ if std.CLIENT_SERVER then
         ---@class CSEnt
         local metatable = findMetatable( "CSEnt" )
 
+        --- Checks if the value type is a `client entity` (or `CSEnt`).
+        ---@param value any: The value to check.
+        ---@return boolean: Returns `true` if the value is a client entity, otherwise `false`.
         function is.clientEntity( value )
             return getmetatable( value ) == metatable
         end
@@ -262,15 +291,14 @@ if std.CLIENT_SERVER then
         ---@class PhysObj
         local metatable = findMetatable( "PhysObj" )
 
+        --- Checks if the value type is a `physics object`.
+        ---@param value any: The value to check.
+        ---@return boolean: Returns `true` if the value is a physics object, otherwise `false`.
         function is.physics( value )
             return getmetatable( value ) == metatable
         end
 
-        local IsValid = metatable.IsValid
-
-        function valid.physics( physics )
-            return getmetatable( physics ) == metatable and IsValid( physics )
-        end
+        valid.physics = metatable.IsValid
 
     end
 
@@ -280,6 +308,9 @@ if std.CLIENT_SERVER then
         ---@class ISave
         local metatable = findMetatable( "ISave" )
 
+        --- Checks if the value type is an `ISave`.
+        ---@param value any: The value to check.
+        ---@return boolean: Returns `true` if the value is an `ISave`, otherwise `false`.
         function is.save( value )
             return getmetatable( value ) == metatable
         end
@@ -292,6 +323,9 @@ if std.CLIENT_SERVER then
         ---@class IRestore
         local metatable = findMetatable( "IRestore" )
 
+        --- Checks if the value type is an `IRestore`.
+        ---@param value any: The value to check.
+        ---@return boolean: Returns `true` if the value is an `IRestore`, otherwise `false`.
         function is.restore( value )
             return getmetatable( value ) == metatable
         end
@@ -304,6 +338,9 @@ if std.CLIENT_SERVER then
         ---@class CTakeDamageInfo
         local metatable = findMetatable( "CTakeDamageInfo" )
 
+        --- Checks if the value type is a `damage info`.
+        ---@param value any: The value to check.
+        ---@return boolean: Returns `true` if the value is a damage info, otherwise `false`.
         function is.damageInfo( value )
             return getmetatable( value ) == metatable
         end
@@ -316,6 +353,9 @@ if std.CLIENT_SERVER then
         ---@class CEffectData
         local metatable = findMetatable( "CEffectData" )
 
+        --- Checks if the value type is an `CEffectData`.
+        ---@param value any: The value to check.
+        ---@return boolean: Returns `true` if the value is an effect data, otherwise `false`.
         function is.effectData( value )
             return getmetatable( value ) == metatable
         end
@@ -328,6 +368,9 @@ if std.CLIENT_SERVER then
         ---@class CMoveData
         local metatable = findMetatable( "CMoveData" )
 
+        --- Checks if the value type is a `CMoveData`.
+        ---@param value any: The value to check.
+        ---@return boolean: Returns `true` if the value is a move data, otherwise `false`.
         function is.movedata( value )
             return getmetatable( value ) == metatable
         end
@@ -340,6 +383,9 @@ if std.CLIENT_SERVER then
         ---@class CUserCmd
         local metatable = findMetatable( "CUserCmd" )
 
+        --- Checks if the value type is a `CUserCmd`.
+        ---@param value any: The value to check.
+        ---@return boolean: Returns `true` if the value is a user command, otherwise `false`.
         function is.usercmd( value )
             return getmetatable( value ) == metatable
         end
@@ -352,6 +398,9 @@ if std.CLIENT_SERVER then
         ---@class bf_read
         local metatable = findMetatable( "bf_read" )
 
+        --- Checks if the value type is a `bf_read` (aka `usmg` or `usermessage`).
+        ---@param value any: The value to check.
+        ---@return boolean: Returns `true` if the value is a bf_read, otherwise `false`.
         function is.userMessage( value )
             return getmetatable( value ) == metatable
         end
@@ -364,15 +413,14 @@ if std.CLIENT_SERVER then
         ---@class PhysCollide
         local metatable = findMetatable( "PhysCollide" )
 
+        --- Checks if the value type is a `PhysCollide`.
+        ---@param value any: The value to check.
+        ---@return boolean: Returns `true` if the value is a physics collide, otherwise `false`.
         function is.physCollide( value )
             return getmetatable( value ) == metatable
         end
 
-        local IsValid = metatable.IsValid
-
-        function valid.physCollide( physCollide )
-            return getmetatable( physCollide ) == metatable and IsValid( physCollide )
-        end
+        valid.physCollide = metatable.IsValid
 
     end
 
@@ -382,6 +430,9 @@ if std.CLIENT_SERVER then
         ---@class SurfaceInfo
         local metatable = findMetatable( "SurfaceInfo" )
 
+        --- Checks if the value type is a `SurfaceInfo`.
+        ---@param value any: The value to check.
+        ---@return boolean: Returns `true` if the value is a surface info, otherwise `false`.
         function is.surfaceInfo( value )
             return getmetatable( value ) == metatable
         end
@@ -396,6 +447,9 @@ do
     ---@class Vector
     local metatable = findMetatable( "Vector" )
 
+    --- Checks if the value type is a `Vector`.
+    ---@param value any: The value to check.
+    ---@return boolean: Returns `true` if the value is a vector, otherwise `false`.
     function is.vector( value )
         return getmetatable( value ) == metatable
     end
@@ -408,6 +462,9 @@ do
     ---@class Angle
     local metatable = findMetatable( "Angle" )
 
+    --- Checks if the value type is an `Angle`.
+    ---@param value any: The value to check.
+    ---@return boolean: Returns `true` if the value is an angle, otherwise `false`.
     function is.angle( value )
         return getmetatable( value ) == metatable
     end
@@ -422,9 +479,13 @@ if std.SERVER then
         ---@class CRecipientFilter
         local metatable = findMetatable( "CRecipientFilter" )
 
+        --- Checks if the value type is a `CRecipientFilter`.
+        ---@param value any: The value to check.
+        ---@return boolean: Returns `true` if the value is a recipient filter, otherwise `false`.
         function is.recipientFilter( value )
             return getmetatable( value ) == metatable
         end
+
     end
 
     -- CLuaLocomotion ( 35 )
@@ -433,6 +494,9 @@ if std.SERVER then
         ---@class CLuaLocomotion
         local metatable = findMetatable( "CLuaLocomotion" )
 
+        --- Checks if the value type is a `CLuaLocomotion`.
+        ---@param value any: The value to check.
+        ---@return boolean: Returns `true` if the value is a locomotion, otherwise `false`.
         function is.locomotion( value )
             return getmetatable( value ) == metatable
         end
@@ -445,15 +509,14 @@ if std.SERVER then
         ---@class PathFollower
         local metatable = findMetatable( "PathFollower" )
 
+        --- Checks if the value type is a `PathFollower`.
+        ---@param value any: The value to check.
+        ---@return boolean: Returns `true` if the value is a path follower, otherwise `false`.
         function is.pathFollower( value )
             return getmetatable( value ) == metatable
         end
 
-        local IsValid = metatable.IsValid
-
-        function valid.pathFollower( pathFollower )
-            return getmetatable( pathFollower ) == metatable and IsValid( pathFollower )
-        end
+        valid.pathFollower = metatable.IsValid
 
     end
 
@@ -463,15 +526,14 @@ if std.SERVER then
         ---@class CNavArea
         local metatable = findMetatable( "CNavArea" )
 
+        --- Checks if the value type is a `CNavArea`.
+        --- @param value any: The value to check.
+        --- @return boolean: Returns `true` if the value is a nav area, otherwise `false`.
         function is.navArea( value )
             return getmetatable( value ) == metatable
         end
 
-        local IsValid = metatable.IsValid
-
-        function valid.navArea( navArea )
-            return getmetatable( navArea ) == metatable and IsValid( navArea )
-        end
+        valid.navArea = metatable.IsValid
 
     end
 
@@ -481,15 +543,14 @@ if std.SERVER then
         ---@class CNavLadder
         local metatable = findMetatable( "CNavLadder" )
 
+        --- Checks if the value type is a `CNavLadder`.
+        ---@param value any: The value to check.
+        ---@return boolean: Returns `true` if the value is a nav ladder, otherwise `false`.
         function is.navLadder( value )
             return getmetatable( value ) == metatable
         end
 
-        local IsValid = metatable.IsValid
-
-        function valid.navLadder( navLadder )
-            return getmetatable( navLadder ) == metatable and IsValid( navLadder )
-        end
+        valid.navLadder = metatable.IsValid
 
     end
 
@@ -501,6 +562,9 @@ do
     ---@class IMaterial
     local metatable = findMetatable( "IMaterial" )
 
+    --- Checks if the value type is a `IMaterial`.
+    ---@param value any: The value to check.
+    ---@return boolean: Returns `true` if the value is a material, otherwise `false`.
     function is.material( value )
         return getmetatable( value ) == metatable
     end
@@ -515,6 +579,9 @@ if std.CLIENT then
         ---@class CLuaParticle
         local metatable = findMetatable( "CLuaParticle" )
 
+        --- Checks if the value type is a `CLuaParticle`.
+        ---@param value any: The value to check.
+        ---@return boolean: Returns `true` if the value is a particle, otherwise `false`.
         function is.particle( value )
             return getmetatable( value ) == metatable
         end
@@ -527,15 +594,14 @@ if std.CLIENT then
         ---@class CLuaEmitter
         local metatable = findMetatable( "CLuaEmitter" )
 
+        --- Checks if the value type is a `CLuaEmitter`.
+        ---@param value any: The value to check.
+        ---@return boolean: Returns `true` if the value is an emitter, otherwise `false`.
         function is.emitter( value )
             return getmetatable( value ) == metatable
         end
 
-        local IsValid = metatable.IsValid
-
-        function valid.emitter( emitter )
-            return getmetatable( emitter ) == metatable and IsValid( emitter )
-        end
+        valid.emitter = metatable.IsValid
 
     end
 
@@ -545,6 +611,9 @@ if std.CLIENT then
         ---@class pixelvis_handle_t
         local metatable = findMetatable( "pixelvis_handle_t" )
 
+        --- Checks if the value type is a `pixelvis_handle_t`.
+        ---@param value any: The value to check.
+        ---@return boolean: Returns `true` if the value is a pixel vis handle, otherwise `false`.
         function is.pixVis( value )
             return getmetatable( value ) == metatable
         end
@@ -557,6 +626,9 @@ if std.CLIENT then
         ---@class dlight_t
         local metatable = findMetatable( "dlight_t" )
 
+        --- Checks if the value type is a `dlight_t`.
+        ---@param value any: The value to check.
+        ---@return boolean: Returns `true` if the value is a dynamic light, otherwise `false`.
         function is.dynamiclight( value )
             return getmetatable( value ) == metatable
         end
@@ -569,15 +641,14 @@ if std.CLIENT then
         ---@class CNewParticleEffect
         local metatable = findMetatable( "CNewParticleEffect" )
 
+        --- Checks if the value type is a `CNewParticleEffect`.
+        ---@param value any: The value to check.
+        ---@return boolean: Returns `true` if the value is a particle effect, otherwise `false`.
         function is.particleEffect( value )
             return getmetatable( value ) == metatable
         end
 
-        local IsValid = metatable.IsValid
-
-        function valid.particleEffect( particleEffect )
-            return getmetatable( particleEffect ) == metatable and IsValid( particleEffect )
-        end
+        valid.particleEffect = metatable.IsValid
 
     end
 
@@ -587,15 +658,14 @@ if std.CLIENT then
         ---@class ProjectedTexture
         local metatable = findMetatable( "ProjectedTexture" )
 
+        --- Checks if the value type is a `ProjectedTexture`.
+        ---@param value any: The value to check.
+        ---@return boolean: Returns `true` if the value is a projected texture, otherwise `false`.
         function is.projectedTexture( value )
             return getmetatable( value ) == metatable
         end
 
-        local IsValid = metatable.IsValid
-
-        function valid.projectedTexture( projectedTexture )
-            return getmetatable( projectedTexture ) == metatable and IsValid( projectedTexture )
-        end
+        valid.projectedTexture = metatable.IsValid
 
     end
 
@@ -607,6 +677,9 @@ do
     ---@class ITexture
     local metatable = findMetatable( "ITexture" )
 
+    --- Checks if the value type is a `ITexture`.
+    ---@param value any: The value to check.
+    ---@return boolean: Returns `true` if the value is a texture, otherwise `false`.
     function is.texture( value )
         return getmetatable( value ) == metatable
     end
@@ -619,6 +692,9 @@ do
     ---@class ConVar
     local metatable = findMetatable( "ConVar" )
 
+    --- Checks if the value type is a `ConVar`.
+    ---@param value any: The value to check.
+    ---@return boolean: Returns `true` if the value is a convar, otherwise `false`.
     function is.convar( value )
         return getmetatable( value ) == metatable
     end
@@ -633,15 +709,14 @@ if std.CLIENT_MENU then
         ---@class Panel
         local metatable = findMetatable( "Panel" )
 
+        --- Checks if the value type is a `Panel`.
+        ---@param value any: The value to check.
+        ---@return boolean: Returns `true` if the value is a panel, otherwise `false`.
         function is.panel( value )
             return getmetatable( value ) == metatable
         end
 
-        local IsValid = metatable.IsValid
-
-        function valid.panel( panel )
-            return getmetatable( panel ) == metatable and IsValid( panel )
-        end
+        valid.panel = metatable.IsValid
 
     end
 
@@ -654,15 +729,16 @@ if std.CLIENT_MENU then
         if metatable == nil then
             function is.mesh() return false end
         else
+
+            --- Checks if the value type is a `IMesh`.
+            ---@param value any: The value to check.
+            ---@return boolean: Returns `true` if the value is a mesh, otherwise `false`.
             function is.mesh( value )
                 return getmetatable( value ) == metatable
             end
 
-            local IsValid = metatable.IsValid
+            valid.mesh = metatable.IsValid
 
-            function valid.mesh( mesh )
-                return getmetatable( mesh ) == metatable and IsValid( mesh )
-            end
         end
 
     end
@@ -673,6 +749,9 @@ if std.CLIENT_MENU then
         ---@class IVideoWriter
         local metatable = findMetatable( "IVideoWriter" )
 
+        --- Checks if the value type is a `IVideoWriter`.
+        ---@param value any: The value to check.
+        ---@return boolean: Returns `true` if the value is a video writer, otherwise `false`.
         function is.videoWriter( value )
             return getmetatable( value ) == metatable
         end
@@ -685,15 +764,14 @@ if std.CLIENT_MENU then
         ---@class IGModAudioChannel
         local metatable = findMetatable( "IGModAudioChannel" )
 
+        --- Checks if the value type is a `IGModAudioChannel`.
+        ---@param value any: The value to check.
+        ---@return boolean: Returns `true` if the value is an audio channel, otherwise `false`.
         function is.audioChannel( value )
             return getmetatable( value ) == metatable
         end
 
-        local IsValid = metatable.IsValid
-
-        function valid.audioChannel( audioChannel )
-            return getmetatable( audioChannel ) == metatable and IsValid( audioChannel )
-        end
+        valid.audioChannel = metatable.IsValid
 
     end
 
@@ -705,6 +783,9 @@ do
     ---@class VMatrix
     local metatable = findMetatable( "VMatrix" )
 
+    --- Checks if the value type is a `VMatrix`.
+    ---@param value any: The value to check.
+    ---@return boolean: Returns `true` if the value is a matrix, otherwise `false`.
     function is.matrix( value )
         return getmetatable( value ) == metatable
     end
@@ -717,6 +798,9 @@ do
     ---@class CSoundPatch
     local metatable = findMetatable( "CSoundPatch" )
 
+    --- Checks if the value is a `CSoundPatch`.
+    ---@param value any: The value to check.
+    ---@return boolean: Returns `true` if the value is a sound patch, otherwise `false`.
     function is.sound( value )
         return getmetatable( value ) == metatable
     end
@@ -729,6 +813,9 @@ do
     ---@class File
     local metatable = findMetatable( "File" )
 
+    --- Checks if the value is a `File`.
+    ---@param value any: The value to check.
+    ---@return boolean: Returns `true` if the value is a file, otherwise `false`.
     function is.file( value )
         return getmetatable( value ) == metatable
     end
@@ -740,6 +827,10 @@ end
 -- Error ( 45 )
 do
 
+    --- Checks if the value is an error.
+    ---@param value any: The value to check.
+    ---@param name string?: The name of the error.
+    ---@return boolean: Returns `true` if the value is an error, otherwise `false`.
     function is.error( value, name )
         if name == nil then name = "Error" end
 
@@ -762,6 +853,9 @@ do
 
     local is_table, is_number = is.table, is.number
 
+    --- Checks if the value is a `color`.
+    ---@param value any: The value to check.
+    ---@return boolean: Returns `true` if the value is a color, otherwise `false`.
     function is.color( value )
         return is_table( value ) and is_number( value.r ) and is_number( value.g ) and is_number( value.b ) and is_number( value.a )
     end
