@@ -5,12 +5,18 @@ local file = std.file
 local path = file.path
 local string = std.string
 local tonumber = std.tonumber
+local glua_render = _G.render
 
 ---@class gpm.std.client
 ---@field ScreenWidth number: The width of the game's window (in pixels).
 ---@field ScreenHeight number: The height of the game's window (in pixels).
 local client = {
-    openURL = _G.gui.OpenURL
+    openURL = _G.gui.OpenURL,
+    getDXLevel = glua_render.GetDXLevel,
+    isSupportsHDR = glua_render.SupportsHDR,
+    isSupportsPixelShaders14 = glua_render.SupportsPixelShaders_1_4,
+    isSupportsPixelShaders20 = glua_render.SupportsPixelShaders_2_0,
+    isSupportsVertexShaders20 = glua_render.SupportsVertexShaders_2_0
 }
 
 if std.CLIENT then
