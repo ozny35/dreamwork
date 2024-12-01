@@ -4,7 +4,7 @@
 
 ```lua
 ---@alias Car gpm.std.Car                        <-- alias Car, so it is easier for us to reference it in params and etc.
----@class gpm.std.Car : gpm.std.Object           <-- do not forget to inherit from gpm.std.Object
+---@class gpm.std.Car: gpm.std.Object           <-- do not forget to inherit from gpm.std.Object
 ---@field __class gpm.std.CarClass
 local Car = std.class.base("Car")
 
@@ -18,7 +18,7 @@ end
 ### 2. Define a class, which will be used to create a Car
 
 ```lua
----@class gpm.std.CarClass : gpm.std.Car      <-- do not forget to inherit from base
+---@class gpm.std.CarClass: gpm.std.Car      <-- do not forget to inherit from base
 ---@field __base gpm.std.Car
 ---@overload fun(): Car
 local CarClass = std.class.create(Car)

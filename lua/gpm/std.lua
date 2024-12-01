@@ -687,7 +687,7 @@ do
 
 end
 
--- symbol library
+-- symbol class
 do
 
     ---@class gpm.std.Symbol : userdata
@@ -722,6 +722,9 @@ local is = include( "std/is.lua" )
 std.is = is
 
 is_string, is_number, is_function = is.string, is.number, is["function"]
+
+-- URL class
+std.URL = include( "std/url.lua" )
 
 -- Queue class
 do

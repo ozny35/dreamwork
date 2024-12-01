@@ -45,8 +45,6 @@ local bigint_ensureArray
 local table_reverse
 local table_copy
 
---##### MODULE FUNCTIONS #####--
-
 local tonumber, getmetatable, setmetatable = std.tonumber, std.getmetatable, std.setmetatable
 local math_floor = std.math.floor
 
@@ -68,16 +66,13 @@ do
     string_sub, string_len, string_rep, string_byte, string_char, string_format = string.sub, string.len, string.rep, string.byte, string.char, string.format
 end
 
---##### CONSTRUCTORS #####--
-
----@alias Car gpm.std.BigInt
----@class gpm.std.BigInt : gpm.std.Object
+---@alias BigInt gpm.std.BigInt
+---@class gpm.std.BigInt: gpm.std.Object
 ---@field __class gpm.std.BigIntClass
 local BigInt = std.class.base( "BigInt" )
 
----@class gpm.std.BigIntClass : gpm.std.BigInt
----@field __base gpm.std.BigInt
----@overload fun(): BigInt
+---@class gpm.std.BigIntClass: gpm.std.BigInt
+---@overload fun( value: string | number | BigInt | table, base: number? ): BigInt
 local BigIntClass = std.class.create( BigInt )
 
 function bigint_new()
@@ -102,6 +97,14 @@ function bigint_constructor( self, value, base )
     end
 
     error( "cannot construct bigint from type: " .. std.type( value ) )
+end
+
+---@protected
+function BigInt:__init( value, base )
+    self.sign = 0
+    self.bytes = {}
+    self.mutable = false
+    bigint_constructor( self, value, base )
 end
 
 -- parse integer from a string
@@ -1621,14 +1624,6 @@ BigIntClass.MaxNumber = bigint_maxnumber
 
 function BigInt.__bitcount()
     return 64
-end
-
-BigInt.new = function( self, ... )
-    self.sign = 0
-    self.bytes = {}
-    self.mutable = false
-    bigint_constructor( self, ... )
-    return nil
 end
 
 function BigIntClass.FromString( value, base )
