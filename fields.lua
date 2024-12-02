@@ -1,8 +1,8 @@
---- Table used by [Global.HTTP](https://wiki.facepunch.com/gmod/Global.HTTP) function.
+--- Table used by `http.request` function.
 ---@class HTTPRequest
 local HTTPRequest = {}
 
----Request method, case insensitive. Possible values are:
+--- Request method, case insensitive. Possible values are:
 --- * GET
 --- * POST
 --- * HEAD
@@ -13,41 +13,57 @@ local HTTPRequest = {}
 ---@type string
 HTTPRequest.method = nil
 
----The target url
+--- The target url
 ---@type string
 HTTPRequest.url = nil
 
----KeyValue table for parameters. This is only applicable to the following request methods:
+--- KeyValue table for parameters. This is only applicable to the following request methods:
 --- * GET
 --- * POST
 --- * HEAD
 ---@type table
 HTTPRequest.parameters = nil
 
----KeyValue table for headers
+--- KeyValue table for headers
 ---@type table
 HTTPRequest.headers = nil
 
----Body string for POST data. If set, will override parameters
+--- Body string for POST data. If set, will override parameters
 ---@type string
 HTTPRequest.body = nil
 
----Content type for body.
+--- Content type for body.
 ---@type string
 HTTPRequest.type = "text/plain; charset=utf-8"
 
----The timeout for the connection.
+--- The timeout for the connection.
 ---@type number
 HTTPRequest.timeout = 60
 
----Whether to cache the response.
+--- Whether to cache the response.
 ---@type boolean
 HTTPRequest.cache = false
 
----The cache lifetime for the request.
+--- The cache lifetime for the request.
 ---@type number
 HTTPRequest.lifetime = nil
 
----Whether to use ETag caching.
+--- Whether to use ETag caching.
 ---@type boolean
 HTTPRequest.etag = false
+
+--- The success callback.
+---@class HTTPResponse
+local HTTPResponse = {}
+
+--- The response status code.
+---@type number
+HTTPResponse.status = nil
+
+--- The response body.
+---@type string
+HTTPResponse.body = nil
+
+--- The response headers.
+---@type table
+HTTPResponse.headers = nil
