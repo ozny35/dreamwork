@@ -1,10 +1,13 @@
 local _G = _G
-local std = _G.gpm.std
-local glua_file = _G.file
+local gpm = _G.gpm
+local std, Logger = gpm.std, gpm.Logger
+local string, table, SERVER, MENU = std.string, std.table, std.SERVER, std.MENU
 
-local file_Exists, file_Find = glua_file.Exists, glua_file.Find
-local assert, string, SERVER, MENU = std.assert, std.string, std.SERVER, std.MENU
-local string_byte, string_sub, string_len = string.byte, string.sub, string.len
+local glua_file = _G.file
+local file_Exists, file_IsDir, file_Find = glua_file.Exists, glua_file.IsDir, glua_file.Find
+
+local string_byte, string_sub, string_len, string_byteSplit = string.byte, string.sub, string.len, string.byteSplit
+local table_append, table_concat = table.append, table.concat
 
 local isDedicatedServer = false
 if not MENU then
@@ -29,6 +32,29 @@ local lua_game_paths = {
     LUA = true
 }
 
+---@alias gpm.std.GamePath
+---| string # The path to look for the files and directories in.
+---| `"GAME"` # Structured like base folder (garrysmod/), searches all the mounted content (main folder, addons, mounted games, etc)
+---| `"LUA"` # All Lua folders (lua/) including gamemodes and addons
+---| `"lcl"` # All Lua files and subfolders (lua/) visible to the client state.
+---| `"lsv"` # All Lua files and subfolders (lua/) visible to the server state.
+---| `"LuaMenu"` # All Lua files and subfolders (lua/) visible to the menu state.
+---| `"DATA"` # Data folder (garrysmod/data)
+---| `"DOWNLOAD"` # Downloads folder (garrysmod/download/)
+---| `"garrysmod"` # Strictly the game folder (garrysmod/), ignores mounting.
+---| `"MOD"` # Strictly the game folder (garrysmod/), ignores mounting.
+---| `"BASE_PATH"` # Location of the root folder (where hl2.exe, bin and etc. are)
+---| `"EXECUTABLE_PATH"` # Bin folder and root folder
+---| `"MOD_WRITE"` # Strictly the game folder (garrysmod/)
+---| `"GAME_WRITE"` # Strictly the game folder (garrysmod/)
+---| `"DEFAULT_WRITE_PATH"` # Strictly the game folder (garrysmod/)
+---| `"THIRDPARTY"` # Contains content from installed addons or gamemodes.
+---| `"WORKSHOP"` # Contains only the content from workshop addons. This includes all mounted .gma files.
+---| `"BSP"` # Only the files embedded in the currently loaded map (.bsp lump 40)
+---| `"GAMEBIN"` # Location of the folder containing important game files. (On Windows: garrysmod/bin on Linux: bin/linux32 or bin/linux64)
+---| `<mounted folder>` # Strictly within the folder of a mounted game specified, e.g. "cstrike", see note below.
+---| `<mounted Workshop addon title>` # Strictly within the specified Workshop addon. See engine.GetAddons.<br>For GMA files, this will be the title embedded inside the GMA file itself, not the title of the Workshop addon it was downloaded from.
+
 ---@class gpm.std.file
 ---@field LUA_PATH string: The current lua game path. ("lsv", "lcl", "LuaMenu", "LUA")
 local file = {
@@ -39,9 +65,9 @@ local file = {
 local path = _G.include( "file.path.lua" )
 file.path = path
 
-local path_resolve = path.resolve
+local path_resolve, path_getDirectory = path.resolve, path.getDirectory
 
-local writeAllowedGamePaths = {
+local write_allowed_game_paths = {
     -- allowed by default
     DATA = true
 }
@@ -60,9 +86,9 @@ do
 
     ---
     ---@param absolutePath string: The absolute file path.
-    ---@param gamePath string?: The game path.
+    ---@param gamePath gpm.std.GamePath?: The game path.
     ---@return string: The normalized file path.
-    ---@return string: The game path.
+    ---@return gpm.std.GamePath: The game path.
     function normalizeGamePath( absolutePath, gamePath )
         -- if not gamePath and isurl( absolutePath ) then
         --     if absolutePath.scheme ~= "file" then
@@ -119,22 +145,210 @@ do
         lcl = "/lua"
     }
 
+    ---
+    ---@param filePath string:
+    ---@param gamePath gpm.std.GamePath?:
+    ---@return string: The absolute file path.
     function absoluteGamePath( filePath, gamePath )
-        return gamePath ~= nil and ( ( path2dir[ gamePath ] or "" ) .. "/" .. filePath ) or filePath
+        if gamePath then
+            return ( path2dir[ gamePath ] or "" ) .. "/" .. filePath
+        else
+            return filePath
+        end
     end
 
 end
 
-function file.find( filePath )
-    return file_Find( normalizeGamePath( filePath ) )
+local isFileMounted, isDirMounted
+do
+
+    local allowed_game_paths = {
+        LUA = true,
+        lsv = true,
+        lcl = true,
+        GAME = true,
+        WORKSHOP = true,
+        THIRDPARTY = true
+    }
+
+    local files = {}
+
+    function isFileMounted( filePath, gamePath, skipNormalize )
+        if not skipNormalize then
+            filePath, gamePath = normalizeGamePath( filePath, gamePath )
+        end
+
+        if allowed_game_paths[ gamePath ] then
+            if lua_game_paths[ gamePath ] then
+                filePath = "lua/" .. filePath
+            end
+
+            return files[ filePath ]
+        else
+            return false
+        end
+    end
+
+    file.isFileMounted = isFileMounted
+
+    local folders = {}
+
+    function isDirMounted( filePath, gamePath, skipNormalize )
+        if not skipNormalize then
+            filePath, gamePath = normalizeGamePath( filePath, gamePath )
+        end
+
+        if allowed_game_paths[ gamePath ] then
+            if lua_game_paths[ gamePath ] then
+                filePath = "lua/" .. filePath
+            end
+
+            return folders[ filePath ]
+        else
+            return false
+        end
+    end
+
+    file.isDirMounted = isDirMounted
+
+    do
+
+        local game_MountGMA = _G.game.MountGMA
+
+        ---
+        ---@param relativePath string:
+        ---@return true | false
+        ---@return table: The list of mounted files.
+        function file.MountGMA( relativePath )
+            local success, mounted_files = game_MountGMA( string_sub( path_resolve( relativePath ), 2 ) )
+            if success then
+                local fileCount = #mounted_files
+                for index = 1, fileCount do
+                    local filePath = mounted_files[ index ]
+
+                    -- mounted files
+                    files[ filePath ] = true
+
+                    -- mounted dirs
+                    local segments, segmentCount = string_byteSplit( path_getDirectory( filePath, false ), 0x2F --[[ / ]] )
+                    segmentCount = segmentCount - 1
+
+                    while segmentCount ~= 0 do
+                        folders[ table_concat( segments, "/", 1, segmentCount ) ] = true
+                        segmentCount = segmentCount - 1
+                    end
+                end
+
+                Logger:Debug( "GMA file '%s' was mounted to GAME with %d files.", relativePath, fileCount )
+            end
+
+            return success, mounted_files
+        end
+    end
+end
+
+function file.Exists( filePath, gamePath, skipNormalize )
+    if not skipNormalize then
+        filePath, gamePath = normalizeGamePath( filePath, gamePath )
+    end
+
+    return ( isFileMounted( filePath, gamePath, true ) or isDirMounted( filePath, gamePath, true ) ) or file_Exists( filePath, gamePath ) or ( CLIENT and lua_game_paths[ gamePath ] and file_Exists( "lua/" .. filePath, "WORKSHOP" ) )
+end
+
+local function isDir( filePath, gamePath, skipNormalize )
+    if not skipNormalize then
+        filePath, gamePath = normalizeGamePath( filePath, gamePath )
+    end
+
+    return isDirMounted( filePath, gamePath, true ) or file_IsDir( filePath, gamePath ) or ( CLIENT and lua_game_paths[ gamePath ] and file_IsDir( "lua/" .. filePath, "WORKSHOP" ) )
+end
+
+file.isDir = isDir
+
+local function isFile( filePath, gamePath, skipNormalize )
+    if not skipNormalize then
+        filePath, gamePath = normalizeGamePath( filePath, gamePath )
+    end
+
+    if isFileMounted( filePath, gamePath, true ) then
+        return true
+    elseif isDirMounted( filePath, gamePath, true ) then
+        return false
+    elseif file_Exists( filePath, gamePath ) then
+        return not file_IsDir( filePath, gamePath )
+    elseif CLIENT and lua_game_paths[ gamePath ] and file_Exists( "lua/" .. filePath, "WORKSHOP" ) then
+        return not file_IsDir( "lua/" .. filePath, "WORKSHOP" )
+    else
+        return false
+    end
+end
+
+file.isFile = isFile
+
+---
+---@param filePath string:
+---@param gamePath gpm.std.GamePath?:
+---@param sorting string?:
+---@param skipNormalize boolean?:
+---@return table files:
+---@return table dirs:
+function file.find( filePath, gamePath, sorting, skipNormalize )
+    if not skipNormalize then
+        filePath, gamePath = normalizeGamePath( filePath, gamePath )
+    end
+
+    ---@cast gamePath string
+
+    local files, dirs = file_Find( filePath, gamePath, sorting )
+    if CLIENT and lua_game_paths[ gamePath ] then
+        local workshop_files, workshop_dirs = file_Find( "lua/" .. filePath, "WORKSHOP", sorting )
+        table_append( files, workshop_files )
+        table_append( dirs, workshop_dirs )
+    end
+
+    return files, dirs
+end
+
+do
+
+    local file_Time = glua_file.Time
+
+    ---
+    ---@param filePath string: The file or folder path.
+    ---@param gamePath gpm.std.GamePath?:
+    ---@param skipNormalize boolean?:
+    ---@return number: Seconds passed since Unix epoch, or 0 if the file is not found.
+    function file.Time( filePath, gamePath, skipNormalize )
+        if not skipNormalize then
+            filePath, gamePath = normalizeGamePath( filePath, gamePath )
+        end
+
+        ---@cast gamePath string
+
+        if file_Exists( filePath, gamePath ) then
+            return file_Time( filePath, gamePath )
+        elseif CLIENT and lua_game_paths[ gamePath ] then
+            return file_Time( "lua/" .. filePath, "WORKSHOP" )
+        else
+            return 0
+        end
+    end
+
 end
 
 do
 
     local engine_GetAddons = _G.engine.GetAddons
 
-    function file.whereIs( filePath )
-        filePath = absoluteGamePath( normalizeGamePath( filePath ) )
+    --- TODO
+    ---@param filePath string: The file or folder path.
+    ---@param gamePath gpm.std.GamePath?: The path to look for the files and directories in.
+    ---@return string: The addon name.
+    function file.whereIs( filePath, gamePath, skipNormalize )
+        if not skipNormalize then
+            filePath, gamePath = absoluteGamePath( normalizeGamePath( filePath, gamePath ) )
+        end
+
         -- TODO: Path build
 
         local addons = engine_GetAddons()

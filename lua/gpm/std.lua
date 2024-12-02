@@ -852,7 +852,6 @@ end
 -- futures library
 local futures = include( "std/futures.lua" )
 std.futures = futures
-std.run = futures.run
 std.yield = futures.yield
 std.apairs = futures.apairs
 std.Future = futures.Future
@@ -1149,6 +1148,8 @@ do
     ---@field __base gpm.std.Error
     ---@overload fun(message: string, fileName: string?, lineNumber: number?, stackPos: number?): Error
     local ErrorClass = class.create( Error )
+
+    -- Basic error class
     std.Error = ErrorClass
 
     --- Creates a new `Error` with custom name
@@ -1156,48 +1157,48 @@ do
     ---@param base Error | nil
     ---@return Error
     function ErrorClass.make( name, base )
-        return class.create( class.base(name, base or std.Error) ) ---@type Error
+        return class.create( class.base( name, base or ErrorClass ) ) ---@type Error
     end
+
+    -- Built-in errors
+    std.NotImplementedError = ErrorClass.make( "NotImplementedError" )
+    std.FutureCancelError = ErrorClass.make( "FutureCancelError" )
+    std.InvalidStateError = ErrorClass.make( "InvalidStateError" )
+    std.CodeCompileError = ErrorClass.make( "CodeCompileError" )
+    std.FileSystemError = ErrorClass.make( "FileSystemError" )
+    std.HTTPClientError = ErrorClass.make( "HTTPClientError" )
+    std.RuntimeError = ErrorClass.make( "RuntimeError" )
+    std.PackageError = ErrorClass.make( "PackageError" )
+    std.ModuleError = ErrorClass.make( "ModuleError" )
+    std.SourceError = ErrorClass.make( "SourceError" )
+    std.FutureError = ErrorClass.make( "FutureError" )
+    std.AddonError = ErrorClass.make( "AddonError" )
+    std.RangeError = ErrorClass.make( "RangeError" )
+    std.TypeError = ErrorClass.make( "TypeError" )
 
     ---@alias gpm.std.ErrorType
     ---| number # error with level
     ---| `-1` # ErrorNoHalt
     ---| `-2` # ErrorNoHaltWithStack
 
-    ---@class gpm.std.error
-    ---@overload fun(message: any, errorLevel: gpm.std.ErrorType?)
-    std.error = std.error or setmetatable( {
-        NotImplementedError = ErrorClass.make( "NotImplementedError" ),
-        FutureCancelError = ErrorClass.make( "FutureCancelError" ),
-        InvalidStateError = ErrorClass.make( "InvalidStateError" ),
-        CodeCompileError = ErrorClass.make( "CodeCompileError" ),
-        FileSystemError = ErrorClass.make( "FileSystemError" ),
-        WebClientError = ErrorClass.make( "WebClientError" ),
-        RuntimeError = ErrorClass.make( "RuntimeError" ),
-        PackageError = ErrorClass.make( "PackageError" ),
-        ModuleError = ErrorClass.make( "ModuleError" ),
-        SourceError = ErrorClass.make( "SourceError" ),
-        FutureError = ErrorClass.make( "FutureError" ),
-        AddonError = ErrorClass.make( "AddonError" ),
-        RangeError = ErrorClass.make( "RangeError" ),
-        TypeError = ErrorClass.make( "TypeError" ),
-        Error = ErrorClass
-    }, {
-        ---@param level gpm.std.ErrorType?
-        __call = function( self, message, level )
-            if not coroutine_running() then
-                message = tostring( message )
-            end
-
-            if level == -1 then
-                return ErrorNoHalt( message )
-            elseif level == -2 then
-                return ErrorNoHaltWithStack( message )
-            else
-                return error( message, level )
-            end
+    --- Throws a Lua error.
+    ---@param message any: The error message to throw.
+    ---@param level gpm.std.ErrorType?: The error level to throw.
+    function std.error( message, level )
+        -- async functions support
+        if not coroutine_running() then
+            message = tostring( message )
         end
-    } )
+
+        -- custom gmod errors: -1, -2
+        if level == -1 then
+            return ErrorNoHalt( message )
+        elseif level == -2 then
+            return ErrorNoHaltWithStack( message )
+        else
+            return error( message, level )
+        end
+    end
 
 end
 

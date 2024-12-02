@@ -89,15 +89,15 @@ end
 --- it will be called with these arguments:
 --- * ok: boolean - whether the function returned without errors
 --- * ... - return values of the function (or error message)
---- 
+---
 --- ## Example
 --- ```lua
 --- ---@async
 --- local function asyncFunction( a, b )
 ---     futures.sleep( 1 )
----     return 
+---     return
 --- end
---- 
+---
 --- futures.run( asyncFunction, function( ok, result )
 ---     if ok then
 ---         print( "result:", result ) -- result: 4
@@ -135,25 +135,25 @@ end
 
 --- Puts current coroutine to sleep until futures.wakeup is called
 --- can be used to wait for some event
---- 
+---
 --- ## Example
 --- ```lua
 --- ---@async
 --- local function request( url )
 ---     local co = futures.running()
---- 
+---
 ---     http.Fetch( url, function( body, size, headers, code )
 ---         futures.wakeup( co, body )
 ---     end)
---- 
+---
 ---     return futures.pending() -- this will return all arguments passed to futures.wakeup
 --- end
---- 
+---
 --- local function main()
 ---     local body = request( "https://example.com" )
 ---     print( body ) -- <!DOCTYPE html>...
 --- end
---- 
+---
 --- futures.run( main )
 --- ```
 ---@see gpm.std.futures.wakeup
@@ -173,10 +173,10 @@ end
 
 --- Cancels execution of passed coroutine
 --- CancelError will be thrown in coroutine
---- 
+---
 --- NB! pcall inside coroutine can catch this error
 --- so coroutine may not be cancelled because of pcall
---- 
+---
 --- ## Example
 --- ```lua
 --- ---@async
@@ -186,13 +186,13 @@ end
 ---        futures.sleep( 1 )
 ---     end
 --- end
---- 
+---
 --- local co = futures.run( work, function(ok, value )
 ---     -- because we cancelled coroutine
 ---     -- ok will be false
 ---     -- value will be CancelError
 --- end)
---- 
+---
 --- futures.cancel( co ) -- this will stop coroutine from executing
 --- ```
 ---@param co thread
@@ -333,7 +333,7 @@ function futures.anext( iterator, ... )
 end
 
 --- Iterates over async iterator, calling it with given arguments
---- 
+---
 --- ## Example
 --- ```lua
 --- ---@async
@@ -343,13 +343,13 @@ end
 ---         futures.yield( i )
 ---     end
 --- end
---- 
+---
 --- local function main()
 ---     for i in futures.apairs( count, 1, 5 ) do
 ---         print( i ) -- 1, 2, 3, 4, 5
 ---     end
 --- end
---- 
+---
 --- futures.run( main )
 --- ```
 ---@see gpm.std.futures.yield
@@ -404,25 +404,25 @@ do
     --- Futures are objects that hold the result that can be assigned asynchronously
     --- they can be awaited to get the result
     --- or add callback with :addCallback(...) method
-    --- 
+    ---
     --- ```lua
     --- local fut = futures.Future()
-    --- 
+    ---
     --- fut:addCallback( function( fut )
     ---     print( fut:result() ) -- "hello world"
     --- end )
-    --- 
+    ---
     --- fut:setResult( "hello world" )
-    --- 
+    ---
     --- -- or you can await it
-    --- 
+    ---
     --- ---@async
     --- local function main()
     ---     print( fut:await() ) -- "hello world"
     --- end
-    --- 
+    ---
     --- futures.run( main )
-    --- 
+    ---
     --- -- also you can set error or cancel it
     --- fut:setError( "something went wrong" )
     --- fut:cancel()
@@ -623,14 +623,14 @@ do
     ---@alias Task gpm.std.futures.Task
     --- Task is a Future wrapper around futures.run(...) to retrieve result of async function
     --- when task is created, it will immediately run given function
-    --- 
+    ---
     --- ## Example
     --- ```lua
     --- local function request( url )
     ---     -- asynchronous work....
     ---     return body
     --- end
-    --- 
+    ---
     --- local task = futures.Task( request, "https://example.com" )
     --- task:addCallback( function( task )
     ---     local body = task:result()
