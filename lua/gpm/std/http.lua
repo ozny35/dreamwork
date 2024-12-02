@@ -271,10 +271,4 @@ if std.MENU then
 
 end
 
----@class gpm.std.http.github
-http.github = include( "http.github.lua" )
-
----@class gpm.std.http.steam
-http.steam = include( "http.steam.lua" )
-
 return http

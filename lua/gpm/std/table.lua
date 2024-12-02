@@ -616,13 +616,16 @@ end
 --- Returns the length of the given table.
 ---@param tbl table The table.
 ---@return number
-function table.len( tbl )
+---@diagnostic disable-next-line: undefined-field
+table.len = glua_table.len or function( tbl )
     local metatable = getmetatable( tbl )
-    if metatable ~= nil then
-        local fn = metatable.__len
-        if is_function( fn ) then
-            return fn( tbl )
-        end
+    if metatable == nil then
+        return #tbl
+    end
+
+    local fn = rawget( metatable, "__len" )
+    if is_function( fn ) then
+        return fn( tbl )
     end
 
     return #tbl

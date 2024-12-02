@@ -186,7 +186,7 @@ function std.tonumber( value, base )
         return tonumber( value, base )
     end
 
-    local fn = metatable.__tonumber
+    local fn = rawget( metatable, "__tonumber" )
     if is_function( fn ) then
         return fn( value, base )
     end
@@ -203,12 +203,31 @@ function std.tobool( value )
         return false
     end
 
-    local fn = metatable.__tobool
+    local fn = rawget( metatable, "__tobool" )
     if is_function( fn ) then
         return fn( value )
     end
 
     return true
+end
+
+--- Returns an iterator `next` for a for loop that will return the values of the specified table in an arbitrary order.
+---@param tbl table: The table to iterate over.
+---@return function: The iterator function.
+---@return table: The table being iterated over.
+---@return any: The previous key in the table (by default `nil`).
+function std.pairs( tbl )
+    local metatable = getmetatable( tbl )
+    if metatable == nil then
+        return pairs( tbl )
+    end
+
+    local fn = rawget( metatable, "__pairs" )
+    if is_function( fn ) then
+        return fn( tbl )
+    end
+
+    return pairs( tbl )
 end
 
 -- coroutine library
@@ -694,7 +713,7 @@ do
     ---@alias Symbol gpm.std.Symbol
 
     local function __tostring( self )
-        return getmetatable( self ).__name
+        return rawget( getmetatable( self ), "__name" )
     end
 
     ---@param name string: The name of the symbol.
@@ -864,6 +883,39 @@ std.os = os
 -- table library
 local table = include( "std/table.lua" )
 std.table = table
+
+do
+
+    local index = 0
+
+    local function iterator( tbl )
+        index = index + 1
+
+        local value = tbl[ index ]
+        if value ~= nil then
+            return index, value
+        end
+    end
+
+    --- Returns a [Stateless Iterator](https://www.lua.org/pil/7.3.html) for a [Generic For Loops](https://www.lua.org/pil/4.3.5.html), to return ordered key-value pairs from a table.
+    ---
+    --- This will only iterate though <b>numerical keys</b>, and these must also be sequential; starting at 1 with no gaps.
+    ---
+    ---@param tbl table: The table to iterate over.
+    ---@return function: The iterator function.
+    ---@return table: The table being iterated over.
+    ---@return number: The origin index =0.
+    function std.ipairs( tbl )
+        local metatable = getmetatable( tbl )
+        if metatable == nil or rawget( metatable, "__index" ) == nil then
+            return ipairs( tbl )
+        else
+            index = 0
+            return iterator, tbl, index
+        end
+    end
+
+end
 
 ---@class gpm.std.string
 local string = include( "std/string.lua" )
@@ -1475,6 +1527,8 @@ std.timer = include( "std/timer.lua" )
 
 -- http client class
 std.http = include( "std/http.lua" )
+http.steam = include( "std/http.steam.lua" )
+http.github = include( "std/http.github.lua" )
 
 -- file library
 local file = include( "std/file.lua" )
@@ -1659,7 +1713,7 @@ do
             return 0
         end
 
-        local fn = metatable.__bitcount
+        local fn = rawget( metatable, "__bitcount" )
         if is_function( fn ) then
             return fn( value )
         end
