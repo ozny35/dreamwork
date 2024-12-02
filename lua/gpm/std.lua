@@ -439,34 +439,39 @@ do
 
         local glua_type = _G.type
 
+        --- Returns a string representing the name of the type of the passed object.
+        ---@param value any: The value to get the type of.
+        ---@return string: The type name of the given value.
         function type( value )
             local metatable = getmetatable( value )
             if metatable == nil then
                 return glua_type( value )
-            else
-                local cls = rawget( metatable, "__class" )
-                if cls == nil then
-                    return rawget( metatable, "__metatable_name" ) or rawget( metatable, "MetaName" ) or glua_type( value )
-                else
-                    return rawget( cls, "__name" ) or glua_type( value )
-                end
+            end
 
-                return glua_type( value )
+            local cls = rawget( metatable, "__class" )
+            if cls == nil then
+                return rawget( metatable, "__metatable_name" ) or rawget( metatable, "MetaName" ) or glua_type( value )
+            else
+                return rawget( cls, "__name" ) or glua_type( value )
             end
         end
 
         std.type = type
 
-        std.isinstance = function( any, a, b, ... )
+        --- Checks if the value is one of the types passed as arguments.
+        ---@param value any: The value to check.
+        ---@vararg string: The types to check.
+        ---@return boolean: `true` if the value is one of the types, `false` otherwise.
+        function std.isinstance( value, a, b, ... )
             if is_string( a ) then
                 if is_string( b ) then
                     a = { a, b, ... }
                 else
-                    return type( any ) == a
+                    return type( value ) == a
                 end
             end
 
-            local name = type( any )
+            local name = type( value )
 
             for i = 1, #a do
                 if name == a[ i ] then
@@ -481,17 +486,20 @@ do
             return indexes[ glua_type( value ) ] or -1
         end
 
-        std.TypeID = function( value )
+        --- Returns the type ID of the given value.
+        ---@param value any: The value to get the type ID of.
+        ---@return number: The type ID of the given value.
+        function std.TypeID( value )
             local metatable = getmetatable( value )
             if metatable == nil then
                 return glua_TypeID( value )
+            end
+
+            local id = rawget( metatable, "__metatable_id" )
+            if id == nil then
+                return glua_TypeID( value )
             else
-                local id = rawget( metatable, "__metatable_id" )
-                if id == nil then
-                    return glua_TypeID( value )
-                else
-                    return id
-                end
+                return id
             end
         end
 
@@ -735,6 +743,26 @@ std.bit = include( "std/bit.lua" )
 -- math library
 local math = include( "std/math.lua" )
 std.math = math
+
+do
+
+    local math_fdiv = math.fdiv
+
+    function math.fdiv( a, b )
+        local metatable = getmetatable( a )
+        if metatable == nil then
+            return math_fdiv( a, b )
+        end
+
+        local fn = rawget( metatable, "__idiv" )
+        if is_function( fn ) then
+            return fn( a, b )
+        else
+            return math_fdiv( a, b )
+        end
+    end
+
+end
 
 -- is library
 local is = include( "std/is.lua" )
@@ -1716,9 +1744,9 @@ do
         local fn = rawget( metatable, "__bitcount" )
         if is_function( fn ) then
             return fn( value )
+        else
+            return 0
         end
-
-        return 0
     end
 
     std.bitcount = bitcount
