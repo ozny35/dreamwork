@@ -330,7 +330,7 @@ end
 ---@param a number The dividend.
 ---@param b number The divisor.
 ---@return number
- function math.fdiv( a, b )
+function math.fdiv( a, b )
     return math_floor( a / b )
 end
 
