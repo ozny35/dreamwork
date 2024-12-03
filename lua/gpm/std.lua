@@ -938,6 +938,7 @@ do
         if metatable == nil or rawget( metatable, "__index" ) == nil then
             return ipairs( tbl )
         else
+            -- TODO: make here creation of iter function and remove old one
             index = 0
             return iterator, tbl, index
         end
