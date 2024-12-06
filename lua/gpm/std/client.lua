@@ -47,12 +47,14 @@ do
 
     local command_run = std.console.command.run
 
+    --- Disconnect game from server.
     function client.disconnect()
-        command_run( "disconnect" )
+        return command_run( "disconnect" )
     end
 
+    --- Retry connection to last server.
     function client.retry()
-        command_run( "retry" )
+        return command_run( "retry" )
     end
 
     --- Take a screenshot.
@@ -92,15 +94,39 @@ end
 
 do
 
-    local hook = std.hook
+    local width, height = _G.ScrW(), _G.ScrH()
 
-    hook.add( "OnScreenSizeChanged", gpm.PREFIX .. "::ScreenSize", function( old_width, old_height, width, height )
-        client.ScreenWidth, client.ScreenHeight = width, height
-        hook.run( "ScreenSizeChanged", width, height, old_width, old_height )
-    end, hook.PRE )
+    local screen = {
+        width = width,
+        height = height
+    }
+
+    do
+
+        local hook = std.hook
+
+        hook.add( "OnScreenSizeChanged", gpm.PREFIX .. "::ScreenSize", function( old_width, old_height, new_width, new_height )
+            width, height = new_width, new_height
+            screen.width, screen.height = new_width, new_height
+            hook.run( "ScreenSizeChanged", new_width, new_height, old_width, old_height )
+        end, hook.PRE )
+
+    end
+
+    --- Returns the width and height of the game's window (in pixels).
+    ---@return number: The width of the game's window (in pixels).
+    ---@return number: The height of the game's window (in pixels).
+    function screen.getResolution()
+        return width, height
+    end
+
+    -- https://music.youtube.com/watch?v=78PjJ1soEZk (01:00)
+    if std.CLIENT then
+        screen.shake = _G.util.ScreenShake
+    end
+
+    client.screen = screen
 
 end
-
-client.ScreenWidth, client.ScreenHeight = _G.ScrW(), _G.ScrH()
 
 return client

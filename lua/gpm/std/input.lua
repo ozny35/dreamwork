@@ -13,6 +13,7 @@ do
     ---@clas gpm.std.input.cursor
     local cursor = {
         isVisible = _G.vgui.CursorVisible,
+        setVisible = glua_gui.EnableScreenClicker,
         getPosition = glua_input.GetCursorPos,
         setPosition = glua_input.SetCursorPos
     }
