@@ -35,6 +35,10 @@
 
     https://wiki.facepunch.com/gmod/util.IsSphereIntersectingSphere
 
+
+    https://wiki.facepunch.com/gmod/gui.ScreenToVector
+    https://wiki.facepunch.com/gmod/Vector:ToScreen
+
 ]]
 
 local _G = _G

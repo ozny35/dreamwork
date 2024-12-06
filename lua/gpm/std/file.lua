@@ -219,7 +219,7 @@ do
         ---@param relativePath string:
         ---@return true | false
         ---@return table: The list of mounted files.
-        function file.MountGMA( relativePath )
+        function file.mountGMA( relativePath )
             local success, mounted_files = game_MountGMA( string_sub( path_resolve( relativePath ), 2 ) )
             if success then
                 local fileCount = #mounted_files
@@ -247,7 +247,7 @@ do
     end
 end
 
-function file.Exists( filePath, gamePath, skipNormalize )
+function file.exists( filePath, gamePath, skipNormalize )
     if not skipNormalize then
         filePath, gamePath = normalizeGamePath( filePath, gamePath )
     end
@@ -318,7 +318,7 @@ do
     ---@param gamePath gpm.std.GamePath?:
     ---@param skipNormalize boolean?:
     ---@return number: Seconds passed since Unix epoch, or 0 if the file is not found.
-    function file.Time( filePath, gamePath, skipNormalize )
+    function file.time( filePath, gamePath, skipNormalize )
         if not skipNormalize then
             filePath, gamePath = normalizeGamePath( filePath, gamePath )
         end
@@ -344,7 +344,7 @@ do
     ---@param filePath string: The file or folder path.
     ---@param gamePath gpm.std.GamePath?: The path to look for the files and directories in.
     ---@return string: The addon name.
-    function file.whereIs( filePath, gamePath, skipNormalize )
+    function file.whereis( filePath, gamePath, skipNormalize )
         if not skipNormalize then
             filePath, gamePath = absoluteGamePath( normalizeGamePath( filePath, gamePath ) )
         end

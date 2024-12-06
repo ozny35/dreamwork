@@ -83,6 +83,8 @@ do
     end
 
     if std.CLIENT then
+        --- Connect to a server.
+        ---@param address string: The address of the server.
         function client.connect( address )
             command_run( "connect", address )
         end
