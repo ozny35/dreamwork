@@ -912,38 +912,27 @@ std.os = os
 local table = include( "std/table.lua" )
 std.table = table
 
-do
-
-    local index = 0
-
-    local function iterator( tbl )
-        index = index + 1
-
-        local value = tbl[ index ]
-        if value ~= nil then
+--- Returns a [Stateless Iterator](https://www.lua.org/pil/7.3.html) for a [Generic For Loops](https://www.lua.org/pil/4.3.5.html), to return ordered key-value pairs from a table.
+---
+--- This will only iterate though <b>numerical keys</b>, and these must also be sequential; starting at 1 with no gaps.
+---
+---@param tbl table: The table to iterate over.
+---@return function: The iterator function.
+---@return table: The table being iterated over.
+---@return number: The origin index =0.
+function std.ipairs( tbl )
+    local metatable = getmetatable( tbl )
+    if metatable == nil or rawget( metatable, "__index" ) == nil then
+        return ipairs( tbl )
+    else
+        local index = 0
+        return function()
+            index = index + 1
+            local value = tbl[ index ]
+            if value == nil then return end
             return index, value
-        end
+        end, tbl, index
     end
-
-    --- Returns a [Stateless Iterator](https://www.lua.org/pil/7.3.html) for a [Generic For Loops](https://www.lua.org/pil/4.3.5.html), to return ordered key-value pairs from a table.
-    ---
-    --- This will only iterate though <b>numerical keys</b>, and these must also be sequential; starting at 1 with no gaps.
-    ---
-    ---@param tbl table: The table to iterate over.
-    ---@return function: The iterator function.
-    ---@return table: The table being iterated over.
-    ---@return number: The origin index =0.
-    function std.ipairs( tbl )
-        local metatable = getmetatable( tbl )
-        if metatable == nil or rawget( metatable, "__index" ) == nil then
-            return ipairs( tbl )
-        else
-            -- TODO: make here creation of iter function and remove old one
-            index = 0
-            return iterator, tbl, index
-        end
-    end
-
 end
 
 ---@class gpm.std.string
