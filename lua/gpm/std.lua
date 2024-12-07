@@ -34,6 +34,8 @@ end
 -- TODO: put https://wiki.facepunch.com/gmod/util.ScreenShake somewhere
 -- TODO: put https://wiki.facepunch.com/gmod/Global.AddonMaterial somewhere
 
+-- TODO: NetTable class
+
 -- TODO: Write "VideoRecorder" class ( https://wiki.facepunch.com/gmod/video.Record )
 
 -- client-side files
