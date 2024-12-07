@@ -2,6 +2,7 @@ local _G = _G
 local std = _G.gpm.std
 local glua_os, glua_system = _G.os, _G.system
 local glua_os_time, glua_os_date = glua_os.time, glua_os.date
+local glua_system_BatteryPower = glua_system.BatteryPower
 
 ---@class gpm.std.os
 local os = {
@@ -13,13 +14,28 @@ local os = {
     difftime = glua_os.difftime,
     uptime = glua_system.UpTime,
     appTime = glua_system.AppTime,
-    hasFocus = glua_system.HasFocus,
     country = glua_system.GetCountry,
     steamTime = glua_system.SteamTime,
-    battery = glua_system.BatteryPower,
-    flashWindow = glua_system.FlashWindow,
     setClipboardText = _G.SetClipboardText
 }
+
+do
+
+    local math_min = std.math.min
+
+    --- Returns the current battery level.
+    ---@return number: The battery level, between 0 and 100.
+    function os.getBatteryLevel()
+        return math_min( 100, glua_system_BatteryPower() )
+    end
+
+end
+
+--- Checks if the system has a battery.
+---@return boolean: `true` if the system has a battery, `false` if not.
+function os.hasBattery()
+    return glua_system_BatteryPower() ~= 255
+end
 
 if std.MENU then
     os.openFolder = _G.OpenFolder

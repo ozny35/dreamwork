@@ -1,6 +1,6 @@
 local _G = _G
 local std = _G.gpm.std
-local glua_input, glua_gui = _G.input, _G.gui
+local glua_input, glua_gui, glua_vgui = _G.input, _G.gui, _G.vgui
 
 ---@class gpm.std.input
 local input = {}
@@ -13,8 +13,9 @@ do
 
     ---@clas gpm.std.input.cursor
     local cursor = {
-        isVisible = _G.vgui.CursorVisible,
+        isVisible = glua_vgui.CursorVisible,
         setVisible = glua_gui.EnableScreenClicker or std.debug.fempty,
+        isHoveringWorld = glua_vgui.IsHoveringWorld,
         getPosition = glua_input.GetCursorPos,
         setPosition = glua_input.SetCursorPos
     }

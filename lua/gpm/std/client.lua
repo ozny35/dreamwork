@@ -8,8 +8,6 @@ local tonumber = std.tonumber
 local glua_render = _G.render
 
 ---@class gpm.std.client
----@field ScreenWidth number: The width of the game's window (in pixels).
----@field ScreenHeight number: The height of the game's window (in pixels).
 local client = {
     openURL = _G.gui.OpenURL,
     getDXLevel = glua_render.GetDXLevel,
@@ -18,8 +16,9 @@ local client = {
     isSupportsPixelShaders20 = glua_render.SupportsPixelShaders_2_0,
     isSupportsVertexShaders20 = glua_render.SupportsVertexShaders_2_0
 }
-
 if std.CLIENT then
+    -- https://music.youtube.com/watch?v=78PjJ1soEZk (01:00)
+    client.screenShake = _G.util.ScreenShake
     client.getViewEntity = _G.GetViewEntity
     client.getEyeVector = _G.EyeVector
     client.getEyeAngles = _G.EyeAngles
@@ -40,7 +39,6 @@ else
     --- NOTE: It always returns `false` on the client.
     ---@return boolean: `true` if connecting, `false` if not.
     function client.isConnecting() return false end
-
 end
 
 do
@@ -94,41 +92,7 @@ do
 
 end
 
-do
-
-    local width, height = _G.ScrW(), _G.ScrH()
-
-    local screen = {
-        width = width,
-        height = height
-    }
-
-    do
-
-        local hook = std.hook
-
-        hook.add( "OnScreenSizeChanged", gpm.PREFIX .. "::ScreenSize", function( old_width, old_height, new_width, new_height )
-            width, height = new_width, new_height
-            screen.width, screen.height = new_width, new_height
-            hook.run( "ScreenSizeChanged", new_width, new_height, old_width, old_height )
-        end, hook.PRE )
-
-    end
-
-    --- Returns the width and height of the game's window (in pixels).
-    ---@return number: The width of the game's window (in pixels).
-    ---@return number: The height of the game's window (in pixels).
-    function screen.getResolution()
-        return width, height
-    end
-
-    -- https://music.youtube.com/watch?v=78PjJ1soEZk (01:00)
-    if std.CLIENT then
-        screen.shake = _G.util.ScreenShake
-    end
-
-    client.screen = screen
-
-end
+---@class gpm.std.client.window
+client.window = include( "client.window.lua" )
 
 return client
