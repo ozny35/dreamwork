@@ -169,12 +169,12 @@ end
 if std.MENU then
 
     local glua_serverlist = _G.serverlist
+    local timer_Simple = _G.timer.Simple
     local Future = std.Future
 
     do
 
         local serverlist_PingServer = glua_serverlist.PingServer
-        local timer_Simple = _G.timer.Simple
 
         --- [MENU] Queries a server for its information/ping.
         ---@param address string: The address of the server. ( IP:Port like `127.0.0.1:27015` )
@@ -216,6 +216,56 @@ if std.MENU then
             return f:await()
         end
 
+    end
+
+    do
+
+        local serverlist_PlayerList = glua_serverlist.PlayerList
+
+        --- [MENU] Queries a server for it's player list.
+        ---@param address string: The address of the server. ( IP:Port like `127.0.0.1:27015` )
+        ---@async
+        function server.getPlayers( address )
+            local f = Future()
+
+            local finished = false
+            serverlist_PlayerList( address, function( data )
+                finished = true
+                f:setResult( data )
+            end )
+
+            timer_Simple( 30, function()
+                if finished then return end
+                f:setError( "timed out" )
+            end )
+
+            return f:await()
+        end
+
+    end
+
+    --- [MENU] Queries the master server for server list.
+    ---@param data ServerQueryData: The query data to send to the master server.
+    function server.getAll( data )
+        data.GameDir = data.directory
+        data.directory = nil
+
+        data.Type = data.type
+        data.type = nil
+
+        data.AppID = data.appid
+        data.appid = nil
+
+        data.Callback = data.server_queried
+        data.server_queried = nil
+
+        data.CallbackFailed = data.query_failed
+        data.query_failed = nil
+
+        data.Finished = data.finished
+        data.finished = nil
+
+        glua_serverlist.Query( data )
     end
 
     server.isInBlacklist = _G.IsServerBlacklisted

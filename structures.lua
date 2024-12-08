@@ -143,3 +143,52 @@ ServerInfo.gamemode_wsid = nil
 --- The [category](https://wiki.facepunch.com/gmod/Gamemode_Creation#gamemodetextfile) of the gamemode, ex. `pvp`, `pve`, `rp` or `roleplay`.
 ---@type string
 ServerInfo.gamemode_category = "other"
+
+--- Used for [serverlist.Query](https://wiki.facepunch.com/gmod/serverlist.Query).
+---@class ServerQueryData
+local ServerQueryData = {}
+
+--- The game directory to get the servers for
+---@type string
+ServerQueryData.directory = "garrysmod"
+
+--- Type of servers to retrieve. Valid values are `internet`, `favorite`, `history` and `lan`
+---@type string
+ServerQueryData.type = nil
+
+--- Steam application ID to get the servers for
+---@type number
+ServerQueryData.appid = 4000
+
+--- Called when a new server is found and queried.
+---
+--- Function argument(s):
+--- * number `ping` - Latency to the server.
+--- * string `name` - Name of the server
+--- * string `gamemode_title` - "Nice" gamemode name
+--- * string `map_name` - Current map
+--- * number `player_count` - Total player number ( bot + human )
+--- * number `player_limit` - Maximum reported amount of players
+--- * number `bot_count` - Amount of bots on the server
+--- * boolean `has_password` - Whether this server has password or not
+--- * number `last_played_time` - Time when you last played on this server, as UNIX timestamp or 0
+--- * string `address` - IP Address of the server
+--- * string `gamemode_name` - Gamemode folder name
+--- * number `gamemode_wsid` - Gamemode Steam Workshop ID
+--- * boolean `is_anonymous` - Is the server signed into an anonymous account?
+--- * string `version` - Version number, same format as jit.version_num
+--- * string `country` - Two digit country code, `us` if nil
+--- * string `gamemode_category` - Category of the gamemode, ex. `pvp`, `pve`, `rp` or `roleplay`
+---
+--- Function return value(s):
+--- * boolean `stop` - Return `false` to stop the query.
+---@type fun(ping: number, name: string, gamemode_title: string, map_name: string, player_count: number, player_limit: number, bot_count: number, has_password: boolean, last_played_time: number, address: string, gamemode_name: string, gamemode_wsid: number, is_anonymous: boolean, version: string, country: string, gamemode_category: string): boolean
+ServerQueryData.server_queried = nil
+
+--- Called if the query has failed, called with the servers IP Address
+---@type function
+ServerQueryData.query_failed = nil
+
+--- Called when the query is finished. No arguments
+---@type function
+ServerQueryData.finished = nil
