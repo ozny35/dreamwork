@@ -16,18 +16,28 @@ local hookMeta = {
 -- https://github.com/Srlion/Hook-Library?tab=readme-ov-file#priorities
 -- https://github.com/TeamUlysses/ulib/blob/master/lua/ulib/shared/hook.lua#L19
 local hook = {
+    --- This hook is guaranteed to be called under all circumstances, and cannot be interrupted by a return statement. You can rely on its consistent execution.
     ---@diagnostic disable-next-line: undefined-field
-    ["PRE"] = _G.PRE_HOOK or -2,
+    PRE = _G.PRE_HOOK or -2,
+
+    --- Consider a scenario where you have an admin mod that checks for "!menu". In this case, your hook might not be called before it.
     ---@diagnostic disable-next-line: undefined-field
-    ["PRE_RETURN"] = _G.PRE_HOOK_RETURN or -1,
+    PRE_RETURN = _G.PRE_HOOK_RETURN or -1,
+
+    --- This hook is called after the normal hook, but before the post hook.
     ---@diagnostic disable-next-line: undefined-field
-    ["NORMAL"] = _G.NORMAL_HOOK or 0,
+    NORMAL = _G.NORMAL_HOOK or 0,
+
+    -- This allows for the modification of results returned from preceding hooks!
     ---@diagnostic disable-next-line: undefined-field
-    ["POST_RETURN"] = _G.POST_HOOK_RETURN or 1,
+    POST_RETURN = _G.POST_HOOK_RETURN or 1,
+
+    --- This hook is guaranteed to be called under all circumstances, and cannot be interrupted by a return statement. You can rely on its consistent execution.
     ---@diagnostic disable-next-line: undefined-field
-    ["POST"] = _G.POST_HOOK or 2,
-    ["call"] = glua_hook.Call,
-    ["run"] = glua_hook.Run
+    POST = _G.POST_HOOK or 2,
+
+    call = glua_hook.Call,
+    run = glua_hook.Run
 }
 
 ---Add a hook to be called upon the given event occurring.

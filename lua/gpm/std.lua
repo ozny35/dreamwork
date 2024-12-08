@@ -1559,9 +1559,7 @@ if CLIENT_MENU then
     std.client = include( "std/client.lua" )
 end
 
-if SERVER_MENU then
-    std.server = include( "std/server.lua" )
-end
+std.server = include( "std/server.lua" )
 
 -- Version class
 std.Version = include( "std/version.lua" )

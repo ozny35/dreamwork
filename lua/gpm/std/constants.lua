@@ -1625,24 +1625,34 @@ end
 ---@class gpm.std
 ---@field BRANCH string: A variable containing a string indicating which (Beta) Branch of the game you are using.
 local constants = {
-    -- garry environment ( hell )
+    --- Garry's Mod default environment
     garrysmod = _G,
 
-    -- Lua version
+    --- A global variable (not a function) that holds a string containing the running Lua version.
     _VERSION = _G._VERSION,
 
-    -- game branch
+    --- A variable containing a string indicating which (Beta) Branch of the game you are using.
     BRANCH = _G.BRANCH or "unknown",
 
-    -- realms
+    --- `true` in the client state and `false` in other states.
     CLIENT = CLIENT,
+
+    --- `true` in the server state and `false` in other states.
     SERVER = SERVER,
+
+    --- `true` in the menu state and `false` in other states.
     MENU = MENU,
 
-    -- extra realms
+    --- `true` in the client/menu state and `false` in other states.
     CLIENT_MENU = CLIENT_MENU,
+
+    --- `true` in the client/server state and `false` in other states.
     SERVER_MENU = SERVER_MENU,
+
+    --- `true` in the client/server state and `false` in other states.
     CLIENT_SERVER = CLIENT_SERVER,
+
+    --- `true` in the client/server state and `false` in other states.
     SHARED = CLIENT_SERVER,
 
     -- https://wiki.facepunch.com/gmod/Enums/ACT

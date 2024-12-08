@@ -47,7 +47,7 @@ end
 ---@param new_width number: The width of the game window.
 ---@param new_height number: The height of the game window.
 function window.setSize( new_width, new_height )
-    return command_run( string_format( "mat_setvideomode %d %d %d", new_width, new_height, system_IsWindowed() and 1 or 0 ) )
+    command_run( string_format( "mat_setvideomode %d %d %d", new_width, new_height, system_IsWindowed() and 1 or 0 ) )
 end
 
 window.isWindowed = system_IsWindowed
@@ -61,7 +61,7 @@ end
 --- Sets the fullscreen state of the game window.
 ---@param value boolean: `true` to set the game window to fullscreen, `false` to set it to windowed.
 function window.setFullscreen( value )
-    return command_run( string_format( "mat_setvideomode %d %d %d", width, height, value == true and 0 or 1 ) )
+    command_run( string_format( "mat_setvideomode %d %d %d", width, height, value == true and 0 or 1 ) )
 end
 
 do
@@ -83,7 +83,7 @@ do
     --- Sets whether the game is running in VSync mode.
     ---@param value boolean: `true` to enable VSync, `false` to disable it.
     function window.setVSync( value )
-        return variable_setBool( "mat_vsync", value )
+        variable_setBool( "mat_vsync", value )
     end
 
 end

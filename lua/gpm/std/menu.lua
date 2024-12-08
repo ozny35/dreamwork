@@ -64,6 +64,9 @@ if std.MENU then
         cancel = _G.CancelLoading,
     }
 
+    -- TODO: Add getProgress
+    -- TODO: https://github.com/Pika-Software/atmosphere/blob/master/lua/menu/atmosphere/components/loading.lua
+
     menu.loading = loading
 
 end
@@ -233,13 +236,23 @@ do
             command.run( std.string.format( "mat_setvideomode %d %d %d", width, height, windowed and 1 or 0 ) )
         end
 
-    end
+        --[[
 
-    if std.MENU then
+            - gmod_unload_test: Unload materials and models on disconnect. Unstable. Use at your own risk.
+
+            - gmod_mcore_test
+
+            - gmod_delete_temp_files: Delete temporary files downloaded from servers such as sprays.
+
+            - fs_tellmeyoursecrets: Causes the Filesystem to print every action.
+
+        ]]
+
         --- Opens the options dialog.
         function options.open()
             RunGameUICommand( "OpenOptionsDialog" )
         end
+
     end
 
     menu.options = options

@@ -32,7 +32,7 @@ local lua_game_paths = {
     LUA = true
 }
 
----@alias gpm.std.GamePath
+---@alias gpm.std.FILE_GAME_PATH
 ---| string # The path to look for the files and directories in.
 ---| `"GAME"` # Structured like base folder (garrysmod/), searches all the mounted content (main folder, addons, mounted games, etc)
 ---| `"LUA"` # All Lua folders (lua/) including gamemodes and addons
@@ -86,9 +86,9 @@ do
 
     ---
     ---@param absolutePath string: The absolute file path.
-    ---@param gamePath gpm.std.GamePath?: The game path.
+    ---@param gamePath gpm.std.FILE_GAME_PATH?: The game path.
     ---@return string: The normalized file path.
-    ---@return gpm.std.GamePath: The game path.
+    ---@return gpm.std.FILE_GAME_PATH: The game path.
     function normalizeGamePath( absolutePath, gamePath )
         -- if not gamePath and isurl( absolutePath ) then
         --     if absolutePath.scheme ~= "file" then
@@ -147,7 +147,7 @@ do
 
     ---
     ---@param filePath string:
-    ---@param gamePath gpm.std.GamePath?:
+    ---@param gamePath gpm.std.FILE_GAME_PATH?:
     ---@return string: The absolute file path.
     function absoluteGamePath( filePath, gamePath )
         if gamePath then
@@ -287,7 +287,7 @@ file.isFile = isFile
 
 ---
 ---@param filePath string:
----@param gamePath gpm.std.GamePath?:
+---@param gamePath gpm.std.FILE_GAME_PATH?:
 ---@param sorting string?:
 ---@param skipNormalize boolean?:
 ---@return table files:
@@ -315,7 +315,7 @@ do
 
     ---
     ---@param filePath string: The file or folder path.
-    ---@param gamePath gpm.std.GamePath?:
+    ---@param gamePath gpm.std.FILE_GAME_PATH?:
     ---@param skipNormalize boolean?:
     ---@return number: Seconds passed since Unix epoch, or 0 if the file is not found.
     function file.time( filePath, gamePath, skipNormalize )
@@ -342,7 +342,7 @@ do
 
     --- TODO
     ---@param filePath string: The file or folder path.
-    ---@param gamePath gpm.std.GamePath?: The path to look for the files and directories in.
+    ---@param gamePath gpm.std.FILE_GAME_PATH?: The path to look for the files and directories in.
     ---@return string: The addon name.
     function file.whereis( filePath, gamePath, skipNormalize )
         if not skipNormalize then

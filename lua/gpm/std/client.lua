@@ -16,14 +16,41 @@ local client = {
     isSupportsPixelShaders20 = glua_render.SupportsPixelShaders_2_0,
     isSupportsVertexShaders20 = glua_render.SupportsVertexShaders_2_0
 }
+
 if std.CLIENT then
+    local LocalPlayer = _G.LocalPlayer
+    client.getEntity = LocalPlayer
+
     -- https://music.youtube.com/watch?v=78PjJ1soEZk (01:00)
     client.screenShake = _G.util.ScreenShake
     client.getViewEntity = _G.GetViewEntity
     client.getEyeVector = _G.EyeVector
     client.getEyeAngles = _G.EyeAngles
     client.getEyePosition = _G.EyePos
-    client.getEntity = _G.LocalPlayer
+
+    do
+
+        local voice_chat_state = false
+        local hook = std.hook
+
+        hook.add( "PlayerStartVoice", "client.getVoiceChat", function( ply )
+            if ply ~= LocalPlayer() then return end
+            voice_chat_state = true
+        end, hook.PRE )
+
+        hook.add( "PlayerEndVoice", "client.getVoiceChat", function( ply )
+            if ply ~= LocalPlayer() then return end
+            voice_chat_state = true
+        end, hook.PRE )
+
+        function client.getVoiceChat()
+            return voice_chat_state
+        end
+
+    end
+
+    client.setVoiceChat = _G.permissions.EnableVoiceChat
+
 end
 
 if std.MENU then
@@ -47,12 +74,12 @@ do
 
     --- Disconnect game from server.
     function client.disconnect()
-        return command_run( "disconnect" )
+        command_run( "disconnect" )
     end
 
     --- Retry connection to last server.
     function client.retry()
-        return command_run( "retry" )
+        command_run( "retry" )
     end
 
     --- Take a screenshot.
@@ -81,13 +108,11 @@ do
     end
 
     if std.CLIENT then
-        --- Connect to a server.
-        ---@param address string: The address of the server.
-        function client.connect( address )
-            command_run( "connect", address )
-        end
+        --- [CLIENT AND MENU] Connects client to the specified server.
+        ---@param address string?: The address of the server. ( IP:Port like `127.0.0.1:27015` )
+        client.connect = _G.permissions.AskToConnect or function( address ) command_run( "connect", address ) end
     else
-        client.connect = _G.JoinServer
+        client.connect = _G.JoinServer or _G.permissions.Connect
     end
 
 end
