@@ -8,7 +8,8 @@ do
 end
 
 local std = _G.gpm.std
-local select, pairs, getmetatable, setmetatable, rawget, next = std.select, std.pairs, std.getmetatable, std.setmetatable, std.rawget, std.next
+local select, pairs, setmetatable, rawget, next = std.select, std.pairs, std.setmetatable, std.rawget, std.next
+local debug_getmetatable = std.debug.getmetatable
 
 local math_random, math_fdiv
 do
@@ -38,7 +39,7 @@ local function copy( source, isSequential, deepCopy, copyKeys, copies )
         result = {}
 
         if deepCopy then
-            setmetatable( result, getmetatable( source ) )
+            setmetatable( result, debug_getmetatable( source ) )
         end
 
         copies[ source ] = result
@@ -97,7 +98,7 @@ local function equal( a, b )
             return false
         end
 
-        if not ( getmetatable( value ) or getmetatable( alt ) ) and is_table( value ) and is_table( alt ) then
+        if not ( debug_getmetatable( value ) or debug_getmetatable( alt ) ) and is_table( value ) and is_table( alt ) then
             return equal( value, alt )
         end
 
@@ -112,7 +113,7 @@ local function equal( a, b )
             return false
         end
 
-        if not ( getmetatable( value ) or getmetatable( alt ) ) and is_table( value ) and is_table( alt ) then
+        if not ( debug_getmetatable( value ) or debug_getmetatable( alt ) ) and is_table( value ) and is_table( alt ) then
             return equal( value, alt )
         end
 
@@ -140,7 +141,7 @@ local function diffKeys( a, b, result, length )
             result[ length ] = key
         end
 
-        if not ( getmetatable( value ) or getmetatable( alt ) ) and is_table( value ) and is_table( alt ) then
+        if not ( debug_getmetatable( value ) or debug_getmetatable( alt ) ) and is_table( value ) and is_table( alt ) then
             result, length = diffKeys( value, alt, result, length )
         end
 
@@ -157,7 +158,7 @@ local function diffKeys( a, b, result, length )
             result[ length ] = key
         end
 
-        if not ( getmetatable( value ) or getmetatable( alt ) ) and is_table( value ) and is_table( alt ) then
+        if not ( debug_getmetatable( value ) or debug_getmetatable( alt ) ) and is_table( value ) and is_table( alt ) then
             result, length = diffKeys( value, alt, result, length )
         end
 
@@ -183,7 +184,7 @@ local function diff( a, b )
             result[ key ] = { value, alt }
         end
 
-        if not ( getmetatable( value ) or getmetatable( alt ) ) and is_table( value ) and is_table( alt ) then
+        if not ( debug_getmetatable( value ) or debug_getmetatable( alt ) ) and is_table( value ) and is_table( alt ) then
             result[ key ] = diff( value, alt )
         end
 
@@ -199,7 +200,7 @@ local function diff( a, b )
                 result[ key ] = { value, alt }
             end
 
-            if not ( getmetatable( value ) or getmetatable( alt ) ) and is_table( value ) and is_table( alt ) then
+            if not ( debug_getmetatable( value ) or debug_getmetatable( alt ) ) and is_table( value ) and is_table( alt ) then
                 result[ key ] = diff( value, alt )
             end
 
@@ -613,22 +614,28 @@ function table.reverse( tbl, noCopy )
     end
 end
 
---- Returns the length of the given table.
----@param tbl table The table.
----@return number
----@diagnostic disable-next-line: undefined-field
-table.len = glua_table.len or function( tbl )
-    local metatable = getmetatable( tbl )
-    if metatable == nil then
+do
+
+    local getmetatable = std.getmetatable
+
+    --- Returns the length of the given table.
+    ---@param tbl table The table.
+    ---@return number
+    ---@diagnostic disable-next-line: undefined-field
+    table.len = glua_table.len or function( tbl )
+        local metatable = getmetatable( tbl )
+        if metatable == nil then
+            return #tbl
+        end
+
+        local fn = rawget( metatable, "__len" )
+        if is_function( fn ) then
+            return fn( tbl )
+        end
+
         return #tbl
     end
 
-    local fn = rawget( metatable, "__len" )
-    if is_function( fn ) then
-        return fn( tbl )
-    end
-
-    return #tbl
 end
 
 return table

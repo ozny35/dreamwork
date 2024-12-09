@@ -10,7 +10,7 @@ local HTTPRequest = {}
 --- * DELETE
 --- * PATCH
 --- * OPTIONS
----@type string
+---@type string?
 HTTPRequest.method = nil
 
 --- The target url
@@ -21,35 +21,35 @@ HTTPRequest.url = nil
 --- * GET
 --- * POST
 --- * HEAD
----@type table
+---@type table?
 HTTPRequest.parameters = nil
 
 --- KeyValue table for headers
----@type table
+---@type table?
 HTTPRequest.headers = nil
 
 --- Body string for POST data. If set, will override parameters
----@type string
+---@type string?
 HTTPRequest.body = nil
 
 --- Content type for body.
----@type string
+---@type string?
 HTTPRequest.type = "text/plain; charset=utf-8"
 
 --- The timeout for the connection.
----@type number
+---@type number?
 HTTPRequest.timeout = 60
 
 --- Whether to cache the response.
----@type boolean
+---@type boolean?
 HTTPRequest.cache = false
 
 --- The cache lifetime for the request.
----@type number
+---@type number?
 HTTPRequest.lifetime = nil
 
 --- Whether to use ETag caching.
----@type boolean
+---@type boolean?
 HTTPRequest.etag = false
 
 --- The success callback.

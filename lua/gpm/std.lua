@@ -17,7 +17,7 @@ else
     end
 end
 
-local CLIENT, SERVER, MENU, CLIENT_MENU, CLIENT_SERVER, SERVER_MENU = std.CLIENT, std.SERVER, std.MENU, std.CLIENT_MENU, std.CLIENT_SERVER, std.SERVER_MENU
+local CLIENT, SERVER, MENU, CLIENT_MENU, CLIENT_SERVER = std.CLIENT, std.SERVER, std.MENU, std.CLIENT_MENU, std.CLIENT_SERVER
 
 -- ULib support ( There are no words to describe how much I hate Ulysses Team )
 if CLIENT_SERVER and _G.file.Exists( "ulib/shared/hook.lua", "LUA" ) then
@@ -263,6 +263,7 @@ std.jit = glua_jit
 local debug = include( "std/debug.lua" )
 std.debug = debug
 
+local debug_getmetatable = debug.getmetatable
 local argument, class, findMetatable
 do
 
@@ -445,7 +446,7 @@ do
         ---@param value any: The value to get the type of.
         ---@return string: The type name of the given value.
         function type( value )
-            local metatable = getmetatable( value )
+            local metatable = debug_getmetatable( value )
             if metatable == nil then
                 return glua_type( value )
             end
@@ -492,7 +493,7 @@ do
         ---@param value any: The value to get the type ID of.
         ---@return number: The type ID of the given value.
         function std.TypeID( value )
-            local metatable = getmetatable( value )
+            local metatable = debug_getmetatable( value )
             if metatable == nil then
                 return glua_TypeID( value )
             end
@@ -731,7 +732,7 @@ do
     function std.Symbol( name )
         ---@class gpm.std.Symbol
         local obj = debug.newproxy( true )
-        local meta = getmetatable( obj )
+        local meta = debug_getmetatable( obj )
         meta.__name = "Symbol(\"" .. tostring( name ) .. "\")"
         meta.__tostring = __tostring
         return obj
