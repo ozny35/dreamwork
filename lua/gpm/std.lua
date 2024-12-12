@@ -630,9 +630,9 @@ do
     ---@param ... any: Arguments to pass to the constructor.
     ---@return Object | userdata: The initialized object.
     local function init( obj, base, ... )
-        local init_fn = rawget( base, "__init" )
-        if is_function( init_fn ) then
-            init_fn( obj, ... )
+        local fn = rawget( base, "__init" )
+        if is_function( fn ) then
+            fn( obj, ... )
         end
 
         return obj
@@ -645,18 +645,9 @@ do
     ---@vararg any: Arguments to pass to the constructor.
     ---@return Object | userdata: The new object.
     local function new( base, ... )
-        if base == nil then
-            error( "base is missing", 2 )
-        end
-
-        local cls = rawget( base, "__class" )
-        if cls == nil then
-            error( "base has no class", 2 )
-        end
-
-        local new_fn = rawget( cls, "__new" )
-        if is_function( new_fn ) then
-            local obj = new_fn( base, ... )
+        local fn = rawget( base, "__new" )
+        if is_function( fn ) then
+            local obj = fn( ... )
             if obj ~= nil then
                 return obj
             end
@@ -685,11 +676,6 @@ do
         local cls = {
             __base = base
         }
-
-        local parent = rawget( base, "__parent" )
-        if parent then
-            cls.__new = rawget( parent, "__new" )
-        end
 
         setmetatable( cls, {
             __index = base,
