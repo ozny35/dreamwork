@@ -2,11 +2,9 @@
 -- https://github.com/Pika-Software/gpm_legacy/blob/main/lua/gpm/sh_semver.lua
 
 local _G = _G
-local error = _G.error
-
 local std = _G.gpm.std
-local tonumber = std.tonumber
 local table_sort = std.table.sort
+local error, tonumber, rawget = std.error, std.tonumber, std.rawget
 
 local bit_band, bit_bor, bit_lshift, bit_rshift
 do
@@ -85,7 +83,7 @@ do
 end
 
 local function parsePreRelease( str )
-	if str == "" then return nil end
+	if str == nil or str == "" then return end
 
 	local pre_release = string_match( str, "^-(%w[%.%w-]*)$" )
 	if not pre_release or string_match( pre_release, "%.%." ) then
@@ -96,7 +94,7 @@ local function parsePreRelease( str )
 end
 
 local function parseBuild( str )
-	if str == "" then return nil end
+	if str == nil or str == "" then return end
 
 	local build = string_match( str, "^%+(%w[%.%w-]*)$" )
 	if not build or string_match( build, "%.%." ) then
@@ -112,7 +110,7 @@ do
 	local string_byte = string.byte
 
 	function parsePreReleaseAndBuild( str )
-		if not str or str == "" then return nil end
+		if str == nil or str == "" then return end
 
 		local pre_release, build = string_match( str, "^(%-[^+]+)(%+.+)$" )
 		if pre_release == nil or build == nil then
@@ -218,41 +216,41 @@ end
 ---@field __class gpm.std.VersionClass
 local Version = std.class.base( "Version" )
 
-local names = {}
+Version.nextMajor = nextMajor
+Version.nextMinor = nextMinor
+Version.nextPatch = nextPatch
+
+function Version:toNumber()
+	local major = tonumber( self[ 1 ], 10 )
+	if major > 0x3ff then
+		error( "major version is too large (max 1023)", 2 )
+	end
+
+	local minor = tonumber( self[ 2 ], 10 )
+	if minor > 0x7ff then
+		error( "minor version is too large (max 2047)", 2 )
+	end
+
+	local patch = tonumber( self[ 3 ], 10 )
+	if patch > 0x7ff then
+		error( "patch version is too large (max 2047)", 2 )
+	end
+
+	return bit_bor( bit_lshift( patch, 21 ), bit_lshift( minor, 10 ), major )
+end
+
 local keys = {}
 
-local methods = {
-	nextMajor = nextMajor,
-	nextMinor = nextMinor,
-	nextPatch = nextPatch,
-	toNumber = function( self )
-		local major = tonumber( self[ 1 ], 10 )
-		if major > 0x3ff then
-			error( "major version is too large (max 1023)", 2 )
-		end
-
-		local minor = tonumber( self[ 2 ], 10 )
-		if minor > 0x7ff then
-			error( "minor version is too large (max 2047)", 2 )
-		end
-
-		local patch = tonumber( self[ 3 ], 10 )
-		if patch > 0x7ff then
-			error( "patch version is too large (max 2047)", 2 )
-		end
-
-		return bit_bor( bit_lshift( patch, 21 ), bit_lshift( minor, 10 ), major )
-	end
-}
-
-function methods:Unpack()
-	local values = keys[ self ]
+function Version:unpack()
+	local values = rawget( keys, self )
 	return values[ 1 ], values[ 2 ], values[ 3 ], values[ 4 ], values[ 5 ]
 end
 
 function Version:__index( key )
-	return keys[ self ][ key ] or methods[ key ]
+	return rawget( rawget( keys, self ), key ) or rawget( Version, key )
 end
+
+local names = {}
 
 function Version:__tostring()
 	return names[ self ] or "unknown"
@@ -397,7 +395,7 @@ do
 
 				-- Hyphen Ranges: X.Y.Z - A.B.C
 				-- https://docs.npmjs.com/cli/v6/using-npm/semver#hyphen-ranges-xyz---abc
-				if pos and string_sub( str, pos, pos + 2 ) == " - " then
+				if pos ~= nil and string_sub( str, pos, pos + 2 ) == " - " then
 					if not ( self % ( ">=" .. part ) ) then
 						return false
 					end
@@ -413,7 +411,7 @@ do
 					return false
 				end
 
-				if not pos then
+				if pos == nil then
 					return true
 				end
 
@@ -474,7 +472,6 @@ do
 	do
 
 		local string_lower = string.lower
-		local rawget = std.rawget
 
 		local key2key = {
 			major = 1,
@@ -486,7 +483,7 @@ do
 
 		keys_metatable = {
 			__index = function( tbl, key )
-				return rawget( tbl, key2key[ string_lower( key ) ] or -1 )
+				return rawget( tbl, rawget( key2key, string_lower( key ) ) or -1 )
 			end
 		}
 
@@ -521,7 +518,7 @@ end
 
 ---@class gpm.std.VersionClass: gpm.std.Version
 ---@field __base gpm.std.Version
----@overload fun( major: string | number, minor: number?, patch: number?, pre_release: string?, build: string? ): Version
+---@overload fun( major: string | number | Version, minor: number?, patch: number?, pre_release: string?, build: string? ): Version
 VersionClass = std.class.create( Version )
 VersionClass.parse = parse
 
