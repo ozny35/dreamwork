@@ -1755,48 +1755,115 @@ local constants = {
     -- https://developer.valvesoftware.com/wiki/Developer_Console_Control#The_FCVAR_flags
     -- https://wiki.facepunch.com/gmod/Enums/FCVAR
     FCVAR = {
-        -- The default, no flags at all
+        --- The default, no flags at all.
         NONE = 0,
 
-        -- ConVar Systems
+        --- If this is set, don't add to linked list, etc.
         UNREGISTERED = 1,
+
+        --- Hidden in released products.
+        ---
+        --- Flag is removed automatically if `ALLOW_DEVELOPMENT_CVARS` is defined.
         DEVELOPMENTONLY = 2,
+
+        --- Defined by the game DLL.
         GAMEDLL = 4,
+
+        --- Defined by the client DLL.
         CLIENTDLL = 8,
+
+        --- Doesn't appear in find or autocomplete.
+        ---
+        --- Like `DEVELOPMENTONLY`, but can't be compiled out.
         HIDDEN = 16,
 
-        -- ConVar only
+        --- It's a server cvar, but we don't send the data since it's a password, etc.
+        ---
+        --- Sends `1` if it's not bland/zero, `0` otherwise as value.
         PROTECTED = 32,
+
+        --- This cvar cannot be changed by clients connected to a multiplayer server.
         SPONLY = 64,
+
+        --- Save the cvar value into `client.vdf`.
         ARCHIVE = 128,
+
+        --- For server-side cvars, notifies all players with blue chat text when the value gets changed.
         NOTIFY = 256,
+
+        --- For clientside commands, sends the value to the server.
         USERINFO = 512,
+
+        --- In multiplayer, prevents this command/variable from being used unless the server has `sv_cheats` turned on.
+        ---
+        --- If a client connects to a server where cheats are disabled (which is the default), all client side console variables labeled as FCVAR_CHEAT are reverted to their default values and can't be changed as long as the client stays connected.
+        ---
+        --- Console commands marked as `CHEAT` can't be executed either.
+        ---
+        --- As a general rule of thumb, any client-side command that isn't specifically meant to be configured by users should be marked with this flag, as even the most harmless looking commands can sometimes be misused to cheat.
+        ---
+        --- For server-side only commands you can be more lenient, since these would have no effect when changed by connected clients anyway.
         CHEAT = 16384,
 
+        --- This cvar's string cannot contain unprintable characters ( e.g., used for player name etc ).
         PRINTABLEONLY = 1024,
+
+        --- If this is a `SERVER`, don't log changes to the log file / console if we are creating a log.
         UNLOGGED = 2048,
+
+        --- Tells the engine to never print this variable as a string.
+        ---
+        --- This is used for variables which may contain control characters.
         NEVER_AS_STRING = 4096,
 
+        --- When set on a console variable, all connected clients will be forced to match the server-side value.
+        ---
+        --- This should be used for shared code where it's important that both sides run the exact same path using the same data.
+        ---
+        --- (e.g. predicted movement/weapons, game rules)
         REPLICATED = 8192,
+
+        --- When starting to record a demo file, explicitly adds the value of this console variable to the recording to ensure a correct playback.
         DEMO = 65536,
+
+        --- Opposite of `DEMO`, ensures the cvar is not recorded in demos.
         DONTRECORD = 131072,
+
+        --- If set and this variable changes, it forces a material reload.
         RELOAD_MATERIALS = 1048576,
+
+        --- If set and this variable changes, it forces a texture reload.
         RELOAD_TEXTURES = 2097152,
 
+        --- Prevents this variable from being changed while the client is currently in a server, due to the possibility of exploitation of the command (e.g. `fps_max`).
         NOT_CONNECTED = 4194304,
+
+        --- Indicates this cvar is read from the material system thread.
         MATERIAL_SYSTEM_THREAD = 8388608,
+
+        --- Like `ARCHIVE`, but for Xbox 360. Needless to say, this is not particularly useful to most modders.
         ARCHIVE_XBOX = 16777216,
 
+        --- Used as a debugging tool necessary to check material system thread convars.
         ACCESSIBLE_FROM_THREADS = 33554432,
 
+        --- The server is allowed to execute this command on clients via `ClientCommand/NET_StringCmd/CBaseClientState::ProcessStringCmd`.
         SERVER_CAN_EXECUTE = 268435456,
+
+        --- If this is set, then the server is not allowed to query this cvar's value (via `IServerPluginHelpers::StartQueryCvarValue`).
         SERVER_CANNOT_QUERY = 536870912,
+
+        --- `IVEngineClient::ClientCmd` is allowed to execute this command.
         CLIENTCMD_CAN_EXECUTE = 1073741824,
 
+        --- Summary of `RELOAD_MATERIALS`, `RELOAD_TEXTURES` and `MATERIAL_SYSTEM_THREAD`.
         MATERIAL_THREAD_MASK = 11534336,
 
         -- Garry's Mod only
+        --- Set automatically on all cvars and console commands created by the `client` Lua state.
         LUA_CLIENT = 262144,
+
+        --- Set automatically on all cvars and console commands created by the `server` Lua state.
         LUA_SERVER = 524288
     },
 
