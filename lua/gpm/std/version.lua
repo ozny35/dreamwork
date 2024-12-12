@@ -87,12 +87,12 @@ end
 local function parsePreRelease( str )
 	if str == "" then return nil end
 
-	local preRelease = string_match( str, "^-(%w[%.%w-]*)$" )
-	if not preRelease or string_match( preRelease, "%.%." ) then
+	local pre_release = string_match( str, "^-(%w[%.%w-]*)$" )
+	if not pre_release or string_match( pre_release, "%.%." ) then
 		error( "the pre-release '" .. str .. "' is not valid" )
 	end
 
-	return preRelease
+	return pre_release
 end
 
 local function parseBuild( str )
@@ -114,11 +114,11 @@ do
 	function parsePreReleaseAndBuild( str )
 		if not str or str == "" then return nil end
 
-		local preRelease, build = string_match( str, "^(%-[^+]+)(%+.+)$" )
-		if preRelease == nil or build == nil then
+		local pre_release, build = string_match( str, "^(%-[^+]+)(%+.+)$" )
+		if pre_release == nil or build == nil then
 			local byte = string_byte( str, 1 )
 			if byte == 0x2D --[[ - ]] then
-				preRelease = parsePreRelease( str )
+				pre_release = parsePreRelease( str )
 			elseif byte == 0x2B --[[ + ]] then
 				build = parseBuild( str )
 			else
@@ -126,16 +126,16 @@ do
 			end
 		end
 
-		return preRelease, build
+		return pre_release, build
 	end
 
 end
 
-local function numbersToString( major, minor, patch, preRelease, build )
-	if preRelease and build then
-		return major .. "." .. minor .. "." .. patch .. "-" .. preRelease .. "+" .. build
-	elseif preRelease then
-		return major .. "." .. minor .. "." .. patch .. "-" .. preRelease
+local function numbersToString( major, minor, patch, pre_release, build )
+	if pre_release and build then
+		return major .. "." .. minor .. "." .. patch .. "-" .. pre_release .. "+" .. build
+	elseif pre_release then
+		return major .. "." .. minor .. "." .. patch .. "-" .. pre_release
 	elseif build then
 		return major .. "." .. minor .. "." .. patch .. "+" .. build
 	else
@@ -143,7 +143,7 @@ local function numbersToString( major, minor, patch, preRelease, build )
 	end
 end
 
-local function parse( major, minor, patch, preRelease, build )
+local function parse( major, minor, patch, pre_release, build )
 	if major == nil then
 		error( "at least one parameter is needed", 2 )
 	end
@@ -167,13 +167,13 @@ local function parse( major, minor, patch, preRelease, build )
 		end
 
 		if is_string( build ) then
-			if is_string( preRelease ) then
-				preRelease = parsePreRelease( preRelease )
+			if is_string( pre_release ) then
+				pre_release = parsePreRelease( pre_release )
 			end
 
 			build = parseBuild( build )
-		elseif is_number( preRelease ) then
-			preRelease, build = parsePreReleaseAndBuild( preRelease )
+		elseif is_number( pre_release ) then
+			pre_release, build = parsePreReleaseAndBuild( pre_release )
 		end
 	else
 		local extra
@@ -187,7 +187,7 @@ local function parse( major, minor, patch, preRelease, build )
 		if patch == "" then patch = "0" end
 
 		patch = tonumber( patch, 10 )
-		preRelease, build = parsePreReleaseAndBuild( extra )
+		pre_release, build = parsePreReleaseAndBuild( extra )
 	end
 
 	if major > 0x3ff or minor > 0x7ff or patch > 0x7ff then
@@ -196,28 +196,36 @@ local function parse( major, minor, patch, preRelease, build )
 		error( "version is too small (min 0.0.0)", 2 )
 	end
 
-	return major, minor, patch, preRelease, build
+	return major, minor, patch, pre_release, build
 end
 
-local new_version
+local VersionClass
 
 local function nextMajor( self )
-	return new_version( self[ 1 ] + 1, 0, 0 )
+	return VersionClass( self[ 1 ] + 1, 0, 0 )
 end
 
 local function nextMinor( self )
-	return new_version( self[ 1 ], self[ 2 ] + 1, 0 )
+	return VersionClass( self[ 1 ], self[ 2 ] + 1, 0 )
 end
 
 local function nextPatch( self )
-	return new_version( self[ 1 ], self[ 2 ], self[ 3 ] + 1 )
+	return VersionClass( self[ 1 ], self[ 2 ], self[ 3 ] + 1 )
 end
 
-local internal = {
-	NextMajor = nextMajor,
-	NextMinor = nextMinor,
-	NextPatch = nextPatch,
-	ToNumber = function( self )
+---@alias Version gpm.std.Version
+---@class gpm.std.Version: gpm.std.Object
+---@field __class gpm.std.VersionClass
+local Version = std.class.base( "Version" )
+
+local names = {}
+local keys = {}
+
+local methods = {
+	nextMajor = nextMajor,
+	nextMinor = nextMinor,
+	nextPatch = nextPatch,
+	toNumber = function( self )
 		local major = tonumber( self[ 1 ], 10 )
 		if major > 0x3ff then
 			error( "major version is too large (max 1023)", 2 )
@@ -237,231 +245,230 @@ local internal = {
 	end
 }
 
+function methods:Unpack()
+	local values = keys[ self ]
+	return values[ 1 ], values[ 2 ], values[ 3 ], values[ 4 ], values[ 5 ]
+end
+
+function Version:__index( key )
+	return keys[ self ][ key ] or methods[ key ]
+end
+
+function Version:__tostring()
+	return names[ self ] or "unknown"
+end
+
+function Version:__eq( other )
+	return names[ self ] == names[ other ]
+end
+
+function Version:__lt( other )
+	if self[ 1 ] ~= other[ 1 ] then
+		return self[ 1 ] < other[ 1 ]
+	elseif self[ 2 ] ~= other[ 2 ] then
+		return self[ 2 ] < other[ 2 ]
+	elseif self[ 3 ] ~= other[ 3 ] then
+		return self[ 3 ] < other[ 3 ]
+	else
+		return smallerPreRelease( self[ 4 ], other[ 4 ] )
+	end
+end
+
+function Version:__le( other )
+	return self == other or self < other
+end
+
+function Version:__pow( other )
+	if self[ 1 ] == 0 then
+		return self == other
+	else
+		return self[ 1 ] == other[ 1 ] and self[ 2 ] <= other[ 2 ]
+	end
+end
+
 do
 
-	local objects = {}
-	local names = {}
-	local keys = {}
+	local string_byteCount, string_trim = string.byteCount, string.trim
 
-	function internal:Unpack()
-		local values = keys[ self ]
-		return values[ 1 ], values[ 2 ], values[ 3 ], values[ 4 ], values[ 5 ]
-	end
+	local operators = {
+		-- primitive operators
+		-- https://docs.npmjs.com/cli/v6/using-npm/semver#ranges
+		["<"] = function( self, sv ) return self < sv end,
+		[">"] = function( self, sv, xrange )
+			if xrange > 0 then
+				if xrange == 1 then
+					sv = nextMinor( sv )
+				elseif xrange == 2 then
+					sv = nextMajor( sv )
+				end
 
-	local metatable = {
-		__index = function( object, key )
-			return keys[ object ][ key ] or internal[ key ]
-		end,
-		__tostring = function( object )
-			return names[ object ] or "unknown"
-		end,
-		__eq = function( self, other )
-			return names[ self ] == names[ other ]
-		end,
-		__lt = function( self, other )
-			if self[ 1 ] ~= other[ 1 ] then
-				return self[ 1 ] < other[ 1 ]
-			elseif self[ 2 ] ~= other[ 2 ] then
-				return self[ 2 ] < other[ 2 ]
-			elseif self[ 3 ] ~= other[ 3 ] then
-				return self[ 3 ] < other[ 3 ]
+				return self >= sv
 			else
-				return smallerPreRelease( self[ 4 ], other[ 4 ] )
+				return self > sv
 			end
 		end,
-		__le = function( self, other )
-			return self == other or self < other
-		end,
-		__pow = function( self, other )
-			if self[ 1 ] == 0 then
-				return self == other
+		["<="] = function( self, sv, xrange )
+			if xrange > 0 then
+				if xrange == 1 then
+					sv = nextMinor( sv )
+				elseif xrange == 2 then
+					sv = nextMajor( sv )
+				end
+
+				return self < sv
 			else
-				return self[ 1 ] == other[ 1 ] and self[ 2 ] <= other[ 2 ]
+				return self <= sv
+			end
+		end,
+		[">="] = function( self, sv ) return self >= sv end,
+		["="] = function( self, sv, xrange )
+			if xrange > 0 then
+				if self < sv then
+					return false
+				elseif xrange == 1 then
+					sv = nextMinor( sv )
+				elseif xrange == 2 then
+					sv = nextMajor( sv )
+				end
+
+				return self < sv
+			else
+				return self == sv
+			end
+		end,
+
+		-- Caret Ranges ^1.2.3 ^0.2.5 ^0.0.4
+		-- Allows changes that do not modify the left-most non-zero digit in the [major, minor, patch] tuple.
+		-- In other words, this allows patch and minor updates for versions 1.0.0 and above, patch updates for
+		-- versions 0.X >=0.1.0, and no updates for versions 0.0.X.
+		-- https://docs.npmjs.com/cli/v6/using-npm/semver#caret-ranges-123-025-004
+		["^"] = function( self, sv, xrange )
+			if sv[ 1 ] == 0 and xrange < 2 then
+				if sv[ 2 ] == 0 and xrange < 1 then
+					return self[ 1 ] == 0 and self[ 2 ] == 0 and self >= sv and self < nextPatch( sv )
+				else
+					return self[ 1 ] == 0 and self >= sv and self < nextMinor( sv )
+				end
+			else
+				return self[ 1 ] == sv[ 1 ] and self >= sv and self < nextMajor( sv )
+			end
+		end,
+
+		-- Tilde Ranges ~1.2.3 ~1.2 ~1
+		-- Allows patch-level changes if a minor version is specified on the comparator. Allows minor-level changes if not.
+		-- https://docs.npmjs.com/cli/v6/using-npm/semver#tilde-ranges-123-12-1
+		["~"] = function( self, sv, xrange )
+			if self < sv then
+				return false
+			elseif xrange == 2 then
+				return self < nextMajor( sv )
+			else
+				return self < nextMinor( sv )
 			end
 		end
 	}
 
-	do
+	function Version:__mod( str )
+		-- spaces clean up
+		str = string_trim( string_gsub( str, "%s+", " " ), "%s", 0 )
 
-		local string_byteCount, string_trim = string.byteCount, string.trim
-
-		local operators = {
-			-- primitive operators
-			-- https://docs.npmjs.com/cli/v6/using-npm/semver#ranges
-			["<"] = function( self, sv ) return self < sv end,
-			[">"] = function( self, sv, xrange )
-				if xrange > 0 then
-					if xrange == 1 then
-						sv = nextMinor( sv )
-					elseif xrange == 2 then
-						sv = nextMajor( sv )
-					end
-
-					return self >= sv
-				else
-					return self > sv
-				end
-			end,
-			["<="] = function( self, sv, xrange )
-				if xrange > 0 then
-					if xrange == 1 then
-						sv = nextMinor( sv )
-					elseif xrange == 2 then
-						sv = nextMajor( sv )
-					end
-
-					return self < sv
-				else
-					return self <= sv
-				end
-			end,
-			[">="] = function( self, sv ) return self >= sv end,
-			["="] = function( self, sv, xrange )
-				if xrange > 0 then
-					if self < sv then
-						return false
-					elseif xrange == 1 then
-						sv = nextMinor( sv )
-					elseif xrange == 2 then
-						sv = nextMajor( sv )
-					end
-
-					return self < sv
-				else
-					return self == sv
-				end
-			end,
-
-			-- Caret Ranges ^1.2.3 ^0.2.5 ^0.0.4
-			-- Allows changes that do not modify the left-most non-zero digit in the [major, minor, patch] tuple.
-			-- In other words, this allows patch and minor updates for versions 1.0.0 and above, patch updates for
-			-- versions 0.X >=0.1.0, and no updates for versions 0.0.X.
-			-- https://docs.npmjs.com/cli/v6/using-npm/semver#caret-ranges-123-025-004
-			["^"] = function( self, sv, xrange )
-				if sv[ 1 ] == 0 and xrange < 2 then
-					if sv[ 2 ] == 0 and xrange < 1 then
-						return self[ 1 ] == 0 and self[ 2 ] == 0 and self >= sv and self < nextPatch( sv )
-					else
-						return self[ 1 ] == 0 and self >= sv and self < nextMinor( sv )
-					end
-				else
-					return self[ 1 ] == sv[ 1 ] and self >= sv and self < nextMajor( sv )
-				end
-			end,
-
-			-- Tilde Ranges ~1.2.3 ~1.2 ~1
-			-- Allows patch-level changes if a minor version is specified on the comparator. Allows minor-level changes if not.
-			-- https://docs.npmjs.com/cli/v6/using-npm/semver#tilde-ranges-123-12-1
-			["~"] = function( self, sv, xrange )
-				if self < sv then
+		-- version range := comparator sets
+		if string_find( str, "||", 1, true ) then
+			local pointer = 1
+			while true do
+				local position = string_find( str, "||", pointer, true )
+				if self % string_sub( str, pointer, position and ( position - 1 ) ) then
+					return true
+				elseif position == nil then
 					return false
-				elseif xrange == 2 then
-					return self < nextMajor( sv )
 				else
-					return self < nextMinor( sv )
+					pointer = position + 2
 				end
-			end
-		}
-
-		function metatable:__mod( str )
-			-- spaces clean up
-			str = string_trim( string_gsub( str, "%s+", " " ), "%s", 0 )
-
-			-- version range := comparator sets
-			if string_find( str, "||", 1, true ) then
-				local pointer = 1
-				while true do
-					local position = string_find( str, "||", pointer, true )
-					if self % string_sub( str, pointer, position and ( position - 1 ) ) then
-						return true
-					elseif position == nil then
-						return false
-					else
-						pointer = position + 2
-					end
-				end
-			end
-
-			-- comparator set := comparators
-			if string_find( str, " ", 1, true ) then
-				local pos, part
-				local start = 1
-				while true do
-					pos = string_find( str, " ", start, true )
-					part = string_sub( str, start, pos and ( pos - 1 ) )
-
-					-- Hyphen Ranges: X.Y.Z - A.B.C
-					-- https://docs.npmjs.com/cli/v6/using-npm/semver#hyphen-ranges-xyz---abc
-					if pos and string_sub( str, pos, pos + 2 ) == " - " then
-						if not ( self % ( ">=" .. part ) ) then
-							return false
-						end
-
-						start = pos + 3
-						pos = string_find( str, " ", start, true )
-						part = string_sub( str, start, pos and ( pos - 1 ) )
-
-						if not ( self % ( "<=" .. part ) ) then
-							return false
-						end
-					elseif not ( self % part ) then
-						return false
-					end
-
-					if not pos then
-						return true
-					end
-
-					start = pos + 1
-				end
-
-				return true
-			end
-
-			-- comparators := operator + version
-			str = string_gsub( string_gsub( str, "^=", "" ), "^v", "" )
-
-			-- X-Ranges *
-			-- Any of X, x, or * may be used to 'stand in' for one of the numeric values in the [major, minor, patch] tuple.
-			-- https://docs.npmjs.com/cli/v6/using-npm/semver#x-ranges-12x-1x-12-
-			if str == "" or str == "*" then
-				return self % ">=0.0.0"
-			end
-
-			local pos = string_find( str, "%d" )
-			if pos == nil then
-				error( "Version range must starts with number: " .. str, 2 )
-			end
-
-			-- X-Ranges 1.2.x 1.X 1.2.*
-			-- Any of X, x, or * may be used to 'stand in' for one of the numeric values in the [major, minor, patch] tuple.
-			-- https://docs.npmjs.com/cli/v6/using-npm/semver#x-ranges-12x-1x-12-
-			local operator
-			if pos == 1 then
-				operator = "="
-			else
-				operator = string_sub( str, 1, pos - 1 )
-			end
-
-			local version = string_gsub( string_sub( str, pos ), "%.[xX*]", "" )
-
-			local xrange = math_max( 2 - string_byteCount( version, 0x2E --[[ . ]] ), 0 )
-			for _ = 1, xrange do
-				version = version .. ".0"
-			end
-
-			local func = operators[ operator ]
-			if func == nil then
-				error( "Invaild operator: '" .. operator .. "'", 2 )
-			else
-				return func( self, new_version( version ), xrange )
 			end
 		end
 
+		-- comparator set := comparators
+		if string_find( str, " ", 1, true ) then
+			local pos, part
+			local start = 1
+			while true do
+				pos = string_find( str, " ", start, true )
+				part = string_sub( str, start, pos and ( pos - 1 ) )
+
+				-- Hyphen Ranges: X.Y.Z - A.B.C
+				-- https://docs.npmjs.com/cli/v6/using-npm/semver#hyphen-ranges-xyz---abc
+				if pos and string_sub( str, pos, pos + 2 ) == " - " then
+					if not ( self % ( ">=" .. part ) ) then
+						return false
+					end
+
+					start = pos + 3
+					pos = string_find( str, " ", start, true )
+					part = string_sub( str, start, pos and ( pos - 1 ) )
+
+					if not ( self % ( "<=" .. part ) ) then
+						return false
+					end
+				elseif not ( self % part ) then
+					return false
+				end
+
+				if not pos then
+					return true
+				end
+
+				start = pos + 1
+			end
+
+			return true
+		end
+
+		-- comparators := operator + version
+		str = string_gsub( string_gsub( str, "^=", "" ), "^v", "" )
+
+		-- X-Ranges *
+		-- Any of X, x, or * may be used to 'stand in' for one of the numeric values in the [major, minor, patch] tuple.
+		-- https://docs.npmjs.com/cli/v6/using-npm/semver#x-ranges-12x-1x-12-
+		if str == "" or str == "*" then
+			return self % ">=0.0.0"
+		end
+
+		local pos = string_find( str, "%d" )
+		if pos == nil then
+			error( "Version range must starts with number: " .. str, 2 )
+		end
+
+		-- X-Ranges 1.2.x 1.X 1.2.*
+		-- Any of X, x, or * may be used to 'stand in' for one of the numeric values in the [major, minor, patch] tuple.
+		-- https://docs.npmjs.com/cli/v6/using-npm/semver#x-ranges-12x-1x-12-
+		local operator
+		if pos == 1 then
+			operator = "="
+		else
+			operator = string_sub( str, 1, pos - 1 )
+		end
+
+		local name = string_gsub( string_sub( str, pos ), "%.[xX*]", "" )
+
+		local xrange = math_max( 2 - string_byteCount( name, 0x2E --[[ . ]] ), 0 )
+		for _ = 1, xrange do
+			name = name .. ".0"
+		end
+
+		local fn = operators[ operator ]
+		if fn == nil then
+			error( "Invaild operator: '" .. operator .. "'", 2 )
+		else
+			return fn( self, VersionClass( name ), xrange )
+		end
 	end
 
+end
+
+do
+
 	local debug_setmetatable = std.debug.setmetatable
-	local newproxy = std.debug.newproxy
+	local debug_newproxy = std.debug.newproxy
 
 	local keys_metatable
 	do
@@ -485,20 +492,25 @@ do
 
 	end
 
-	function new_version( major, minor, patch, preRelease, build )
-		major, minor, patch, preRelease, build = parse( major, minor, patch, preRelease, build )
-		local name = numbersToString( major, minor, patch, preRelease, build )
+	local cache = {}
 
-		local object = objects[ name ]
+	---@protected
+	function Version.__new( major, minor, patch, pre_release, build )
+		if getmetatable( major ) == Version then return major end
+
+		major, minor, patch, pre_release, build = parse( major, minor, patch, pre_release, build )
+		local name = numbersToString( major, minor, patch, pre_release, build )
+
+		local object = cache[ name ]
 		if object == nil then
-			object = newproxy()
+			object = debug_newproxy()
+			cache[ name ] = object
 
-			if not debug_setmetatable( object, metatable ) then
+			if not debug_setmetatable( object, Version ) then
 				error( "failed to set metatable", 2 )
 			end
 
-			keys[ object ] = setmetatable( { major, minor, patch, preRelease, build }, keys_metatable )
-			objects[ name ] = object
+			keys[ object ] = setmetatable( { major, minor, patch, pre_release, build }, keys_metatable )
 			names[ object ] = name
 		end
 
@@ -507,32 +519,40 @@ do
 
 end
 
-local function sort_fn( a, b )
-	return a > b
+---@class gpm.std.VersionClass: gpm.std.Version
+---@field __base gpm.std.Version
+---@overload fun( major: string | number, minor: number?, patch: number?, pre_release: string?, build: string? ): Version
+VersionClass = std.class.create( Version )
+VersionClass.parse = parse
+
+function VersionClass.toString( major, minor, patch, pre_release, build )
+	return numbersToString( parse( major, minor, patch, pre_release, build ) )
 end
 
----@class gpm.std.Version
-local Version = {
-	Parse = parse,
-	ToString = function( ... )
-		return numbersToString( parse( ... ) )
-	end,
-	FromNumber = function( uint )
-		return new_version( bit_band( uint, 0x3ff ), bit_band( bit_rshift( uint, 10 ), 0x7ff ), bit_band( bit_rshift( uint, 21 ), 0x7ff ) )
-	end,
-	Select = function( target, tbl )
+function VersionClass.fromNumber( uint )
+	return VersionClass( bit_band( uint, 0x3ff ), bit_band( bit_rshift( uint, 10 ), 0x7ff ), bit_band( bit_rshift( uint, 21 ), 0x7ff ) )
+end
+
+do
+
+	local function sort_fn( a, b ) return a > b end
+
+	--- TODO
+	---@param target string: TODO
+	---@param tbl table<string|gpm.std.Version>: The table to search.
+	---@return gpm.std.Version?: The first version that matches `target`.
+	---@return integer: The index of the version in `tbl`.
+	function VersionClass.select( target, tbl )
 		table_sort( tbl, sort_fn )
 
-		for index = 1, #tbl do
-			local version = new_version( tbl[ index ] )
+		for index = 1, #tbl, 1 do
+			local version = VersionClass( tbl[ index ] )
 			if version % target then return version, index end
 		end
 
 		return nil, -1
 	end
-}
 
-return setmetatable( Version, {
-	__call = function( _, ... ) return new_version( ... ) end,
-	__index = internal
-} )
+end
+
+return VersionClass
