@@ -1261,6 +1261,8 @@ do
 
 end
 
+std.struct = include( "std/struct.lua" )
+
 ---@class gpm.std.game
 local game = include( "std/game.lua" )
 std.game = game
