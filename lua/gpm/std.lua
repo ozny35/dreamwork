@@ -1291,12 +1291,12 @@ end
 local isInDebug
 do
 
-    local developer = console.variable.get( "developer" )
+    local developer = console.Variable( "developer" )
 
     -- TODO: Think about engine lib in menu
     local getDeveloper
     if isDedicatedServer then
-        local value = developer and developer:GetInt() or 0
+        local value = developer and developer:getInteger() or 0
 
         _G.cvars.AddChangeCallback( "developer", function( _, __, str )
             value = tonumber( str, 10 )
@@ -1304,8 +1304,8 @@ do
 
         getDeveloper = function() return value end
     else
-        local console_variable_getInt = console.variable.getInt
-        getDeveloper = function() return console_variable_getInt( developer ) end
+        local getInteger = developer.getInteger
+        getDeveloper = function() return getInteger( developer ) end
     end
 
     function isInDebug()
@@ -1368,12 +1368,12 @@ do
     ---@alias Logger gpm.std.Logger
     ---@class gpm.std.Logger : gpm.std.Object
     ---@field __class gpm.std.LoggerClass
-    local Logger = class.base("Logger")
+    local Logger = class.base( "Logger" )
 
     ---@protected
     ---@param title string
     ---@param options gpm.std.LoggerOptions?
-    function Logger:__init(title, options)
+    function Logger:__init( title, options )
         argument( title, 1, "string" )
         self.title = title
         self.title_color = color_white
@@ -1497,8 +1497,7 @@ do
 
     game.isBinaryModuleInstalled = isBinaryModuleInstalled
 
-    local sv_allowcslua = console.variable.get( "sv_allowcslua" )
-    local console_variable_getBool = console.variable.getBool
+    local sv_allowcslua = SERVER and console.Variable( "sv_allowcslua" )
 
     ---Loads a binary module
     ---@param name string The binary module name, for example: "chttp"
@@ -1506,8 +1505,10 @@ do
     ---@return table? module: the binary module table
     function loadbinary( name )
         if isBinaryModuleInstalled( name ) then
-            if sv_allowcslua and console_variable_getBool( sv_allowcslua ) then
-                console.variable.setBool( sv_allowcslua, false )
+            ---@diagnostic disable-next-line: need-check-nil
+            if SERVER and sv_allowcslua:getBool() then
+                ---@diagnostic disable-next-line: need-check-nil
+                sv_allowcslua:setBool( false )
             end
 
             require( name )

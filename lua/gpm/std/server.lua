@@ -1,8 +1,7 @@
 local _G = _G
 local gpm = _G.gpm
 local std = gpm.std
-local variable = std.console.variable
-local variable_setString = variable.setString
+local variable = std.console.Variable
 
 ---@class gpm.std.server
 local server = {}
@@ -89,7 +88,7 @@ if std.SERVER then
     --- [SERVER] Sets the download URL of the server.
     ---@param str string: The download URL to set.
     function server.setDownloadURL( str )
-        variable_setString( "sv_downloadurl", str )
+        variable.setString( "sv_downloadurl", str )
     end
 
     --- [SERVER] Checks if the server allows downloads.
@@ -131,13 +130,13 @@ if std.SERVER then
     --- [SERVER] Gets the variable requested by the server browser to determine in which part of the world the server is located.
     ---@return gpm.std.SERVER_REGION: The region of the world to report this server in.
     function server.getRegion()
-        return variable.getInt( "sv_region" )
+        return variable.getInteger( "sv_region" )
     end
 
     --- [SERVER] Sets the variable requested by the server browser to determine in which part of the world the server is located.
     ---@param region gpm.std.SERVER_REGION: The region of the world to report this server in.
     function server.setRegion( region )
-        variable.setInt( "sv_region", region )
+        variable.setInteger( "sv_region", region )
     end
 
     --[[

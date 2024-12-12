@@ -12,7 +12,7 @@ local Version = std.Version
 ---@field __class gpm.PackageClass
 ---@field name string
 ---@field version Version
----@field private cvar_callbacks table
+---@field cvar_callbacks table
 local Package = class.base( "Package" )
 
 local cache = {}

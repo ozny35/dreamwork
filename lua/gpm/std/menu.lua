@@ -74,8 +74,8 @@ end
 do
 
     local console = std.console
-    local command = console.command
-    local variable = console.variable
+    local command = console.Command
+    local variable = console.Variable
 
     ---@class gpm.std.menu.options
     local options = {}
@@ -233,7 +233,7 @@ do
         ---@param height number: The height of the game window.
         ---@param windowed boolean: Whether the game window is windowed.
         function options.setScreenResolution( width, height, windowed )
-            command.run( std.string.format( "mat_setvideomode %d %d %d", width, height, windowed and 1 or 0 ) )
+            command.run( "mat_setvideomode", width, height, windowed and 1 or 0 )
         end
 
         --[[
