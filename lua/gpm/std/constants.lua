@@ -1622,6 +1622,38 @@ do
 
 end
 
+---@alias gpm.std.FCVAR
+---| `0` `[NONE]` The default, no flags at all.
+---| `1` `[UNREGISTERED]` If this is set, don't add to linked list, etc.
+---| `2` `[DEVELOPMENTONLY]` Hidden in released products. Flag is removed automatically if ALLOW_DEVELOPMENT_CVARS is defined.
+---| `4` `[GAMEDLL]` Defined by the game DLL.
+---| `8` `[CLIENTDLL]` Defined by the client DLL.
+---| `16` `[HIDDEN]` Doesn't appear in find or autocomplete. Like DEVELOPMENTONLY, but can't be compiled out.
+---| `32` `[PROTECTED]` It's a server cvar, but we don't send the data since it's a password, etc.  Sends 1 if it's not bland/zero, 0 otherwise as value.
+---| `64` `[SPONLY]` This cvar cannot be changed by clients connected to a multiplayer server.
+---| `128` `[ARCHIVE]` Save the cvar value into `client.vdf`.
+---| `256` `[NOTIFY]` For server-side cvars, notifies all players with blue chat text when the value gets changed.
+---| `512` `[USERINFO]` For clientside commands, sends the value to the server.
+---| `1024` `[PRINTABLEONLY]` This cvar's string cannot contain unprintable characters ( e.g., used for player name etc ).
+---| `2048` `[UNLOGGED]` If this is a FCVAR_SERVER, don't log changes to the log file / console if we are creating a log.
+---| `4096` `[NEVER_AS_STRING]` Tells the engine to never print this variable as a string. This is used for variables which may contain control characters.
+---| `8192` `[REPLICATED]` When set on a console variable, all connected clients will be forced to match the server-side value. This should be used for shared code where it's important that both sides run the exact same path using the same data (e.g. predicted movement/weapons, game rules).
+---| `16384` `[CHEAT]` In multiplayer, prevents this command/variable from being used unless the server has sv_cheats turned on. If a client connects to a server where cheats are disabled (which is the default), all client side console variables labeled as FCVAR_CHEAT are reverted to their default values and can't be changed as long as the client stays connected. Console commands marked as FCVAR_CHEAT can't be executed either. As a general rule of thumb, any client-side command that isn't specifically meant to be configured by users should be marked with this flag, as even the most harmless looking commands can sometimes be misused to cheat. For server-side only commands you can be more lenient, since these would have no effect when changed by connected clients anyway.
+---| `65536` `[DEMO]` When starting to record a demo file, explicitly adds the value of this console variable to the recording to ensure a correct playback.
+---| `131072` `[DONTRECORD]` Opposite of `DEMO`, ensures the cvar is not recorded in demos.
+---| `1048576` `[RELOAD_MATERIALS]` If set and this variable changes, it forces a material reload.
+---| `2097152` `[RELOAD_TEXTURES]` If set and this variable changes, it forces a texture reload.
+---| `4194304` `[NOT_CONNECTED]` Prevents this variable from being changed while the client is currently in a server, due to the possibility of exploitation of the command (e.g. `fps_max`).
+---| `8388608` `[MATERIAL_SYSTEM_THREAD]` Indicates this cvar is read from the material system thread.
+---| `16777216` `[ARCHIVE_XBOX]` Like `ARCHIVE`, but for Xbox 360. Needless to say, this is not particularly useful to most modders.
+---| `33554432` `[ACCESSIBLE_FROM_THREADS]` Used as a debugging tool necessary to check material system thread convars.
+---| `268435456` `[SERVER_CAN_EXECUTE]` The server is allowed to execute this command on clients via ClientCommand/NET_StringCmd/CBaseClientState::ProcessStringCmd.
+---| `536870912` `[SERVER_CANNOT_QUERY]` If this is set, then the server is not allowed to query this cvar's value (via IServerPluginHelpers::StartQueryCvarValue).
+---| `1073741824` `[CLIENTCMD_CAN_EXECUTE]` IVEngineClient::ClientCmd is allowed to execute this command.
+---| `11534336` `[MATERIAL_THREAD_MASK]` Summary of `RELOAD_MATERIALS`, `RELOAD_TEXTURES` and `MATERIAL_SYSTEM_THREAD`.
+---| `262144` `[LUA_CLIENT]` Set automatically on all cvars and console commands created by the `client` Lua state.
+---| `524288` `[LUA_SERVER]` Set automatically on all cvars and console commands created by the `server` Lua state.
+
 ---@class gpm.std
 ---@field BRANCH string: A variable containing a string indicating which (Beta) Branch of the game you are using.
 local constants = {
