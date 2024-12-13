@@ -64,9 +64,9 @@ local asciiNumbers = {
 --- Removes leading and trailing matches of a string.
 ---@param str string The string.
 ---@param pattern? string The pattern to match, `%s` for whitespace.
----@param dir? number The direction to trim. `1` for left, `-1` for right, `0` for both.
+---@param direction? number The direction to trim. `1` for left, `-1` for right, `0` for both.
 ---@return string str The trimmed string.
-local function trim( str, pattern, dir )
+local function trim( str, pattern, direction )
     if pattern == nil then
         pattern = "%s"
     else
@@ -82,9 +82,9 @@ local function trim( str, pattern, dir )
         end
     end
 
-    if dir == 1 then -- left
+    if direction == 1 then -- left
         return string_match( str, "^(.-)" .. pattern .. "*$" ) or str
-    elseif dir == -1 then -- right
+    elseif direction == -1 then -- right
         return string_match( str, "^" .. pattern .. "*(.+)$" ) or str
     else -- both
         return string_match( str, "^" .. pattern .. "*(.-)" .. pattern .. "*$" ) or str
@@ -293,6 +293,37 @@ local string = {
     dec2hex = decimal2hex,
 }
 
+--- Pads the string.
+---@param str string: The string.
+---@param length integer: The length.
+---@param char string: The character.
+---@param direction integer: The direction. `1` for left, `-1` for right, `0` for both.
+---@return string: The padded string.
+function string.pad( str, length, char, direction )
+    local missing_length = math_max( 0, length - string_len( str ) )
+    if missing_length == 0 then return str end
+
+    if char == nil then
+        char = " "
+    elseif string_len( char ) ~= 1 then
+        error( "char must be a single character", 2 )
+    end
+
+    if direction == 1 then
+        return string_rep( char, missing_length ) .. str
+    elseif direction == -1 then
+        return str .. string_rep( char, missing_length )
+    end
+
+    missing_length = missing_length * 0.5
+
+    if missing_length % 1 == 0 then
+        return string_rep( char, missing_length ) .. str .. string_rep( char, missing_length )
+    else
+        return string_rep( char, missing_length ) .. str .. string_rep( char, missing_length + 1 )
+    end
+end
+
 --- Cuts the string into two.
 ---@param str string The string.
 ---@param index number Cutting index.
@@ -492,21 +523,20 @@ end
 --- Trims a string by a byte.
 ---@param str string The string.
 ---@param byte? number The byte to trim by.
----@param dir? number The direction to trim. `1` for left, `-1` for right, `0` for both.
+---@param direction? number The direction to trim. `1` for left, `-1` for right, `0` for both.
 ---@return string str The trimmed string.
 ---@return number length The length of the trimmed string.
-function string.trimByte( str, byte, dir )
+function string.trimByte( str, byte, direction )
     local startPos, endPos = 1, string_len( str )
-    if dir == nil then dir = 0 end
 
-    if dir ~= -1 then
+    if direction ~= -1 then
         while string_byte( str, startPos ) == byte do
             startPos = startPos + 1
             if startPos == endPos then return "", 0 end
         end
     end
 
-    if dir ~= 1 then
+    if direction ~= 1 then
         while string_byte( str, endPos ) == byte do
             endPos = endPos - 1
             if endPos == 0 then return "", 0 end
@@ -519,12 +549,11 @@ end
 --- Trims a string by bytes.
 ---@param str string The string.
 ---@param bytes table The bytes to trim by.
----@param dir? number The direction to trim. `1` for left, `-1` for right, `0` for both.
+---@param direction? number The direction to trim. `1` for left, `-1` for right, `0` for both.
 ---@return string str The trimmed string.
 ---@return number length The length of the trimmed string.
-function string.trimBytes( str, bytes, dir )
+function string.trimBytes( str, bytes, direction )
     local startPos, endPos = 1, string_len( str )
-    if dir == nil then dir = 0 end
 
     for key, value in pairs( bytes ) do
         if is_number( value ) then
@@ -539,14 +568,14 @@ function string.trimBytes( str, bytes, dir )
         end
     end
 
-    if dir ~= -1 then
+    if direction ~= -1 then
         while bytes[ string_byte( str, startPos ) ] do
             startPos = startPos + 1
             if startPos == endPos then return "", 0 end
         end
     end
 
-    if dir ~= 1 then
+    if direction ~= 1 then
         while bytes[ string_byte( str, endPos ) ] do
             endPos = endPos - 1
             if endPos == 0 then return "", 0 end

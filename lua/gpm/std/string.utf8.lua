@@ -27,7 +27,7 @@ end
 
 local charpattern = "[%z\x01-\x7F\xC2-\xF4][\x80-\xBF]*"
 
----Converts a UTF-8 byte to a character
+--- Converts a UTF-8 byte to a character
 ---@param byte number
 ---@return string
 local function byte2char( byte )
@@ -42,7 +42,7 @@ local function byte2char( byte )
 	end
 end
 
----Converts a sequence of UTF-8 bytes to a string
+--- Converts a sequence of UTF-8 bytes to a string
 ---@vararg number: The UTF-8 bytes
 ---@return string: The resulting string
 local function char_fn( ... )
@@ -58,6 +58,7 @@ local function char_fn( ... )
 	return table_concat( args, "", 1, length )
 end
 
+--- TODO
 ---@param index number
 ---@param stringLength number
 ---@return number
@@ -73,6 +74,7 @@ local function stringPosition( index, stringLength )
 	end
 end
 
+--- TODO
 ---@param str string
 ---@param stringStart? number
 ---@param stringLength number
@@ -100,10 +102,11 @@ local function decode( str, stringStart, stringLength )
 	return stringStart, stringEnd, bit_bor( codePoint, bit_lshift( bit_band( byte1, 0x7F ), contByteCount * 5 ) )
 end
 
+--- TODO
 ---@param str string
 ---@param stringStart? number
 ---@param stringEnd? number
----@return string
+---@return string ...: The UTF-8 code points.
 local function codepoint( str, stringStart, stringEnd )
 	local stringLength = string_len( str )
 	stringStart = stringPosition( stringStart or 1, stringLength )
@@ -122,6 +125,7 @@ local function codepoint( str, stringStart, stringEnd )
 	return table_unpack( buffer, 1, length )
 end
 
+--- TODO
 ---@param str string
 ---@param stringStart number?
 ---@param stringEnd number?
@@ -151,10 +155,11 @@ local function len( str, stringStart, stringEnd )
 	return length
 end
 
---- @param str string
---- @param offset number
---- @param stringStart? number
---- @return number?
+--- TODO
+---@param str string
+---@param offset number
+---@param stringStart? number
+---@return number?
 local function offset_fn( str, offset, stringStart )
 	local stringLength = string_len( str )
 	local position = stringPosition( stringStart or ( ( offset >= 0 ) and 1 or stringLength ), stringLength )
@@ -1141,12 +1146,7 @@ local lower2upper = {
 local upper2lower = table_flip( lower2upper, true )
 
 do
-	local metatable = {
-		__index = function( _, key )
-			return key
-		end
-	}
-
+	local metatable = { __index = function( _, key ) return key end }
 	std.setmetatable( lower2upper, metatable )
 	std.setmetatable( upper2lower, metatable )
 end
@@ -1156,6 +1156,7 @@ do
 
 	local tonumber = std.tonumber
 
+	--- TODO
 	---@param str string
 	---@return string
 	function hex2char( str )
@@ -1166,12 +1167,14 @@ end
 
 local escapeChars = { ["\\n"] = "\n", ["\\t"] = "\t", ["\\0"] = "\0" }
 
+--- TODO
 ---@param str string
 ---@return string
 local function escapeToChar( str )
 	return escapeChars[ str ] or string_sub( str, 2, 2 )
 end
 
+--- TODO
 ---@param position number
 ---@param utf8Length number
 ---@return number
@@ -1183,6 +1186,7 @@ local function stringOffset( position, utf8Length )
 	end
 end
 
+--- TODO
 ---@param str string
 ---@param index number
 ---@param utf8Length number
@@ -1208,6 +1212,7 @@ local utf8 = {
 	["get"] = get,
 }
 
+--- TODO
 ---@param str string
 ---@param index number?
 ---@param char string
@@ -1226,6 +1231,7 @@ function utf8.set( str, index, char )
 	return string_sub( str, 1, offset_fn( str, index - 1 ) ) .. char .. string_sub( str, offset_fn( str, index ) or 1, utf8Length )
 end
 
+--- TODO
 ---@param str string
 ---@return function
 function utf8.codes( str )
@@ -1241,6 +1247,7 @@ function utf8.codes( str )
 	end
 end
 
+--- TODO
 ---@param str string
 ---@return string
 function utf8.force( str )
@@ -1267,6 +1274,7 @@ function utf8.force( str )
 	return table_concat( buffer, "", 1, length )
 end
 
+--- TODO
 ---@param str string
 ---@param charStart number?
 ---@param charEnd number?
@@ -1286,6 +1294,7 @@ end
 utf8.sub = sub
 utf8.slice = sub
 
+--- TODO
 ---@param str string
 ---@return string
 function utf8.lower( str )
@@ -1300,6 +1309,7 @@ function utf8.lower( str )
 	return table_concat( buffer, "", 1, length )
 end
 
+--- TODO
 ---@param str string
 ---@return string
 function utf8.upper( str )
@@ -1314,6 +1324,7 @@ function utf8.upper( str )
 	return table_concat( buffer, "", 1, length )
 end
 
+--- TODO
 ---@param str string
 ---@param isSequence boolean?
 ---@return string
@@ -1322,6 +1333,7 @@ function utf8.escape( str, isSequence )
 	return string_gsub( string_gsub( str, isSequence and "\\[uU]([0-9a-fA-F]+)" or "[uU]%+([0-9a-fA-F]+)", hex2char ), "\\.", escapeToChar ), nil
 end
 
+--- TODO
 ---@param str string
 ---@return string
 function utf8.reverse( str )
