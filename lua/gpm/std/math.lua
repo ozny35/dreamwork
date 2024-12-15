@@ -598,6 +598,15 @@ function math.inPoly( x, y, poly )
     return inside
 end
 
+--- Calculates the euclidean modulus.
+---@param numerator number: The numerator.
+---@param denominator number: The denominator.
+---@return number: The euclidean modulus.
+function math.euclideanMod( numerator, denominator )
+    local result = numerator % denominator
+    return result < 0 and result + denominator or result
+end
+
 --- Converts a bits number to a byte number.
 ---@param x number The bits number.
 ---@return number bytes The byte number.

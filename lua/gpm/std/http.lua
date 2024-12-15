@@ -120,6 +120,7 @@ local function request( parameters )
 
     local method = parameters.method
     if is_string( method ) then
+        ---@cast method string
         method = string_upper( method )
     else
         method = "GET"
@@ -135,10 +136,12 @@ local function request( parameters )
 
     Logger:Debug( "%s HTTP request to '%s', using '%s', with timeout %d seconds.", method, url, client_name, timeout )
 
+    ---@diagnostic disable-next-line: inject-field
     function parameters.success( status, body, headers )
         f:setResult( { status = status, body = body, headers = headers } )
     end
 
+    ---@diagnostic disable-next-line: inject-field
     function parameters.failed( msg )
         f:setError( HTTPClientError( msg ) )
     end
@@ -172,6 +175,7 @@ local function request( parameters )
 
         local success = parameters.success
 
+        ---@diagnostic disable-next-line: inject-field
         function parameters.success( status, body, headers )
             local cache_control = headers["cache-control"]
             if cache_control then
@@ -192,6 +196,7 @@ local function request( parameters )
 
         local failed = parameters.failed
 
+        ---@diagnostic disable-next-line: inject-field
         function parameters.failed( msg )
             session_cache[ identifier ] = nil
             failed( msg )
@@ -215,6 +220,7 @@ local function request( parameters )
 
         local success = parameters.success
 
+        ---@diagnostic disable-next-line: inject-field
         function parameters.success( status, body, headers )
             if status == 304 then
                 status, body = 200, data and data.content or ""

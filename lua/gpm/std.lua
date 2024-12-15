@@ -1,6 +1,8 @@
 local _G = _G
 local assert, error, select, pairs, ipairs, tostring, tonumber, getmetatable, setmetatable, rawget, rawset, getfenv, setfenv = _G.assert, _G.error, _G.select, _G.pairs, _G.ipairs, _G.tostring, _G.tonumber, _G.getmetatable, _G.setmetatable, _G.rawget, _G.rawset, _G.getfenv, _G.setfenv
-local include = _G.include
+
+---@diagnostic disable-next-line: undefined-field
+local include = _G.include or _G.dofile
 
 ---@class gpm
 local gpm = _G.gpm
@@ -40,15 +42,17 @@ end
 
 -- client-side files
 if SERVER then
+    ---@diagnostic disable-next-line: undefined-field
     local AddCSLuaFile = _G.AddCSLuaFile
+    if AddCSLuaFile ~= nil then
+        AddCSLuaFile( "gpm/database.lua" )
+        AddCSLuaFile( "gpm/detour.lua" )
+        AddCSLuaFile( "gpm/std.lua" )
 
-    AddCSLuaFile( "gpm/database.lua" )
-    AddCSLuaFile( "gpm/detour.lua" )
-    AddCSLuaFile( "gpm/std.lua" )
-
-    local files = _G.file.Find( "gpm/std/*", "lsv" )
-    for i = 1, #files do
-        AddCSLuaFile( "gpm/std/" .. files[ i ] )
+        local files = _G.file.Find( "gpm/std/*", "lsv" )
+        for i = 1, #files do
+            AddCSLuaFile( "gpm/std/" .. files[ i ] )
+        end
     end
 end
 
@@ -157,9 +161,40 @@ std.xpcall = _G.xpcall
 
 -- require - broken in glua
 
+---@diagnostic disable-next-line: undefined-field
 local is_table, is_string, is_number, is_function = _G.istable, _G.isstring, _G.isnumber, _G.isfunction
-local glua_string, glua_table, glua_jit, glua_system = _G.string, _G.table, _G.jit, _G.system
 
+do
+
+    local type = _G.type
+
+    if not is_table then
+        function is_table( value )
+            return type( value ) == "table"
+        end
+    end
+
+    if not is_string then
+        function is_string( value )
+            return type( value ) == "string"
+        end
+    end
+
+    if not is_number then
+        function is_number( value )
+            return type( value ) == "number"
+        end
+    end
+
+    if not is_function then
+        function is_function( value )
+            return type( value ) == "function"
+        end
+    end
+
+end
+
+local glua_string, glua_table, glua_jit = _G.string, _G.table, _G.jit
 local string_byte, string_len, string_format = glua_string.byte, glua_string.len, glua_string.format
 local table_concat = glua_table.concat
 
@@ -241,14 +276,16 @@ do
     coroutine = {
         -- lua
         create = glua_coroutine.create,
-        isyieldable = glua_coroutine.isyieldable,
+        ---@diagnostic disable-next-line: deprecated
+        isyieldable = glua_coroutine.isyieldable or function() return true end,
         resume = glua_coroutine.resume,
         running = glua_coroutine.running,
         status = glua_coroutine.status,
         wrap = glua_coroutine.wrap,
         yield = glua_coroutine.yield,
 
-        -- gmod
+        -- gmod only
+        ---@diagnostic disable-next-line: undefined-field
         wait = glua_coroutine.wait
     }
 
@@ -266,6 +303,8 @@ std.debug = debug
 local debug_getmetatable = debug.getmetatable
 local argument, class, findMetatable
 do
+
+    local debug_fempty = debug.fempty
 
     local indexes = {
         ["unknown"] = -1,
@@ -345,16 +384,21 @@ do
 
     do
 
-        local FindMetaTable = _G.FindMetaTable
+        ---@diagnostic disable-next-line: undefined-field
+        local FindMetaTable = _G.FindMetaTable or debug_fempty
 
+        --- Returns the metatable for the given name.
+        ---@param name string: The name of the metatable to find.
+        ---@return table?: The metatable for the given name.
         function findMetatable( name )
-            assert( is_string( name ), "argument #1 (name) must be a string" )
+            -- assert( is_string( name ), "argument #1 (name) must be a string" )
 
-            local metatable = metatables[ name ]
-            if metatable then
+            local metatable = rawget( metatables, name )
+            if metatable ~= nil then
                 return metatable
             end
 
+            ---@diagnostic disable-next-line: redundant-parameter
             metatable = FindMetaTable( name )
             if metatable == nil then
                 return nil
@@ -378,18 +422,22 @@ do
 
     end
 
-    local debug_fempty = debug.fempty
-
     do
 
+        ---@diagnostic disable-next-line: undefined-field
         local RegisterMetaTable = _G.RegisterMetaTable or debug_fempty
 
+        --- Registers a metatable.
+        ---@param name string
+        ---@param new table
+        ---@return table
         function std.registerMetatable( name, new )
-            assert( is_string( name ), "argument #1 (name) must be a string" )
-            assert( is_table( new ), "argument #2 (metatable) must be a table" )
+            -- assert( is_string( name ), "argument #1 (name) must be a string" )
+            -- assert( is_table( new ), "argument #2 (metatable) must be a table" )
 
             local old = findMetatable( name )
             if old == nil then
+                ---@diagnostic disable-next-line: redundant-parameter
                 RegisterMetaTable( name, new )
                 local id = getID( name, new )
 
@@ -485,8 +533,12 @@ do
             return false
         end
 
-        local glua_TypeID = _G.TypeID or function( value )
-            return indexes[ glua_type( value ) ] or -1
+        ---@diagnostic disable-next-line: undefined-field
+        local glua_TypeID = _G.TypeID
+        if not glua_TypeID then
+            function glua_TypeID( value )
+                return indexes[ glua_type( value ) ] or -1
+            end
         end
 
         --- Returns the type ID of the given value.
@@ -930,7 +982,7 @@ std.string = string
 
 string.utf8 = include( "std/string.utf8.lua" )
 
--- console library
+---@class gpm.std.console
 local console = include( "std/console.lua" )
 std.console = console
 
@@ -952,23 +1004,29 @@ std.Color = Color
 do
 
     local debug_getstack, debug_getupvalue, debug_getlocal = debug.getstack, debug.getupvalue, debug.getlocal
-    local ErrorNoHalt, ErrorNoHaltWithStack = _G.ErrorNoHalt, _G.ErrorNoHaltWithStack
     local coroutine_running = coroutine.running
     local string_rep = string.rep
 
-    local callStack, callStackSize = {}, 0
+    ---@diagnostic disable-next-line: undefined-field
+    local ErrorNoHalt, ErrorNoHaltWithStack = _G.ErrorNoHalt, _G.ErrorNoHaltWithStack
 
-    local captureStack = function( stackPos )
-        return debug_getstack( stackPos or 1 )
+    if not ErrorNoHalt then
+        ErrorNoHalt = console.writeLine
     end
 
-    local pushCallStack = function( stack )
+    if not ErrorNoHaltWithStack then
+        ErrorNoHaltWithStack = console.writeLine
+    end
+
+    local callStack, callStackSize = {}, 0
+
+    local function pushCallStack( stack )
         local size = callStackSize + 1
         callStack[ size ] = stack
         callStackSize = size
     end
 
-    local popCallStack = function()
+    local function popCallStack()
         local pos = callStackSize
         if pos == 0 then
             return nil
@@ -980,11 +1038,11 @@ do
         return stack
     end
 
-    local appendStack = function( stack )
+    local function appendStack( stack )
         return pushCallStack( { stack, callStack[ callStackSize ] } )
     end
 
-    local mergeStack = function( stack )
+    local function mergeStack( stack )
         local pos = #stack
 
         local currentCallStack = callStack[ callStackSize ]
@@ -1102,13 +1160,14 @@ do
     ---@param message string
     ---@param fileName string?
     ---@param lineNumber number?
-    ---@param stackPos number?
+    ---@param stackPos integer?
     function Error:__init( message, fileName, lineNumber, stackPos )
-        self.message = message
-        self.fileName = fileName
+        if stackPos == nil then stackPos = 0 end
         self.lineNumber = lineNumber
+        self.fileName = fileName
+        self.message = message
 
-        local stack = captureStack( stackPos )
+        local stack = debug_getstack( stackPos )
         self.stack = stack
         mergeStack( stack )
 
@@ -1155,6 +1214,8 @@ do
 
     function Error:display()
         if is_string( self ) then
+            ---@diagnostic disable-next-line: cast-type-mismatch
+            ---@cast self string
             ErrorNoHaltWithStack( self )
             return
         end
@@ -1473,9 +1534,10 @@ do
 
     local isEdge = glua_jit.version_num ~= 20004
     local is32 = glua_jit.arch == "x86"
+    local os_name = glua_jit.os
 
     local head = "lua/bin/gm" .. ( ( CLIENT and not MENU ) and "cl" or "sv" ) .. "_"
-    local tail = "_" .. ( { "osx64", "osx", "linux64", "linux", "win64", "win32" } )[ ( glua_system.IsWindows() and 4 or 0 ) + ( glua_system.IsLinux() and 2 or 0 ) + ( is32 and 1 or 0 ) + 1 ] .. ".dll"
+    local tail = "_" .. ( { "osx64", "osx", "linux64", "linux", "win64", "win32" } )[ ( os_name == "Windows" and 4 or 0 ) + ( os_name == "Linux" and 2 or 0 ) + ( is32 and 1 or 0 ) + 1 ] .. ".dll"
 
     local function isBinaryModuleInstalled( name )
         if name == "" then return false, "" end
@@ -1535,8 +1597,10 @@ std.hook = hook
 -- timer library
 std.timer = include( "std/timer.lua" )
 
--- http client class
-std.http = include( "std/http.lua" )
+---@class gpm.std.http
+local http = include( "std/http.lua" )
+std.http = http
+
 http.steam = include( "std/http.steam.lua" )
 http.github = include( "std/http.github.lua" )
 
@@ -1630,6 +1694,7 @@ do
 end
 
 -- https://github.com/WilliamVenner/gmsv_workshop
+---@diagnostic disable-next-line: undefined-field
 if SERVER and not ( is_table( _G.steamworks ) and is_function( _G.steamworks.DownloadUGC ) ) then
     loadbinary( "workshop" )
 end
