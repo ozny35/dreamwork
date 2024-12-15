@@ -56,7 +56,7 @@ elseif std.CLIENT then
 
     do
 
-        local command_run = std.console.command.run
+        local command_run = std.console.Command.run
         local glua_chat = _G.chat
 
         ---@class gpm.std.player.chat

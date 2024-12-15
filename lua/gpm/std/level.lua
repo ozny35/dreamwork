@@ -109,7 +109,7 @@ if std.SERVER then
 
     do
 
-        local command_run = std.console.command.run
+        local command_run = std.console.Command.run
 
         --- It will end the current game, load the specified map and start a new game on it. Players are not kicked from the server.
         ---@param name string

@@ -1,6 +1,7 @@
 local _G = _G
 local std = _G.gpm.std
 local class = std.class
+local bit_bor = std.bit.bor
 local string_format = std.string.format
 local RunConsoleCommand = _G.RunConsoleCommand
 
@@ -52,14 +53,23 @@ do
 
     local cache = {}
 
-    function Command:__init( name, help_text, flags )
-        AddConsoleCommand( name, help_text, flags )
+    ---@param name string: The name of the console command.
+    ---@param help_text string?: The help text of the console command.
+    ---@param ... integer?: The flags of the console command.
+    ---@protected
+    function Command:__init( name, help_text, ... )
+        AddConsoleCommand( name, help_text, ... )
         cache[ name ] = self
         self.name = name
-        self.help_text = help_text
-        self.flags = flags
+        self.help_text = help_text or ""
+
+        if ... then
+            self.flags = bit_bor( 0, ... )
+        end
     end
 
+    ---@param name string
+    ---@return gpm.std.console.Command?
     function Command.__new( name )
         return cache[ name ]
     end
@@ -111,7 +121,7 @@ do
     local setmetatable = std.setmetatable
 
     ---@class ConVar
-    local CONVAR = _G.FindMetaTable( "ConVar" )
+    local CONVAR = std.findMetatable( "ConVar" )
     local getDefault = CONVAR.GetDefault
 
     ---@alias ConsoleVariable gpm.std.console.Variable
@@ -130,18 +140,24 @@ do
     ---@param max number?
     ---@vararg gpm.std.FCVAR: Flags numbers TODO:
     ---@protected
-    function Variable:__init( name, default, flags, helptext, min, max )
+    function Variable:__init( name, default, helptext, min, max, ... )
         cache[ name ] = self
         self.name = name
 
         local object = GetConVar( name )
         if object == nil then
-            self.object = CreateConVar( name, default or "", flags, helptext, min, max )
+            if ... then
+                self.object = CreateConVar( name, default or "", bit_bor( 0, ... ), helptext, min, max )
+            else
+                self.object = CreateConVar( name, default or "", 0, helptext, min, max )
+            end
         else
             self.object = object
         end
     end
 
+    ---@param name string
+    ---@return gpm.std.console.Variable?
     function Variable.__new( name )
         return cache[ name ]
     end

@@ -81,14 +81,13 @@ end
 local http = {}
 
 local gpm_http_timeout, gpm_http_lifetime
-do
+if std.MENU then
+    gpm_http_timeout = std.console.Variable( "gpm_http_lifetime", "10", "Default http timeout for gpm http library.", 0, 300, 128 )
+    gpm_http_lifetime = std.console.Variable( "gpm_http_lifetime", "1", "Cache lifetime for gpm http library in minutes.", 0, 40320, 128 )
 
-    local flags = std.MENU and std.FCVAR.ARCHIVE or std.bit.bor( std.FCVAR.ARCHIVE, std.FCVAR.REPLICATED )
-    local variable_create = std.console.variable.create
-
-    gpm_http_timeout = variable_create( "gpm_http_lifetime", "10", flags, "Default http timeout for gpm http library.", 0, 300 )
-    gpm_http_lifetime = variable_create( "gpm_http_lifetime", "1", flags, "Cache lifetime for gpm http library in minutes.", 0, 40320 )
-
+else
+    gpm_http_timeout = std.console.Variable( "gpm_http_lifetime", "10", "Default http timeout for gpm http library.", 0, 300, 8192, 128 )
+    gpm_http_lifetime = std.console.Variable( "gpm_http_lifetime", "1", "Cache lifetime for gpm http library in minutes.", 0, 40320, 8192, 128 )
 end
 
 local json_serialize = std.crypto.json.serialize

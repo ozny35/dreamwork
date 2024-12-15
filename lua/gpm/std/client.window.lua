@@ -1,9 +1,9 @@
 local _G = _G
 local std = _G.gpm.std
 local console = std.console
-local variable = console.variable
+local variable = console.Variable
 local string_format = std.string.format
-local command_run = console.command.run
+local command_run = console.Command.run
 local system_IsWindowed = _G.system.IsWindowed
 
 local width, height = _G.ScrW(), _G.ScrH()

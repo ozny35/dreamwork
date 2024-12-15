@@ -70,7 +70,7 @@ end
 
 do
 
-    local command_run = std.console.command.run
+    local command_run = std.console.Command.run
 
     --- Disconnect game from server.
     function client.disconnect()

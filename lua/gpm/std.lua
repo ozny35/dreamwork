@@ -203,7 +203,8 @@ do
     local print = _G.print
     std.print = print
 
-    --- Prints a formatted string to the console.<br>
+    --- Prints a formatted string to the console.
+    ---
     --- Basically the same as `print( string.format( str, ... ) )`
     ---@param str any
     ---@vararg any
