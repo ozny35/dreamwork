@@ -563,4 +563,6 @@ if std.MENU then
 
 end
 
+-- TODO: https://wiki.facepunch.com/gmod/steamworks.GetList
+
 return AddonClass
