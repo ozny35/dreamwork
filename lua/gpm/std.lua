@@ -1605,6 +1605,9 @@ http.github = include( "std/http.github.lua" )
 local file = include( "std/file.lua" )
 std.file = file
 
+-- Addon class
+std.Addon = include( "std/addon.lua" )
+
 if CLIENT_MENU then
     -- menu library
     std.menu = include( "std/menu.lua" )
