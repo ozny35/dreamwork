@@ -212,4 +212,30 @@ if std.SERVER then
     game.exit = glua_engine.CloseServer
 end
 
+if std.MENU then
+
+    local steamworks_ApplyAddons = _G.steamworks.ApplyAddons
+    local Command_run = std.console.Command.run
+
+    --- Reloads addons.
+    ---@param reloadType number?: The reload type.
+    ---
+    --- `0`: reload workshop addons
+    ---
+    --- `1`: reload legacy addons
+    ---
+    --- `2`: reload all addons
+    function game.reloadAddons( reloadType )
+        if reloadType == nil then
+            steamworks_ApplyAddons()
+        elseif reloadType == 1 then
+            Command_run( "reload_legacy_addons" )
+        elseif reloadType == 2 then
+            Command_run( "reload_legacy_addons" )
+            steamworks_ApplyAddons()
+        end
+    end
+
+end
+
 return game
