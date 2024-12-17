@@ -182,10 +182,7 @@ if std.MENU then
         function server.ping( address )
             local f = Future()
 
-            local finished = false
             serverlist_PingServer( address, function( server_ping, server_name, gamemode_title, map_name, player_count, player_limit, bot_count, has_password, last_played_time, server_address, gamemode_name, gamemode_workshopid, is_anonymous_server, gmod_version, server_localization, gamemode_category )
-                finished = true
-
                 f:setResult( {
                     ping = server_ping,
                     name = server_name,
@@ -208,8 +205,9 @@ if std.MENU then
             end )
 
             timer_simple( 30, function()
-                if finished then return end
-                f:setError( "timed out" )
+                if f:isPending() then
+                    f:setError( "timed out" )
+                end
             end )
 
             return f:await()

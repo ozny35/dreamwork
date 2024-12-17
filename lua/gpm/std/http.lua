@@ -249,11 +249,9 @@ if std.MENU then
     ---@return table data: The data returned from the API.
     ---@async
     function http.getFacepunchManifest()
-        local f, finished = Future(), false
+        local f = Future()
 
         GetAPIManifest( function( json )
-            finished = true
-
             if is_string( json ) then
                 local data = json_deserialize( json, false, false )
                 if data ~= nil then
@@ -266,8 +264,9 @@ if std.MENU then
         end )
 
         timer_simple( 30, function()
-            if finished then return end
-            f:setError( HTTPClientError( "timed out getting facepunch manifest" ) )
+            if f:isPending() then
+                f:setError( HTTPClientError( "timed out getting facepunch manifest" ) )
+            end
         end )
 
         return f:await()

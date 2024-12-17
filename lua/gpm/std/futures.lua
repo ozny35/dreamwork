@@ -8,7 +8,7 @@ local Queue = std.Queue
 local tostring, pcall, xpcall = std.tostring, pcall, xpcall
 ---@type coroutinelib
 local coroutine = std.coroutine
-local timer_Simple = timer.Simple
+local timer_simple = std.timer.simple
 
 ---@class gpm.std.futures
 local futures = std.futures or {}
@@ -134,7 +134,7 @@ local function handlePending( value, ... )
 end
 
 --- Puts current coroutine to sleep until futures.wakeup is called
---- can be used to wait for some event
+--- can be used to wait for some event.
 ---
 --- ## Example
 --- ```lua
@@ -163,7 +163,8 @@ function futures.pending()
     return handlePending( coroutine.yield() )
 end
 
---- Used to wake up pending coroutine
+--- Used to wake up pending coroutine.
+---
 ---@see gpm.std.futures.pending for example
 ---@param co thread
 function futures.wakeup( co, ... )
@@ -171,11 +172,12 @@ function futures.wakeup( co, ... )
 end
 
 
---- Cancels execution of passed coroutine
---- CancelError will be thrown in coroutine
+--- Cancels execution of passed coroutine.
+---
+--- `CancelError` will be thrown in coroutine.
 ---
 --- NB! pcall inside coroutine can catch this error
---- so coroutine may not be cancelled because of pcall
+--- so coroutine may not be cancelled because of pcall.
 ---
 --- ## Example
 --- ```lua
@@ -211,7 +213,8 @@ end
 
 
 --- Puts current coroutine to sleep for given amount of seconds
---- uses internally timer.Simple
+--- uses internally `timer.simple`.
+---
 ---@see gpm.std.futures.pending
 ---@see gpm.std.futures.wakeup
 ---@async
@@ -219,7 +222,7 @@ end
 function futures.sleep( seconds )
     local co = futures.running()
 
-    timer_Simple( seconds, function()
+    timer_simple( seconds, function()
         futures.wakeup( co )
     end )
 
@@ -229,7 +232,8 @@ end
 
 --- Transfers data between coroutines in symmetrical way
 --- used in asynchronous iterators
---- you probably should not use it
+--- you probably should not use it.
+---
 ---@see gpm.std.futures.apairs for example
 ---@async
 ---@param co thread
@@ -269,7 +273,8 @@ local function handleYield( ok, value, ... )
     end
 end
 
---- Yields given arguments to the apairs listener
+--- Yields given arguments to the apairs listener.
+---
 ---@see gpm.std.futures.apairs for example
 ---@async
 function futures.yield( ... )
@@ -324,7 +329,8 @@ end
 
 --- Retrieves next value from async iterator coroutine
 --- this function returned by apairs
---- you probably should not use it
+--- you probably should not use it.
+---
 ---@see gpm.std.futures.apairs for example
 ---@async
 ---@param iterator thread
@@ -332,7 +338,7 @@ function futures.anext( iterator, ... )
     return handleAnext( iterator, futures.transfer( iterator, ACTION_RESUME, ... ) )
 end
 
---- Iterates over async iterator, calling it with given arguments
+--- Iterates over async iterator, calling it with given arguments.
 ---
 --- ## Example
 --- ```lua
@@ -367,7 +373,7 @@ function futures.apairs( iterator, ... )
 end
 
 
---- Collects all values from async iterator into a list
+--- Collects all values from async iterator into a list.
 ---@async
 ---@generic V
 ---@param iterator async fun(...): gpm.std.futures.AsyncIterator<V>
@@ -383,7 +389,7 @@ function futures.collect( iterator, ... )
     return results, length
 end
 
---- Collects all values from async iterator into a table
+--- Collects all values from async iterator into a table.
 ---@async
 ---@generic K, V
 ---@param iterator async fun(...): gpm.std.futures.AsyncIterator<K, V>
@@ -403,7 +409,7 @@ do
 
     --- Futures are objects that hold the result that can be assigned asynchronously
     --- they can be awaited to get the result
-    --- or add callback with :addCallback(...) method
+    --- or add callback with :addCallback(...) method.
     ---
     --- ```lua
     --- local fut = futures.Future()
@@ -451,8 +457,8 @@ do
 
     ---@protected
     function Future:__tostring()
-        if self:done() then
-            if self:cancelled() then
+        if self:isFinished() then
+            if self:isCancelled() then
                 return self.__name .. "( cancelled )"
             elseif self._error then
                 return self.__name .. "( finished error = " .. tostring( self._error ) .. " )"
@@ -464,15 +470,21 @@ do
         end
     end
 
-    --- Returns true if Future is finished (or cancelled)
+    --- Returns `true` if Future is pending.
     ---@return boolean
-    function Future:done()
+    function Future:isPending()
+        return self._state == STATE_PENDING
+    end
+
+    --- Returns `true` if Future is finished (or cancelled).
+    ---@return boolean
+    function Future:isFinished()
         return self._state ~= STATE_PENDING
     end
 
-    --- Returns true if Future was cancelled
+    --- Returns true if Future was cancelled.
     ---@return boolean
-    function Future:cancelled()
+    function Future:isCancelled()
         return self._state == STATE_CANCELLED
     end
 
@@ -480,7 +492,7 @@ do
     function Future:runCallbacks()
         local callbacks = self._callbacks
 
-        -- TODO: is this can be nil or false? or why this is here
+        -- TODO: is this can be nil or false? or why this is here.
         if not callbacks then
             return
         end
@@ -492,18 +504,20 @@ do
     end
 
     --- Adds callback that will be called when future is done
-    --- if future is already done, callback will be called immediately
+    --- if future is already done, callback will be called immediately.
+    ---
     ---@see gpm.std.futures.Future.removeCallback for removing callback
     ---@param fn fun(fut: gpm.std.futures.Future)
     function Future:addCallback( fn )
-        if self:done() then
+        if self:isFinished() then
             xpcall( fn, displayError, self )
         else
             self._callbacks[ #self._callbacks + 1 ] = fn
         end
     end
 
-    --- Removes callback that was previously added with :addCallback
+    --- Removes callback that was previously added with `:addCallback`.
+    ---
     ---@see gpm.std.futures.Future.addCallback for adding callback
     ---@param fn function
     function Future:removeCallback( fn )
@@ -519,12 +533,13 @@ do
     end
 
     --- Sets result of the Future, marks it as finished, and runs all callbacks
-    --- if future is already finished, error will be thrown
+    --- if future is already finished, error will be thrown.
+    ---
     ---@see gpm.std.futures.Future.result to retrieve result
     ---@see gpm.std.futures.Future.await to asynchronously retrieve result
     ---@param result any
     function Future:setResult( result )
-        if self:done() then
+        if self:isFinished() then
             error( "future is already finished", 2 )
         end
 
@@ -534,10 +549,10 @@ do
     end
 
     --- Sets error of the Future, marks it as finished, and runs all callbacks
-    --- if future is already finished, error will be thrown
+    --- if future is already finished, error will be thrown.
     ---@param err any
     function Future:setError( err )
-        if self:done() then
+        if self:isFinished() then
             error( "future is already finished", 2 )
         end
 
@@ -546,11 +561,11 @@ do
         self:runCallbacks()
     end
 
-    --- Tries to cancel future, if it's already done, returns false
-    --- otherwise marks it as cancelled, runs all callbacks and returns true
+    --- Tries to cancel future, if it's already done, returns `false`
+    --- otherwise marks it as cancelled, runs all callbacks and returns `true`.
     ---@return boolean cancelled
     function Future:cancel()
-        if self:done() then
+        if self:isFinished() then
             return false
         end
 
@@ -561,13 +576,14 @@ do
 
     --- Returns error if future is finished and has error
     --- otherwise returns nil
-    --- if future is not finished or cancelled, returns error
+    --- if future is not finished or cancelled, returns error.
+    ---
     ---@see gpm.std.futures.Future.setError
     ---@return unknown?
     function Future:error()
-        if self:cancelled() then
+        if self:isCancelled() then
             return "future was cancelled"
-        elseif not self:done() then
+        elseif not self:isFinished() then
             return "future is not finished"
         end
 
@@ -575,13 +591,13 @@ do
     end
 
     --- Returns result if future is finished
-    --- otherwise throws an error
+    --- otherwise throws an error.
     ---@see gpm.std.futures.Future.setResult
     ---@return any
     function Future:result()
-        if self:cancelled() then
+        if self:isCancelled() then
             return error( "future was cancelled" )
-        elseif not self:done() then
+        elseif not self:isFinished() then
             return error( "future is not finished" )
         end
 
@@ -593,17 +609,17 @@ do
     end
 
     --- Await until future will be finished
-    --- if it contains an error, then it will be thrown
+    --- if it contains an error, then it will be thrown.
     ---@async
     ---@return any
     function Future:await()
-        if not self:done() then
+        if not self:isFinished() then
             local co = futures.running()
             self:addCallback( function() futures.wakeup( co ) end )
             futures.pending()
         end
 
-        if self:done() then
+        if self:isFinished() then
             return self:result()
         else
             error( "future hasn't changed it's state wtf???" )
@@ -622,7 +638,7 @@ do
     ---@diagnostic disable-next-line: duplicate-doc-alias
     ---@alias Task gpm.std.futures.Task
     --- Task is a Future wrapper around futures.run(...) to retrieve result of async function
-    --- when task is created, it will immediately run given function
+    --- when task is created, it will immediately run given function.
     ---
     --- ## Example
     --- ```lua

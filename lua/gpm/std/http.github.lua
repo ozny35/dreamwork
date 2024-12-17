@@ -90,6 +90,7 @@ local function request( method, url, headers, body, cache )
     end
 
     -- i believe there is no reason to implement queue, since requests are queued by the engine
+    ---@diagnostic disable-next-line: missing-fields
     local result = http_request( {
         url = url,
         method = method,
