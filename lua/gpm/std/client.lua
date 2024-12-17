@@ -11,6 +11,7 @@ local glua_render = _G.render
 local client = {
     openURL = _G.gui.OpenURL,
     getDXLevel = glua_render.GetDXLevel,
+    openWorkshop = steamworks.OpenWorkshop,
     isSupportsHDR = glua_render.SupportsHDR,
     isSupportsPixelShaders14 = glua_render.SupportsPixelShaders_1_4,
     isSupportsPixelShaders20 = glua_render.SupportsPixelShaders_2_0,
