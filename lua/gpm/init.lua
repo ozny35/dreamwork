@@ -70,6 +70,37 @@ do
 
 end
 
+
+-- TODO: remove me later
+do
+
+    local collectgarbage = collectgarbage
+    local format = string.format
+    local SysTime = SysTime
+
+    local iter = 100000
+    local warmup = math.min( iter / 100, 100 )
+
+    function gpm.bench(name, fn)
+        for i = 1, warmup do
+            fn()
+        end
+
+        collectgarbage( "stop" )
+
+        local st = SysTime()
+        for _ = 1, iter do
+            fn()
+        end
+
+        st = SysTime() - st
+        collectgarbage( "restart" )
+        print( format( "%d iterations of %s, took %f sec.", iter, name, st ) )
+        return st
+    end
+
+end
+
 ---@class gpm
 local gpm = gpm
 local include = _G.include
