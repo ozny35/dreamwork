@@ -211,13 +211,16 @@ end
 
 do
 
+    local string_byteSplit = std.string.byteSplit
+
     --- Returns the tags of the addon.
     ---@param wsid string: The workshop ID of the addon.
     ---@return string[]?: The tags of the addon.
     local function getTags( wsid )
         local data = findAddon( wsid )
         if data == nil then return nil end
-        return data.tags
+        ---@diagnostic disable-next-line: redundant-return-value
+        return string_byteSplit( data.tags, 0x2C --[[ , ]] ), nil
     end
 
     --- Returns the tags of the addon.
