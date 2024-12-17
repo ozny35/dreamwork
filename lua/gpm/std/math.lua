@@ -1,5 +1,5 @@
 local _G = _G
-local glua_math, isnumber = _G.math, _G.isnumber
+local glua_math = _G.math
 local math_abs, math_atan, math_ceil, math_min, math_max, math_random, math_sqrt, math_floor, math_log, math_deg, math_pi = glua_math.abs, glua_math.atan, glua_math.ceil, glua_math.min, glua_math.max, glua_math.random, glua_math.sqrt, glua_math.floor, glua_math.log, glua_math.deg, glua_math.pi
 
 local e = glua_math.exp( 1 )
@@ -441,15 +441,21 @@ end
 
 math.inrage = inrage
 
---- Returns "integer" if x is an integer, "float" if it is a float, or nil if x is not a number.
----@param x number The number to get the type of.
----@return "integer" | "float" | nil
-function math.type( x )
-    if isnumber( x ) then
-        return ( x % 1 ) == 0 and "integer" or "float"
+do
+
+    local is_number = _G.gpm.std.is.number
+
+    --- Returns "integer" if x is an integer, "float" if it is a float, or nil if x is not a number.
+    ---@param x number The number to get the type of.
+    ---@return "integer" | "float" | nil
+    function math.type( x )
+        if is_number( x ) then
+            return ( x % 1 ) == 0 and "integer" or "float"
+        end
+
+        return nil
     end
 
-    return nil
 end
 
 --- Calculates the angle between two points.

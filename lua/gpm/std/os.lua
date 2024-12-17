@@ -1,8 +1,8 @@
 local _G = _G
 local std = _G.gpm.std
 local glua_os, glua_system = _G.os, _G.system
-local glua_os_time, glua_os_date = glua_os.time, glua_os.date
 local glua_system_BatteryPower = glua_system.BatteryPower
+local glua_os_time, glua_os_date = glua_os.time, glua_os.date
 
 ---@class gpm.std.os
 local os = {

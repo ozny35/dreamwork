@@ -168,7 +168,7 @@ end
 if std.MENU then
 
     local glua_serverlist = _G.serverlist
-    local timer_Simple = _G.timer.Simple
+    local timer_simple = std.timer.simple
     local Future = std.Future
 
     do
@@ -207,7 +207,7 @@ if std.MENU then
                 } )
             end )
 
-            timer_Simple( 30, function()
+            timer_simple( 30, function()
                 if finished then return end
                 f:setError( "timed out" )
             end )
@@ -233,7 +233,7 @@ if std.MENU then
                 f:setResult( data )
             end )
 
-            timer_Simple( 30, function()
+            timer_simple( 30, function()
                 if finished then return end
                 f:setError( "timed out" )
             end )

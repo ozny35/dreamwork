@@ -1,7 +1,7 @@
 local _G = _G
 local gpm = _G.gpm
 local std, Logger = gpm.std, gpm.Logger
-local CLIENT, SERVER, Future, tonumber, HTTPClientError = std.CLIENT, std.SERVER, std.Future, std.tonumber, std.HTTPClientError
+local Future, tonumber, HTTPClientError, timer_simple = std.Future, std.tonumber, std.HTTPClientError, std.timer.simple
 
 local string_gmatch, string_upper
 do
@@ -16,7 +16,7 @@ do
 end
 
 local http_client, client_name
-if SERVER and std.loadbinary( "reqwest" ) then
+if std.SERVER and std.loadbinary( "reqwest" ) then
     local user_agent = "gLua Package Manager/" .. gpm.VERSION .. " - Garry's Mod/" .. _G.VERSIONSTR
     ---@diagnostic disable-next-line: undefined-field
     local reqwest = _G.reqwest
@@ -37,7 +37,7 @@ if SERVER and std.loadbinary( "reqwest" ) then
     end
 
     client_name = "reqwest"
-elseif ( CLIENT or SERVER ) and std.loadbinary( "chttp" ) then
+elseif std.SHARED and std.loadbinary( "chttp" ) then
     ---@diagnostic disable-next-line: undefined-field
     local CHTTP = _G.CHTTP
 
@@ -64,7 +64,7 @@ do
         queue[ length ] = { parameters }
     end
 
-    _G.timer.Simple( 0, function()
+    timer_simple( 0, function()
         make_request = http_client
 
         for i = 1, length do
@@ -129,7 +129,7 @@ local function request( parameters )
 
     local timeout = parameters.timeout
     if not is_number( timeout ) then
-        timeout = gpm_http_timeout:GetInt()
+        timeout = gpm_http_timeout:getInteger()
         parameters.timeout = timeout
     end
 
@@ -165,7 +165,7 @@ local function request( parameters )
         parameters.lifetime = nil
 
         if not is_number( lifetime ) then
-            lifetime = gpm_http_lifetime:GetInt() * 60
+            lifetime = gpm_http_lifetime:getInteger() * 60
         end
 
         -- future, start, age
@@ -244,7 +244,6 @@ if std.MENU then
 
     local json_deserialize = std.crypto.json.deserialize
     local GetAPIManifest = _G.GetAPIManifest
-    local timer_Simple = _G.timer.Simple
 
     --- Gets miscellaneous information from Facepunches API.
     ---@return table data: The data returned from the API.
@@ -266,7 +265,7 @@ if std.MENU then
             f:setError( HTTPClientError( "failed to get facepunch manifest" ) )
         end )
 
-        timer_Simple( 30, function()
+        timer_simple( 30, function()
             if finished then return end
             f:setError( HTTPClientError( "timed out getting facepunch manifest" ) )
         end )

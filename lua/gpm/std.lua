@@ -782,6 +782,12 @@ end
 -- bit library
 std.bit = include( "std/bit.lua" )
 
+-- is library
+local is = include( "std/is.lua" )
+std.is = is
+
+is_string, is_number, is_function = is.string, is.number, is["function"]
+
 -- math library
 local math = include( "std/math.lua" )
 std.math = math
@@ -805,12 +811,6 @@ do
     end
 
 end
-
--- is library
-local is = include( "std/is.lua" )
-std.is = is
-
-is_string, is_number, is_function = is.string, is.number, is["function"]
 
 -- URL class
 std.URL = include( "std/url.lua" )
@@ -938,14 +938,6 @@ do
 
 end
 
--- futures library
-local futures = include( "std/futures.lua" )
-std.futures = futures
-std.yield = futures.yield
-std.apairs = futures.apairs
-std.Future = futures.Future
-std.Task = futures.Task
-
 ---@class gpm.std.os
 local os = include( "std/os.lua" )
 std.os = os
@@ -953,6 +945,20 @@ std.os = os
 -- table library
 local table = include( "std/table.lua" )
 std.table = table
+
+-- hook library
+std.hook = include( "std/hook.lua" )
+
+-- timer library
+std.timer = include( "std/timer.lua" )
+
+-- futures library
+local futures = include( "std/futures.lua" )
+std.futures = futures
+std.yield = futures.yield
+std.apairs = futures.apairs
+std.Future = futures.Future
+std.Task = futures.Task
 
 --- Returns a [Stateless Iterator](https://www.lua.org/pil/7.3.html) for a [Generic For Loops](https://www.lua.org/pil/4.3.5.html), to return ordered key-value pairs from a table.
 ---
@@ -990,8 +996,7 @@ std.console = console
 ---@class gpm.std.crypto
 local crypto = include( "std/crypto.lua" )
 crypto.deflate = include( "std/crypto.deflate.lua" )
--- TODO: struct library
--- crypto.struct = include( "std/crypto.struct.lua" )
+crypto.struct = include( "std/crypto.struct.lua" )
 std.crypto = crypto
 
 -- Color class
@@ -1323,8 +1328,6 @@ do
 
 end
 
-std.struct = include( "std/struct.lua" )
-
 ---@class gpm.std.game
 local game = include( "std/game.lua" )
 std.game = game
@@ -1591,13 +1594,6 @@ std.sqlite = include( "std/sqlite.lua" )
 -- database functions ( gpm only )
 include( "database.lua" )
 
--- hook library
-local hook = include( "std/hook.lua" )
-std.hook = hook
-
--- timer library
-std.timer = include( "std/timer.lua" )
-
 ---@class gpm.std.http
 local http = include( "std/http.lua" )
 std.http = http
@@ -1610,10 +1606,14 @@ local file = include( "std/file.lua" )
 std.file = file
 
 if CLIENT_MENU then
+    -- menu library
     std.menu = include( "std/menu.lua" )
+
+    -- client library
     std.client = include( "std/client.lua" )
 end
 
+-- server library
 std.server = include( "std/server.lua" )
 
 -- Version class
