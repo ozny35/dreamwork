@@ -375,33 +375,6 @@ function string.endsWith( str, endStr )
     end
 end
 
---- Joins the strings.
----@vararg string The strings to join.
----@return string
-function string.join( ... )
-    local args = { ... }
-    local length = #args
-    if length == 0 then
-        return ""
-    else
-        return table_concat( args, "", 1, length )
-    end
-end
-
---- Concatenates the strings.
----@param concatenator? string The concatenator.
----@vararg string The strings to concatenate.
----@return string
-function string.concat( concatenator, ... )
-    local args = { ... }
-    local length = #args
-    if length == 0 then
-        return ""
-    else
-        return table_concat( args, concatenator or "", 1, length )
-    end
-end
-
 --- Checks if the string contains the searchable string.
 ---@param str string The string.
 ---@param searchable string The searchable string.
