@@ -1571,17 +1571,15 @@ do
     ---@return table? module: the binary module table
     function loadbinary( name )
         if isBinaryModuleInstalled( name ) then
-            ---@diagnostic disable-next-line: need-check-nil
-            if SERVER and sv_allowcslua:getBool() then
-                ---@diagnostic disable-next-line: need-check-nil
+            if sv_allowcslua ~= nil and sv_allowcslua:getBool() then
                 sv_allowcslua:setBool( false )
             end
 
             require( name )
             return true, _G[ name ]
+        else
+            return false, nil
         end
-
-        return false, nil
     end
 
     std.loadbinary = loadbinary
@@ -1676,10 +1674,15 @@ do
         end
     else
 
-        ---Either returns the material with the given name, or loads the material interpreting the first argument as the path.<br>
-        ---.png, .jpg and other image formats<br><br>
-        ---This function is capable to loading .png or .jpg images, generating a texture and material for them on the fly.<br><br>
-        ---PNG, JPEG, GIF, and TGA files will work, but only if they have the .png or .jpg file extensions (even if the actual image format doesn't match the file extension)
+        --- Either returns the material with the given name, or loads the material interpreting the first argument as the path.
+        ---
+        --- `.png`, `.jpg` and other image formats.
+        ---
+        ---
+        --- This function is capable to loading .png or .jpg images, generating a texture and material for them on the fly.
+        ---
+        ---
+        --- `PNG`, `JPEG`, `GIF`, and `TGA` files will work, but only if they have the `.png` or `.jpg` file extensions (even if the actual image format doesn't match the file extension)
         ---@param name string The material name or path relative to the materials/ folder.<br>Paths outside the materials/ folder like data/MyImage.jpg or maps/thumb/gm_construct.png will also work for when generating materials.<br>To retrieve a Lua material created with CreateMaterial, just prepend a ! to the material name.
         ---@param parameters? number A bit flag of material parameters.
         ---@return IMaterial
@@ -1721,11 +1724,11 @@ do
     local function load( chunk, chunkName, mode, env )
         if env == nil then env = getfenv( 2 ) end
 
-        if is_string( chunk ) then
+        local chunk_type = type( chunk )
+        if chunk_type == "string" then
             if mode == nil then mode = "bt" end
 
             local fn
-            ---@diagnostic disable-next-line: param-type-mismatch
             if ( mode == "bt" or mode == "tb" or mode == "b" ) and string_byte( chunk, 1 ) == 0x1B then
                 if gmbc_load_bytecode == nil then
                     return nil, "bytecode compilation is not supported"
@@ -1733,7 +1736,9 @@ do
                     fn = gmbc_load_bytecode( chunk )
                 end
             elseif ( mode == "bt" or mode == "tb" or mode == "t" ) then
-                ---@diagnostic disable-next-line: param-type-mismatch
+                if not is_string( chunkName ) then return nil, "chunk name must be a string" end
+                ---@cast chunkName string
+
                 fn = CompileString( chunk, chunkName, false )
                 if is_string( fn ) then
                     ---@cast fn string
@@ -1741,7 +1746,6 @@ do
                 end
             end
 
-            ---@cast fn function | nil
             if fn == nil then
                 return nil, "wrong load mode"
             end
@@ -1753,15 +1757,12 @@ do
             end
 
             return fn
-        elseif is_function( chunk ) then
+        elseif chunk_type == "function" then
             local segment = chunk()
-            if segment == nil then
-                return nil, "first segment is nil"
-            end
+            if segment == nil then return nil, "first segment is nil" end
 
             local result, length = {}, 0
-
-            while segment do
+            while segment ~= nil do
                 length = length + 1
                 result[ length ] = segment
                 segment = chunk()
@@ -1770,7 +1771,7 @@ do
             return load( table_concat( result, "", 1, length ), chunkName, mode, env )
         end
 
-        return nil, "wrong chunk type"
+        return nil, "bad argument #1 to \'load\' ('string/function' expected, got '" .. chunk_type .. "')"
     end
 
     std.load = load
@@ -1804,7 +1805,7 @@ do
     ---@param value any: The value to get the byte count of.
     ---@return number: The byte count of the value.
     function std.bytecount( value )
-        return math_ceil( bitcount( value ) / 8 )
+        return math_ceil( bitcount( value ) * 0.125 )
     end
 
     findMetatable( "nil" ).__tobool = function() return false end
