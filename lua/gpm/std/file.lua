@@ -239,7 +239,7 @@ do
                     end
                 end
 
-                Logger:Debug( "GMA file '%s' was mounted to GAME with %d files.", relativePath, fileCount )
+                Logger:debug( "GMA file '%s' was mounted to GAME with %d files.", relativePath, fileCount )
             end
 
             return success, mounted_files

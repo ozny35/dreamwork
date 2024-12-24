@@ -45,14 +45,14 @@ do
     function rawQuery( str )
         local fenv = getfenv( 2 )
         if fenv == nil then
-            gpm_Logger:Debug( "Executing SQL query: " .. str )
+            gpm_Logger:debug( "Executing SQL query: " .. str )
         else
             local logger = fenv.Logger
             if type( logger ) == "Logger" then
                 ---@cast logger Logger
-                logger:Debug( "Executing SQL query: " .. str )
+                logger:debug( "Executing SQL query: " .. str )
             else
-                gpm_Logger:Debug( "Executing SQL query: " .. str )
+                gpm_Logger:debug( "Executing SQL query: " .. str )
             end
         end
 

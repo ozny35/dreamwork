@@ -52,7 +52,7 @@ else
     client_name = "Garry's Mod"
 end
 
-Logger:Info( "'%s' was connected as HTTP client.", client_name )
+Logger:info( "'%s' was connected as HTTP client.", client_name )
 
 local make_request
 do
@@ -133,7 +133,8 @@ local function request( parameters )
         parameters.timeout = timeout
     end
 
-    Logger:Debug( "%s HTTP request to '%s', using '%s', with timeout %d seconds.", method, url, client_name, timeout )
+    -- TODO: add package logger searching
+    Logger:debug( "%s HTTP request to '%s', using '%s', with timeout %d seconds.", method, url, client_name, timeout )
 
     ---@diagnostic disable-next-line: inject-field
     function parameters.success( status, body, headers )

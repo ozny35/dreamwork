@@ -1467,7 +1467,7 @@ do
     ---@param color Color
     ---@param level string
     ---@param str string
-    function Logger:Log( color, level, str, ... )
+    function Logger:log( color, level, str, ... )
         if self.interpolation then
             local args = { ... }
             for index = 1, select( '#', ... ) do
@@ -1495,21 +1495,21 @@ do
         return nil
     end
 
-    function Logger:Info( ... )
-        return self:Log( infoColor, "INFO ", ... )
+    function Logger:info( ... )
+        return self:log( infoColor, "INFO ", ... )
     end
 
-    function Logger:Warn( ... )
-        return self:Log( warnColor, "WARN ", ... )
+    function Logger:warn( ... )
+        return self:log( warnColor, "WARN ", ... )
     end
 
-    function Logger:Error( ... )
-        return self:Log( errorColor, "ERROR", ... )
+    function Logger:error( ... )
+        return self:log( errorColor, "ERROR", ... )
     end
 
-    function Logger:Debug( ... )
+    function Logger:debug( ... )
         if self:debug_fn() then
-            return self:Log( debugColor, "DEBUG", ... )
+            return self:log( debugColor, "DEBUG", ... )
         end
 
         return nil
@@ -1863,9 +1863,9 @@ do
 end
 
 if std.TYPE.COUNT ~= 44 then
-    logger:Warn( "Global TYPE_COUNT mismatch, data corruption suspected. (" .. tostring( _G.TYPE_COUNT or "missing" ) .. " ~= 44)"  )
+    logger:warn( "Global TYPE_COUNT mismatch, data corruption suspected. (" .. tostring( _G.TYPE_COUNT or "missing" ) .. " ~= 44)"  )
 end
 
 if std._VERSION ~= "Lua 5.1" then
-    logger:Warn( "Lua version changed, possible unpredictable behavior. (" .. tostring( _G._VERSION or "missing") .. ")" )
+    logger:warn( "Lua version changed, possible unpredictable behavior. (" .. tostring( _G._VERSION or "missing") .. ")" )
 end

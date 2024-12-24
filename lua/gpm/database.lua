@@ -272,7 +272,7 @@ end
 -- truncate WAL journal on shutdown
 _G.hook.Add( "ShutDown", gpm.PREFIX .. "::SQLite", function()
     if sqlite.query( "pragma wal_checkpoint(TRUNCATE)" ) == false then
-        gpm.Logger:Error( "Failed to truncate WAL journal: %s", sqlite.getLastError() )
+        gpm.Logger:error( "Failed to truncate WAL journal: %s", sqlite.getLastError() )
     end
 end )
 
@@ -380,7 +380,7 @@ do
         --     error( "Migration '" .. tostring( migration.name ) .. "' does not have an execute function" )
         -- end
 
-        gpm.Logger:Info( "Running migration '" .. tostring( migration.name ) .. "'...")
+        gpm.Logger:info( "Running migration '" .. tostring( migration.name ) .. "'...")
 
         if xpcall( sqlite_transaction, _G.ErrorNoHaltWithStack, migration.execute ) then
             sqlite_query( "insert into 'gpm.migration_history' (name, timestamp) values (?, ?)", migration.name, os_time() )
