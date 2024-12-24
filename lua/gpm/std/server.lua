@@ -38,8 +38,15 @@ end
 
 do
 
-    local game_GetIPAddress = _G.game.GetIPAddress -- Must be added in our custom main menu binary
-    local string_match = _G.string.match
+    local game_GetIPAddress = _G.game.GetIPAddress -- missing in menu
+    local string_match = std.string.match
+
+    -- fallback
+    if game_GetIPAddress == nil then
+        function game_GetIPAddress()
+            return "127.0.0.1:27015"
+        end
+    end
 
     server.getAddress = game_GetIPAddress
 
@@ -293,7 +300,7 @@ if std.MENU then
         local serverlist_IsServerFavorite = glua_serverlist.IsServerFavorite
 
         --- [MENU] Returns true if the given server address is in their favorites.
-        ---@param address string?: The address of the server. ( IP:Port like `127.0.0.1:27015` )
+        ---@param address string?: The address of the server, current server if `nil`. ( IP:Port like `127.0.0.1:27015` )
         ---@return boolean: `true` if the given server is in player favorites, `false` if not.
         function server.isInFavorites( address )
             if address == nil then
@@ -305,16 +312,18 @@ if std.MENU then
 
     end
 
+    local serverlist_AddCurrentServerToFavorites = glua_serverlist.AddCurrentServerToFavorites
+
     do
 
-        local serverlist_AddCurrentServerToFavorites = glua_serverlist.AddCurrentServerToFavorites
         local serverlist_AddServerToFavorites = glua_serverlist.AddServerToFavorites
 
         --- [MENU] Adds the given server address to their favorites.
-        ---@param address string?: The address of the server. ( IP:Port like `127.0.0.1:27015` )
+        ---@param address string?: The address of the server, current server if `nil`. ( IP:Port like `127.0.0.1:27015` )
         function server.addToFavorites( address )
             if address == nil then
-                serverlist_AddCurrentServerToFavorites()
+                ---@diagnostic disable-next-line: redundant-parameter
+                serverlist_AddCurrentServerToFavorites( true )
             else
                 serverlist_AddServerToFavorites( address )
             end
@@ -327,10 +336,11 @@ if std.MENU then
         local serverlist_RemoveServerFromFavorites = glua_serverlist.RemoveServerFromFavorites
 
         --- [MENU] Removes the given server address from their favorites.
-        ---@param address string?: The address of the server. ( IP:Port like `127.0.0.1:27015` )
+        ---@param address string?: The address of the server, current server if `nil`. ( IP:Port like `127.0.0.1:27015` )
         function server.removeFromFavorites( address )
             if address == nil then
-                serverlist_RemoveServerFromFavorites( server.getAddress() )
+                ---@diagnostic disable-next-line: redundant-parameter
+                serverlist_AddCurrentServerToFavorites( false )
             else
                 serverlist_RemoveServerFromFavorites( address )
             end
