@@ -1,16 +1,15 @@
 local _G = _G
 local glua_engine = _G.engine
 
+local std = _G.gpm.std
+
 ---@class gpm.std.gamemode
 local gamemode = {
     getName = glua_engine.ActiveGamemode,
-    getAll = glua_engine.GetGamemodes
+    getAll = glua_engine.GetGamemodes,
+    derive = _G.DeriveGamemode
 }
 
---[[
 
-    https://wiki.facepunch.com/gmod/Global.DeriveGamemode
-
-]]
 
 return gamemode
