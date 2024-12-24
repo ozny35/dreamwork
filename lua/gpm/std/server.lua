@@ -73,6 +73,12 @@ if std.SHARED then
         variable.setBool( "sv_cheats", bool )
     end
 
+    --- [SHARED] Checks if the server allows clients to run `lua_openscript_cl` and `lua_run_cl`.
+    ---@return boolean: `true` if the server allows clients to run lua_openscript_cl and lua_run_cl, `false` if not.
+    function server.isUserScriptsAllowed()
+        return variable.getBool( "sv_allowcslua" )
+    end
+
 end
 
 if std.SERVER then
@@ -139,13 +145,27 @@ if std.SERVER then
         variable.setInteger( "sv_region", region )
     end
 
+    --- [SERVER] Checks if the server is hidden from the master server.
+    ---@return boolean: `true` if the server is hidden, `false` if not.
+    function server.isHidden()
+        return variable.getBool( "hide_server" )
+    end
+
+    --- [SERVER] Hides/unhides the server from the master server.
+    ---@param bool boolean: `true` to hide the server, `false` to unhide it.
+    function server.setHidden( bool )
+        variable.setBool( "hide_server", bool )
+    end
+
+    --- [SERVER] Allow clients to run `lua_openscript_cl` and `lua_run_cl`.
+    ---@param bool boolean: `true` to allow clients to run lua_openscript_cl and lua_run_cl, `false` to disallow them.
+    function server.allowUserScripts( bool )
+        variable.setBool( "sv_allowcslua", bool )
+    end
+
     --[[
 
         TODO:
-
-        - hide_server: Whether the server should be hidden from the master server
-
-        - sv_allowcslua: Allow clients on the server to run lua_openscript_cl and lua_run_cl.
 
         - sv_kickerrornum: Disconnects any client that exceeds this amount of client-side errors.
             A value of 0 disables this functionality.

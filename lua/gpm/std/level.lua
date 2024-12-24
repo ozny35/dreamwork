@@ -10,6 +10,7 @@ local level = {
 
 if std.CLIENT then
     level.getSunInfo = glua_util.GetSunInfo
+    level.redownloadLightmaps = _G.render.RedownloadAllLightmaps
 end
 
 --- Checks if a map/level exists.
@@ -22,7 +23,7 @@ end
 
 level.exists = exists
 
-if std.CLIENT_SERVER then
+if std.SHARED then
     level.getEntity = glua_game.GetWorld
 
     level.cleanup = glua_game.CleanUpMap
@@ -34,12 +35,6 @@ if std.CLIENT_SERVER then
 
     level.getStartSpot = glua_game.StartSpot
     level.getContents = glua_util.PointContents
-
-    --[[
-
-        TODO: Add https://wiki.facepunch.com/gmod/render.RedownloadAllLightmaps
-
-    ]]
 end
 
 if std.SERVER then

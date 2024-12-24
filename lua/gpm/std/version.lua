@@ -534,8 +534,8 @@ do
 
 	local function sort_fn( a, b ) return a > b end
 
-	--- TODO
-	---@param target string: TODO
+	--- Selects the first version in `tbl` that matches `target`.
+	---@param target string: The version selector.
 	---@param tbl table<string|gpm.std.Version>: The table to search.
 	---@return gpm.std.Version?: The first version that matches `target`.
 	---@return integer: The index of the version in `tbl`.
