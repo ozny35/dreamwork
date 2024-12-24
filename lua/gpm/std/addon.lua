@@ -11,6 +11,56 @@ local timer_simple = std.timer.simple
 local is_string = is.string
 
 
+---@alias gpm.std.CONTENT_TYPE
+---| string # The type of the content.
+---| `"addon"`
+---| `"save"`
+---| `"dupe"`
+---| `"demo"`
+
+---@alias gpm.std.ADDON_TYPE
+---| string # The type of the addon.
+---| `"gamemode"`
+---| `"map"`
+---| `"weapon"`
+---| `"vehicle"`
+---| `"npc"`
+---| `"entity"`
+---| `"tool"`
+---| `"effects"`
+---| `"model"`
+---| `"servercontent"`
+
+---@alias gpm.std.ADDON_TAG
+---| string # The tag of the addon.
+---| `"fun"`
+---| `"roleplay"`
+---| `"scenic"`
+---| `"movie"`
+---| `"realism"`
+---| `"cartoon"`
+---| `"water"`
+---| `"comic"`
+---| `"build"`
+
+---@alias gpm.std.DUPE_TAG
+---| string # The tag of the dupe.
+---| `"buildings"`
+---| `"machines"`
+---| `"posed"`
+---| `"scenes"`
+---| `"vehicles"`
+---| `"other"`
+
+---@alias gpm.std.SAVE_TAG
+---| string # The tag of the save.
+---| `"buildings"`
+---| `"courses"`
+---| `"machines"`
+---| `"scenes"`
+---| `"other"`
+
+
 ---@alias Addon gpm.std.Addon
 ---@class gpm.std.Addon: gpm.std.Object
 ---@field __class gpm.std.AddonClass
@@ -211,25 +261,99 @@ end
 
 do
 
-    local string_byteSplit = std.string.byteSplit
+    local string = std.string
+    local string_lower = string.lower
+    local table_remove = std.table.remove
+    local string_byteSplit = string.byteSplit
 
-    --- Returns the tags of the addon.
-    ---@param wsid string: The workshop ID of the addon.
-    ---@return string[]?: The tags of the addon.
-    local function getTags( wsid )
-        local data = findAddon( wsid )
-        if data == nil then return nil end
-        ---@diagnostic disable-next-line: redundant-return-value
-        return string_byteSplit( data.tags, 0x2C --[[ , ]] ), nil
+    do
+
+        local addon_types = {
+            gamemode = true,
+            map = true,
+            weapon = true,
+            vehicle = true,
+            npc = true,
+            entity = true,
+            tool = true,
+            effects = true,
+            model = true,
+            servercontent = true
+        }
+
+        --- Returns the type of the addon.
+        ---@param wsid string: The workshop ID of the addon.
+        ---@return gpm.std.ADDON_TYPE?: The type of the addon.
+        local function getType( wsid )
+            local data = findAddon( wsid )
+            if data == nil then return nil end
+
+            local tags, length = string_byteSplit( data.tags, 0x2C --[[ , ]] )
+
+            for i = length, 1, -1 do
+                local tag = string_lower( tags[ i ] )
+                if addon_types[ tag ] then return tag end
+            end
+
+            return nil
+        end
+
+        --- Returns the type of the addon.
+        ---@return gpm.std.ADDON_TYPE?: The type of the addon.
+        function Addon:getType()
+            return getType( self.wsid )
+        end
+
+        AddonClass.getType = getType
+
     end
 
-    --- Returns the tags of the addon.
-    ---@return string[]?: The tags of the addon.
-    function Addon:getTags()
-        return getTags( self.wsid )
-    end
+    do
 
-    AddonClass.getTags = getTags
+        local addon_tags = {
+            fun = true,
+            roleplay = true,
+            scenic = true,
+            movie = true,
+            realism = true,
+            cartoon = true,
+            water = true,
+            comic = true,
+            build = true
+        }
+
+        --- Returns the tags of the addon.
+        ---@param wsid string: The workshop ID of the addon.
+        ---@return gpm.std.ADDON_TAG[]?: The tags of the addon.
+        ---@return integer?: The number of tags.
+        local function getTags( wsid )
+            local data = findAddon( wsid )
+            if data == nil then return nil end
+
+            local tags, length = string_byteSplit( data.tags, 0x2C --[[ , ]] )
+
+            for i = length, 1, -1 do
+                local tag = string_lower( tags[ i ] )
+                if addon_tags[ tag ] then
+                    tags[ i ] = tag
+                else
+                    table_remove( tags, i )
+                    length = length - 1
+                end
+            end
+
+            return tags, length
+        end
+
+        --- Returns the tags of the addon.
+        ---@return string[]?: The tags of the addon.
+        function Addon:getTags()
+            return getTags( self.wsid )
+        end
+
+        AddonClass.getTags = getTags
+
+    end
 
 end
 
@@ -346,18 +470,38 @@ end
 
 do
 
+    local steamworks_IsSubscribed = steamworks.IsSubscribed
+
+    function Addon:isSubscribed()
+        return steamworks_IsSubscribed( self.wsid )
+    end
+
+    AddonClass.isSubscribed = steamworks_IsSubscribed
+
+end
+
+do
+
     local steamworks_Subscribem, steamworks_Unsubscribe = steamworks.Subscribe, steamworks.Unsubscribe
 
-    function Addon:subscribe()
-        steamworks_Subscribem( self.wsid )
+    --- Subscribes or unsubscribes the addon.
+    ---@param wsid string: The workshop ID of the addon.
+    ---@param subscribed boolean: `true` to subscribe, `false` to unsubscribe.
+    local function setSubscribed( wsid, subscribed )
+        if subscribed then
+            steamworks_Subscribem( wsid )
+        else
+            steamworks_Unsubscribe( wsid )
+        end
     end
 
-    function Addon:unsubscribe()
-        steamworks_Unsubscribe( self.wsid )
+    --- Subscribes or unsubscribes the addon.
+    ---@param subscribed boolean: `true` to subscribe, `false` to unsubscribe.
+    function Addon:setSubscribed( subscribed )
+        setSubscribed( self.wsid, subscribed )
     end
 
-    AddonClass.subscribe = steamworks_Subscribem
-    AddonClass.unsubscribe = steamworks_Unsubscribe
+    AddonClass.setSubscribed = setSubscribed
 
 end
 
@@ -515,18 +659,6 @@ do
     end
 
     AddonClass.fetchInfo = fetchInfo
-
-end
-
-do
-
-    local steamworks_IsSubscribed = steamworks.IsSubscribed
-
-    function Addon:isSubscribed()
-        return steamworks_IsSubscribed( self.wsid )
-    end
-
-    AddonClass.isSubscribed = steamworks_IsSubscribed
 
 end
 
