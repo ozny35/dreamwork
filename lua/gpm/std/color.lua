@@ -22,56 +22,7 @@ do
     string_char, string_byte, string_format, string_len, string_sub = string.char, string.byte, string.format, string.len, string.sub
 end
 
--- TODO: Find original author
-local colorCorrection = {
-    [ 0 ] = 0, 5, 8, 10, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22,
-    22, -- lost 15
-    23, 24, 25, 26, 27, 28,
-    28, -- lost 22
-    29, 30, 31, 32, 33, 34, 35,
-    35, -- lost 30
-    36, 37, 38, 39, 40, 41, 42,
-    42, -- lost 38
-    43, 44, 45, 46, 47, 48, 49, 50, 51,
-    51, -- lost 48
-    52, 53, 54, 55, 56, 57, 58, 59, 60,
-    60, -- lost 58
-    61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73,
-    73, -- lost 72
-    74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88,
-    88, -- lost 88
-    89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109,
-    109, -- lost 110
-    111,
-    111, -- lost 112
-    113,
-    113, -- lost 114
-    114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132,
-    133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151,
-    152, 153, 154, 155, 156, 157,
-    157, -- lost 159
-    158, 159, 160, 162, 163, 164, 165,
-    165, -- lost 167
-    167, 168,
-    168, -- lost 170
-    170,
-    170, -- lost 172
-    172,
-    172, -- lost 174
-    174,
-    174, -- lost 176
-    176, 177,
-    177, -- lost 179
-    178, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197,
-    198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216,
-    217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 236, 237,
-    237, -- lost 238
-    238, 239, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255
-}
-
 local vconst = 1 / 255
-
--- TODO: write proper documentation
 
 -- https://github.com/Facepunch/garrysmod/blob/master/garrysmod/lua/includes/util/color.lua
 ---@diagnostic disable-next-line: duplicate-doc-alias
@@ -90,10 +41,10 @@ local vconst = 1 / 255
 local Color = std.class.base( "Color" )
 
 ---@protected
----@param r number?
----@param g number?
----@param b number?
----@param a number?
+---@param r number?: The red color channel.
+---@param g number?: The green color channel.
+---@param b number?: The blue color channel.
+---@param a number?: The alpha color channel.
 function Color:__init( r, g, b, a )
     r = math_clamp( r or 0, 0, 255 )
 
@@ -105,17 +56,20 @@ end
 
 
 ---@private
+---@protected
 function Color:__tostring()
     return string_format( "Color: %p [%d, %d, %d, %d]", self, self.r, self.g, self.b, self.a )
 end
 
 ---@private
+---@protected
 ---@param other Color
 function Color:__eq( other )
     return self.r == other.r and self.g == other.g and self.b == other.b and self.a == other.a
 end
 
 ---@private
+---@protected
 function Color:__unm()
     return setmetatable(
         {
@@ -129,6 +83,7 @@ function Color:__unm()
 end
 
 ---@private
+---@protected
 ---@param color Color
 function Color:__add( color )
     return setmetatable(
@@ -143,6 +98,7 @@ function Color:__add( color )
 end
 
 ---@private
+---@protected
 ---@param color Color
 function Color:__sub( color )
     return setmetatable(
@@ -157,6 +113,7 @@ function Color:__sub( color )
 end
 
 ---@private
+---@protected
 ---@param other Color | number
 function Color:__mul( other )
     if is_number( other ) then
@@ -184,6 +141,7 @@ function Color:__mul( other )
 end
 
 ---@private
+---@protected
 ---@param other Color | number
 function Color:__div( other )
     if is_number( other ) then
@@ -211,28 +169,41 @@ function Color:__div( other )
 end
 
 ---@private
+---@protected
 ---@param other Color
 function Color:__lt( other )
     return ( self.r + self.g + self.b + self.a ) < ( other.r + other.g + other.b + other.a )
 end
 
 ---@private
+---@protected
 ---@param other Color
 function Color:__le( other )
     return ( self.r + self.g + self.b + self.a ) <= ( other.r + other.g + other.b + other.a )
 end
 
 ---@private
+---@protected
 ---@param value Color
 function Color:__concat( value )
-    return self:ToHex() .. tostring( value )
+    return self:toHex() .. tostring( value )
 end
 
-function Color:Unpack()
+--- Unpacks the color as r, g, b, a values.
+---@return number
+---@return number
+---@return number
+---@return number
+function Color:unpack()
     return self.r, self.g, self.b, self.a
 end
 
-function Color:SetUnpacked(r, g, b, a)
+--- Set the color as r, g, b, a values.
+---@param r number
+---@param g number
+---@param b number
+---@param a number
+function Color:setUnpacked( r, g, b, a )
     r = math_clamp( r or 0, 0, 255 )
 
     self.r = r
@@ -241,26 +212,28 @@ function Color:SetUnpacked(r, g, b, a)
     self.a = math_clamp( a or 255, 0, 255 )
 end
 
-function Color:DoCorrection()
-    self.r = colorCorrection[ self.r ]
-    self.g = colorCorrection[ self.g ]
-    self.b = colorCorrection[ self.b ]
-    return self
-end
-
-function Color:Copy()
+--- Makes a copy of the color.
+---@return gpm.std.Color
+function Color:copy()
     return self.__class( self.r, self.g, self.b, self.a )
 end
 
-function Color:ToTable()
+--- Returns the color as { r, g, b, a } table.
+---@return table
+function Color:toTable()
     return { self.r, self.g, self.b, self.a }
 end
 
-function Color:ToHex()
+--- Returns the color as hex string.
+---@return string
+function Color:toHex()
     return string_format( "#%02x%02x%02x", self.r, self.g, self.b )
 end
 
-function Color:ToBinary( withOutAlpha )
+--- Returns the color as binary string.
+---@param withOutAlpha boolean
+---@return string
+function Color:toBinary( withOutAlpha )
     if withOutAlpha then
         return string_char( self.r, self.g, self.b )
     else
@@ -268,43 +241,69 @@ function Color:ToBinary( withOutAlpha )
     end
 end
 
-function Color:ToVector()
+--- Returns the color as vector.
+---@return Vector
+function Color:toVector()
     return Vector( self.r * vconst, self.g * vconst, self.b * vconst )
 end
 
-function Color:ToHSL()
+--- Returns the color as HSL values (hue, saturation, lightness).
+---@return number hue: The hue in degrees [0, 360].
+---@return number saturation: The saturation as fraction [0, 1].
+---@return number lightness: The lightness as fraction [0, 1].
+function Color:toHSL()
     return ColorToHSL( self )
 end
 
-function Color:ToHSV()
+--- Returns the color as HSV values (hue, saturation, value).
+---@return number hue: The hue in degrees [0, 360].
+---@return number saturation: The saturation as fraction [0, 1].
+---@return number value: The value as fraction [0, 1].
+function Color:toHSV()
     return ColorToHSV( self )
 end
 
-function Color:ToHWB()
-    local hue, saturation, brightness = self:ToHSL()
-    return hue, ( 100 - saturation ) * brightness, 100 - brightness
+--- Returns the color as HWB values (hue, whiteness, blackness).
+---@return number hue: The hue in degrees [0, 360].
+---@return number whiteness: The whiteness as fraction [0, 1].
+---@return number blackness: The blackness as fraction [0, 1].
+function Color:toHWB()
+    local hue, saturation, brightness = self:toHSL()
+    return hue, ( 1 - saturation ) * brightness, 1 - brightness
 end
 
-function Color:ToCMYK()
+--- Returns the color as CMYK values (cyan, magenta, yellow, black).
+---@return number cyan: The cyan as fraction [0, 1].
+---@return number magenta: The magenta as fraction [0, 1].
+---@return number yellow: The yellow as fraction [0, 1].
+---@return number black: The black as fraction [0, 1].
+function Color:toCMYK()
     local m = math_max( self.r, self.g, self.b )
-    return ( m - self.r ) / m * 100, ( m - self.g ) / m * 100, ( m - self.b ) / m * 100, math_min( self.r, self.g, self.b ) / 2.55
+    return ( m - self.r ) / m, ( m - self.g ) / m, ( m - self.b ) / m, math_min( self.r, self.g, self.b ) / 255
 end
 
-function Color:Lerp( color, frac, withOutAlpha )
+--- Smoothing a color object to another color object.
+---@param color Color: The color to lerp.
+---@param frac number: The fraction to lerp [0, 1].
+---@param withAlpha boolean?: Whether to lerp alpha channel.
+---@return Color
+function Color:lerp( color, frac, withAlpha )
     frac = math_clamp( frac, 0, 1 )
 
     self.r = math_lerp( frac, self.r, color.r )
     self.g = math_lerp( frac, self.g, color.g )
     self.b = math_lerp( frac, self.b, color.b )
 
-    if not withOutAlpha then
+    if withAlpha then
         self.a = math_lerp( frac, self.a, color.a )
     end
 
     return self
 end
 
-function Color:Invert()
+--- Inverts current color.
+---@return Color
+function Color:invert()
     self.r, self.g, self.b = math_clamp( math_abs( 255 - self.r ), 0, 255 ), math_clamp( math_abs( 255 - self.g ), 0, 255 ), math_clamp( math_abs( 255 - self.b ), 0, 255 )
     return self
 end
@@ -315,7 +314,12 @@ end
 ---@overload fun(r: number?, g: number?, b: number?, a: number?): gpm.std.Color
 local ColorClass = std.class.create( Color )
 
-function ColorClass.FromHex( hex )
+--- Creates a color object from hex string.
+---
+--- Supports hex strings from `0` to `8` characters.
+---@param hex string: The hex string. If the first character is `#`, it will be ignored.
+---@return Color: The color object.
+function ColorClass.fromHex( hex )
     if is_number( hex ) then
         return setmetatable(
             {
@@ -333,7 +337,29 @@ function ColorClass.FromHex( hex )
     end
 
     local length = string_len( hex )
-    if length == 3 then
+    if length == 1 then
+        local r = string_byte( hex, 1 )
+        return setmetatable(
+            {
+                r = tonumber( string_char( r, r ), 16 ),
+                g = 0,
+                b = 0,
+                a = 255
+            },
+            Color
+        )
+    elseif length == 2 then
+        local r, g = string_byte( hex, 1, 2 )
+        return setmetatable(
+            {
+                r = tonumber( string_char( r, r ), 16 ),
+                g = tonumber( string_char( g, g ), 16 ),
+                b = 0,
+                a = 255
+            },
+            Color
+        )
+    elseif length == 3 then
         local r, g, b = string_byte( hex, 1, 3 )
         return setmetatable(
             {
@@ -380,7 +406,10 @@ function ColorClass.FromHex( hex )
     end
 end
 
-function ColorClass.FromBinary( binary )
+--- Creates a color object from binary string.
+---@param binary string: The binary string.
+---@return Color: The color object.
+function ColorClass.fromBinary( binary )
     local length = string_len( binary )
     if length == 1 then
         return setmetatable(
@@ -425,7 +454,10 @@ function ColorClass.FromBinary( binary )
     end
 end
 
-function ColorClass.FromVector( vector )
+--- Creates a color object from vector.
+---@param vector Vector: The vector.
+---@return Color: The color object.
+function ColorClass.fromVector( vector )
     return setmetatable(
         {
             r = vector[ 1 ] * 255,
@@ -437,19 +469,40 @@ function ColorClass.FromVector( vector )
     )
 end
 
-function ColorClass.FromHSL( hue, saturation, lightness )
+--- Creates a color object from HSL values.
+---@param hue number: The hue in degrees [0, 360].
+---@param saturation number: The saturation [0, 1].
+---@param lightness number: The lightness [0, 1].
+---@return Color: The color object.
+function ColorClass.fromHSL( hue, saturation, lightness )
     return setmetatable( HSLToColor( hue, saturation, lightness ), Color )
 end
 
-function ColorClass.FromHSV( hue, saturation, brightness )
+--- Creates a color object from HSV values.
+---@param hue number: The hue in degrees [0, 360].
+---@param saturation number: The saturation [0, 1].
+---@param brightness number: The brightness [0, 1].
+---@return Color: The color object.
+function ColorClass.fromHSV( hue, saturation, brightness )
     return setmetatable( HSVToColor( hue, saturation, brightness ), Color )
 end
 
-function ColorClass.FromHWB( hue, saturation, brightness )
+--- Creates a color object from HWB values.
+---@param hue number: The hue in degrees [0, 360].
+---@param saturation number: The saturation [0, 1].
+---@param brightness number: The brightness [0, 1].
+---@return Color: The color object.
+function ColorClass.fromHWB( hue, saturation, brightness )
     return setmetatable( HSVToColor( hue, 1 - saturation / ( 1 - brightness ), 1 - brightness ), Color )
 end
 
-function ColorClass.FromCMYK( cyan, magenta, yellow, black )
+--- Creates a color object from CMYK values.
+---@param cyan number: The cyan as fraction [0, 1].
+---@param magenta number: The magenta as fraction [0, 1].
+---@param yellow number: The yellow as fraction [0, 1].
+---@param black number: The black as fraction [0, 1].
+---@return Color: The color object.
+function ColorClass.fromCMYK( cyan, magenta, yellow, black )
     cyan, magenta, yellow, black = cyan * 0.01, magenta * 0.01, yellow * 0.01, black * 0.01
 
     local mk = 1 - black
@@ -460,31 +513,65 @@ function ColorClass.FromCMYK( cyan, magenta, yellow, black )
     )
 end
 
-function ColorClass.FromTable( tbl )
+--- Creates a color object from table.
+---@param tbl number[] | table: The table.
+---@return Color: The color object.
+function ColorClass.fromTable( tbl )
     return ColorClass( tbl[ 1 ] or tbl.r, tbl[ 2 ] or tbl.g, tbl[ 3 ] or tbl.b, tbl[ 4 ] or tbl.a )
 end
 
----@param frac number
-function ColorClass.Lerp(frac, a, b, withOutAlpha)
+--- Creates a color object from lerp.
+---@param frac number: The fraction [0, 1].
+---@param a Color: The "from" color.
+---@param b Color: The "to" color.
+---@param withAlpha boolean: Whether to lerp alpha channel.
+---@return Color: The color object.
+function ColorClass.lerp( frac, a, b, withAlpha )
     frac = math_clamp( frac, 0, 1 )
     return ColorClass(
         math_lerp( frac, a.r, b.r ),
         math_lerp( frac, a.g, b.g ),
         math_lerp( frac, a.b, b.b ),
-        withOutAlpha and 255 or math_lerp( frac, a.a, b.a )
+        withAlpha and math_lerp( frac, a.a, b.a ) or 255
     )
 end
 
 if std.CLIENT then
-    local render_ReadPixel = _G.render.ReadPixel
+    do
 
-    -- TODO: ReadPixel needs CapturePixels called before
-    function ColorClass.FromScreen(x, y, alpha)
-        local r, g, b, a = render_ReadPixel(x, y)
-        return ColorClass(r, g, b, alpha or a)
+        local render_ReadPixel = _G.render.ReadPixel
+
+        --- Creates a color object from screen coordinates by reading a pixel.
+        ---
+        --- Requires `render.CapturePixels` call before using.
+        ---
+        ---@see https://wiki.facepunch.com/gmod/render.ReadPixel
+        ---@param x integer: The x coordinate.
+        ---@param y integer: The y coordinate.
+        ---@param alpha number? The alpha channel.
+        ---@return Color
+        function ColorClass.fromScreen( x, y, alpha )
+            local r, g, b, a = render_ReadPixel( x, y )
+            return ColorClass( r, g, b, alpha or a )
+        end
+
     end
-end
 
--- TODO: https://wiki.facepunch.com/gmod/Global.NamedColor
+    do
+
+        local NamedColor = _G.NamedColor
+
+        --- Creates a color object from `resource/ClientScheme.res`.
+        ---@param name string
+        ---@return Color?
+        function ColorClass.fromScheme( name )
+            local tbl = NamedColor( name )
+            if tbl == nil then return end
+            return setmetatable( tbl, Color )
+        end
+
+    end
+
+end
 
 return ColorClass
