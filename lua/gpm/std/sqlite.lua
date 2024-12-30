@@ -85,7 +85,7 @@ end
 local query
 do
 
-    local string_gsub = std.string.gsub
+    local string_gsub = string.gsub
 
     --- Executes a SQL query with parameters.
     ---@param str string: The SQL query to execute.

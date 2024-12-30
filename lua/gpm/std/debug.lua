@@ -44,6 +44,44 @@ function debug.fcall( func, ... )
     return func( ... )
 end
 
+do
+
+    local FindMetaTable = _G.FindMetaTable or fempty
+    local metatables = debug.getregistry() or {}
+
+    --- Returns the metatable of the given name or `nil` if not found.
+    ---@param name string
+    ---@return table?
+    function debug.findmetatable( name )
+        local tbl = metatables[ name ]
+        if tbl == nil then
+            tbl = FindMetaTable( name )
+            if tbl == nil then
+                return nil
+            else
+                metatables[ name ] = tbl
+                return tbl
+            end
+        else
+            return tbl
+        end
+    end
+
+    local RegisterMetaTable = _G.RegisterMetaTable or fempty
+
+    --- Registers the metatable of the given name and table.
+    ---@param name string: The name of the metatable.
+    ---@param tbl table: The metatable.
+    ---@return number: The ID of the metatable.
+    function debug.registermetatable( name, tbl )
+        tbl = metatables[ name ] or tbl
+        metatables[ name ] = tbl
+        RegisterMetaTable( name, tbl )
+        return tbl.MetaID or -1
+    end
+
+end
+
 --- Returns current stack trace as a table with strings.
 ---@param startPos? number
 ---@return table stack

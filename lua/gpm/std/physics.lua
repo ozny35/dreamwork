@@ -17,7 +17,7 @@ do
         createBox = _G.CreatePhysCollideBox,
     }
 
-    setmetatable( collide, { __index = std.findMetatable( "PhysCollide" ) } )
+    setmetatable( collide, { __index = std.debug.findmetatable( "PhysCollide" ) } )
 
     physics.collide = collide
 
@@ -25,7 +25,7 @@ end
 
 ---@type PhysObj
 ---@diagnostic disable-next-line: assign-type-mismatch
-physics.object = setmetatable( {}, { __index = std.findMetatable( "PhysObj" ) } )
+physics.object = setmetatable( {}, { __index = std.debug.findmetatable( "PhysObj" ) } )
 
 do
 

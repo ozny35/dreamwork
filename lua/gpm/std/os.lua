@@ -1,15 +1,10 @@
 local _G = _G
-local std = _G.gpm.std
-local glua_os, glua_system = _G.os, _G.system
-local glua_system_BatteryPower = glua_system.BatteryPower
-local glua_os_time, glua_os_date = glua_os.time, glua_os.date
+local std, glua_os, glua_system = _G.gpm.std, _G.os, _G.system
 
 ---@class gpm.std.os
 local os = {
     name = std.jit.os,
     arch = std.jit.arch,
-    date = glua_os_date,
-    time = glua_os_time,
     clock = glua_os.clock,
     difftime = glua_os.difftime,
     uptime = glua_system.UpTime,
@@ -21,6 +16,7 @@ local os = {
 
 do
 
+    local glua_system_BatteryPower = glua_system.BatteryPower
     local math_min = std.math.min
 
     --- Returns the current battery level.
@@ -29,12 +25,12 @@ do
         return math_min( 100, glua_system_BatteryPower() )
     end
 
-end
+    --- Checks if the system has a battery.
+    ---@return boolean: `true` if the system has a battery, `false` if not.
+    function os.hasBattery()
+        return glua_system_BatteryPower() ~= 255
+    end
 
---- Checks if the system has a battery.
----@return boolean: `true` if the system has a battery, `false` if not.
-function os.hasBattery()
-    return glua_system_BatteryPower() ~= 255
 end
 
 if std.MENU then
@@ -48,6 +44,7 @@ local bit = std.bit
 do
 
     local bit_band, bit_rshift = bit.band, bit.rshift
+    local glua_os_time = glua_os.time
 
     ---Converts a DOS date and time to a Unix timestamp.
     ---@param time number The time to convert.
@@ -71,12 +68,15 @@ do
         return glua_os_time( data )
     end
 
+    os.time = glua_os_time
+
 end
 
 do
 
     local bit_bor, bit_lshift = bit.bor, bit.lshift
     local math_fdiv = _G.gpm.std.math.fdiv
+    local glua_os_date = glua_os.date
 
     ---Converts a Unix timestamp to a DOS date and time.
     ---@param seconds number The Unix timestamp to convert.
@@ -87,6 +87,8 @@ do
         ---@diagnostic disable-next-line: param-type-mismatch, return-type-mismatch
         return bit_bor( bit_lshift( data.hour, 11 ), bit_lshift( data.min, 5 ), math_fdiv( data.sec, 2 ) ), bit_bor( bit_lshift( data.year - 1980, 9 ), bit_lshift( data.month, 5 ), data.day )
     end
+
+    os.date = glua_os_date
 
 end
 

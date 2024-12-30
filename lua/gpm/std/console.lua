@@ -1,6 +1,8 @@
 local _G = _G
-local std = _G.gpm.std
+local gpm = _G.gpm
+local std = gpm.std
 local class = std.class
+local debug = std.debug
 local bit_bor = std.bit.bor
 local string_format = std.string.format
 local RunConsoleCommand = _G.RunConsoleCommand
@@ -121,7 +123,7 @@ do
     local setmetatable = std.setmetatable
 
     ---@class ConVar
-    local CONVAR = std.findMetatable( "ConVar" )
+    local CONVAR = debug.findmetatable( "ConVar" )
     local getDefault = CONVAR.GetDefault
 
     ---@alias ConsoleVariable gpm.std.console.Variable
@@ -516,7 +518,7 @@ do
     do
 
         local table_insert, table_remove = std.table.insert, std.table.remove
-        local debug_getfpackage = std.debug.getfpackage
+        local debug_getfpackage = debug.getfpackage
         local Future = std.Future
 
         --- 1 - object, 2 - fn, 3 - name, 4 - once

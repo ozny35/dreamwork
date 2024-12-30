@@ -1,6 +1,6 @@
 local _G = _G
 local glua_bit = _G.bit
-local getmetatable = _G.gpm.std.getmetatable
+local debug_getmetatable = _G.gpm.std.debug.getmetatable
 
 ---@class gpm.std.bit
 local bit = {}
@@ -15,7 +15,7 @@ do
     ---@param shift number: Amounts of bits to shift.
     ---@return V: The arithmetically shifted value.
     function bit.arshift( value, shift )
-        local metatable = getmetatable( value )
+        local metatable = debug_getmetatable( value )
         if metatable == nil then
             return bit_arshift( value, shift )
         else
@@ -40,7 +40,7 @@ do
     ---@param shift number: Amounts of bits to shift left by.
     ---@return V: The left shifted value.
     function bit.lshift( value, shift )
-        local metatable = getmetatable( value )
+        local metatable = debug_getmetatable( value )
         if metatable == nil then
             return bit_lshift( value, shift )
         else
@@ -65,7 +65,7 @@ do
     ---@param shift number: Amounts of bits to shift right by.
     ---@return V: The right shifted value.
     function bit.rshift( value, shift )
-        local metatable = getmetatable( value )
+        local metatable = debug_getmetatable( value )
         if metatable == nil then
             return bit_rshift( value, shift )
         else
@@ -90,7 +90,7 @@ do
     ---@param shift number: Amounts of bits to rotate left by.
     ---@return V: The left rotated value.
     function bit.rol( value, shift )
-        local metatable = getmetatable( value )
+        local metatable = debug_getmetatable( value )
         if metatable == nil then
             return bit_rol( value, shift )
         else
@@ -115,7 +115,7 @@ do
     ---@param shift number: Amounts of bits to rotate right by.
     ---@return V: The right rotated value.
     function bit.ror( value, shift )
-        local metatable = getmetatable( value )
+        local metatable = debug_getmetatable( value )
         if metatable == nil then
             return bit_ror( value, shift )
         else
@@ -140,7 +140,7 @@ do
     ---@vararg V?: Values bit to perform bitwise `and` with.
     ---@return V: Result of bitwise `and` operation.
     function bit.band( value, ... )
-        local metatable = getmetatable( value )
+        local metatable = debug_getmetatable( value )
         if metatable == nil then
             return bit_band( value, ... )
         else
@@ -164,7 +164,7 @@ do
     ---@param value V: The value to be inverted.
     ---@return V: Result of bitwise `not` operation.
     function bit.bnot( value )
-        local metatable = getmetatable( value )
+        local metatable = debug_getmetatable( value )
         if metatable == nil then
             return bit_bnot( value )
         else
@@ -189,7 +189,7 @@ do
     ---@vararg V: Extra values to be evaluated.
     ---@return V: The bitwise `or` result between all values.
     function bit.bor( value, ... )
-        local metatable = getmetatable( value )
+        local metatable = debug_getmetatable( value )
         if metatable == nil then
             return bit_bor( value, ... )
         else
@@ -214,7 +214,7 @@ do
     ---@vararg V: Values bit xor with.
     ---@return V: Result of bitwise `xor` operation.
     function bit.bxor( value, ... )
-        local metatable = getmetatable( value )
+        local metatable = debug_getmetatable( value )
         if metatable == nil then
             return bit_bxor( value, ... )
         else
@@ -238,7 +238,7 @@ do
     ---@param value V: The value to be byte swapped.
     ---@return V: The byte swapped value.
     function bit.bswap( value )
-        local metatable = getmetatable( value )
+        local metatable = debug_getmetatable( value )
         if metatable == nil then
             return bit_bswap( value )
         else
@@ -261,7 +261,7 @@ do
     ---@param value any: The value to be normalized.
     ---@return number: The normalized value.
     function bit.tobit( value )
-        local metatable = getmetatable( value )
+        local metatable = debug_getmetatable( value )
         if metatable == nil then
             return bit_tobit( value )
         else
@@ -287,7 +287,7 @@ do
     function bit.tohex( value, length )
         if length == nil then length = 8 end
 
-        local metatable = getmetatable( value )
+        local metatable = debug_getmetatable( value )
         if metatable == nil then
             return bit_tohex( value, length )
         else

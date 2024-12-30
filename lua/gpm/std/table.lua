@@ -1,15 +1,15 @@
 local _G = _G
 local glua_table = _G.table
 
-local string_sub, string_find, string_len, string_lower
-do
-    local string = _G.string
-    string_sub, string_find, string_len, string_lower = string.sub, string.find, string.len, string.lower
-end
-
 local std = _G.gpm.std
 local select, pairs, setmetatable, rawget, next = std.select, std.pairs, std.setmetatable, std.rawget, std.next
 local debug_getmetatable = std.debug.getmetatable
+
+local string_sub, string_find, string_len, string_lower
+do
+    local string = std.string
+    string_sub, string_find, string_len, string_lower = string.sub, string.find, string.len, string.lower
+end
 
 local math_random, math_fdiv
 do
@@ -239,6 +239,7 @@ local function lower( tbl, lowerKeys, lowerValues )
     return tbl
 end
 
+---@class gpm.std.table
 local table = {
     -- Lua 5.1
     concat = glua_table.concat,

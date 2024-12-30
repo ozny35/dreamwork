@@ -55,3 +55,25 @@ std.Truck = TruckClass
 ```lua
 std.class.inherited(TruckClass)
 ```
+
+## Class Template
+```lua
+
+---@alias Car gpm.std.Car
+---@class gpm.std.Car: gpm.std.Object
+---@field __class gpm.std.CarClass
+local Car = std.class.base( "Car" )
+
+---@protected
+function Car:__init()
+    self.speed = 0
+    self.color = Color(255, 255, 255)
+end
+
+---@class gpm.std.CarClass: gpm.std.Car
+---@field __base gpm.std.Car
+---@overload fun(): Car
+local CarClass = std.class.create(Car)
+std.Car = CarClass
+
+```

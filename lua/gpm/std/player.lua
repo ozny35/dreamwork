@@ -11,7 +11,7 @@ local glua_player, NULL, Player = _G.player, _G.NULL, _G.Player
 local player_Iterator = glua_player.Iterator
 
 ---@class Player
-local PLAYER = std.findMetatable( "Player" )
+local PLAYER = std.debug.findmetatable( "Player" )
 
 ---@class gpm.std.player
 local player = {
@@ -23,7 +23,7 @@ if std.SERVER then
     local PLAYER_IsListenServerHost = PLAYER.IsListenServerHost
     local player_CreateNextBot = glua_player.CreateNextBot
 
-    PLAYER.new = function( value )
+    function PLAYER.new( value )
         if is_string( value ) then
             ---@diagnostic disable-next-line: param-type-mismatch
             return player_CreateNextBot( value )
@@ -43,7 +43,7 @@ if std.SERVER then
 elseif std.CLIENT then
     local LocalPlayer = _G.LocalPlayer
 
-    PLAYER.new = function( value )
+    function PLAYER.new( value )
         if is_string( value ) then
             return std.error( "Client cannot create players.", 2 )
         elseif is_number( value ) then

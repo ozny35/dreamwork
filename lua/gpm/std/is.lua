@@ -1,9 +1,11 @@
 local _G = _G
 
+local gpm = _G.gpm
+
 ---@class gpm.std
-local std = _G.gpm.std
-local debug_getmetatable, debug_setmetatable = std.debug.getmetatable, std.debug.setmetatable
-local findMetatable, registerMetatable = std.findMetatable, std.registerMetatable
+local std = gpm.std
+local debug = std.debug
+local debug_getmetatable, debug_setmetatable, debug_findmetatable, debug_registermetatable = debug.getmetatable, debug.setmetatable, debug.findmetatable, debug.registermetatable
 
 --- Table of functions to check the type of a value.
 ---@class gpm.std.is
@@ -33,7 +35,7 @@ do
         debug_setmetatable( object, metatable )
     end
 
-    registerMetatable( "nil", metatable )
+    debug_registermetatable( "nil", metatable )
 
     --- Checks if the value type is `nil`.
     ---@param value any: The value to check.
@@ -54,7 +56,7 @@ do
         debug_setmetatable( object, metatable )
     end
 
-    registerMetatable( "boolean", metatable )
+    debug_registermetatable( "boolean", metatable )
 
     --- Checks if the value type is a `boolean`.
     ---@param value any: The value to check.
@@ -79,7 +81,7 @@ do
         debug_setmetatable( object, metatable )
     end
 
-    registerMetatable( "number", metatable )
+    debug_registermetatable( "number", metatable )
 
     --- Checks if the value type is a `number`.
     ---@param value any: The value to check.
@@ -100,7 +102,7 @@ do
         debug_setmetatable( object, metatable )
     end
 
-    registerMetatable( "string", metatable )
+    debug_registermetatable( "string", metatable )
 
     --- Checks if the value type is a `string`.
     ---@param value any: The value to check.
@@ -115,7 +117,7 @@ end
 is.table = _G.istable
 
 -- function ( 6 )
-object = std.debug.fempty
+object = debug.fempty
 do
 
     local metatable = debug_getmetatable( object )
@@ -124,7 +126,7 @@ do
         debug_setmetatable( object, metatable )
     end
 
-    registerMetatable( "function", metatable )
+    debug_registermetatable( "function", metatable )
 
     --- Checks if the value type is a `function`.
     ---@param value any
@@ -158,7 +160,7 @@ do
         debug_setmetatable( object, metatable )
     end
 
-    registerMetatable( "thread", metatable )
+    debug_registermetatable( "thread", metatable )
 
     --- Checks if the value type is a `thread`.
     ---@param value any: The value to check.
@@ -181,7 +183,7 @@ if std.CLIENT_SERVER then
     end
 
     ---@class Entity
-    local ENTITY = findMetatable( "Entity" )
+    local ENTITY = debug_findmetatable( "Entity" )
 
     --- Checks if the value type is an `entity`.
     ---@param value any: The value to check.
@@ -197,7 +199,7 @@ if std.CLIENT_SERVER then
     do
 
         ---@class Player
-        local metatable = findMetatable( "Player" )
+        local metatable = debug_findmetatable( "Player" )
 
         --- Checks if the value type is a `player`.
         ---@param value any: The value to check.
@@ -212,7 +214,7 @@ if std.CLIENT_SERVER then
     do
 
         ---@class Weapon
-        local metatable = findMetatable( "Weapon" )
+        local metatable = debug_findmetatable( "Weapon" )
 
         --- Checks if the value type is a `weapon`.
         ---@param value any: The value to check.
@@ -227,7 +229,7 @@ if std.CLIENT_SERVER then
     do
 
         ---@class NPC
-        local metatable = findMetatable( "NPC" )
+        local metatable = debug_findmetatable( "NPC" )
 
         --- Checks if the value type is an `npc`.
         ---@param value any: The value to check.
@@ -242,7 +244,7 @@ if std.CLIENT_SERVER then
     do
 
         ---@class NextBot
-        local metatable = findMetatable( "NextBot" )
+        local metatable = debug_findmetatable( "NextBot" )
 
         --- Checks if the value type is a `nextbot`.
         ---@param value any: The value to check.
@@ -257,7 +259,7 @@ if std.CLIENT_SERVER then
     do
 
         ---@class Vehicle
-        local metatable = findMetatable( "Vehicle" )
+        local metatable = debug_findmetatable( "Vehicle" )
 
         --- Checks if the value type is a `vehicle`.
         ---@param value any: The value to check.
@@ -274,7 +276,7 @@ if std.CLIENT_SERVER then
     if std.CLIENT then
 
         ---@class CSEnt
-        local metatable = findMetatable( "CSEnt" )
+        local metatable = debug_findmetatable( "CSEnt" )
 
         --- Checks if the value type is a `client entity` (or `CSEnt`).
         ---@param value any: The value to check.
@@ -289,7 +291,7 @@ if std.CLIENT_SERVER then
     do
 
         ---@class PhysObj
-        local metatable = findMetatable( "PhysObj" )
+        local metatable = debug_findmetatable( "PhysObj" )
 
         --- Checks if the value type is a `physics object`.
         ---@param value any: The value to check.
@@ -306,7 +308,7 @@ if std.CLIENT_SERVER then
     do
 
         ---@class ISave
-        local metatable = findMetatable( "ISave" )
+        local metatable = debug_findmetatable( "ISave" )
 
         --- Checks if the value type is an `ISave`.
         ---@param value any: The value to check.
@@ -321,7 +323,7 @@ if std.CLIENT_SERVER then
     do
 
         ---@class IRestore
-        local metatable = findMetatable( "IRestore" )
+        local metatable = debug_findmetatable( "IRestore" )
 
         --- Checks if the value type is an `IRestore`.
         ---@param value any: The value to check.
@@ -336,7 +338,7 @@ if std.CLIENT_SERVER then
     do
 
         ---@class CTakeDamageInfo
-        local metatable = findMetatable( "CTakeDamageInfo" )
+        local metatable = debug_findmetatable( "CTakeDamageInfo" )
 
         --- Checks if the value type is a `damage info`.
         ---@param value any: The value to check.
@@ -351,7 +353,7 @@ if std.CLIENT_SERVER then
     do
 
         ---@class CEffectData
-        local metatable = findMetatable( "CEffectData" )
+        local metatable = debug_findmetatable( "CEffectData" )
 
         --- Checks if the value type is an `CEffectData`.
         ---@param value any: The value to check.
@@ -366,7 +368,7 @@ if std.CLIENT_SERVER then
     do
 
         ---@class CMoveData
-        local metatable = findMetatable( "CMoveData" )
+        local metatable = debug_findmetatable( "CMoveData" )
 
         --- Checks if the value type is a `CMoveData`.
         ---@param value any: The value to check.
@@ -381,7 +383,7 @@ if std.CLIENT_SERVER then
     do
 
         ---@class CUserCmd
-        local metatable = findMetatable( "CUserCmd" )
+        local metatable = debug_findmetatable( "CUserCmd" )
 
         --- Checks if the value type is a `CUserCmd`.
         ---@param value any: The value to check.
@@ -396,7 +398,7 @@ if std.CLIENT_SERVER then
     do
 
         ---@class bf_read
-        local metatable = findMetatable( "bf_read" )
+        local metatable = debug_findmetatable( "bf_read" )
 
         --- Checks if the value type is a `bf_read` (aka `usmg` or `usermessage`).
         ---@param value any: The value to check.
@@ -411,7 +413,7 @@ if std.CLIENT_SERVER then
     do
 
         ---@class PhysCollide
-        local metatable = findMetatable( "PhysCollide" )
+        local metatable = debug_findmetatable( "PhysCollide" )
 
         --- Checks if the value type is a `PhysCollide`.
         ---@param value any: The value to check.
@@ -428,7 +430,7 @@ if std.CLIENT_SERVER then
     do
 
         ---@class SurfaceInfo
-        local metatable = findMetatable( "SurfaceInfo" )
+        local metatable = debug_findmetatable( "SurfaceInfo" )
 
         --- Checks if the value type is a `SurfaceInfo`.
         ---@param value any: The value to check.
@@ -445,7 +447,7 @@ end
 do
 
     ---@class Vector
-    local metatable = findMetatable( "Vector" )
+    local metatable = debug_findmetatable( "Vector" )
 
     --- Checks if the value type is a `Vector`.
     ---@param value any: The value to check.
@@ -460,7 +462,7 @@ end
 do
 
     ---@class Angle
-    local metatable = findMetatable( "Angle" )
+    local metatable = debug_findmetatable( "Angle" )
 
     --- Checks if the value type is an `Angle`.
     ---@param value any: The value to check.
@@ -477,7 +479,7 @@ if std.SERVER then
     do
 
         ---@class CRecipientFilter
-        local metatable = findMetatable( "CRecipientFilter" )
+        local metatable = debug_findmetatable( "CRecipientFilter" )
 
         --- Checks if the value type is a `CRecipientFilter`.
         ---@param value any: The value to check.
@@ -492,7 +494,7 @@ if std.SERVER then
     do
 
         ---@class CLuaLocomotion
-        local metatable = findMetatable( "CLuaLocomotion" )
+        local metatable = debug_findmetatable( "CLuaLocomotion" )
 
         --- Checks if the value type is a `CLuaLocomotion`.
         ---@param value any: The value to check.
@@ -507,7 +509,7 @@ if std.SERVER then
     do
 
         ---@class PathFollower
-        local metatable = findMetatable( "PathFollower" )
+        local metatable = debug_findmetatable( "PathFollower" )
 
         --- Checks if the value type is a `PathFollower`.
         ---@param value any: The value to check.
@@ -524,7 +526,7 @@ if std.SERVER then
     do
 
         ---@class CNavArea
-        local metatable = findMetatable( "CNavArea" )
+        local metatable = debug_findmetatable( "CNavArea" )
 
         --- Checks if the value type is a `CNavArea`.
         --- @param value any: The value to check.
@@ -541,7 +543,7 @@ if std.SERVER then
     do
 
         ---@class CNavLadder
-        local metatable = findMetatable( "CNavLadder" )
+        local metatable = debug_findmetatable( "CNavLadder" )
 
         --- Checks if the value type is a `CNavLadder`.
         ---@param value any: The value to check.
@@ -560,7 +562,7 @@ end
 do
 
     ---@class IMaterial
-    local metatable = findMetatable( "IMaterial" )
+    local metatable = debug_findmetatable( "IMaterial" )
 
     --- Checks if the value type is a `IMaterial`.
     ---@param value any: The value to check.
@@ -577,7 +579,7 @@ if std.CLIENT then
     do
 
         ---@class CLuaParticle
-        local metatable = findMetatable( "CLuaParticle" )
+        local metatable = debug_findmetatable( "CLuaParticle" )
 
         --- Checks if the value type is a `CLuaParticle`.
         ---@param value any: The value to check.
@@ -592,7 +594,7 @@ if std.CLIENT then
     do
 
         ---@class CLuaEmitter
-        local metatable = findMetatable( "CLuaEmitter" )
+        local metatable = debug_findmetatable( "CLuaEmitter" )
 
         --- Checks if the value type is a `CLuaEmitter`.
         ---@param value any: The value to check.
@@ -609,7 +611,7 @@ if std.CLIENT then
     do
 
         ---@class pixelvis_handle_t
-        local metatable = findMetatable( "pixelvis_handle_t" )
+        local metatable = debug_findmetatable( "pixelvis_handle_t" )
 
         --- Checks if the value type is a `pixelvis_handle_t`.
         ---@param value any: The value to check.
@@ -624,7 +626,7 @@ if std.CLIENT then
     do
 
         ---@class dlight_t
-        local metatable = findMetatable( "dlight_t" )
+        local metatable = debug_findmetatable( "dlight_t" )
 
         --- Checks if the value type is a `dlight_t`.
         ---@param value any: The value to check.
@@ -639,7 +641,7 @@ if std.CLIENT then
     do
 
         ---@class CNewParticleEffect
-        local metatable = findMetatable( "CNewParticleEffect" )
+        local metatable = debug_findmetatable( "CNewParticleEffect" )
 
         --- Checks if the value type is a `CNewParticleEffect`.
         ---@param value any: The value to check.
@@ -656,7 +658,7 @@ if std.CLIENT then
     do
 
         ---@class ProjectedTexture
-        local metatable = findMetatable( "ProjectedTexture" )
+        local metatable = debug_findmetatable( "ProjectedTexture" )
 
         --- Checks if the value type is a `ProjectedTexture`.
         ---@param value any: The value to check.
@@ -675,7 +677,7 @@ end
 do
 
     ---@class ITexture
-    local metatable = findMetatable( "ITexture" )
+    local metatable = debug_findmetatable( "ITexture" )
 
     --- Checks if the value type is a `ITexture`.
     ---@param value any: The value to check.
@@ -690,7 +692,7 @@ end
 do
 
     ---@class ConVar
-    local metatable = findMetatable( "ConVar" )
+    local metatable = debug_findmetatable( "ConVar" )
 
     --- Checks if the value type is a `ConVar`.
     ---@param value any: The value to check.
@@ -707,7 +709,7 @@ if std.CLIENT_MENU then
     do
 
         ---@class Panel
-        local metatable = findMetatable( "Panel" )
+        local metatable = debug_findmetatable( "Panel" )
 
         --- Checks if the value type is a `Panel`.
         ---@param value any: The value to check.
@@ -724,7 +726,7 @@ if std.CLIENT_MENU then
     do
 
         ---@class IMesh
-        local metatable = findMetatable( "IMesh" )
+        local metatable = debug_findmetatable( "IMesh" )
 
         if metatable == nil then
             function is.mesh() return false end
@@ -747,7 +749,7 @@ if std.CLIENT_MENU then
     do
 
         ---@class IVideoWriter
-        local metatable = findMetatable( "IVideoWriter" )
+        local metatable = debug_findmetatable( "IVideoWriter" )
 
         --- Checks if the value type is a `IVideoWriter`.
         ---@param value any: The value to check.
@@ -762,7 +764,7 @@ if std.CLIENT_MENU then
     do
 
         ---@class IGModAudioChannel
-        local metatable = findMetatable( "IGModAudioChannel" )
+        local metatable = debug_findmetatable( "IGModAudioChannel" )
 
         --- Checks if the value type is a `IGModAudioChannel`.
         ---@param value any: The value to check.
@@ -781,7 +783,7 @@ end
 do
 
     ---@class VMatrix
-    local metatable = findMetatable( "VMatrix" )
+    local metatable = debug_findmetatable( "VMatrix" )
 
     --- Checks if the value type is a `VMatrix`.
     ---@param value any: The value to check.
@@ -796,7 +798,7 @@ end
 do
 
     ---@class CSoundPatch
-    local metatable = findMetatable( "CSoundPatch" )
+    local metatable = debug_findmetatable( "CSoundPatch" )
 
     --- Checks if the value is a `CSoundPatch`.
     ---@param value any: The value to check.
@@ -811,7 +813,7 @@ end
 do
 
     ---@class File
-    local metatable = findMetatable( "File" )
+    local metatable = debug_findmetatable( "File" )
 
     --- Checks if the value is a `File`.
     ---@param value any: The value to check.
@@ -819,8 +821,6 @@ do
     function is.file( value )
         return debug_getmetatable( value ) == metatable
     end
-
-    registerMetatable( "File", metatable )
 
 end
 

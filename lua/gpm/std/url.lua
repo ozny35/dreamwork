@@ -2,6 +2,15 @@
 local std = _G.gpm.std
 local tostring, tonumber, rawget, rawset, getmetatable, pairs = std.tostring, std.tonumber, std.rawget, std.rawset, std.getmetatable, std.pairs
 
+---@class gpm.std.string
+local string = std.string
+
+---@class gpm.std.bit
+local bit = std.bit
+
+---@class gpm.std.table
+local table = std.table
+
 -- TODO: glua functions below
 local string_byte, string_char, string_sub, string_gsub, string_lower, string_format, string_len = string.byte, string.char, string.sub, string.gsub, string.lower, string.format, string.len
 local rshift, lshift, band, bor = bit.rshift, bit.lshift, bit.band, bit.bor

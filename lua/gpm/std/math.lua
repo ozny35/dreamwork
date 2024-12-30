@@ -2,6 +2,12 @@ local _G = _G
 local glua_math = _G.math
 local math_abs, math_atan, math_ceil, math_min, math_max, math_random, math_sqrt, math_floor, math_log, math_deg, math_pi = glua_math.abs, glua_math.atan, glua_math.ceil, glua_math.min, glua_math.max, glua_math.random, glua_math.sqrt, glua_math.floor, glua_math.log, glua_math.deg, glua_math.pi
 
+---@class gpm.std
+local std = _G.gpm.std
+
+---@class gpm.std.is
+local is = std.is
+
 local e = glua_math.exp( 1 )
 local ln2 = math_log( 2 )
 
@@ -443,7 +449,7 @@ math.inrage = inrage
 
 do
 
-    local is_number = _G.gpm.std.is.number
+    local is_number = is.number
 
     --- Returns "integer" if x is an integer, "float" if it is a float, or nil if x is not a number.
     ---@param x number The number to get the type of.
@@ -538,6 +544,36 @@ end
 ---@return number bits The bits number.
 function math.byte2bit( x )
     return math_ceil( x ) * 8
+end
+
+do
+
+    local debug_getmetatable = std.debug.getmetatable
+    local is_function = is.fn
+    local rawget = std.rawget
+
+    ---Returns the bit count of the given value.
+    ---@param value any: The value to get the bit count of.
+    ---@return number: The bit count of the value.
+    local function bitcount( value )
+        local metatable = debug_getmetatable( value )
+        if metatable == nil then
+            return 0
+        else
+            local fn = rawget( metatable, "__bitcount" )
+            return is_function( fn ) and fn( value ) or 0
+        end
+    end
+
+    math.bitcount = bitcount
+
+    ---Returns the byte count of the given value.
+    ---@param value any: The value to get the byte count of.
+    ---@return number: The byte count of the value.
+    function math.bytecount( value )
+        return math_ceil( bitcount( value ) * 0.125 )
+    end
+
 end
 
 return math

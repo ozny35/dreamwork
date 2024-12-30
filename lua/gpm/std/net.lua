@@ -2,16 +2,16 @@ local _G = _G
 
 local glua_net = _G.net
 local std = _G.gpm.std
-local string, math = std.string, std.math
+local string, math, debug = std.string, std.math, std.debug
 
-local bitcount, findMetatable, getmetatable, table_len = std.bitcount, std.findMetatable, std.getmetatable, std.table.len
+local bitcount, getmetatable, table_len, debug_findmetatable = std.bitcount, std.getmetatable, std.table.len, debug.findmetatable
 local is_function = std.is.fn
 
 ---@class Entity
-local ENTITY = findMetatable( "Entity" )
+local ENTITY = debug_findmetatable( "Entity" )
 
 ---@class Player
-local PLAYER = findMetatable( "Player" )
+local PLAYER = debug_findmetatable( "Player" )
 
 local ENTITY_IsValid, ENTITY_EntIndex = ENTITY.IsValid, ENTITY.EntIndex
 local Entity, NULL = _G.Entity, _G.NULL
@@ -187,12 +187,12 @@ do
 
 end
 
-local NUMBER = findMetatable( "number" )
-local STRING = findMetatable( "string" )
-local BOOLEAN = findMetatable( "boolean" )
-local MATRIX = findMetatable( "VMatrix" )
-local VECTOR = findMetatable( "Vector" )
-local ANGLE = findMetatable( "Angle" )
+local NUMBER = debug_findmetatable( "number" )
+local STRING = debug_findmetatable( "string" )
+local BOOLEAN = debug_findmetatable( "boolean" )
+local MATRIX = debug_findmetatable( "VMatrix" )
+local VECTOR = debug_findmetatable( "Vector" )
+local ANGLE = debug_findmetatable( "Angle" )
 
 --- Reads a boolean from the received net message.
 ---@return boolean: `true` or `false`, or `false` if the bool could not be read.
@@ -415,7 +415,7 @@ do
         return nil
     end
 
-    local metatable = findMetatable( "function" )
+    local metatable = debug_findmetatable( "function" )
     if metatable then
         metatable.__rx = readFunction
         metatable.__tx = writeFunction

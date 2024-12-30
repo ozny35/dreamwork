@@ -78,7 +78,7 @@ if std.SERVER then
                 findInBox = glua_navmesh.FindInBox,
                 find = glua_navmesh.Find,
             }, {
-                __index = std.findMetatable( "CNavArea" )
+                __index = std.debug.findmetatable( "CNavArea" )
             } ),
             ladder = std.setmetatable( {
                 getByIndex = glua_navmesh.GetNavLadderByID,
@@ -86,7 +86,7 @@ if std.SERVER then
                 setMarked = glua_navmesh.SetMarkedLadder,
                 create = glua_navmesh.CreateNavLadder,
             }, {
-                __index = std.findMetatable( "CNavLadder" )
+                __index = std.debug.findmetatable( "CNavLadder" )
             } )
         }
 

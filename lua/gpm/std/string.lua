@@ -1,6 +1,6 @@
 local _G = _G
 local std, glua_string = _G.gpm.std, _G.string
-local table_concat, tostring, tonumber = std.table.concat, std.tostring, std.tonumber
+local table_concat, tostring, tonumber = _G.table.concat, std.tostring, std.tonumber
 
 local math_ceil, math_max, math_floor, math_log, math_ln2
 do

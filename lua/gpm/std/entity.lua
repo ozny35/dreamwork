@@ -1,9 +1,11 @@
 local _G = _G
 local std = _G.gpm.std
+local debug = std.debug
+
 local ents, scripted_ents, Entity, NULL, ents_GetMapCreatedEntity = _G.ents, _G.scripted_ents, _G.Entity, _G.NULL, ents.GetMapCreatedEntity
 
 ---@class Entity
-local ENTITY = std.findMetatable( "Entity" )
+local ENTITY = debug.findmetatable( "Entity" )
 local ENTITY_SetModel = ENTITY.SetModel
 
 ---@class gpm.std.entity
@@ -32,7 +34,7 @@ entity.find = find
 
 do
 
-    local VECTOR_DistToSqr = std.findMetatable( "Vector" ).DistToSqr
+    local VECTOR_DistToSqr = debug.findmetatable( "Vector" ).DistToSqr
 
     local math_sqrt, math_huge
     do
@@ -91,7 +93,7 @@ elseif std.SERVER then
         local inPAS = ents.FindInPAS
         if inPAS == nil then
             ---@class CRecipientFilter
-            local FILTER = std.findMetatable( "CRecipientFilter" )
+            local FILTER = debug.findmetatable( "CRecipientFilter" )
             local FILTER_GetPlayers = FILTER.GetPlayers
             local FILTER_AddPAS = FILTER.AddPAS
 

@@ -695,6 +695,95 @@ if std.MENU then
 
 end
 
--- TODO: https://wiki.facepunch.com/gmod/steamworks.GetList
+do
+
+    -- TODO: https://wiki.facepunch.com/gmod/steamworks.GetList
+    -- https://github.com/search?q=repo%3AFacepunch%2Fgarrysmod+steamworks.GetList&type=code
+    local steamworks_GetList = steamworks.GetList
+
+    -- steamworks_GetList( "mine", {"addon"}, 0, 25, 0, "1", function( data )
+    --     for i = 1, #data do
+    --         print( i, AddonClass( data[ i ].wsid ) )
+    --     end
+    -- end )
+
+    -- -- steamworks_GetList( "latest", {}, 0, 10, 365, "0", function( data )
+    -- --     for i = 1, #data do
+
+    -- --     end
+    -- -- end )
+
+    ---@async
+    function AddonClass.getPopular()
+        local f = Future()
+
+        -- steamworks_GetList(
+        --     "popular",
+        --     {},
+        -- )
+
+        return f:await()
+    end
+
+    ---@async
+    function AddonClass.getTrending()
+        local f = Future()
+
+        -- steamworks_GetList( "trending",  )
+
+
+        return f:await()
+
+    end
+
+    ---@async
+    function AddonClass.getRecent()
+        local f = Future()
+
+        -- steamworks_GetList( "latest",  )
+
+
+        return f:await()
+    end
+
+    ---@async
+    function AddonClass.getFavorite()
+        local f = Future()
+
+        -- steamworks_GetList( "favorite",  )
+
+
+        return f:await()
+    end
+
+    ---@async
+    function AddonClass.getFriends()
+        local f = Future()
+
+        -- steamworks_GetList( "friends", )
+
+
+        return f:await()
+    end
+
+    ---@async
+    function AddonClass.getFriendFavorite()
+
+        -- steamworks_GetList( "friend_favs",  )
+
+
+    end
+
+    ---@async
+    function AddonClass.getSubscribed()
+        local f = Future()
+
+        -- steamworks_GetList( "followed",  )
+
+
+        return f:await()
+    end
+
+end
 
 return AddonClass
