@@ -326,65 +326,13 @@ local table_concat = table.concat
 
 do
 
-    local indexes = {
-        ["unknown"] = -1,
-        ["nil"] = 0,
-        ["boolean"] = 1,
-        ["light userdata"] = 2,
-        ["number"] = 3,
-        ["string"] = 4,
-        ["table"] = 5,
-        ["function"] = 6,
-        ["userdata"] = 7,
-        ["thread"] = 8,
-        ["Entity"] = CLIENT_SERVER and 9 or nil,
-        ["Player"] = CLIENT_SERVER and 9 or nil,
-        ["Weapon"] = CLIENT_SERVER and 9 or nil,
-        ["NPC"] = CLIENT_SERVER and 9 or nil,
-        ["Vehicle"] = CLIENT_SERVER and 9 or nil,
-        ["CSEnt"] = CLIENT and 9 or nil,
-        ["NextBot"] = CLIENT_SERVER and 9 or nil,
-        ["Vector"] = 10,
-        ["Angle"] = 11,
-        ["PhysObj"] = CLIENT_SERVER and 12 or nil,
-        ["ISave"] = CLIENT_SERVER and 13 or nil,
-        ["IRestore"] = CLIENT_SERVER and 14 or nil,
-        ["CTakeDamageInfo"] = CLIENT_SERVER and 15 or nil,
-        ["CEffectData"] = CLIENT_SERVER and 16 or nil,
-        ["CMoveData"] = CLIENT_SERVER and 17 or nil,
-        ["CRecipientFilter"] = SERVER and 18 or nil,
-        ["CUserCmd"] = CLIENT_SERVER and 19 or nil,
-        ["IMaterial"] = 21,
-        ["Panel"] = CLIENT_MENU and 22 or nil,
-        ["CLuaParticle"] = CLIENT and 23 or nil,
-        ["CLuaEmitter"] = CLIENT and 24 or nil,
-        ["ITexture"] = 25,
-        ["bf_read"] = CLIENT_SERVER and 26 or nil,
-        ["ConVar"] = 27,
-        ["IMesh"] = CLIENT_MENU and 28 or nil,
-        ["VMatrix"] = 29,
-        ["CSoundPatch"] = CLIENT_SERVER and 30 or nil,
-        ["pixelvis_handle_t"] = CLIENT and 31 or nil,
-        ["dlight_t"] = CLIENT and 32 or nil,
-        ["IVideoWriter"] = CLIENT_MENU and 33 or nil,
-        ["File"] = 34,
-        ["CLuaLocomotion"] = SERVER and 35 or nil,
-        ["PathFollower"] = SERVER and 36 or nil,
-        ["CNavArea"] = SERVER and 37 or nil,
-        ["IGModAudioChannel"] = CLIENT and 38 or nil,
-        ["CNavLadder"] = SERVER and 39 or nil,
-        ["CNewParticleEffect"] = CLIENT and 40 or nil,
-        ["ProjectedTexture"] = CLIENT and 41 or nil,
-        ["PhysCollide"] = CLIENT_SERVER and 42 or nil,
-        ["SurfaceInfo"] = CLIENT_SERVER and 43 or nil,
-        ["Color"] = 255
-    }
+    local debug_getinfo = debug.getinfo
+    local glua_type = _G.type
 
-    local type
-    do
-
-        local glua_type = _G.type
-
+    --- Returns a string representing the name of the type of the passed object.
+    ---@param value any: The value to get the type of.
+    ---@return string: The type name of the given value.
+    local function type( value )
         local metatable = debug_getmetatable( value )
         if metatable ~= nil then
             local name = rawget( metatable, "__type" )
@@ -394,97 +342,29 @@ do
         return glua_type( value )
     end
 
-        std.type = type
+    std.type = type
 
-        ---@diagnostic disable-next-line: undefined-field
-        local glua_TypeID = _G.TypeID
-        if glua_TypeID == nil then
-            function glua_TypeID( value )
-                return indexes[ glua_type( value ) ] or -1
-            end
+    --- Validates the type of the argument and returns a boolean and an error message.
+    ---@param value any: The argument value.
+    ---@param arg_num number: The argument number.
+    ---@param expected_type string: The expected type name.
+    ---@return boolean: `true` if the argument is of the expected type, `false` otherwise.
+    ---@return string?: The error message.
+    function std.arg( value, arg_num, expected_type )
+        local got = type( value )
+        if got == expected_type or expected_type == "any" then
+            return true, nil
+        else
+            return false, string_format( "bad argument #%d to \'%s\' ('%s' expected, got '%s')", arg_num, debug_getinfo( 2, "n" ).name or "unknown", expected_type, got )
         end
-
-        --- Returns the type ID of the given value.
-        ---@param value any: The value to get the type ID of.
-        ---@return number: The type ID of the given value.
-        function std.TypeID( value )
-            local metatable = debug_getmetatable( value )
-            if metatable == nil then
-                return glua_TypeID( value )
-            end
-
-            local id = rawget( metatable, "__metatable_id" )
-            if id == nil then
-                return glua_TypeID( value )
-            else
-                return id
-            end
-        end
-
-    end
-
-    local typeError
-    do
-
-        local debug_getinfo = debug.getinfo
-
-        function typeError( num, expected, got )
-            return error( "bad argument #" .. num .. " to \'" .. ( debug_getinfo( 3, "n" ).name or "unknown" ) .. "\' ('" .. expected .. "' expected, got '" .. got .. "')", 4 )
-        end
-
-    end
-
-    ---Validates the type of the argument.
-    ---@param value any The value to validate.
-    ---@param num number The argument number.
-    ---@vararg any The expected types.
-    ---@return any value
-    function std.arg( value, num, ... )
-        local length = select( "#", ... )
-        if length == 0 then
-            return typeError( num, "none", type( value ) )
-        end
-
-        local name = type( value )
-
-        if length == 1 then
-            local searchable = ...
-            if is_function( searchable ) then
-                local expected = searchable( value, name, num )
-                if is_string( expected ) then
-                    return typeError( num, expected, name )
-                else
-                    return value
-                end
-            elseif searchable == "any" or name == searchable then
-                return value
-            end
-
-            return typeError( num, searchable, name )
-        end
-
-        local args = { ... }
-        for i = 1, length do
-            local searchable = args[ i ]
-            if is_function( searchable ) then
-                local expected = searchable( value, name, num )
-                if is_string( expected ) then
-                    return typeError( num, expected, name )
-                else
-                    return value
-                end
-            elseif searchable == "any" or name == searchable then
-                return value
-            end
-        end
-
-        return typeError( num, table_concat( args, "/", 1, length ), name )
     end
 
 end
 
 -- utf8 library
 string.utf8 = include( "std/string.utf8.lua" )
+
+local tonumber = _G.tonumber
 
 --- Attempts to convert the value to a number.
 ---@param value any: The value to convert.
@@ -935,12 +815,6 @@ std.Version = include( "std/version.lua" )
 
 -- URL class
 std.URL = include( "std/url.lua" )
-
--- sqlite library
-std.sqlite = include( "std/sqlite.lua" )
-
--- gpm database
-include( "database.lua" )
 
 -- Queue class
 do
@@ -1430,6 +1304,12 @@ do
 
 end
 
+-- sqlite library
+std.sqlite = include( "std/sqlite.lua" )
+
+-- gpm database
+include( "database.lua" )
+
 local loadbinary
 do
 
@@ -1536,6 +1416,10 @@ do
         else
             function metatable.__tobool() return false end
             function metatable.__bitcount() return 0 end
+            function metatable.__tonumber() return 0 end
+            function metatable.__lerp() return nil end
+            metatable.__type = "nil"
+            metatable.__typeid = 0
         end
 
     end
@@ -1549,6 +1433,8 @@ do
         else
             function metatable.__tobool( value ) return value end
             function metatable.__bitcount() return 1 end
+            function metatable.__tonumber( value ) return value == true and 1 or 0 end
+            function metatable.__lerp( frac, a, b ) return frac < 0.5 and a or b end
             metatable.__type = "boolean"
             metatable.__typeid = 1
         end
@@ -1564,6 +1450,10 @@ do
         else
             local math_ceil, math_log, math_ln2, math_isfinite = math.ceil, math.log, math.ln2, math.isfinite
 
+            function metatable.__tobool( value )
+                return value ~= 0
+            end
+
             function metatable.__bitcount( value )
                 if math_isfinite( value ) then
                     if ( value % 1 ) == 0 then
@@ -1578,10 +1468,11 @@ do
                 end
             end
 
-            function metatable.__tobool( value )
-                return value ~= 0
+            function metatable.__tonumber( value )
+                return value
             end
 
+            metatable.__lerp = math.lerp
             metatable.__type = "number"
             metatable.__typeid = 3
         end
@@ -1602,6 +1493,9 @@ do
             function metatable.__tobool( value )
                 return value ~= "" and value ~= "0" and value ~= "false"
             end
+
+            metatable.__tonumber = tonumber
+            metatable.__lerp = string.lerp
 
             metatable.__type = "string"
             metatable.__typeid = 4

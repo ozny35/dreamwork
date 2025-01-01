@@ -66,6 +66,7 @@ function hook.add( eventName, identifier, fn, priority )
         return
     end
 
+    -- TODO: move this to the package class
     local hooks = pkg.__hooks
     if hooks == nil then
         hooks = setmetatable( {}, hookMeta )
@@ -93,6 +94,7 @@ function hook.remove( eventName, identifier )
         return
     end
 
+    -- TODO: move this to the package class
     local hooks = pkg.__hooks
     if hooks == nil then
         hooks = setmetatable( {}, hookMeta )
@@ -120,6 +122,7 @@ function hook.getTable()
         if pkg == nil then
             return hook_GetTable()
         else
+            -- TODO: move this to the package class
             local hooks = pkg.__hooks
             if hooks == nil then
                 hooks = setmetatable( {}, hookMeta )

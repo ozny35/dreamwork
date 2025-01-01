@@ -18,7 +18,7 @@ local valid = {}
 is.valid = valid
 
 ---@diagnostic disable-next-line: param-type-mismatch
-setmetatable( valid, {
+std.setmetatable( valid, {
     __call = function( _, value )
         local metatable = debug_getmetatable( value )
         return ( metatable and metatable.__isvalid and metatable.__isvalid( value ) ) == true
@@ -190,7 +190,7 @@ if std.CLIENT_SERVER then
     ---@return boolean: Returns `true` if the value is an entity (SENT, Player, Weapon, NPC, Vehicle, CSEnt, and NextBot), otherwise `false`.
     function is.entity( value )
         local metatable = debug_getmetatable( value )
-        return metatable and metatable.__metatable_id == 9
+        return metatable and metatable.__typeid == 9
     end
 
     valid.entity = ENTITY.IsValid
@@ -834,13 +834,10 @@ do
     function is.error( value, name )
         if name == nil then name = "Error" end
 
-        local metatable = debug_getmetatable( value )
-        if metatable == nil then return false end
-
-        local class = metatable.__class
-        while class ~= nil do
-            if class.__name == name then return true end
-            class = class.__parent
+        local base = debug_getmetatable( value )
+        while base ~= nil do
+            if base.__type == name then return true end
+            base = base.__parent
         end
 
         return false

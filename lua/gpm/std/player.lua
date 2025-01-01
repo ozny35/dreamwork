@@ -73,7 +73,7 @@ elseif std.CLIENT then
             open = "Open"
         }
 
-        setmetatable( chat, {
+        std.setmetatable( chat, {
             __index = function( _, key )
                 return glua_chat[ key2key[ key ] or -1 ]
             end

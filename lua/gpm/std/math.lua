@@ -411,18 +411,18 @@ end
 ---@param fraction number The fraction of the way between the start and end numbers.
 ---@param from number The start number.
 ---@param to number The end number.
----@return number
+---@return number: The interpolated value.
 function math.lerp( fraction, from, to )
     return from + ( to - from ) * fraction
 end
 
 --- Performs an inverse linear interpolation from the start number to the end number.
----@param fraction number The fraction of the way between the start and end numbers.
----@param from number The start number.
----@param to number The end number.
----@return number
-function math.ilerp( fraction, from, to )
-    return ( fraction - from ) / ( to - from )
+---@param result number: The interpolated value.
+---@param from number: The start number.
+---@param to number: The end number.
+---@return number: The fraction of the way between the start and end numbers.
+function math.ilerp( result, from, to )
+    return ( result - from ) / ( to - from )
 end
 
 --- Remaps a number from one range to another.
