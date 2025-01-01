@@ -16,48 +16,47 @@ local debug_getmetatable = std.debug.getmetatable
 local class = {}
 
 ---@class gpm.std.Object
----@field __name string name of the object
----@field __class Class class of the object (must be defined)
----@field __parent gpm.std.Class | nil parent of the class (must be defined)
+---@field __type string: The name of object type.
+---@field __class Class: The class of the object (must be defined).
+---@field __parent gpm.std.Object | nil: The parent of the object.
 ---@alias Object gpm.std.Object
 
 ---@class gpm.std.Class : gpm.std.Object
----@field __base gpm.std.Object base of the class (must be defined)
----@field __inherited fun( parent: gpm.std.Class, child: gpm.std.Class ) | nil called when a class is inherited
+---@field __base gpm.std.Object: The base of the class (must be defined).
+---@field __parent gpm.std.Class | nil: The parent of the class.
+---@field __inherited fun( parent: gpm.std.Class, child: gpm.std.Class ) | nil: The function that will be called when the class is inherited.
 ---@alias Class gpm.std.Class
 
 ---@param obj Object: The object to convert to a string.
 ---@return string: The string representation of the object.
 local function base__tostring( obj )
-    return string_format( "%s: %p", rawget( debug_getmetatable( obj ),  "__name" ), obj )
+    return string_format( "%s: %p", rawget( debug_getmetatable( obj ), "__type" ), obj )
 end
 
----@param name string: name of the class.
----@param parent Class | unknown | nil: parent of the class.
+---@param name string: The name of the class.
+---@param parent Class | unknown | nil: The parent of the class.
 ---@return Object: The base of the class.
 function class.base( name, parent )
     local base = {
-        __name = name,
-        __metatable_id = 5,
-        __metatable_name = name,
+        __type = name,
         __tostring = base__tostring
     }
 
     base.__index = base
 
     if parent then
-        base.__parent = parent
-
         local parent_base = rawget( parent, "__base" )
         if parent_base == nil then
             std.error( "parent class has no base", 2 )
         end
 
+        ---@cast parent_base gpm.std.Object
+        base.__parent = parent_base
         setmetatable( base, { __index = parent_base } )
 
         -- copy metamethods from parent
         for key, value in pairs( parent_base ) do
-            if string_sub( key, 1, 2 ) == "__" and not ( key == "__index" and value == parent_base ) and key ~= "__name" then
+            if string_sub( key, 1, 2 ) == "__" and not ( key == "__index" and value == parent_base ) and key ~= "__type" then
                 base[ key ] = value
             end
         end
@@ -109,7 +108,7 @@ end
 ---@param cls Class: The class.
 ---@return string: The string representation of the class.
 local function class__tostring( cls )
-    return string_format( "%sClass: %p", rawget( rawget( cls, "__base" ), "__name" ), cls )
+    return string_format( "%sClass: %p", rawget( rawget( cls, "__base" ), "__type" ), cls )
 end
 
 ---@param base Object: The base object, aka metatable.
@@ -119,12 +118,17 @@ function class.create( base )
         __base = base
     }
 
+    local parent = rawget( base, "__parent" )
+    ---@cast parent gpm.std.Object
+    if parent ~= nil then
+        cls.__parent = parent.__class
+    end
+
     setmetatable( cls, {
         __index = base,
-        __metatable_id = 5,
         __call = class__call,
         __tostring = class__tostring,
-        __metatable_name = rawget( base, "__name" ) .. "Class"
+        __type = rawget( base, "__type" ) .. "Class"
     } ) ---@cast cls -Object
 
     rawset( base, "__class", cls )
