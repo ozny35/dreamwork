@@ -40,11 +40,11 @@ local ACTION_RESUME = futures.ACTION.RESUME
 
 ---@private
 ---@type { [thread]: function }
-futures.listeners = futures.listeners or setmetatable({}, { __mode = "kv" })
+futures.listeners = futures.listeners or setmetatable( {}, { __mode = "kv" } )
 
 ---@private
 ---@type { [thread]: thread }
-futures.coroutine_listeners = futures.coroutine_listeners or setmetatable({}, { __mode = "kv" })
+futures.coroutine_listeners = futures.coroutine_listeners or setmetatable( {}, { __mode = "kv" } )
 
 --- Abstract type that is used to type hint async functions
 ---@see gpm.std.futures.apairs for example
@@ -459,14 +459,14 @@ do
     function Future:__tostring()
         if self:isFinished() then
             if self:isCancelled() then
-                return self.__name .. "( cancelled )"
+                return self.__type .. "( cancelled )"
             elseif self._error then
-                return self.__name .. "( finished error = " .. tostring( self._error ) .. " )"
+                return self.__type .. "( finished error = " .. tostring( self._error ) .. " )"
             else
-                return self.__name .. "( finished value = " .. tostring( self._result ) .. " )"
+                return self.__type .. "( finished value = " .. tostring( self._result ) .. " )"
             end
         else
-            return self.__name .. "( pending )"
+            return self.__type .. "( pending )"
         end
     end
 

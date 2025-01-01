@@ -141,7 +141,7 @@ ENTITY.new = function( self )
     local cls = rawget( self, "__class" )
     if cls == nil then return true, NULL end
 
-    local name = rawget( cls, "__name" )
+    local name = rawget( cls, "__type" )
     if name == nil then return true, NULL end
 
     classes[ name ] = self

@@ -369,22 +369,14 @@ do
 
         local glua_type = _G.type
 
-        --- Returns a string representing the name of the type of the passed object.
-        ---@param value any: The value to get the type of.
-        ---@return string: The type name of the given value.
-        function type( value )
-            local metatable = debug_getmetatable( value )
-            if metatable == nil then
-                return glua_type( value )
-            end
-
-            local cls = rawget( metatable, "__class" )
-            if cls == nil then
-                return rawget( metatable, "MetaName" ) or glua_type( value )
-            else
-                return rawget( cls, "__name" ) or glua_type( value )
-            end
+        local metatable = debug_getmetatable( value )
+        if metatable ~= nil then
+            local name = rawget( metatable, "__type" )
+            if is_string( name ) then return name end
         end
+
+        return glua_type( value )
+    end
 
         std.type = type
 
@@ -570,7 +562,7 @@ do
     ---@alias Symbol gpm.std.Symbol
 
     local function __tostring( self )
-        return rawget( debug_getmetatable( self ), "__name" )
+        return rawget( debug_getmetatable( self ), "__type" )
     end
 
     local debug_newproxy = debug.newproxy
@@ -582,9 +574,9 @@ do
     function std.Symbol( name )
         ---@class gpm.std.Symbol
         local obj = debug_newproxy( true )
-        local meta = debug_getmetatable( obj )
-        meta.__name = "Symbol(\"" .. tostring( name ) .. "\")"
-        meta.__tostring = __tostring
+        local metatable = debug_getmetatable( obj )
+        metatable.__type = "Symbol(\"" .. tostring( name ) .. "\")"
+        metatable.__tostring = __tostring
         return obj
     end
 
@@ -739,9 +731,9 @@ do
     local Error = class.base( "Error" )
 
     ---@protected
-    function Error:__index(key)
+    function Error:__index( key )
         if key == "name" then
-            return self.__name
+            return self.__type
         end
 
         return Error[ key ]
@@ -1544,6 +1536,8 @@ do
         else
             function metatable.__tobool( value ) return value end
             function metatable.__bitcount() return 1 end
+            metatable.__type = "boolean"
+            metatable.__typeid = 1
         end
 
     end
@@ -1574,6 +1568,9 @@ do
             function metatable.__tobool( value )
                 return value ~= 0
             end
+
+            metatable.__type = "number"
+            metatable.__typeid = 3
         end
 
     end
@@ -1592,6 +1589,9 @@ do
             function metatable.__tobool( value )
                 return value ~= "" and value ~= "0" and value ~= "false"
             end
+
+            metatable.__type = "string"
+            metatable.__typeid = 4
         end
 
     end
