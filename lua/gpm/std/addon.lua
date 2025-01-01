@@ -79,21 +79,19 @@ do
     local ipairs = _G.ipairs
 
     function findAddon( wsid )
-        for _, data in ipairs( engine_GetAddons() ) do
-            if data.wsid == wsid then
-                return data
-            end
+        for _, addon in ipairs( engine_GetAddons() ) do
+            if addon.wsid == wsid then return addon end
         end
     end
 
     function AddonClass.getAll()
-        local lst = engine_GetAddons()
+        local addons = engine_GetAddons()
 
-        for i = 1, #lst, 1 do
-            lst[ i ] = AddonClass( lst[ i ].wsid )
+        for i = 1, #addons, 1 do
+            addons[ i ] = AddonClass( addons[ i ].wsid )
         end
 
-        return lst
+        return addons
     end
 
 end
@@ -106,13 +104,13 @@ do
     function Addon:__tostring()
         local title = self:getTitle()
         if title == nil then
-            return string_format( "Addon [%s]", self.wsid )
+            return string_format( "Addon [%s]", self:getWorkshopID() )
         else
             local size = self:getSize()
             if size == nil then
-                return string_format( "Addon [%s][%s]", self.wsid, title )
+                return string_format( "Addon [%s][%s]", self:getWorkshopID(), title )
             else
-                return string_format( "Addon [%s][%s][%.1fMB]", self.wsid, title, size / 1024 / 1024 )
+                return string_format( "Addon [%s][%s][%.1fMB]", self:getWorkshopID(), title, size / 1024 / 1024 )
             end
         end
     end
@@ -574,10 +572,10 @@ do
     local steamworks_DownloadUGC = steamworks.DownloadUGC
     local file_write = std.file.write
 
-    --- Downloads the addon and returns the absolute path to the addon folder.
+    --- Downloads the addon and returns the absolute path to the `.gma` file.
     ---@param wsid string: The workshop ID of the addon.
     ---@param timeout number | nil | false: The timeout in seconds. Set to `false` to disable the timeout.
-    ---@return string: The absolute path to the addon folder.
+    ---@return string: The absolute path to the downloaded addon `.gma`.
     ---@async
     local function download( wsid, timeout )
         local f = Future()
