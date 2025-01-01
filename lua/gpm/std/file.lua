@@ -9,11 +9,6 @@ local file_Exists, file_IsDir, file_Find = glua_file.Exists, glua_file.IsDir, gl
 local string_byte, string_sub, string_len, string_byteSplit = string.byte, string.sub, string.len, string.byteSplit
 local table_append, table_concat = table.append, table.concat
 
-local isDedicatedServer = false
-if not MENU then
-    isDedicatedServer = std.game.isDedicatedServer()
-end
-
 local LUA_PATH
 if SERVER then
     LUA_PATH = "lsv"
@@ -358,7 +353,7 @@ do
             end
         end
 
-        if SERVER or MENU or not isDedicatedServer then
+        if SERVER or MENU or not std.DEDICATED_SERVER then
             local _, folders = file_Find( filePath, "GAME" )
             for i = 1, #folders do
                 if file_Exists( "addons/" .. folders[ i ] .. "/" .. filePath, "GAME") then

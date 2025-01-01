@@ -27,7 +27,9 @@ if gpm.detour == nil then
     gpm.detour = include( "detour.lua" )
 end
 
+--- gpm standard environment
 ---@class gpm.std
+---@field DEDICATED_SERVER boolean: `true` if game is dedicated server, `false` otherwise.
 local std = gpm.std
 if std == nil then
     std = include( "std/constants.lua" )
@@ -220,7 +222,21 @@ end
 local is = include( "std/is.lua" )
 std.is = is
 
-local is_table, is_string, is_number, is_function = is.table, is.string, is.number, is.fn
+local is_table, is_string, is_function = is.table, is.string, is.fn
+
+do
+    local game = _G.game
+    if game == nil then
+        std.DEDICATED_SERVER = false
+    else
+        local game_isDedicatedServer = game.IsDedicated
+        if is_function( game_isDedicatedServer ) then
+            std.DEDICATED_SERVER = game_isDedicatedServer()
+        else
+            std.DEDICATED_SERVER = false
+        end
+    end
+end
 
 ---@class gpm.std.math
 local math = include( "std/math.lua" )
@@ -1227,10 +1243,7 @@ std.level = include( "std/level.lua" )
 --- Angle class
 std.Angle = include( "std/angle.lua" )
 
-local isDedicatedServer = false
 if CLIENT_SERVER then
-    isDedicatedServer = game.isDedicatedServer()
-
     -- physics library
     std.physics = include( "std/physics.lua" )
 
@@ -1252,7 +1265,7 @@ do
 
     -- TODO: Think about engine lib in menu
     local getDeveloper
-    if isDedicatedServer then
+    if std.DEDICATED_SERVER then
         local value = developer and developer:getInteger() or 0
 
         _G.cvars.AddChangeCallback( "developer", function( _, __, str )
