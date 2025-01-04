@@ -89,7 +89,7 @@ do
 
     --- Executes a SQL query with parameters.
     ---@param str string: The SQL query to execute.
-    ---@vararg string: The parameters to use in the query.
+    ---@param ... string: The parameters to use in the query.
     ---@return table?: The result of the query.
     function query( str, ... )
         local args, counter = { ... }, 0
@@ -123,7 +123,7 @@ end
 --- Executes a SQL query and returns a specific row.
 ---@param str string: The SQL query to execute.
 ---@param row number?: The row to return.
----@vararg string?: The parameters to use in the query.
+---@param ... string?: The parameters to use in the query.
 ---@return table?: The selected row of the result.
 local function queryRow( str, row, ... )
     local result = query( str, ... )
@@ -138,7 +138,7 @@ sqlite.queryRow = queryRow
 
 --- Executes a SQL query and returns the first row.
 ---@param str string: The SQL query to execute.
----@vararg string?: The parameters to use in the query.
+---@param ... string?: The parameters to use in the query.
 ---@return table?: The first row of the result.
 local function queryOne( str, ... )
     return queryRow( str, 1, ... )
@@ -152,7 +152,7 @@ do
 
     --- Executes a SQL query and returns the first value of the first row.
     ---@param str string: The SQL query to execute.
-    ---@vararg string?: The parameters to use in the query.
+    ---@param ... string?: The parameters to use in the query.
     ---@return any: The first value of the first row of the result.
     function sqlite.queryValue( str, ... )
         local result = queryOne( str, ... )

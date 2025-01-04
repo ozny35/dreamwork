@@ -1,7 +1,13 @@
 local _G = _G
 local glua_game, glua_engine, glua_util = _G.game, _G.engine, _G.util
 local file_Exists = _G.file.Exists
+
+---@class gpm.std
 local std = _G.gpm.std
+
+---@class gpm.std.console
+local console = std.console
+local console_Variable = console.Variable
 
 ---@class gpm.std.level
 local level = {
@@ -24,6 +30,7 @@ end
 level.exists = exists
 
 if std.SHARED then
+
     level.getEntity = glua_game.GetWorld
 
     level.cleanup = glua_game.CleanUpMap
@@ -35,9 +42,11 @@ if std.SHARED then
 
     level.getStartSpot = glua_game.StartSpot
     level.getContents = glua_util.PointContents
+
 end
 
 if std.SERVER then
+
     level.getCounter = glua_game.GetGlobalCounter
     level.setCounter = glua_game.SetGlobalCounter
     level.setLightStyle = glua_engine.LightStyle
@@ -104,7 +113,7 @@ if std.SERVER then
 
     do
 
-        local command_run = std.console.Command.run
+        local command_run = console.Command.run
 
         --- It will end the current game, load the specified map and start a new game on it. Players are not kicked from the server.
         ---@param name string
@@ -120,6 +129,18 @@ if std.SERVER then
 
     end
 
+    --- Sets the gravity of the current level.
+    ---@param value integer: The value to set. Default: 600
+    function level.setGravity( value )
+        console_Variable.setInteger( "sv_gravity", value )
+    end
+
+end
+
+--- Returns the gravity of the current level.
+---@return integer: The gravity of the current level.
+function level.getGravity()
+    return console_Variable.getInteger( "sv_gravity" )
 end
 
 do

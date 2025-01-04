@@ -455,7 +455,7 @@ do
 end
 
 --- Join the file paths into a single file path and normalize it.
----@vararg string: The file paths.
+---@param ... string: The file paths.
 ---@return string: The joined file path.
 local function join( ... )
     local length = select( "#", ... )
@@ -490,7 +490,7 @@ end
 path.join = join
 
 --- Resolve the file paths into a single file path.
----@vararg string: The file paths.
+---@param ... string: The file paths.
 ---@return string: The resolved file path.
 local function resolve( ... )
     local args, resolvedPath = { ... }, ""

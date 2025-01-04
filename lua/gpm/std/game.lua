@@ -3,6 +3,7 @@ local glua_engine, glua_game, glua_util, system_IsWindowed = _G.engine, _G.game,
 
 local std = _G.gpm.std
 local debug = std.debug
+local console_Variable = std.console.Variable
 
 ---@class gpm.std.game
 local game = {
@@ -17,7 +18,7 @@ do
 
     local getAll = glua_engine.GetGames
 
-    --- Returns an array of tables corresponding to all games from which Garry's Mod supports mounting content.
+    --- [SHARED AND MENU] Returns an array of tables corresponding to all games from which Garry's Mod supports mounting content.
     ---@return table: Array of tables with the following fields: `appid`, `title`, `folder`, `owned`, `installed`, `mounted`.
     function game.getAll()
         local games = getAll()
@@ -31,7 +32,7 @@ do
         return games
     end
 
-    --- Checks whether or not a game is currently mounted.
+    --- [SHARED AND MENU] Checks whether or not a game is currently mounted.
     ---@param appID number: Steam AppID of the game.
     ---@return boolean: Returns `true` if the game is mounted, `false` otherwise.
     function game.isMounted( appID )
@@ -53,13 +54,13 @@ if std.MENU then
     local SetMounted = glua_game.SetMounted
     local tostring = std.tostring
 
-    --- Mounts a game on the client.
+    --- [MENU] Mounts a game on the client.
     ---@param appID number: Steam AppID of the game.
     function game.mount( appID )
         SetMounted( tostring( appID ), true )
     end
 
-    --- Unmounts a game on the client.
+    --- [MENU] Unmounts a game on the client.
     ---@param appID number: Steam AppID of the game.
     function game.unmount( appID )
         SetMounted( tostring( appID ), false )
@@ -166,7 +167,8 @@ if std.CLIENT then
     game.getTimeoutInfo = _G.GetTimeoutInfo
 end
 
-if std.CLIENT_SERVER then
+if std.SHARED then
+
     game.getAbsoluteFrameTime = glua_engine.AbsoluteFrameTime
     game.isDedicatedServer = glua_game.IsDedicated
     game.isSinglePlayer = glua_game.SinglePlayer
@@ -195,21 +197,28 @@ if std.CLIENT_SERVER then
 
     game.getFrameNumber = _G.FrameNumber
 
-    -- TODO: Rework server name
-    game.getServerName = _G.GetHostName
+    --- [SHARED] Checks if Half-Life 2 aux suit power stuff is enabled.
+    ---@return boolean: `true` if Half-Life 2 aux suit power stuff is enabled, `false` if not.
+    function game.getHL2Suit()
+        return console_Variable.getBool( "gmod_suit" )
+    end
+
 end
 
 if std.SERVER then
+
     game.setDifficulty = glua_game.SetSkillLevel
     game.setTimeScale = glua_game.SetTimeScale
     game.print = _G.PrintMessage
 
-    -- TODO: Rework server name
-    game.setServerName = function( str )
-
+    --- [SERVER] Enables Half-Life 2 aux suit power stuff.
+    ---@param bool boolean: `true` to enable Half-Life 2 aux suit power stuff, `false` to disable it.
+    function game.setHL2Suit( bool )
+        console_Variable.setBool( "gmod_suit", bool )
     end
 
     game.exit = glua_engine.CloseServer
+
 end
 
 if std.MENU then

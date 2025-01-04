@@ -83,7 +83,7 @@ class.init = init
 
 --- Creates a new object from the given base.
 ---@param base Object: The base object, aka metatable.
----@vararg any: Arguments to pass to the constructor.
+---@param ... any: Arguments to pass to the constructor.
 ---@return Object | userdata: The new object.
 local function new( base, ... )
     local fn = rawget( base, "__new" )

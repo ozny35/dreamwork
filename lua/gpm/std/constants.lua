@@ -1658,7 +1658,7 @@ end
 ---@field BRANCH string: A variable containing a string indicating which (Beta) Branch of the game you are using.
 local constants = {
     --- Garry's Mod default environment
-    garrysmod = _G,
+    gmod = _G,
 
     --- A global variable (not a function) that holds a string containing the running Lua version.
     _VERSION = _G._VERSION,

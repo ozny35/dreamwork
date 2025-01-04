@@ -137,7 +137,7 @@ do
     --- Performs the bitwise `and for all values specified.
     ---@generic V
     ---@param value V: The value to be manipulated.
-    ---@vararg V?: Values bit to perform bitwise `and` with.
+    ---@param ... V?: Values bit to perform bitwise `and` with.
     ---@return V: Result of bitwise `and` operation.
     function bit.band( value, ... )
         local metatable = debug_getmetatable( value )
@@ -186,7 +186,7 @@ do
     --- Returns the bitwise `or` of all values specified.
     ---@generic V
     ---@param value V: The first value.
-    ---@vararg V: Extra values to be evaluated.
+    ---@param ... V: Extra values to be evaluated.
     ---@return V: The bitwise `or` result between all values.
     function bit.bor( value, ... )
         local metatable = debug_getmetatable( value )
@@ -211,7 +211,7 @@ do
     --- Returns the bitwise `xor` of all values specified.
     ---@generic V
     ---@param value V: The value to be manipulated.
-    ---@vararg V: Values bit xor with.
+    ---@param ... V: Values bit xor with.
     ---@return V: Result of bitwise `xor` operation.
     function bit.bxor( value, ... )
         local metatable = debug_getmetatable( value )

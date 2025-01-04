@@ -38,7 +38,7 @@ local debug = {
 
 --- Call function with given arguments.
 ---@param func function
----@vararg any
+---@param ... any
 ---@return any
 function debug.fcall( func, ... )
     return func( ... )

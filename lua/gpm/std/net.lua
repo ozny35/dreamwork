@@ -238,7 +238,7 @@ local net = {
 -- tx rx
 
 ---@param metatable table
----@vararg any
+---@param ... any
 ---@return any
 local function read( metatable, ... )
     if metatable == nil then
@@ -254,7 +254,7 @@ local function read( metatable, ... )
 end
 
 ---@param value any
----@vararg any
+---@param ... any
 ---@return any
 local function write( value, ... )
     local metatable = getmetatable( value )

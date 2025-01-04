@@ -2195,7 +2195,7 @@ end
 ---@see puff.c:codes()
 ---@param state table: decompression state that will be modified by this function.
 ---@see CreateDecompressState
----@vararg any: Read the source code
+---@param ... any: Read the source code
 ---@return number: 0 on success, other value on failure.
 local function DecodeUntilEndOfBlock( state, lcodes_huffman_bitlens, lcodes_huffman_symbols, lcodes_huffman_min_bitlen, dcodes_huffman_bitlens, dcodes_huffman_symbols, dcodes_huffman_min_bitlen )
     local buffer, buffer_size, ReadBits, Decode, ReaderBitlenLeft, result_buffer = state.buffer, state.buffer_size, state.ReadBits, state.Decode, state.ReaderBitlenLeft, state.result_buffer

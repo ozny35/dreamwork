@@ -2291,7 +2291,7 @@ do
 		--- Given a format string, a buffer or file, and an optional third argument,
 		--- read data from the buffer or file according to the format string.
 		---@param fmt string
-		---@vararg any -- TODO: idk
+		---@param ... any -- TODO: idk
 		---@return table
 		local function read( fmt, ... )
 			return api_compile( nil, fmt ):read( ... )
@@ -2319,8 +2319,8 @@ do
 		end
 
 		---comment
-		---@vararg ... unknown
-		---@vararg unknown
+		---@param ... unknown
+		---@param ... unknown
 		function struct.readValues( ... )
 			return table_unpack( read( ... ) )
 		end

@@ -270,7 +270,7 @@ end
 
 --- Runs the function in the next engine tick.
 ---@param fn function: Function to run.
----@vararg any: Arguments to pass to the function.
+---@param ... any: Arguments to pass to the function.
 function timer.tick( fn, ... )
     local args = { ... }
     glua_timer_Simple( 0, function() fn( table_unpack( args ) ) end )

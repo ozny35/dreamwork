@@ -341,7 +341,7 @@ function math.fdiv( a, b )
 end
 
 --- Returns the square root of the sum of squares of its arguments.
----@vararg number The numbers to calculate the square root of.
+---@param ... number The numbers to calculate the square root of.
 ---@return number
 function math.hypot( ... )
     local number, args = 0, { ... }

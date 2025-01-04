@@ -43,7 +43,7 @@ local function byte2char( byte )
 end
 
 --- Converts a sequence of UTF-8 bytes to a string
----@vararg number: The UTF-8 bytes
+---@param ... number: The UTF-8 bytes
 ---@return string: The resulting string
 local function char_fn( ... )
 	local length = select( "#", ... )
