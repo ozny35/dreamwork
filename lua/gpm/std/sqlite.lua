@@ -100,11 +100,9 @@ do
         end )
 
         local result = rawQuery( str )
-        if result == nil then
-            return nil
-        end
+        if result == nil then return nil end
 
-        for j = 1, #result do
+        for j = 1, #result, 1 do
             local row = result[ j ]
             for key, value in pairs( row ) do
                 if value == "NULL" then
@@ -175,7 +173,7 @@ do
     function sqlite.transaction( fn )
         rawQuery( "begin" )
 
-        local ok, result = pcall( fn )
+        local ok, result = pcall( fn, query )
         if ok then
             rawQuery( "commit" )
             return result
