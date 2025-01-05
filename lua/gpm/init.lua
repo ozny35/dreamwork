@@ -185,6 +185,30 @@ do
 
 end
 
+--- string library
+---@class gpm.std.string
+local string = include( "std/string.lua" )
+std.string = string
+
+local string_format = string.format
+local string_len = string.len
+
+do
+
+    local print = _G.print
+    std.print = print
+
+    --- Prints a formatted string to the console.
+    ---
+    --- Basically the same as `print( string.format( str, ... ) )`
+    ---@param str any
+    ---@param ... any
+    function std.printf( str, ... )
+        return print( string_format( str, ... ) )
+    end
+
+end
+
 --- os library
 ---@class gpm.std.os
 local os = include( "std/os.lua" )
@@ -216,30 +240,6 @@ do
 
 end
 
---- string library
----@class gpm.std.string
-local string = include( "std/string.lua" )
-std.string = string
-
-local string_format = string.format
-local string_len = string.len
-
-do
-
-    local print = _G.print
-    std.print = print
-
-    --- Prints a formatted string to the console.
-    ---
-    --- Basically the same as `print( string.format( str, ... ) )`
-    ---@param str any
-    ---@vararg any
-    function std.printf( str, ... )
-        return print( string_format( str, ... ) )
-    end
-
-end
-
 --- table library
 ---@class gpm.std.table
 local table = include( "std/table.lua" )
@@ -266,6 +266,17 @@ do
     end
 
     std.type = type
+
+    setmetatable( is, {
+        __index = function( _, key )
+            local function fn( value )
+                return type( value ) == key
+            end
+
+            rawset( is, key, fn )
+            return fn
+        end
+    } )
 
     --- Validates the type of the argument and returns a boolean and an error message.
     ---@param value any: The argument value.
@@ -732,6 +743,9 @@ do
             return error( message, level )
         end
     end
+
+    -- Extensions for string library
+    include( "std/string.extensions.lua" )
 
 end
 
