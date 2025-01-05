@@ -87,7 +87,9 @@ if SERVER then
 
         local files = _G.file.Find( "gpm/std/*", "lsv" )
         for i = 1, #files do
-            AddCSLuaFile( "gpm/std/" .. files[ i ] )
+            if not string.find( files[i], ".meta.lua$" ) then
+                AddCSLuaFile( "gpm/std/" .. files[ i ] )
+            end
         end
     end
 end
