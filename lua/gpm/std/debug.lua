@@ -72,12 +72,18 @@ do
     --- Registers the metatable of the given name and table.
     ---@param name string: The name of the metatable.
     ---@param tbl table: The metatable.
+    ---@param do_full_register? boolean: If true, the metatable will be registered.
     ---@return number: The ID of the metatable.
-    function debug.registermetatable( name, tbl )
+    function debug.registermetatable( name, tbl, do_full_register )
         tbl = metatables[ name ] or tbl
         metatables[ name ] = tbl
-        RegisterMetaTable( name, tbl )
-        return tbl.MetaID or -1
+
+        if do_full_register then
+            RegisterMetaTable( name, tbl )
+            return tbl.MetaID or -1
+        else
+            return -1
+        end
     end
 
 end

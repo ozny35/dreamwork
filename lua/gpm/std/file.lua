@@ -50,15 +50,26 @@ local lua_game_paths = {
 ---| `<mounted folder>` # Strictly within the folder of a mounted game specified, e.g. "cstrike", see note below.
 ---| `<mounted Workshop addon title>` # Strictly within the specified Workshop addon. See engine.GetAddons.<br>For GMA files, this will be the title embedded inside the GMA file itself, not the title of the Workshop addon it was downloaded from.
 
----@class gpm.std.file
----@field LUA_PATH string: The current lua game path. ("lsv", "lcl", "LuaMenu", "LUA")
-local file = {
-    LUA_PATH = LUA_PATH
-}
+---@alias File gpm.std.File
+---@class gpm.std.File: gpm.std.Object
+---@field __class gpm.std.FileClass
+local File = std.class.base( "File" )
 
----@class gpm.std.file.path
+---@protected
+function File:__init()
+end
+
+---@class gpm.std.FileClass: gpm.std.File
+---@field __base gpm.std.File
+---@field LUA_PATH string: The current lua game path. ("lsv", "lcl", "LuaMenu", "LUA")
+---@overload fun(): File
+local FileClass = std.class.create( File )
+
+FileClass.LUA_PATH = LUA_PATH
+
+---@class gpm.std.File.path
 local path = _G.include( "file.path.lua" )
-file.path = path
+FileClass.path = path
 
 local path_resolve, path_getDirectory = path.resolve, path.getDirectory
 
@@ -184,7 +195,7 @@ do
         end
     end
 
-    file.isFileMounted = isFileMounted
+    FileClass.isFileMounted = isFileMounted
 
     local folders = {}
 
@@ -204,7 +215,7 @@ do
         end
     end
 
-    file.isDirMounted = isDirMounted
+    FileClass.isDirMounted = isDirMounted
 
     do
 
@@ -214,7 +225,7 @@ do
         ---@param relativePath string:
         ---@return true | false
         ---@return table: The list of mounted files.
-        function file.mountGMA( relativePath )
+        function FileClass.mountGMA( relativePath )
             local success, mounted_files = game_MountGMA( string_sub( path_resolve( relativePath ), 2 ) )
             if success then
                 local fileCount = #mounted_files
@@ -242,7 +253,7 @@ do
     end
 end
 
-function file.exists( filePath, gamePath, skipNormalize )
+function FileClass.exists( filePath, gamePath, skipNormalize )
     if not skipNormalize then
         filePath, gamePath = normalizeGamePath( filePath, gamePath )
     end
@@ -258,7 +269,7 @@ local function isDir( filePath, gamePath, skipNormalize )
     return isDirMounted( filePath, gamePath, true ) or file_IsDir( filePath, gamePath ) or ( CLIENT and lua_game_paths[ gamePath ] and file_IsDir( "lua/" .. filePath, "WORKSHOP" ) )
 end
 
-file.isDir = isDir
+FileClass.isDir = isDir
 
 local function isFile( filePath, gamePath, skipNormalize )
     if not skipNormalize then
@@ -278,7 +289,7 @@ local function isFile( filePath, gamePath, skipNormalize )
     end
 end
 
-file.isFile = isFile
+FileClass.isFile = isFile
 
 ---
 ---@param filePath string:
@@ -287,7 +298,7 @@ file.isFile = isFile
 ---@param skipNormalize boolean?:
 ---@return table files:
 ---@return table dirs:
-function file.find( filePath, gamePath, sorting, skipNormalize )
+function FileClass.find( filePath, gamePath, sorting, skipNormalize )
     if not skipNormalize then
         filePath, gamePath = normalizeGamePath( filePath, gamePath )
     end
@@ -313,7 +324,7 @@ do
     ---@param gamePath gpm.std.FILE_GAME_PATH?:
     ---@param skipNormalize boolean?:
     ---@return number: Seconds passed since Unix epoch, or 0 if the file is not found.
-    function file.time( filePath, gamePath, skipNormalize )
+    function FileClass.time( filePath, gamePath, skipNormalize )
         if not skipNormalize then
             filePath, gamePath = normalizeGamePath( filePath, gamePath )
         end
@@ -339,7 +350,7 @@ do
     ---@param filePath string: The file or folder path.
     ---@param gamePath gpm.std.FILE_GAME_PATH?: The path to look for the files and directories in.
     ---@return string: The addon name.
-    function file.whereis( filePath, gamePath, skipNormalize )
+    function FileClass.whereis( filePath, gamePath, skipNormalize )
         if not skipNormalize then
             filePath, gamePath = absoluteGamePath( normalizeGamePath( filePath, gamePath ) )
         end
@@ -370,4 +381,4 @@ end
 -- TODO: https://wiki.facepunch.com/gmod/resource
 -- TODO: https://wiki.facepunch.com/gmod/Global.AddCSLuaFile
 
-return file
+return FileClass

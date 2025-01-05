@@ -310,7 +310,7 @@ end
 --- Attempts to convert the value to a boolean.
 ---@param value any: The value to convert.
 ---@return boolean
-function std.tobool( value )
+function std.toboolean( value )
     local metatable = debug_getmetatable( value )
     if metatable == nil then
         return false
@@ -323,6 +323,8 @@ function std.tobool( value )
 
     return true
 end
+
+std.tobool = std.toboolean
 
 --- Returns an iterator `next` for a for loop that will return the values of the specified table in an arbitrary order.
 ---@param tbl table: The table to iterate over.
@@ -401,10 +403,10 @@ do
 
 end
 
---- file library
----@class gpm.std.file
-local file = include( "std/file.lua" )
-std.file = file
+--- File class
+---@class gpm.std.File
+local File = include( "std/file.lua" )
+std.File = File
 
 --- Color class
 ---@class gpm.std.Color
@@ -896,11 +898,11 @@ do
 
     local name
 
-    local cvar = console.Variable.get( SERVER and "hostname" or "name" )
+    local cvar = console.Variable.get( SERVER and "hostname" or "name", "string" )
     if cvar == nil then
         name = "stranger"
     else
-        name = cvar:getString()
+        name = cvar:get()
         if name == "" or name == "unnamed" then name = "stranger" end
     end
 
@@ -1058,21 +1060,18 @@ end
 local isInDebug
 do
 
-    local developer = console.Variable( "developer" )
+    local developer = console.Variable.get( "developer", "number" )
 
     -- TODO: Think about engine lib in menu
     local getDeveloper
-    if std.DEDICATED_SERVER then
-        local value = developer and developer:getInteger() or 0
-
-        _G.cvars.AddChangeCallback( "developer", function( _, __, str )
-            value = tonumber( str, 10 )
-        end, gpm.PREFIX .. "::Developer" )
-
+    if developer == nil then
+        getDeveloper = function() return 1 end
+    elseif std.DEDICATED_SERVER then
+        local value = developer:get()
+        developer:addChangeCallback( "isInDebug", function( _, __, new ) value = new end )
         getDeveloper = function() return value end
     else
-        local getInteger = developer.getInteger
-        getDeveloper = function() return getInteger( developer ) end
+        getDeveloper = function() return developer:get() end
     end
 
     function isInDebug()
@@ -1270,7 +1269,7 @@ do
 
     std.lookupbinary = lookupbinary
 
-    local sv_allowcslua = SERVER and console.Variable( "sv_allowcslua" )
+    local sv_allowcslua = SERVER and console.Variable.get( "sv_allowcslua", "boolean" )
 
     --- Loads a binary module
     ---@param name string The binary module name, for example: "chttp"
@@ -1279,8 +1278,8 @@ do
     ---@protected
     function loadbinary( name )
         if lookupbinary( name ) then
-            if sv_allowcslua ~= nil and sv_allowcslua:getBool() then
-                sv_allowcslua:setBool( false )
+            if sv_allowcslua ~= nil and sv_allowcslua:get() then
+                sv_allowcslua:set( false )
             end
 
             require( name )

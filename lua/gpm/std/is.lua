@@ -809,21 +809,6 @@ do
 
 end
 
--- File ( 34 )
-do
-
-    ---@class File
-    local metatable = debug_findmetatable( "File" )
-
-    --- Checks if the value is a `File`.
-    ---@param value any: The value to check.
-    ---@return boolean: Returns `true` if the value is a file, otherwise `false`.
-    function is.file( value )
-        return debug_getmetatable( value ) == metatable
-    end
-
-end
-
 -- Error ( 45 )
 do
 

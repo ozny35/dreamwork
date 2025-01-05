@@ -1,7 +1,7 @@
 local _G = _G
 local std = _G.gpm.std
 local string, table = std.string, std.table
-local string_byte, string_sub, string_len, string_match, string_byteSplit, string_trimByte, string_isURL = string.byte, string.sub, string.len, string.match, string.byteSplit, string.trimByte, string.isURL
+local string_byte, string_sub, string_len, string_match, string_byteSplit, string_byteTrim, string_isURL = string.byte, string.sub, string.len, string.match, string.byteSplit, string.byteTrim, string.isURL
 local table_concat = table.concat
 
 -- References: https://github.com/luvit/luvit/blob/master/deps/path/base.lua
@@ -14,7 +14,7 @@ end
 
 local getfenv, rawget, select = std.getfenv, std.rawget, std.select
 
----@class gpm.std.file.path
+---@class gpm.std.File.path
 local path = {}
 
 --- Get the file name with extension from filePath.
@@ -330,16 +330,16 @@ end
 
 --- Split a filename into [root, dir, basename].
 ---@param filePath string: The file path.
----@return string: The root.
+---@return boolean: Whether filePath is absolute.
 ---@return string: The directory.
 ---@return string: The basename.
 local function splitPath( filePath )
     local root
     if isAbsolute( filePath ) then
         filePath = string_sub( filePath, 2 )
-        root = "/"
+        root = true
     else
-        root = ""
+        root = false
     end
 
     local basename, dir = stripDirectory( filePath )
@@ -474,11 +474,11 @@ local function join( ... )
     for index = 1, length do
         local value = args[ index ]
         if index > 1 then
-            value = string_trimByte( value, 0x2F, 1 )
+            value = string_byteTrim( value, 0x2F, 1 )
         end
 
         if index < length then
-            value = string_trimByte( value, 0x2F, -1 )
+            value = string_byteTrim( value, 0x2F, -1 )
         end
 
         args[ index ] = value
@@ -515,11 +515,11 @@ path.resolve = resolve
 ---@param pathTo string: The file path.
 ---@return string: The relative path.
 function path.relative( pathFrom, pathTo )
-    local fromRoot, fromDir, fromBaseName = splitPath( resolve( pathFrom ) )
+    local fromIsAbs, fromDir, fromBaseName = splitPath( resolve( pathFrom ) )
 
     pathTo = resolve( pathTo )
-    local toRoot, toDir, toBaseName = splitPath( pathTo )
-    if not equal( fromRoot, toRoot ) then return pathTo end
+    local toIsAbs, toDir, toBaseName = splitPath( pathTo )
+    if fromIsAbs ~= toIsAbs then return pathTo end
 
     local fromParts, fromLength = string_byteSplit( fromDir .. fromBaseName, 0x2F --[[ / ]] )
     local toParts, toLength = string_byteSplit( toDir .. toBaseName, 0x2F --[[ / ]] )
@@ -546,6 +546,7 @@ function path.relative( pathFrom, pathTo )
 end
 
 --[[
+
     ┌─────────────────────┬────────────┐
     │          dir        │    base    │
     ├──────┬              ├──────┬─────┤
@@ -557,12 +558,13 @@ end
 ]]
 
 --- Parse a file path into [root, dir, basename, ext, name].
----@param filePath string
----@return table
+---@param filePath string: The file path.
+---@return ParsedFilePath: The parsed file path.
 function path.parse( filePath )
-    local root, dir, base = splitPath( filePath )
-    local name, ext = string_match( base, "^(.+)%.(.+)$" )
+    local isAbs, dir, base = splitPath( filePath )
+    if isAbs then dir = "/" .. dir end
 
+    local name, ext = string_match( base, "^(.+)%.(.+)$" )
     if name then
         ext = ext or ""
     else
@@ -570,7 +572,7 @@ function path.parse( filePath )
         ext = ""
     end
 
-    return { root = root, dir = dir, base = base, ext = ext, name = name }
+    return { root = isAbs and "/" or "", dir = dir, base = base, ext = ext, name = name, abs = isAbs }
 end
 
 return path

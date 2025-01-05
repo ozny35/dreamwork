@@ -570,7 +570,7 @@ end
 do
 
     local steamworks_DownloadUGC = steamworks.DownloadUGC
-    local file_write = std.file.write
+    local file_write = std.File.write
 
     --- Downloads the addon and returns the absolute path to the `.gma` file.
     ---@param wsid string: The workshop ID of the addon.
