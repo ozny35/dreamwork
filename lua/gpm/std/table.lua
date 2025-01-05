@@ -639,4 +639,79 @@ do
 
 end
 
+do
+
+    --- Creates a new table, filled with the given value and size.
+    ---@param value any: The value to fill the table with.
+    ---@param ... number: The sizes of the table.
+    ---@return table: The created table.
+    local function create_table( value, size, ... )
+        if size == nil then
+            return value
+        else
+            local tbl = {}
+            for i = 1, size, 1 do
+                tbl[ i ] = create_table( value, ... )
+            end
+
+            return tbl
+        end
+    end
+
+    table.create = create_table
+
+end
+
+--- Removes values from the table.
+---@param tbl table: The table.
+---@param start number?: The start position.
+---@param delete_count number?: The number of values to remove.
+---@param ... any: The values to remove.
+---@return table: The table with removed values.
+function table.splice( tbl, start, delete_count, ... )
+    if start == nil then return {} end
+    local tbl_length = #tbl
+
+    if start < 0 then
+        start = tbl_length + start + 1
+    end
+
+    if delete_count == nil then
+        delete_count = tbl_length - start + 1
+    end
+
+    local keys
+    local arg_count = select( "#", ... )
+    if arg_count ~= 0 then
+        keys = {}
+
+        local args = { ... }
+        for i = 1, arg_count, 1 do
+            keys[ args[ i ] ] = true
+        end
+    end
+
+    local removed, removed_length = {}, 0
+    ::back::
+
+    for index = start, tbl_length, 1 do
+        if keys == nil or keys[ rawget( tbl, index ) ] then
+            removed_length = removed_length + 1
+            removed[ removed_length ] = rawget( tbl, index )
+
+            delete_count = delete_count - 1
+            table_remove( tbl, index )
+
+            if delete_count == 0 then
+                break
+            else
+                start, tbl_length = index, #tbl
+                goto back
+            end
+        end
+    end
+
+    return removed
+end
+
 return table
