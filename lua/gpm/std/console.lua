@@ -1,42 +1,44 @@
 local _G = _G
 local gpm = _G.gpm
+local RunConsoleCommand = _G.RunConsoleCommand
+
 local std = gpm.std
 local class = std.class
 local debug = std.debug
-local bit_bor = std.bit.bor
+local Future = std.Future
 local string_format = std.string.format
-local RunConsoleCommand = _G.RunConsoleCommand
+local debug_getfpackage = debug.getfpackage
+local bit_bor, setmetatable = std.bit.bor, std.setmetatable
+local table_insert, table_remove = std.table.insert, std.table.remove
 
 ---@class gpm.std.console
 local console = {}
 
 if std.MENU then
+
     console.show = _G.gui.ShowConsole
-end
 
-function console.hide()
-    RunConsoleCommand( "hideconsole" )
-end
+    --- Shows the console.
+    function console.hide()
+        RunConsoleCommand( "hideconsole" )
+    end
 
-function console.toggle()
-    RunConsoleCommand( "toggleconsole" )
+    --- Toggles the console.
+    function console.toggle()
+        RunConsoleCommand( "toggleconsole" )
+    end
+
 end
 
 do
 
     local MsgC = _G.MsgC
-
-    --- Writes a colored message to the console.
-    ---@vararg string | Color: The message to write to the console.
-    function console.write( ... )
-        return MsgC( ... )
-    end
+    console.write = MsgC
 
     --- Writes a colored message to the console on a new line.
-    ---@vararg string | Color: The message to write to the console.
+    ---@param ... string | Color: The message to write to the console.
     function console.writeLine( ... )
-        MsgC( ... )
-        MsgC( "\n" )
+        return MsgC( ... ), MsgC( "\n" )
     end
 
 end
@@ -49,25 +51,34 @@ do
     ---@class gpm.std.console.Command : gpm.std.Object
     ---@field __class gpm.std.console.Command
     ---@field name string: The name of the console command.
-    ---@field help_text string: The help text of the console command.
+    ---@field description string: The help text of the console command.
     ---@field flags integer: The flags of the console command.
     local Command = class.base( "Command" )
 
     local cache = {}
 
     ---@param name string: The name of the console command.
-    ---@param help_text string?: The help text of the console command.
-    ---@param ... integer?: The flags of the console command.
+    ---@param description string?: The help text of the console command.
+    ---@param ... gpm.std.FCVAR?: The flags of the console command.
     ---@protected
-    function Command:__init( name, help_text, ... )
-        AddConsoleCommand( name, help_text, ... )
-        cache[ name ] = self
+    function Command:__init( name, description, ... )
         self.name = name
-        self.help_text = help_text or ""
 
+        if description == nil then description = "" end
+        self.description = description
+
+        local flags
         if ... then
-            self.flags = bit_bor( 0, ... )
+            flags = bit_bor( 0, ... )
+        else
+            flags = 0
         end
+
+        self.flags = flags
+
+        AddConsoleCommand( name, description, flags )
+
+        cache[ name ] = self
     end
 
     ---@param name string
@@ -78,14 +89,16 @@ do
 
     ---@class gpm.std.console.CommandClass: gpm.std.console.Command
     ---@field __base gpm.std.console.Command
-    ---@overload fun( name: string, help_text: string?, flags: integer? ): ConsoleCommand
+    ---@overload fun( name: string, description: string?, ...: gpm.std.FCVAR? ): ConsoleCommand
     local CommandClass = class.create( Command )
     console.Command = CommandClass
 
     CommandClass.run = RunConsoleCommand
 
+    --- Runs the console command.
+    ---@param ... string: The arguments to pass to the console command.
     function Command:run( ... )
-        RunConsoleCommand( self.name, ... )
+        return RunConsoleCommand( self.name, ... )
     end
 
     do
@@ -101,18 +114,69 @@ do
 
     end
 
-    -- TODO:
-    local callbacks = {}
+    do
 
-    _G.concommand.Run = gpm.detour.attach( _G.concommand.Run, function( fn, ply, cmd, args, argumentString )
+        --- 1 - object, 2 - fn, 3 - identifier, 4 - once
+        local callbacks = {}
 
+        setmetatable( callbacks, {
+            __index = function( _, name )
+                callbacks[ name ] = {}
+            end
+        } )
 
-        return fn( ply, cmd, args, argumentString )
-    end )
+        -- TODO:
+        function Command:addCallback( identifier, fn, once )
+            local data = { self, fn, identifier, once }
 
+            local package = debug_getfpackage( 2 )
+            if package then
+                table_insert( package.ccommand_callbacks, data )
+            end
 
-    -- TODO: callbacks and async/future functions
-    -- somethink like once and etc
+            table_insert( callbacks[ self.name ], data )
+        end
+
+        -- TODO:
+        function Command:removeCallback( identifier )
+            local lst = callbacks[ self.name ]
+            if lst == nil then return end
+            for i = #lst, 1, -1 do
+                local value = lst[ i ][ 3 ]
+                if value and value == identifier then
+                    table_remove( lst, i )
+                end
+            end
+        end
+
+        -- TODO:
+        function Command:wait()
+            local future = Future()
+
+            self:addCallback( future, function( ... )
+                return future:setResult( { ... } )
+            end, true )
+
+            return future
+        end
+
+        _G.concommand.Run = gpm.detour.attach( _G.concommand.Run, function( fn, ply, cmd, args, argumentString )
+            local lst = callbacks[ cmd ]
+            if lst ~= nil then
+                for i = #lst, 1, -1 do
+                    local data = lst[ i ]
+                    data[ 2 ]( data[ 1 ], ply, args, argumentString )
+
+                    if data[ 4 ] then
+                        table_remove( lst, i )
+                    end
+                end
+            end
+
+            return fn( ply, cmd, args, argumentString )
+        end )
+
+    end
 
 end
 
@@ -120,42 +184,91 @@ end
 do
 
     local ConVarExists, GetConVar, CreateConVar = _G.ConVarExists, _G.GetConVar, _G.CreateConVar
-    local setmetatable = std.setmetatable
+    local tostring, tonumber, toboolean = std.tostring, std.tonumber, std.toboolean
+    local is_string, is_number = std.is.string, std.is.number
+    local type = std.type
+
+    ---@alias ConsoleVariableType string
+    ---| "boolean"
+    ---| "number"
+    ---| "string"
 
     ---@class ConVar
     local CONVAR = debug.findmetatable( "ConVar" )
     local getDefault = CONVAR.GetDefault
+    local getString = CONVAR.GetString
+    local getFloat = CONVAR.GetFloat
+    local getBool = CONVAR.GetBool
 
     ---@alias ConsoleVariable gpm.std.console.Variable
     ---@class gpm.std.console.Variable: gpm.std.Object
     ---@field __class gpm.std.console.Variable
     ---@field private object ConVar: The `ConVar` object.
+    ---@field private type ConsoleVariableType: The type of the console variable.
     ---@field name string: The name of the console variable.
     local Variable = class.base( "Variable" )
 
     local cache = {}
 
-    ---@param name string
-    ---@param default string?
-    ---@param helptext string?
-    ---@param min number?
-    ---@param max number?
-    ---@vararg gpm.std.FCVAR: Flags numbers TODO:
+    ---@param data ConsoleVariableData: The data of the console variable.
     ---@protected
-    function Variable:__init( name, default, helptext, min, max, ... )
-        cache[ name ] = self
+    function Variable:__init( data )
+        local cvar_type = data.type
+        if not is_string( cvar_type ) then
+            cvar_type = "string"
+        end
+
+        local name = data.name
+        if not is_string( name ) then
+            error( "Console variable name must be a string.", 3 )
+        end
+
         self.name = name
 
         local object = GetConVar( name )
         if object == nil then
-            if ... then
-                self.object = CreateConVar( name, default or "", bit_bor( 0, ... ), helptext, min, max )
-            else
-                self.object = CreateConVar( name, default or "", 0, helptext, min, max )
+            local flags = data.flags
+            if not is_number( flags ) then flags = nil end
+
+            local default = data.default
+            if default == nil then
+                default = ""
+            elseif type( default ) ~= cvar_type then
+                error( "default value must match console variable data type (" .. cvar_type .. ").", 3 )
+            elseif cvar_type == "boolean" then
+                default = toboolean( default ) and "1" or "0"
+            elseif cvar_type == "string" then
+                default = default or ""
+            elseif cvar_type == "number" then
+                default = tostring( default ) or ""
             end
+
+            ---@diagnostic disable-next-line: assign-type-mismatch
+            self.type = cvar_type
+
+            ---@cast default string
+
+            local description = data.description
+            if not is_string( description ) then
+                description = tostring( description ) or ""
+            end
+
+            local min = data.min
+            if not is_number( min ) then
+                min = nil
+            end
+
+            local max = data.max
+            if not is_number( max ) then
+                max = nil
+            end
+
+            self.object = CreateConVar( name, default, flags, description, min, max )
         else
             self.object = object
         end
+
+        cache[ name ] = self
     end
 
     ---@param name string
@@ -166,21 +279,40 @@ do
 
     ---@class gpm.std.console.VariableClass: gpm.std.console.Variable
     ---@field __base gpm.std.console.Variable
-    ---@overload fun( name: string, default: string?, helptext: string?, min: number?, max: number?, ...: gpm.std.FCVAR? ): ConsoleVariable
+    ---@overload fun( data: ConsoleVariableData ): ConsoleVariable
     local VariableClass = class.create( Variable )
     console.Variable = VariableClass
 
     VariableClass.exists = ConVarExists
 
+    do
+
+        local type2fn = {
+            boolean = getBool,
+            number = getFloat,
+            string = getString
+        }
+
+        --- Gets the value of the `ConsoleVariable` object.
+        ---@return boolean | string | number: The value of the `ConsoleVariable` object.
+        function Variable:get()
+            return type2fn[ self.type ]( self.object )
+        end
+
+    end
+
     --- Gets a `ConsoleVariable` object by its name.
     ---@param name string: The name of the console variable.
+    ---@param cvar_type ConsoleVariableType?: The type of the console variable.
     ---@return gpm.std.console.Variable?
-    function VariableClass.get( name )
+    function VariableClass.get( name, cvar_type )
         local object = GetConVar( name )
         if object == nil then return end
+        if cvar_type == nil then cvar_type = "string" end
 
         local value = {
             name = name,
+            type = cvar_type,
             object = object
         }
 
@@ -192,156 +324,81 @@ do
 
     do
 
-        local getString = CONVAR.GetString
+        local toboolean = std.toboolean
 
-        ---@protected
-        function Variable:__tostring()
-            return string_format( "Console Variable: %s [%s]", self.name, getString( self.object ) )
+        --- Sets the value of the `ConsoleVariable` object.
+        ---@param value any: The value to set.
+        function Variable:set( value )
+            local cvar_type = self.type
+            if cvar_type == "boolean" then
+                RunConsoleCommand( self.name, toboolean( value ) and "1" or "0" )
+            elseif cvar_type == "string" then
+                RunConsoleCommand( self.name, tostring( value ) )
+            elseif cvar_type == "number" then
+                RunConsoleCommand( self.name, string_format( "%f", tonumber( value, 10 ) ) )
+            end
         end
 
-        --- Gets the value of the `ConsoleVariable` object as a string.
-        ---@return string: The value of the `ConsoleVariable` object.
-        function Variable:getString()
-            return getString( self.object )
-        end
-
-        --- Gets the value of the `ConsoleVariable` object as a string.
+        --- Sets the value of the `ConsoleVariable` object.
         ---@param name string: The name of the console variable.
-        ---@return string: The value of the `ConsoleVariable` object.
-        function VariableClass.getString( name )
-            local object = GetConVar( name )
-            if object == nil then
-                return ""
+        ---@param value boolean | string | number: The value to set.
+        function VariableClass.set( name, value )
+            local value_type = type( value )
+            if value_type == "boolean" then
+                RunConsoleCommand( name, value and "1" or "0" )
+            elseif value_type == "string" then
+                RunConsoleCommand( name, value )
+            elseif value_type == "number" then
+                RunConsoleCommand( name, string_format( "%f", tonumber( value, 10 ) ) )
             else
-                return getString( object )
+                error( "invalid value type, must be boolean, string or number.", 2 )
             end
         end
 
     end
 
-    --- Sets the value of the `ConsoleVariable` object as a string.
-    ---@param value string: The value to set.
-    function Variable:setString( value )
-        RunConsoleCommand( self.name, value )
+    ---@protected
+    function Variable:__tostring()
+        return string_format( "Console Variable: %s [%s]", self.name, getString( self.object ) )
     end
 
-    --- Sets the value of the `ConsoleVariable` object as a string.
+    --- Gets the value of the `ConsoleVariable` object as a string.
     ---@param name string: The name of the console variable.
-    ---@param value string: The value to set.
-    function VariableClass.setString( name, value )
-        RunConsoleCommand( name, value )
-    end
-
-    do
-
-        local getFloat = CONVAR.GetFloat
-
-        --- Gets the value of the `ConsoleVariable` object as a float.
-        ---@return number: The value of the `ConsoleVariable` object.
-        function Variable:getFloat()
-            return getFloat( self.object )
+    ---@return string: The value of the `ConsoleVariable` object.
+    function VariableClass.getString( name )
+        local object = GetConVar( name )
+        if object == nil then
+            return ""
+        else
+            return getString( object )
         end
-
-        --- Gets the value of the `ConsoleVariable` object as a float.
-        ---@param name string: The name of the console variable.
-        ---@return number: The value of the `ConsoleVariable` object.
-        function VariableClass.getFloat( name )
-            local object = GetConVar( name )
-            if object == nil then
-                return 0.0
-            else
-                return getFloat( object )
-            end
-        end
-
     end
 
-    --- Sets the value of the `ConsoleVariable` object as a float.
-    ---@param value number: The value to set.
-    function Variable:setFloat( value )
-        RunConsoleCommand( self.name, string_format( "%f", value ) )
-    end
-
-    --- Sets the value of the `ConsoleVariable` object as a float.
+    --- Gets the value of the `ConsoleVariable` object as a number.
     ---@param name string: The name of the console variable.
-    ---@param value number: The value to set.
-    function VariableClass.setFloat( name, value )
-        RunConsoleCommand( name, string_format( "%f", value ) )
-    end
-
-    do
-
-        local getBool = CONVAR.GetBool
-
-        --- Gets the value of the `ConsoleVariable` object as a boolean.
-        ---@return boolean: The value of the `ConsoleVariable` object.
-        function Variable:getBool()
-            return getBool( self.object )
+    ---@return number: The value of the `ConsoleVariable` object.
+    function VariableClass.getNumber( name )
+        local object = GetConVar( name )
+        if object == nil then
+            return 0.0
+        else
+            return getFloat( object )
         end
-
-        --- Gets the value of the `ConsoleVariable` object as a boolean.
-        ---@param name string: The name of the console variable.
-        ---@return boolean: The value of the `ConsoleVariable` object.
-        function VariableClass.getBool( name )
-            local object = GetConVar( name )
-            if object == nil then
-                return false
-            else
-                return getBool( object )
-            end
-        end
-
     end
 
-    --- Sets the value of the `ConsoleVariable` object as a boolean.
-    ---@param value boolean: The value to set.
-    function Variable:setBool( value )
-        RunConsoleCommand( self.name, value == true and "1" or "0" )
-    end
-
-    --- Sets the value of the `ConsoleVariable` object as a boolean.
+    --- Gets the value of the `ConsoleVariable` object as a boolean.
     ---@param name string: The name of the console variable.
-    ---@param value boolean: The value to set.
-    function VariableClass.setBool( name, value )
-        RunConsoleCommand( name, value == true and "1" or "0" )
-    end
-
-    do
-
-        local getInt = CONVAR.GetInt
-
-        --- Gets the value of the `ConsoleVariable` object as an integer.
-        ---@return integer: The value of the `ConsoleVariable` object.
-        function Variable:getInteger()
-            return getInt( self.object )
+    ---@return boolean: The value of the `ConsoleVariable` object.
+    function VariableClass.getBoolean( name )
+        local object = GetConVar( name )
+        if object == nil then
+            return false
+        else
+            return getBool( object )
         end
-
-        --- Gets the value of the `ConsoleVariable` object as an integer.
-        ---@param name string: The name of the console variable.
-        ---@return integer: The value of the `ConsoleVariable` object.
-        function VariableClass.getInteger( name )
-            local object = GetConVar( name )
-            if object == nil then
-                return 0
-            else
-                return getInt( object )
-            end
-        end
-
     end
 
-    --- Sets the value of the `ConsoleVariable` object as an integer.
-    ---@param value integer: The value to set.
-    function Variable:setInteger( value )
-        RunConsoleCommand( self.name, string_format( "%d", value ) )
-    end
-
-    --- Sets the value of the `ConsoleVariable` object as an integer.
-    ---@param name string: The name of the console variable.
-    ---@param value integer: The value to set.
-    function VariableClass.setInteger( name, value )
-        RunConsoleCommand( name, string_format( "%d", value ) )
-    end
+    VariableClass.getBool = VariableClass.getBoolean
 
     --- Reverts the value of the `ConsoleVariable` object to its default value.
     function Variable:revert()
@@ -352,8 +409,11 @@ do
     ---@param name string: The name of the console variable.
     function VariableClass.revert( name )
         local object = GetConVar( name )
-        if object == nil then return end
-        RunConsoleCommand( name, getDefault( object ) )
+        if object == nil then
+            error( "Variable '" .. name .. "' does not available.", 2 )
+        else
+            RunConsoleCommand( name, getDefault( object ) )
+        end
     end
 
     --- Gets the name of the `ConsoleVariable` object.
@@ -517,20 +577,21 @@ do
 
     do
 
-        local table_insert, table_remove = std.table.insert, std.table.remove
-        local debug_getfpackage = debug.getfpackage
-        local Future = std.Future
-
-        --- 1 - object, 2 - fn, 3 - name, 4 - once
+        --- 1 - object, 2 - fn, 3 - identifier, 4 - once
         local callbacks = {}
 
         setmetatable( callbacks, {
-            __index = function( _, identifier )
-                callbacks[ identifier ] = {}
+            __index = function( _, name )
+                callbacks[ name ] = {}
             end
         } )
 
+        --- Adds a callback to the `ConsoleVariable` object.
+        ---@param identifier string The identifier of the callback.
+        ---@param fn fun( object: gpm.std.console.Variable, old: boolean | string | number, new: boolean | string | number ) The callback function.
         function Variable:addChangeCallback( identifier, fn, once )
+            self:removeChangeCallback( identifier )
+
             local data = { self, fn, identifier, once }
 
             local package = debug_getfpackage( 2 )
@@ -541,8 +602,12 @@ do
             table_insert( callbacks[ self.name ], data )
         end
 
+        --- Removes a callback from the `ConsoleVariable` object.
+        ---@param identifier string The identifier of the callback.
         function Variable:removeChangeCallback( identifier )
-            local lst = callbacks[ identifier ]
+            if identifier == nil then return end
+
+            local lst = callbacks[ self.name ]
             if lst == nil then return end
             for i = #lst, 1, -1 do
                 local value = lst[ i ][ 3 ]
@@ -552,11 +617,14 @@ do
             end
         end
 
+        --- Waits for the `ConsoleVariable` object to change.
+        ---@return boolean | string | number
         ---@async
         function Variable:waitForChange()
             local f = Future()
 
-            self:addChangeCallback( nil, function( _, value )
+            ---@diagnostic disable-next-line: param-type-mismatch
+            self:addChangeCallback( nil, function( _, __, value )
                 f:setResult( value )
             end, true )
 
@@ -568,7 +636,20 @@ do
             if lst ~= nil then
                 for i = #lst, 1, -1 do
                     local data = lst[ i ]
-                    data[ 2 ]( data[ 1 ], old, new )
+
+                    local cvar = data[ 1 ]
+                    local cvar_type = cvar.type
+
+                    local old_value, new_value
+                    if cvar_type == "boolean" then
+                        old_value, new_value = old == "1", new == "1"
+                    elseif cvar_type == "number" then
+                        old_value, new_value = tonumber( old, 10 ), tonumber( new, 10 )
+                    elseif cvar_type == "string" then
+                        old_value, new_value = old, new
+                    end
+
+                    data[ 2 ]( cvar, old_value, new_value )
 
                     if data[ 4 ] then
                         table_remove( lst, i )
@@ -578,29 +659,6 @@ do
 
             return fn( name, old, new )
         end )
-
-        -- TODO: Rewrite this crap
-        -- variable.getCallbacks = cvars_GetConVarCallbacks
-
-        -- variable.addCallback = function( name, callback, identifier )
-        --     local package = debug_getfpackage( 2 )
-        --     if package == nil then
-        --         -- cvars_AddChangeCallback( name, callback, identifier )
-        --     else
-        --         local prefix = package.prefix
-        --         identifier = prefix .. ( identifier or "" )
-        --     end
-        -- end
-
-        -- variable.removeCallback = function( name, identifier )
-        --     local package = debug_getfpackage( 2 )
-        --     if package == nil then
-        --         -- cvars_RemoveChangeCallback( name, identifier )
-        --     else
-        --         local prefix = package.prefix
-        --         identifier = prefix .. ( identifier or "" )
-        --     end
-        -- end
 
     end
 

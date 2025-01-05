@@ -192,3 +192,63 @@ ServerQueryData.query_failed = nil
 --- Called when the query is finished. No arguments
 ---@type function
 ServerQueryData.finished = nil
+
+--- Table used by `console.Variable` class constructor.
+---@class ConsoleVariableData
+local ConsoleVariableData = {}
+
+--- The name of the console variable.
+---@type string
+ConsoleVariableData.name = nil
+
+--- The type of the console variable.
+---@type ConsoleVariableType?
+ConsoleVariableData.type = nil
+
+--- The flags of the console variable.
+---@type gpm.std.FCVAR?
+ConsoleVariableData.flags = nil
+
+--- The default value of the console variable.
+---@type string | number | boolean | nil
+ConsoleVariableData.default = nil
+
+--- The description of the console variable.
+---@type string?
+ConsoleVariableData.description = nil
+
+--- The minimal value of the console variable.
+---@type number?
+ConsoleVariableData.min = nil
+
+--- The maximum value of the console variable.
+---@type number?
+ConsoleVariableData.max = nil
+
+--- The result table of executing `file.path.parse`.
+---@class ParsedFilePath
+local ParsedFilePath = {}
+
+--- The root of the file path.
+---@type string
+ParsedFilePath.root = ""
+
+--- The directory of the file path.
+---@type string
+ParsedFilePath.dir = ""
+
+--- The basename of the file path.
+---@type string
+ParsedFilePath.base = ""
+
+--- The name of the file path.
+---@type string
+ParsedFilePath.name = ""
+
+--- The extension of the file path.
+---@type string
+ParsedFilePath.ext = ""
+
+--- Whether the file path is absolute.
+---@type boolean
+ParsedFilePath.abs = false

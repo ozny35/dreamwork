@@ -1,7 +1,7 @@
 local _G = _G
 local gpm = _G.gpm
 local std = gpm.std
-local variable = std.console.Variable
+local console_Variable = std.console.Variable
 
 ---@class gpm.std.server
 local server = {}
@@ -64,12 +64,45 @@ do
 
 end
 
+local sv_hostname = console_Variable( {
+    name = "sv_hostname",
+    description = "The publicly visible name of the server.",
+    type = "string",
+    flags = 8192
+} )
+
+do
+
+    local hostname = console_Variable.get( "hostname", "string" )
+    if hostname ~= nil then
+        sv_hostname:set( hostname:get() )
+
+        sv_hostname:addChangeCallback( "hostname", function( _, __, str )
+            if hostname:get() == str then return end
+            hostname:set( str )
+        end )
+
+        hostname:addChangeCallback( "sv_hostname", function( _, __, str )
+            if sv_hostname:get() == str then return end
+            sv_hostname:set( str )
+        end )
+    end
+
+    --- [SHARED AND MENU] Gets the name of the server.
+    ---@return string: The name of the server.
+    function server.getName()
+        ---@diagnostic disable-next-line: return-type-mismatch
+        return sv_hostname:get()
+    end
+
+end
+
 if std.SHARED then
 
     --- [SHARED] Checks if cheats are enabled.
     ---@return boolean: `true` if cheats are enabled, `false` if not.
     function server.isCheatsEnabled()
-        return variable.getBool( "sv_cheats" )
+        return console_Variable.getBoolean( "sv_cheats" )
     end
 
     --- [SHARED] Enables or disables cheats.
@@ -77,13 +110,13 @@ if std.SHARED then
     --- It gives all players access to commmands that would normally be abused or misused by players.
     ---@param bool boolean: `true` to enable cheats, `false` to disable them.
     function server.setCheatsEnabled( bool )
-        variable.setBool( "sv_cheats", bool )
+        console_Variable.set( "sv_cheats", bool )
     end
 
     --- [SHARED] Checks if the server allows clients to run `lua_openscript_cl` and `lua_run_cl`.
     ---@return boolean: `true` if the server allows clients to run lua_openscript_cl and lua_run_cl, `false` if not.
     function server.isUserScriptsAllowed()
-        return variable.getBool( "sv_allowcslua" )
+        return console_Variable.getBoolean( "sv_allowcslua" )
     end
 
 end
@@ -95,37 +128,37 @@ if std.SERVER then
     --- [SERVER] Gets the download URL of the server.
     ---@return string: The download URL.
     function server.getDownloadURL()
-        return variable.getString( "sv_downloadurl" )
+        return console_Variable.getString( "sv_downloadurl" )
     end
 
     --- [SERVER] Sets the download URL of the server.
     ---@param str string: The download URL to set.
     function server.setDownloadURL( str )
-        variable.setString( "sv_downloadurl", str )
+        console_Variable.set( "sv_downloadurl", str )
     end
 
     --- [SERVER] Checks if the server allows downloads.
     ---@return boolean: Whether the server allows downloads.
     function server.isDowloadAllowed()
-        return variable.getBool( "sv_allowdownload" )
+        return console_Variable.getBoolean( "sv_allowdownload" )
     end
 
     --- [SERVER] Allow clients to download files from the server.
     ---@param bool boolean: Whether the server allows downloads.
     function server.allowDownload( bool )
-        variable.setBool( "sv_allowdownload", bool )
+        console_Variable.set( "sv_allowdownload", bool )
     end
 
     --- [SERVER] Checks if the server allows uploads.
     ---@return boolean: Whether the server allows uploads.
     function server.isUploadAllowed()
-        return variable.getBool( "sv_allowupload" )
+        return console_Variable.getBoolean( "sv_allowupload" )
     end
 
     --- [SERVER] Allow clients to upload customizations files to the server.
     ---@param bool boolean: Whether the server allows uploads.
     function server.allowUpload( bool )
-        variable.setBool( "sv_allowupload", bool )
+        console_Variable.set( "sv_allowupload", bool )
     end
 
     ---@alias gpm.std.SERVER_REGION
@@ -140,42 +173,45 @@ if std.SERVER then
     ---| `7`	Africa
     ---| `255`	World (default)
 
-    --- [SERVER] Gets the variable requested by the server browser to determine in which part of the world the server is located.
+    --- [SERVER] Gets the console_Variable requested by the server browser to determine in which part of the world the server is located.
     ---@return gpm.std.SERVER_REGION: The region of the world to report this server in.
     function server.getRegion()
-        return variable.getInteger( "sv_region" )
+        return console_Variable.getNumber( "sv_region" )
     end
 
-    --- [SERVER] Sets the variable requested by the server browser to determine in which part of the world the server is located.
+    --- [SERVER] Sets the console_Variable requested by the server browser to determine in which part of the world the server is located.
     ---@param region gpm.std.SERVER_REGION: The region of the world to report this server in.
     function server.setRegion( region )
-        variable.setInteger( "sv_region", region )
+        console_Variable.set( "sv_region", region )
     end
 
     --- [SERVER] Checks if the server is hidden from the master server.
     ---@return boolean: `true` if the server is hidden, `false` if not.
     function server.isHidden()
-        return variable.getBool( "hide_server" )
+        return console_Variable.getBoolean( "hide_server" )
     end
 
     --- [SERVER] Hides/unhides the server from the master server.
     ---@param bool boolean: `true` to hide the server, `false` to unhide it.
     function server.setHidden( bool )
-        variable.setBool( "hide_server", bool )
+        console_Variable.set( "hide_server", bool )
     end
 
     --- [SERVER] Allow clients to run `lua_openscript_cl` and `lua_run_cl`.
     ---@param bool boolean: `true` to allow clients to run lua_openscript_cl and lua_run_cl, `false` to disallow them.
     function server.allowUserScripts( bool )
-        variable.setBool( "sv_allowcslua", bool )
+        console_Variable.set( "sv_allowcslua", bool )
+    end
+
+    --- [SERVER] Sets the name of the server.
+    ---@param str string: The name to set.
+    function server.setName( str )
+        return sv_hostname:set( str )
     end
 
     --[[
 
         TODO:
-
-        - sv_kickerrornum: Disconnects any client that exceeds this amount of client-side errors.
-            A value of 0 disables this functionality.
 
         - lua_networkvar_bytespertick: Allows you to control how many bytes are networked each tick.
             This should affect all NW functions. not NW2
@@ -183,10 +219,12 @@ if std.SERVER then
         - gmod_sneak_attack: If set to 0 disables HL2's sneak attack, where headshotting
             NPCs that haven't seen the player would result in an instant kill.
 
-        - gmod_suit: Set to non zero to enable Half-Life 2 aux suit power stuff.
-
         - sv_infinite_aux_power: This boolean ConVar enables/disables infinite suit power on the server. (For usual only on Half-Life 2 and modifications)
             when sv_infinite_aux_power is non-zero players will have infinitive suit power.
+
+        https://wiki.facepunch.com/gmod/Blocked_ConCommands
+
+        https://developer.valvesoftware.com/wiki/Console_Command_List
 
     --]]
 

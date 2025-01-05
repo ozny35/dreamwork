@@ -1,9 +1,9 @@
 local _G = _G
 local std = _G.gpm.std
 local console = std.console
-local variable = console.Variable
 local string_format = std.string.format
 local command_run = console.Command.run
+local console_Variable = console.Variable
 local system_IsWindowed = _G.system.IsWindowed
 
 local width, height = _G.ScrW(), _G.ScrH()
@@ -66,24 +66,24 @@ end
 
 do
 
-    local variable_getBool = variable.getBool
+    local variable_getBoolean = console_Variable.getBoolean
 
     --- Returns whether the game is running in VSync mode.
     ---@return boolean: `true` if the game is running in VSync mode, `false` if not.
     function window.getVSync()
-        return variable_getBool( "mat_vsync" )
+        return variable_getBoolean( "mat_vsync" )
     end
 
 end
 
 do
 
-    local variable_setBool = variable.setBool
+    local Variable_set = console_Variable.set
 
     --- Sets whether the game is running in VSync mode.
     ---@param value boolean: `true` to enable VSync, `false` to disable it.
     function window.setVSync( value )
-        variable_setBool( "mat_vsync", value )
+        Variable_set( "mat_vsync", value )
     end
 
 end

@@ -23,17 +23,15 @@ end
 
 local api_token
 if SERVER then
-    local convar = _G.CreateConVar("gpm_github_token", "", {
-        _G.FCVAR_ARCHIVE,
-        _G.FCVAR_PROTECTED,
-        16
-    }, "https://github.com/settings/tokens")
+    local gpm_github_token = std.console.Variable( {
+        name = "gpm.github.token",
+        description = "https://github.com/settings/tokens",
+        flags = std.bit.bor( 16, 32, 128 ),
+        type = "string"
+    } )
 
-    _G.cvars.AddChangeCallback( convar:GetName(), function( _, __, value )
-        api_token = value
-    end, gpm.PREFIX .. "::Github API" )
-
-    api_token = convar:GetString()
+    gpm_github_token:addChangeCallback( "http.github", function( _, __, str ) api_token = str end )
+    api_token = gpm_github_token:get()
 else
     api_token = ""
 end

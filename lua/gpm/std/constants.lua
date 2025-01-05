@@ -1705,6 +1705,7 @@ local constants = {
         INVALID = -1,
         NIL = 0,
         BOOL = 1,
+        BOOLEAN = 1,
         LIGHTUSERDATA = 2,
         NUMBER = 3,
         STRING = 4,

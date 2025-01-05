@@ -200,7 +200,7 @@ if std.SHARED then
     --- [SHARED] Checks if Half-Life 2 aux suit power stuff is enabled.
     ---@return boolean: `true` if Half-Life 2 aux suit power stuff is enabled, `false` if not.
     function game.getHL2Suit()
-        return console_Variable.getBool( "gmod_suit" )
+        return console_Variable.getBoolean( "gmod_suit" )
     end
 
 end
