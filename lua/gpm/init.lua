@@ -747,6 +747,24 @@ do
     -- Extensions for string library
     include( "std/string.extensions.lua" )
 
+    --- Performs a linear interpolation between two values.
+    ---@param frac number: The fraction [0, 1].
+    ---@generic T
+    ---@param from T: The start value.
+    ---@param to T: The end value.
+    ---@return T: The interpolated value.
+    function std.lerp( frac, from, to )
+        local metatable = debug_getmetatable( from )
+        if metatable ~= nil then
+            local fn = rawget( metatable, "__lerp" )
+            if is_function( fn ) then
+                return fn( frac, from, to )
+            end
+        end
+
+        error( "metatable method __lerp is missing", 2 )
+    end
+
 end
 
 -- Version class
