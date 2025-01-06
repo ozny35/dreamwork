@@ -873,7 +873,7 @@ end
 std.Version = include( "std/version.lua" )
 
 -- URL class
-std.URL = include( "std/url.lua" )
+include( "std/url.lua" )
 
 -- Queue class
 do

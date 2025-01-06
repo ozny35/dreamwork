@@ -1796,9 +1796,8 @@ local function update( self )
 		self.url.query = self
 	end
 end
----@alias URLSearchParams gpm.std.URLSearchParams
----@class gpm.std.URLSearchParams: gpm.std.Object
----@field __class gpm.std.URLSearchParamsClass
+
+---@type unknown
 local URLSearchParams = std.class.base( "URLSearchParams" )
 
 function URLSearchParams:__tostring()
@@ -1937,10 +1936,9 @@ local function isURLSearchParams( any )
 	return metatable == URLSearchParams
 end
 
----@class gpm.std.URLSearchParamsClass : gpm.std.URLSearchParams
----@field __base gpm.std.URLSearchParams
----@overload fun( query: string | table, url: URL ): URLSearchParams
 local URLSearchParamsClass = std.class.create( URLSearchParams )
+
+---@class gpm.std.URLSearchParamsClass
 std.URLSearchParams = URLSearchParamsClass
 
 function URLSearchParams:__init( query, url )
@@ -1996,23 +1994,7 @@ local function cacheValue( obj, key, value )
 	return value
 end
 
----@alias URL gpm.std.URL
----@class gpm.std.URL: gpm.std.Object
----@field __class gpm.std.URLClass
----@field protected state table
----@field href string: TOOD
----@field origin string: TOOD
----@field protocol string: TOOD
----@field username string: TOOD
----@field password string: TOOD
----@field host string: TOOD
----@field hostname string: TOOD
----@field port string: TOOD
----@field pathname string: TOOD
----@field search string: TOOD
----@field hash string: TOOD
----@field query string: TOOD
----@field searchParams URLSearchParams: TOOD
+---@type unknown
 local URL = std.class.base( "URL" )
 
 -- TODO: write missing fields
@@ -2163,9 +2145,7 @@ function is.url( value )
 	return getmetatable( value ) == URL
 end
 
----@class gpm.std.URLClass : gpm.std.URL
----@field __base gpm.std.URL
----@overload fun( str: string, base: string? ): URL
+
 local URLClass = std.class.create( URL )
 
 ---@protected
@@ -2175,20 +2155,16 @@ function URL:__init( str, base )
 	parse( state, str, base )
 end
 
---- TODO: docs
----@param str string: TODO
----@param base string?: TODO
----@return URL: TODO
 function URLClass.parse( str, base )
-	return URLClass( str, base )
+	return parse( {}, str, base )
 end
 
 function URLClass.canParse( str, base )
-	return pcall( parse, {}, str, base )
+	return pcall( URLClass.parse, str, base )
 end
 
 URLClass.serialize = serialize
-URLClass.deserialize = parse
+-- URLClass.deserialize = parse
 
 --- TODO: docs
 ---@param str string: TODO
@@ -2218,4 +2194,5 @@ function URLClass.decodeURIComponent( str )
 	return percentDecode( str, DECODE_LOOKUP_TABLE )
 end
 
+---@class gpm.std.URLClass
 std.URL = URLClass
