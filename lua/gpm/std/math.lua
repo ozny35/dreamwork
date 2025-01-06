@@ -332,12 +332,44 @@ function math.randomf( a, b )
     return a + ( b - a ) * math_random()
 end
 
+--- Returns floor addition of two numbers.
+---@param a number The first number.
+---@param b number The second number.
+---@return number
+function math.fadd( a, b )
+    return math_floor( a + b )
+end
+
+--- Returns floor subtraction of two numbers.
+---@param a number The first number.
+---@param b number The second number.
+---@return number
+function math.fsub( a, b )
+    return math_floor( a - b )
+end
+
 --- Returns floor division of two numbers. ( // from Lua 5.3 )
 ---@param a number The dividend.
 ---@param b number The divisor.
 ---@return number
 function math.fdiv( a, b )
     return math_floor( a / b )
+end
+
+--- Returns floor multiplication of two numbers.
+---@param a number The first number.
+---@param b number The second number.
+---@return number
+function math.fmul( a, b )
+    return math_floor( a * b )
+end
+
+--- Returns floor exponentiation of two numbers.
+---@param a number The base.
+---@param b number The exponent.
+---@return number
+function math.fpow( a, b )
+    return math_floor( a ^ b )
 end
 
 --- Returns the square root of the sum of squares of its arguments.

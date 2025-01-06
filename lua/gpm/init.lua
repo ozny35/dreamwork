@@ -169,6 +169,46 @@ std.math = math
 
 do
 
+    local math_fadd = math.fadd
+
+    function math.fadd( a, b )
+        local metatable = debug_getmetatable( a )
+        if metatable == nil then
+            return math_fadd( a, b )
+        end
+
+        local fn = rawget( metatable, "__iadd" )
+        if is_function( fn ) then
+            return fn( a, b )
+        else
+            return math_fadd( a, b )
+        end
+    end
+
+end
+
+do
+
+    local math_fsub = math.fsub
+
+    function math.fsub( a, b )
+        local metatable = debug_getmetatable( a )
+        if metatable == nil then
+            return math_fsub( a, b )
+        end
+
+        local fn = rawget( metatable, "__isub" )
+        if is_function( fn ) then
+            return fn( a, b )
+        else
+            return math_fsub( a, b )
+        end
+    end
+
+end
+
+do
+
     local math_fdiv = math.fdiv
 
     function math.fdiv( a, b )
@@ -182,6 +222,66 @@ do
             return fn( a, b )
         else
             return math_fdiv( a, b )
+        end
+    end
+
+end
+
+do
+
+    local math_fmul = math.fmul
+
+    function math.fmul( a, b )
+        local metatable = debug_getmetatable( a )
+        if metatable == nil then
+            return math_fmul( a, b )
+        end
+
+        local fn = rawget( metatable, "__imul" )
+        if is_function( fn ) then
+            return fn( a, b )
+        else
+            return math_fmul( a, b )
+        end
+    end
+
+end
+
+do
+
+    local math_fmod = math.fmod
+
+    function math.fmod( a, b )
+        local metatable = debug_getmetatable( a )
+        if metatable == nil then
+            return math_fmod( a, b )
+        end
+
+        local fn = rawget( metatable, "__imod" )
+        if is_function( fn ) then
+            return fn( a, b )
+        else
+            return math_fmod( a, b )
+        end
+    end
+
+end
+
+do
+
+    local math_fpow = math.fpow
+
+    function math.fpow( a, b )
+        local metatable = debug_getmetatable( a )
+        if metatable == nil then
+            return math_fpow( a, b )
+        end
+
+        local fn = rawget( metatable, "__ipow" )
+        if is_function( fn ) then
+            return fn( a, b )
+        else
+            return math_fpow( a, b )
         end
     end
 
