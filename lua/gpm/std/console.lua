@@ -322,39 +322,33 @@ do
         return value
     end
 
-    do
-
-        local toboolean = std.toboolean
-
-        --- Sets the value of the `ConsoleVariable` object.
-        ---@param value any: The value to set.
-        function Variable:set( value )
-            local cvar_type = self.type
-            if cvar_type == "boolean" then
-                RunConsoleCommand( self.name, toboolean( value ) and "1" or "0" )
-            elseif cvar_type == "string" then
-                RunConsoleCommand( self.name, tostring( value ) )
-            elseif cvar_type == "number" then
-                RunConsoleCommand( self.name, string_format( "%f", tonumber( value, 10 ) ) )
-            end
+    --- Sets the value of the `ConsoleVariable` object.
+    ---@param value any: The value to set.
+    function Variable:set( value )
+        local cvar_type = self.type
+        if cvar_type == "boolean" then
+            RunConsoleCommand( self.name, toboolean( value ) and "1" or "0" )
+        elseif cvar_type == "string" then
+            RunConsoleCommand( self.name, tostring( value ) )
+        elseif cvar_type == "number" then
+            RunConsoleCommand( self.name, string_format( "%f", tonumber( value, 10 ) ) )
         end
+    end
 
-        --- Sets the value of the `ConsoleVariable` object.
-        ---@param name string: The name of the console variable.
-        ---@param value boolean | string | number: The value to set.
-        function VariableClass.set( name, value )
-            local value_type = type( value )
-            if value_type == "boolean" then
-                RunConsoleCommand( name, value and "1" or "0" )
-            elseif value_type == "string" then
-                RunConsoleCommand( name, value )
-            elseif value_type == "number" then
-                RunConsoleCommand( name, string_format( "%f", tonumber( value, 10 ) ) )
-            else
-                error( "invalid value type, must be boolean, string or number.", 2 )
-            end
+    --- Sets the value of the `ConsoleVariable` object.
+    ---@param name string: The name of the console variable.
+    ---@param value boolean | string | number: The value to set.
+    function VariableClass.set( name, value )
+        local value_type = type( value )
+        if value_type == "boolean" then
+            RunConsoleCommand( name, value and "1" or "0" )
+        elseif value_type == "string" then
+            RunConsoleCommand( name, value )
+        elseif value_type == "number" then
+            RunConsoleCommand( name, string_format( "%f", tonumber( value, 10 ) ) )
+        else
+            error( "invalid value type, must be boolean, string or number.", 2 )
         end
-
     end
 
     ---@protected

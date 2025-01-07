@@ -7,6 +7,7 @@ local string = std.string
 local tonumber = std.tonumber
 local glua_render = _G.render
 
+--- [CLIENT AND MENU] The game's client library.
 ---@class gpm.std.client
 local client = {
     openURL = _G.gui.OpenURL,
@@ -57,12 +58,12 @@ if std.MENU then
     client.isConnected = _G.IsInGame
     client.isConnecting = _G.IsInLoading
 else
-    --- Checks if the client is connected to the server.<br>
+    --- [CLIENT AND MENU] Checks if the client is connected to the server.<br>
     --- NOTE: It always returns `true` on the client.
     ---@return boolean: `true` if connected, `false` if not.
     function client.isConnected() return true end
 
-    --- Checks if the client has connected to the server (looks at the loading screen).<br>
+    --- [CLIENT AND MENU] Checks if the client has connected to the server (looks at the loading screen).<br>
     --- NOTE: It always returns `false` on the client.
     ---@return boolean: `true` if connecting, `false` if not.
     function client.isConnecting() return false end
@@ -72,17 +73,17 @@ do
 
     local command_run = std.console.Command.run
 
-    --- Disconnect game from server.
+    --- [CLIENT AND MENU] Disconnect game from server.
     function client.disconnect()
         command_run( "disconnect" )
     end
 
-    --- Retry connection to last server.
+    --- [CLIENT AND MENU] Retry connection to last server.
     function client.retry()
         command_run( "retry" )
     end
 
-    --- Take a screenshot.
+    --- [CLIENT AND MENU] Take a screenshot.
     ---@param quality integer: The quality of the screenshot (0-100), only used if `useTGA` is `false`.
     ---@param fileName string: The name of the screenshot.
     function client.screencap( quality, fileName )

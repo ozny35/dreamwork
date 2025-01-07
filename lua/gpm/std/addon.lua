@@ -2,7 +2,7 @@ local _G = _G
 local gpm = _G.gpm
 local steamworks = _G.steamworks
 
-
+--- [SHARED AND MENU] The addon library.
 ---@class gpm.std
 local std = gpm.std
 local Future, is = std.Future, std.is
@@ -60,7 +60,6 @@ local is_string = is.string
 ---| `"scenes"`
 ---| `"other"`
 
-
 ---@alias Addon gpm.std.Addon
 ---@class gpm.std.Addon: gpm.std.Object
 ---@field __class gpm.std.AddonClass
@@ -84,6 +83,8 @@ do
         end
     end
 
+    --- Returns all subscribed addons.
+    ---@return Addon[]: The subscribed addons.
     function AddonClass.getAll()
         local addons = engine_GetAddons()
 
@@ -121,7 +122,6 @@ do
 
     local cache = {}
 
-    --- Creates a new addon.
     ---@param wsid string: The workshop ID of the addon.
     ---@protected
     function Addon:__init( wsid )
@@ -136,7 +136,7 @@ do
 
 end
 
---- Returns the workshop ID of the addon.
+--- [SHARED AND MENU] Returns the workshop ID of the addon.
 ---@return string: The workshop ID of the addon.
 function Addon:getWorkshopID()
     return self.wsid
@@ -146,7 +146,7 @@ do
 
     local wsid2title = {}
 
-    --- Returns the title of the addon.
+    --- [SHARED AND MENU] Returns the title of the addon.
     ---@param wsid string: The workshop ID of the addon.
     ---@return string?: The title of the addon.
     local function getTitle( wsid )
@@ -164,7 +164,7 @@ do
         return title
     end
 
-    --- Returns the title of the addon.
+    --- [SHARED AND MENU] Returns the title of the addon.
     ---@return string?: The title of the addon.
     function Addon:getTitle()
         return getTitle( self.wsid )
@@ -176,7 +176,7 @@ end
 
 do
 
-    --- Returns the absolute file path of the addon `.gma`.
+    --- [SHARED AND MENU] Returns the absolute file path of the addon `.gma`.
     ---@param wsid string: The workshop ID of the addon.
     ---@return string?: The absolute file path of the addon `.gma`.
     local function getFilePath( wsid )
@@ -189,7 +189,7 @@ do
         return "/" .. filePath
     end
 
-    --- Returns the absolute file path of the addon `.gma`.
+    --- [SHARED AND MENU] Returns the absolute file path of the addon `.gma`.
     ---@return string?: The absolute file path of the addon `.gma`.
     function Addon:getFilePath()
         return getFilePath( self.wsid )
@@ -203,7 +203,7 @@ do
 
     local mounted = {}
 
-    --- Checks if the addon is mounted.
+    --- [SHARED AND MENU] Checks if the addon is mounted.
     ---@param wsid string: The workshop ID of the addon.
     ---@return boolean: `true` if the addon is mounted, `false` otherwise.
     local function isMounted( wsid )
@@ -218,7 +218,7 @@ do
         return value
     end
 
-    --- Checks if the addon is mounted.
+    --- [SHARED AND MENU] Checks if the addon is mounted.
     ---@return boolean: `true` if the addon is mounted, `false` otherwise.
     function Addon:isMounted()
         return isMounted( self.wsid )
@@ -232,7 +232,7 @@ do
 
     local downloaded = {}
 
-    --- Checks if the addon is downloaded.
+    --- [SHARED AND MENU] Checks if the addon is downloaded.
     ---@param wsid string: The workshop ID of the addon.
     ---@return boolean: `true` if the addon is downloaded, `false` otherwise.
     local function isDownloaded( wsid )
@@ -247,7 +247,7 @@ do
         return value
     end
 
-    --- Checks if the addon is downloaded.
+    --- [SHARED AND MENU] Checks if the addon is downloaded.
     ---@return boolean: `true` if the addon is downloaded, `false` otherwise.
     function Addon:isDownloaded()
         return isDownloaded( self.wsid )
@@ -279,7 +279,7 @@ do
             servercontent = true
         }
 
-        --- Returns the type of the addon.
+        --- [SHARED AND MENU] Returns the type of the addon.
         ---@param wsid string: The workshop ID of the addon.
         ---@return gpm.std.ADDON_TYPE?: The type of the addon.
         local function getType( wsid )
@@ -296,7 +296,7 @@ do
             return nil
         end
 
-        --- Returns the type of the addon.
+        --- [SHARED AND MENU] Returns the type of the addon.
         ---@return gpm.std.ADDON_TYPE?: The type of the addon.
         function Addon:getType()
             return getType( self.wsid )
@@ -320,7 +320,7 @@ do
             build = true
         }
 
-        --- Returns the tags of the addon.
+        --- [SHARED AND MENU] Returns the tags of the addon.
         ---@param wsid string: The workshop ID of the addon.
         ---@return gpm.std.ADDON_TAG[]?: The tags of the addon.
         ---@return integer?: The number of tags.
@@ -343,7 +343,7 @@ do
             return tags, length
         end
 
-        --- Returns the tags of the addon.
+        --- [SHARED AND MENU] Returns the tags of the addon.
         ---@return string[]?: The tags of the addon.
         function Addon:getTags()
             return getTags( self.wsid )
@@ -357,7 +357,7 @@ end
 
 do
 
-    --- Returns the last time the addon was updated.
+    --- [SHARED AND MENU] Returns the last time the addon was updated.
     ---@param wsid string: The workshop ID of the addon.
     ---@return integer?: The last time the addon was updated in UNIX time.
     local function getUpdateTime( wsid )
@@ -366,7 +366,7 @@ do
         return data.timeupdated
     end
 
-    --- Returns the last time the addon was updated.
+    --- [SHARED AND MENU] Returns the last time the addon was updated.
     ---@return integer?: The last time the addon was updated in UNIX time.
     function Addon:getUpdateTime()
         return getUpdateTime( self.wsid )
@@ -378,7 +378,7 @@ end
 
 do
 
-    --- Returns the creation time of the addon.
+    --- [SHARED AND MENU] Returns the creation time of the addon.
     ---@param wsid string: The workshop ID of the addon.
     ---@return integer?: The creation time of the addon in UNIX time.
     local function getCreationTime( wsid )
@@ -387,7 +387,7 @@ do
         return data.timecreated
     end
 
-    --- Returns the creation time of the addon.
+    --- [SHARED AND MENU] Returns the creation time of the addon.
     ---@return integer?: The creation time of the addon in UNIX time.
     function Addon:getCreationTime()
         return getCreationTime( self.wsid )
@@ -399,7 +399,7 @@ end
 
 do
 
-    --- Returns the size of the addon.
+    --- [SHARED AND MENU] Returns the size of the addon.
     ---@param wsid string: The workshop ID of the addon.
     ---@return integer?: The size of the addon in bytes.
     local function getSize( wsid )
@@ -408,7 +408,7 @@ do
         return data.size
     end
 
-    --- Returns the size of the addon.
+    --- [SHARED AND MENU] Returns the size of the addon.
     ---@return integer?: The size of the addon in bytes.
     function Addon:getSize()
         return getSize( self.wsid )
@@ -422,6 +422,8 @@ do
 
     local steamworks_ShouldMountAddon = steamworks.ShouldMountAddon
 
+    --- [SHARED AND MENU] Returns whether the addon should be mounted.
+    ---@return boolean?: Whether the addon should be mounted.
     function Addon:isShouldMount()
         return steamworks_ShouldMountAddon( self.wsid )
     end
@@ -434,6 +436,8 @@ do
 
     local steamworks_SetShouldMountAddon = steamworks.SetShouldMountAddon
 
+    --- [SHARED AND MENU] Sets whether the addon should be mounted.
+    ---@param shouldMount boolean: Whether the addon should be mounted.
     function Addon:setShouldMount( shouldMount )
         steamworks_SetShouldMountAddon( self.wsid, shouldMount )
     end
@@ -446,6 +450,7 @@ do
 
     local steamworks_SetFilePlayed = steamworks.SetFilePlayed
 
+    --- [SHARED AND MENU] Marks the addon as played.
     function Addon:markAsPlayed()
         steamworks_SetFilePlayed( self.wsid )
     end
@@ -458,6 +463,7 @@ do
 
     local steamworks_SetFileCompleted = steamworks.SetFileCompleted
 
+    --- [SHARED AND MENU] Marks the addon as completed.
     function Addon:markAsCompleted()
         steamworks_SetFileCompleted( self.wsid )
     end
@@ -470,6 +476,8 @@ do
 
     local steamworks_IsSubscribed = steamworks.IsSubscribed
 
+    --- [SHARED AND MENU] Checks if the addon is subscribed.
+    ---@return boolean: `true` if the addon is subscribed, `false` otherwise.
     function Addon:isSubscribed()
         return steamworks_IsSubscribed( self.wsid )
     end
@@ -482,7 +490,7 @@ do
 
     local steamworks_Subscribem, steamworks_Unsubscribe = steamworks.Subscribe, steamworks.Unsubscribe
 
-    --- Subscribes or unsubscribes the addon.
+    --- [SHARED AND MENU] Subscribes or unsubscribes the addon.
     ---@param wsid string: The workshop ID of the addon.
     ---@param subscribed boolean: `true` to subscribe, `false` to unsubscribe.
     local function setSubscribed( wsid, subscribed )
@@ -493,7 +501,7 @@ do
         end
     end
 
-    --- Subscribes or unsubscribes the addon.
+    --- [SHARED AND MENU] Subscribes or unsubscribes the addon.
     ---@param subscribed boolean: `true` to subscribe, `false` to unsubscribe.
     function Addon:setSubscribed( subscribed )
         setSubscribed( self.wsid, subscribed )
@@ -507,6 +515,8 @@ do
 
     local steamworks_Vote = steamworks.Vote
 
+    --- [SHARED AND MENU] Votes for or against the addon.
+    ---@param upOrDown boolean: `true` to vote for, `false` to vote against.
     function Addon:vote( upOrDown )
         steamworks_Vote( self.wsid, upOrDown )
     end
@@ -519,6 +529,7 @@ do
 
     local steamworks_ViewFile = steamworks.ViewFile
 
+    --- [SHARED AND MENU] Opens the workshop page of the addon.
     function Addon:openWorkshopPage()
         steamworks_ViewFile( self.wsid )
     end
@@ -531,7 +542,7 @@ do
 
     local steamworks_Download = steamworks.Download
 
-    --- Downloads the icon of the addon.
+    --- [SHARED AND MENU] Downloads the icon of the addon.
     ---@param wsid string: The workshop ID of the addon.
     ---@param uncompress boolean?: Whether the icon should be uncompressed. Default is `true`.
     ---@return string: The absolute path to the icon file.
@@ -543,7 +554,7 @@ do
         steamworks_Download( wsid, uncompress, function( filePath )
             if is_string( filePath ) then
                 ---@cast filePath string
-                f:setResult( filePath )
+                f:setResult( "/" .. filePath )
             else
                 f:setError( "failed to download icon file for '" .. wsid .. "', unknown error." )
             end
@@ -558,6 +569,9 @@ do
         return f:await()
     end
 
+    --- [SHARED AND MENU] Downloads the icon of the addon.
+    ---@param uncompress boolean?: Whether the icon should be uncompressed. Default is `true`.
+    ---@return string: The absolute path to the icon file.
     ---@async
     function Addon:downloadIcon( uncompress )
         return downloadIcon( self.wsid, uncompress )
@@ -572,7 +586,7 @@ do
     local steamworks_DownloadUGC = steamworks.DownloadUGC
     local file_write = std.File.write
 
-    --- Downloads the addon and returns the absolute path to the `.gma` file.
+    --- [SHARED AND MENU] Downloads the addon and returns the absolute path to the `.gma` file.
     ---@param wsid string: The workshop ID of the addon.
     ---@param timeout number | nil | false: The timeout in seconds. Set to `false` to disable the timeout.
     ---@return string: The absolute path to the downloaded addon `.gma`.
@@ -582,7 +596,7 @@ do
 
         steamworks_DownloadUGC( wsid, function( filePath, file )
             if is_string( filePath ) then
-                f:setResult( filePath )
+                f:setResult( "/" .. filePath )
             else
                 if file == nil then
                     f:setError( "failed to download addon '" .. wsid .. "', unknown error." )
@@ -604,7 +618,7 @@ do
         return f:await()
     end
 
-    --- Downloads the addon from Steam Workshop and returns the absolute path to the `.gma` file.
+    --- [SHARED AND MENU] Downloads the addon from Steam Workshop and returns the absolute path to the `.gma` file.
     ---@param timeout number | nil | false: The timeout in seconds. Set to `false` to disable the timeout.
     ---@return string: The absolute path to the `.gma` file.
     ---@async
@@ -621,10 +635,10 @@ do
     local steamworks_FileInfo = steamworks.FileInfo
     local is_table = is.table
 
-    --- Fetches the info of the addon from Steam Workshop.
+    --- [SHARED AND MENU] Fetches the info of the addon from Steam Workshop.
     ---@param wsid string: The workshop ID of the addon.
     ---@param timeout number | nil | false: The timeout in seconds. Set to `false` to disable the timeout.
-    ---@return UGCFileInfo
+    ---@return UGCFileInfo: The info of the addon.
     ---@async
     local function fetchInfo( wsid, timeout )
         local f = Future()
@@ -649,11 +663,12 @@ do
         return f:await()
     end
 
-    --- Fetches the info of the addon from Steam Workshop.
-    ---@return UGCFileInfo
+    --- [SHARED AND MENU] Fetches the info of the addon from Steam Workshop.
+    ---@param timeout number | nil | false: The timeout in seconds. Set to `false` to disable the timeout.
+    ---@return UGCFileInfo: The info of the addon.
     ---@async
-    function Addon:fetchInfo()
-        return fetchInfo( self.wsid )
+    function Addon:fetchInfo( timeout )
+        return fetchInfo( self.wsid, timeout )
     end
 
     AddonClass.fetchInfo = fetchInfo
@@ -711,6 +726,7 @@ do
     -- --     end
     -- -- end )
 
+    --- [SHARED AND MENU] TODO
     ---@async
     function AddonClass.getPopular()
         local f = Future()
@@ -723,6 +739,7 @@ do
         return f:await()
     end
 
+    --- [SHARED AND MENU] TODO
     ---@async
     function AddonClass.getTrending()
         local f = Future()
@@ -734,6 +751,7 @@ do
 
     end
 
+    --- [SHARED AND MENU] TODO
     ---@async
     function AddonClass.getRecent()
         local f = Future()
@@ -744,6 +762,7 @@ do
         return f:await()
     end
 
+    --- [SHARED AND MENU] TODO
     ---@async
     function AddonClass.getFavorite()
         local f = Future()
@@ -754,6 +773,7 @@ do
         return f:await()
     end
 
+    --- [SHARED AND MENU] TODO
     ---@async
     function AddonClass.getFriends()
         local f = Future()
@@ -764,6 +784,7 @@ do
         return f:await()
     end
 
+    --- [SHARED AND MENU] TODO
     ---@async
     function AddonClass.getFriendFavorite()
 
@@ -772,6 +793,7 @@ do
 
     end
 
+    --- [SHARED AND MENU] TODO
     ---@async
     function AddonClass.getSubscribed()
         local f = Future()

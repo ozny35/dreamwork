@@ -2,6 +2,7 @@ local _G = _G
 local glua_bit = _G.bit
 local debug_getmetatable = _G.gpm.std.debug.getmetatable
 
+--- [SHARED AND MENU] The bit library.
 ---@class gpm.std.bit
 local bit = {}
 
@@ -9,7 +10,7 @@ do
 
     local bit_arshift = glua_bit.arshift
 
-    -- Returns the arithmetically shifted value.
+    -- [SHARED AND MENU] Returns the arithmetically shifted value.
     ---@generic V
     ---@param value V: The value to be manipulated.
     ---@param shift number: Amounts of bits to shift.
@@ -34,7 +35,7 @@ do
 
     local bit_lshift = glua_bit.lshift
 
-    --- Returns the left shifted value.
+    --- [SHARED AND MENU] Returns the left shifted value.
     ---@generic V
     ---@param value V: The value to be manipulated.
     ---@param shift number: Amounts of bits to shift left by.
@@ -59,7 +60,7 @@ do
 
     local bit_rshift = glua_bit.rshift
 
-    --- Returns the right shifted value.
+    --- [SHARED AND MENU] Returns the right shifted value.
     ---@generic V
     ---@param value V: The value to be manipulated.
     ---@param shift number: Amounts of bits to shift right by.
@@ -84,7 +85,7 @@ do
 
     local bit_rol = glua_bit.rol
 
-    --- Returns the left rotated value.
+    --- [SHARED AND MENU] Returns the left rotated value.
     ---@generic V
     ---@param value V: The value to be manipulated.
     ---@param shift number: Amounts of bits to rotate left by.
@@ -109,7 +110,7 @@ do
 
     local bit_ror = glua_bit.ror
 
-    --- Returns the right rotated value.
+    --- [SHARED AND MENU] Returns the right rotated value.
     ---@generic V
     ---@param value V: The value to be manipulated.
     ---@param shift number: Amounts of bits to rotate right by.
@@ -134,7 +135,7 @@ do
 
     local bit_band = glua_bit.band
 
-    --- Performs the bitwise `and for all values specified.
+    --- [SHARED AND MENU] Performs the bitwise `and for all values specified.
     ---@generic V
     ---@param value V: The value to be manipulated.
     ---@param ... V?: Values bit to perform bitwise `and` with.
@@ -159,7 +160,7 @@ do
 
     local bit_bnot = glua_bit.bnot
 
-    --- Returns the bitwise `not` of the value.
+    --- [SHARED AND MENU] Returns the bitwise `not` of the value.
     ---@generic V
     ---@param value V: The value to be inverted.
     ---@return V: Result of bitwise `not` operation.
@@ -183,7 +184,7 @@ do
 
     local bit_bor = glua_bit.bor
 
-    --- Returns the bitwise `or` of all values specified.
+    --- [SHARED AND MENU] Returns the bitwise `or` of all values specified.
     ---@generic V
     ---@param value V: The first value.
     ---@param ... V: Extra values to be evaluated.
@@ -208,7 +209,7 @@ do
 
     local bit_bxor = glua_bit.bxor
 
-    --- Returns the bitwise `xor` of all values specified.
+    --- [SHARED AND MENU] Returns the bitwise `xor` of all values specified.
     ---@generic V
     ---@param value V: The value to be manipulated.
     ---@param ... V: Values bit xor with.
@@ -233,7 +234,7 @@ do
 
     local bit_bswap = glua_bit.bswap
 
-    --- Swaps the byte order.
+    --- [SHARED AND MENU] Swaps the byte order.
     ---@generic V
     ---@param value V: The value to be byte swapped.
     ---@return V: The byte swapped value.
@@ -257,7 +258,7 @@ do
 
     local bit_tobit = glua_bit.tobit
 
-    --- Normalizes the specified value and clamps it in the range of a signed 32bit integer.
+    --- [SHARED AND MENU] Normalizes the specified value and clamps it in the range of a signed 32bit integer.
     ---@param value any: The value to be normalized.
     ---@return number: The normalized value.
     function bit.tobit( value )
@@ -280,7 +281,7 @@ do
 
     local bit_tohex = glua_bit.tohex
 
-    --- Returns the hexadecimal representation of the number with the specified digits.
+    --- [SHARED AND MENU] Returns the hexadecimal representation of the number with the specified digits.
     ---@param value any: The value to be converted.
     ---@param length number: The number of digits. Defaults to 8.
     ---@return string: The hexadecimal representation.

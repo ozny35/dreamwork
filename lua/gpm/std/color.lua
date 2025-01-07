@@ -524,15 +524,15 @@ end
 ---@param frac number: The fraction [0, 1].
 ---@param a Color: The "from" color.
 ---@param b Color: The "to" color.
----@param withAlpha boolean: Whether to lerp alpha channel.
+---@param alpha number?: The alpha channel override [0, 255].
 ---@return Color: The color object.
-function ColorClass.lerp( frac, a, b, withAlpha )
+function ColorClass.lerp( frac, a, b, alpha )
     frac = math_clamp( frac, 0, 1 )
     return ColorClass(
         math_lerp( frac, a.r, b.r ),
         math_lerp( frac, a.g, b.g ),
         math_lerp( frac, a.b, b.b ),
-        withAlpha and math_lerp( frac, a.a, b.a ) or 255
+        alpha or math_lerp( frac, a.a, b.a )
     )
 end
 

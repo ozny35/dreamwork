@@ -56,13 +56,14 @@ local lua_game_paths = {
 local File = std.class.base( "File" )
 
 ---@protected
-function File:__init()
+function File:__init( filePath )
+
 end
 
 ---@class gpm.std.FileClass: gpm.std.File
 ---@field __base gpm.std.File
 ---@field LUA_PATH string: The current lua game path. ("lsv", "lcl", "LuaMenu", "LUA")
----@overload fun(): File
+---@overload fun( filePath: string ): File
 local FileClass = std.class.create( File )
 
 FileClass.LUA_PATH = LUA_PATH

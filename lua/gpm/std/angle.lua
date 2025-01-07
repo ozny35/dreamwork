@@ -21,6 +21,11 @@ if ANGLE == nil then return end
 ---@field __class gpm.std.AngleClass
 local Angle = std.class.base( "Angle" )
 
+---@class gpm.std.AngleClass: gpm.std.Angle
+---@field __base gpm.std.Angle
+---@overload fun(): Angle
+local AngleClass = std.class.create( Angle )
+
 do
 
     local string_format = std.string.format
@@ -41,126 +46,121 @@ end
 -- Addition
 
 ---
----@param other Angle
+---@param angle Angle
 ---@return Angle
-function Angle:add( other )
-    self[ 1 ] = self[ 1 ] + other[ 1 ]
-    self[ 2 ] = self[ 2 ] + other[ 2 ]
-    self[ 3 ] = self[ 3 ] + other[ 3 ]
+function Angle:add( angle )
+    self[ 1 ] = self[ 1 ] + angle[ 1 ]
+    self[ 2 ] = self[ 2 ] + angle[ 2 ]
+    self[ 3 ] = self[ 3 ] + angle[ 3 ]
     return self
 end
 
 ---
----@param other Angle
+---@param angle Angle
 ---@return Angle
-function Angle:__add( other )
+function Angle:__add( angle )
     return setmetatable( {
-        self[ 1 ] + other[ 1 ],
-        self[ 2 ] + other[ 2 ],
-        self[ 3 ] + other[ 3 ]
+        self[ 1 ] + angle[ 1 ],
+        self[ 2 ] + angle[ 2 ],
+        self[ 3 ] + angle[ 3 ]
     }, Angle )
 end
 
 -- Subtraction
 
 ---
----@param other Angle
+---@param angle Angle
 ---@return Angle
-function Angle:sub( other )
-    self[ 1 ] = self[ 1 ] - other[ 1 ]
-    self[ 2 ] = self[ 2 ] - other[ 2 ]
-    self[ 3 ] = self[ 3 ] - other[ 3 ]
+function Angle:sub( angle )
+    self[ 1 ] = self[ 1 ] - angle[ 1 ]
+    self[ 2 ] = self[ 2 ] - angle[ 2 ]
+    self[ 3 ] = self[ 3 ] - angle[ 3 ]
     return self
 end
 
 ---
----@param other Angle
+---@param angle Angle
 ---@return Angle
-function Angle:__sub( other )
+function Angle:__sub( angle )
     return setmetatable( {
-        self[ 1 ] - other[ 1 ],
-        self[ 2 ] - other[ 2 ],
-        self[ 3 ] - other[ 3 ]
+        self[ 1 ] - angle[ 1 ],
+        self[ 2 ] - angle[ 2 ],
+        self[ 3 ] - angle[ 3 ]
     }, Angle )
 end
 
 -- Multiplication
-function Angle:mul( other )
-    self[ 1 ] = self[ 1 ] * other[ 1 ]
-    self[ 2 ] = self[ 2 ] * other[ 2 ]
-    self[ 3 ] = self[ 3 ] * other[ 3 ]
+function Angle:mul( angle )
+    self[ 1 ] = self[ 1 ] * angle[ 1 ]
+    self[ 2 ] = self[ 2 ] * angle[ 2 ]
+    self[ 3 ] = self[ 3 ] * angle[ 3 ]
     return self
 end
 
 ---
----@param other Angle
+---@param angle Angle
 ---@return Angle
-function Angle:__mul( other )
+function Angle:__mul( angle )
     return setmetatable( {
-        self[ 1 ] * other[ 1 ],
-        self[ 2 ] * other[ 2 ],
-        self[ 3 ] * other[ 3 ]
+        self[ 1 ] * angle[ 1 ],
+        self[ 2 ] * angle[ 2 ],
+        self[ 3 ] * angle[ 3 ]
     }, Angle )
 end
 
 -- Division
 
 ---
----@param other Angle
+---@param angle Angle
 ---@return Angle
-function Angle:div( other )
-    self[ 1 ] = self[ 1 ] / other[ 1 ]
-    self[ 2 ] = self[ 2 ] / other[ 2 ]
-    self[ 3 ] = self[ 3 ] / other[ 3 ]
+function Angle:div( angle )
+    self[ 1 ] = self[ 1 ] / angle[ 1 ]
+    self[ 2 ] = self[ 2 ] / angle[ 2 ]
+    self[ 3 ] = self[ 3 ] / angle[ 3 ]
     return self
 end
 
 ---
----@param other Angle
+---@param angle Angle
 ---@return Angle
-function Angle:__div( other )
+function Angle:__div( angle )
     return setmetatable( {
-        self[ 1 ] / other[ 1 ],
-        self[ 2 ] / other[ 2 ],
-        self[ 3 ] / other[ 3 ]
+        self[ 1 ] / angle[ 1 ],
+        self[ 2 ] / angle[ 2 ],
+        self[ 3 ] / angle[ 3 ]
     }, Angle )
 end
 
 -- Lerp
-
 do
 
     local math_lerp = math.lerp
 
     ---
-    ---@param other Angle
+    ---@param angle Angle
     ---@param frac number
     ---@return Angle
-    function Angle:lerp( other, frac )
-        self[ 1 ] = math_lerp( frac, self[ 1 ], other[ 1 ] )
-        self[ 2 ] = math_lerp( frac, self[ 2 ], other[ 2 ] )
-        self[ 3 ] = math_lerp( frac, self[ 3 ], other[ 3 ] )
+    function Angle:lerp( angle, frac )
+        self[ 1 ] = math_lerp( frac, self[ 1 ], angle[ 1 ] )
+        self[ 2 ] = math_lerp( frac, self[ 2 ], angle[ 2 ] )
+        self[ 3 ] = math_lerp( frac, self[ 3 ], angle[ 3 ] )
         return self
     end
 
     ---
-    ---@param other Angle
+    ---@param angle1 Angle
+    ---@param angle2 Angle
     ---@param frac number
     ---@return Angle
-    function Angle:__lerp( other, frac )
+    function AngleClass.lerp( angle1, angle2, frac )
         return setmetatable( {
-            math_lerp( frac, self[ 1 ], other[ 1 ] ),
-            math_lerp( frac, self[ 2 ], other[ 2 ] ),
-            math_lerp( frac, self[ 3 ], other[ 3 ] )
+            math_lerp( frac, angle1[ 1 ], angle2[ 1 ] ),
+            math_lerp( frac, angle1[ 2 ], angle2[ 2 ] ),
+            math_lerp( frac, angle1[ 3 ], angle2[ 3 ] )
         }, Angle )
     end
 
 end
-
----@class gpm.std.AngleClass: gpm.std.Angle
----@field __base gpm.std.Angle
----@overload fun(): Angle
-local AngleClass = std.class.create( Angle )
 
 -- print( AngleClass( 10.11, 0, 0 ) )
 

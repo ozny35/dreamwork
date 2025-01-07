@@ -1,6 +1,6 @@
 local std = _G.gpm.std
 
-local tonumber = std.tonumber
+local error, tonumber = std.error, std.tonumber
 
 ---@class gpm.std.math
 local math = std.math

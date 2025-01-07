@@ -846,28 +846,10 @@ do
         end
     end
 
-    -- Extensions for string library
-    include( "std/string.extensions.lua" )
-
-    --- Performs a linear interpolation between two values.
-    ---@param frac number: The fraction [0, 1].
-    ---@generic T
-    ---@param from T: The start value.
-    ---@param to T: The end value.
-    ---@return T: The interpolated value.
-    function std.lerp( frac, from, to )
-        local metatable = debug_getmetatable( from )
-        if metatable ~= nil then
-            local fn = rawget( metatable, "__lerp" )
-            if is_function( fn ) then
-                return fn( frac, from, to )
-            end
-        end
-
-        error( "metatable method __lerp is missing", 2 )
-    end
-
 end
+
+-- Extensions for string library
+include( "std/string.extensions.lua" )
 
 -- Version class
 std.Version = include( "std/version.lua" )
@@ -1473,7 +1455,6 @@ do
             function metatable.__tobool() return false end
             function metatable.__bitcount() return 0 end
             function metatable.__tonumber() return 0 end
-            function metatable.__lerp() return nil end
             metatable.__type = "nil"
             metatable.__typeid = 0
         end
@@ -1490,7 +1471,6 @@ do
             function metatable.__tobool( value ) return value end
             function metatable.__bitcount() return 1 end
             function metatable.__tonumber( value ) return value == true and 1 or 0 end
-            function metatable.__lerp( frac, a, b ) return frac < 0.5 and a or b end
             metatable.__type = "boolean"
             metatable.__typeid = 1
         end
@@ -1528,7 +1508,6 @@ do
                 return value
             end
 
-            metatable.__lerp = math.lerp
             metatable.__type = "number"
             metatable.__typeid = 3
         end
@@ -1551,8 +1530,6 @@ do
             end
 
             metatable.__tonumber = tonumber
-            metatable.__lerp = string.lerp
-
             metatable.__type = "string"
             metatable.__typeid = 4
         end

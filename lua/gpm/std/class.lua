@@ -12,6 +12,7 @@ local is_function = std.is.fn
 local setmetatable = std.setmetatable
 local debug_getmetatable = std.debug.getmetatable
 
+--- [SHARED AND MENU] The class library.
 ---@class gpm.std.class
 local class = {}
 
@@ -33,6 +34,7 @@ local function base__tostring( obj )
     return string_format( "%s: %p", rawget( debug_getmetatable( obj ), "__type" ), obj )
 end
 
+--- [SHARED AND MENU] Creates a new class base ( metatable ).
 ---@param name string: The name of the class.
 ---@param parent Class | unknown | nil: The parent of the class.
 ---@return Object: The base of the class.
@@ -65,7 +67,7 @@ function class.base( name, parent )
     return base
 end
 
---- Calls the base initialization function, <b>if it exists</b>, and returns the given object.
+--- [SHARED AND MENU] Calls the base initialization function, <b>if it exists</b>, and returns the given object.
 ---@param obj table | userdata: The object to initialize.
 ---@param base Object: The base object, aka metatable.
 ---@param ... any: Arguments to pass to the constructor.
@@ -81,7 +83,7 @@ end
 
 class.init = init
 
---- Creates a new object from the given base.
+--- [SHARED AND MENU] Creates a new object from the given base.
 ---@param base Object: The base object, aka metatable.
 ---@param ... any: Arguments to pass to the constructor.
 ---@return Object | userdata: The new object.
@@ -111,6 +113,7 @@ local function class__tostring( cls )
     return string_format( "%sClass: %p", rawget( rawget( cls, "__base" ), "__type" ), cls )
 end
 
+--- [SHARED AND MENU] Creates a new class from the given base.
 ---@param base Object: The base object, aka metatable.
 ---@return Class | unknown: The class.
 function class.create( base )
@@ -135,7 +138,8 @@ function class.create( base )
     return cls
 end
 
----@param cls Class | unknown: The class.
+--- [SHARED AND MENU] Calls the base <b>inherited</b> function, <b>if it exists</b>.
+---@param cls Class: The class to be inherited.
 function class.inherited( cls )
     local base = rawget( cls, "__base" )
     if base == nil then return end
