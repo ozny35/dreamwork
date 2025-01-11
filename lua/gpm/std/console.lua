@@ -218,18 +218,19 @@ do
             cvar_type = "string"
         end
 
+        ---@cast cvar_type string
+        self.type = cvar_type
+
         local name = data.name
         if not is_string( name ) then
             error( "Console variable name must be a string.", 3 )
         end
 
+        ---@cast name string
         self.name = name
 
         local object = GetConVar( name )
         if object == nil then
-            local flags = data.flags
-            if not is_number( flags ) then flags = nil end
-
             local default = data.default
             if default == nil then
                 default = ""
@@ -243,25 +244,33 @@ do
                 default = tostring( default ) or ""
             end
 
-            ---@diagnostic disable-next-line: assign-type-mismatch
-            self.type = cvar_type
-
             ---@cast default string
+
+            local flags = data.flags
+            if not is_number( flags ) then flags = nil end
+
+            ---@cast flags integer
 
             local description = data.description
             if not is_string( description ) then
                 description = tostring( description ) or ""
             end
 
+            ---@cast description string
+
             local min = data.min
             if not is_number( min ) then
                 min = nil
             end
 
+            ---@cast min number
+
             local max = data.max
             if not is_number( max ) then
                 max = nil
             end
+
+            ---@cast max number
 
             self.object = CreateConVar( name, default, flags, description, min, max )
         else

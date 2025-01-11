@@ -1155,8 +1155,11 @@ std.game = game
 --- level library
 std.level = include( "std/level.lua" )
 
+--- Vector class
+std.Vector3 = include( "std/vector3.lua" )
+
 --- Angle class
-std.Angle = include( "std/angle.lua" )
+std.Angle3 = include( "std/angle3.lua" )
 
 if CLIENT_SERVER then
     -- physics library
