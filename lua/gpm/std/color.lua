@@ -1,5 +1,5 @@
 local _G = _G
-local Vector, ColorToHSL, HSLToColor, HSVToColor = _G.Vector, _G.ColorToHSL, _G.HSLToColor, _G.HSVToColor
+local ColorToHSL, HSLToColor, HSVToColor = _G.ColorToHSL, _G.HSLToColor, _G.HSVToColor
 local std = _G.gpm.std
 
 local is_number, setmetatable = std.is.number, std.setmetatable
@@ -22,9 +22,7 @@ do
     string_char, string_byte, string_format, string_len, string_sub = string.char, string.byte, string.format, string.len, string.sub
 end
 
-local vconst = 1 / 255
-
--- https://github.com/Facepunch/garrysmod/blob/master/garrysmod/lua/includes/util/color.lua
+--- [SHARED AND MENU] The color class.
 ---@diagnostic disable-next-line: duplicate-doc-alias
 ---@alias Color gpm.std.Color
 ---@class gpm.std.Color : gpm.std.Object
@@ -40,32 +38,69 @@ local vconst = 1 / 255
 ---@operator unm(): Color
 local Color = std.class.base( "Color" )
 
+do
+
+    local rawget, rawset = std.rawget, std.rawset
+
+    local key2index = {
+        r = 1,
+        red = 1,
+        g = 2,
+        green = 2,
+        b = 3,
+        blue = 3,
+        a = 4,
+        alpha = 4
+    }
+
+    ---@param key integer | string
+    ---@return number | function | nil
+    function Color:__index( key )
+        local index = key2index[ key ]
+        if index == nil then
+            return rawget( Color, key )
+        else
+            return rawget( self, index ) or 0
+        end
+    end
+
+    ---@param key integer | string
+    ---@param value number
+    function Color:__newindex( key, value )
+        local index = key2index[ key ]
+        if index ~= nil then
+            rawset( self, index, value )
+        end
+    end
+
+end
+
 ---@protected
 ---@param r number?: The red color channel.
 ---@param g number?: The green color channel.
 ---@param b number?: The blue color channel.
 ---@param a number?: The alpha color channel.
-function Color:__init( r, g, b, a )
+function Color.__new( r, g, b, a )
     r = math_clamp( r or 0, 0, 255 )
-
-    self.r = r
-    self.g = math_clamp( g or r, 0, 255 )
-    self.b = math_clamp( b or r, 0, 255 )
-    self.a = math_clamp( a or 255, 0, 255 )
+    return setmetatable( {
+        r,
+        math_clamp( g or r, 0, 255 ),
+        math_clamp( b or r, 0, 255 ),
+        math_clamp( a or 255, 0, 255 )
+    }, Color )
 end
-
 
 ---@private
 ---@protected
 function Color:__tostring()
-    return string_format( "Color: %p [%d, %d, %d, %d]", self, self.r, self.g, self.b, self.a )
+    return string_format( "Color: %p [%d, %d, %d, %d]", self, self[ 1 ], self[ 2 ], self[ 3 ], self[ 4 ] )
 end
 
 ---@private
 ---@protected
 ---@param other Color
 function Color:__eq( other )
-    return self.r == other.r and self.g == other.g and self.b == other.b and self.a == other.a
+    return self[ 1 ] == other[ 1 ] and self[ 2 ] == other[ 2 ] and self[ 3 ] == other[ 3 ] and self[ 4 ] == other[ 4 ]
 end
 
 ---@private
@@ -73,10 +108,10 @@ end
 function Color:__unm()
     return setmetatable(
         {
-            r = math_clamp( math_abs( 255 - self.r ), 0, 255 ),
-            g = math_clamp( math_abs( 255 - self.g ), 0, 255 ),
-            b = math_clamp( math_abs( 255 - self.b ), 0, 255 ),
-            a = self.a
+            math_clamp( math_abs( 255 - self[ 1 ] ), 0, 255 ),
+            math_clamp( math_abs( 255 - self[ 2 ] ), 0, 255 ),
+            math_clamp( math_abs( 255 - self[ 3 ] ), 0, 255 ),
+            self[ 4 ]
         },
         Color
     )
@@ -88,10 +123,10 @@ end
 function Color:__add( color )
     return setmetatable(
         {
-            r = math_clamp( self.r + color.r, 0, 255 ),
-            g = math_clamp( self.g + color.g, 0, 255 ),
-            b = math_clamp( self.b + color.b, 0, 255 ),
-            a = self.a
+            math_clamp( self[ 1 ] + color[ 1 ], 0, 255 ),
+            math_clamp( self[ 2 ] + color[ 2 ], 0, 255 ),
+            math_clamp( self[ 3 ] + color[ 3 ], 0, 255 ),
+            self[ 4 ]
         },
         Color
     )
@@ -103,10 +138,10 @@ end
 function Color:__sub( color )
     return setmetatable(
         {
-            r = math_clamp( self.r - color.r, 0, 255 ),
-            g = math_clamp( self.g - color.g, 0, 255 ),
-            b = math_clamp( self.b - color.b, 0, 255 ),
-            a = self.a
+            math_clamp( self[ 1 ] - color[ 1 ], 0, 255 ),
+            math_clamp( self[ 2 ] - color[ 2 ], 0, 255 ),
+            math_clamp( self[ 3 ] - color[ 3 ], 0, 255 ),
+            self[ 4 ]
         },
         Color
     )
@@ -120,20 +155,20 @@ function Color:__mul( other )
         ---@cast other number
         return setmetatable(
             {
-                r = math_clamp( self.r * other, 0, 255 ),
-                g = math_clamp( self.g * other, 0, 255 ),
-                b = math_clamp( self.b * other, 0, 255 ),
-                a = self.a
+                math_clamp( self[ 1 ] * other, 0, 255 ),
+                math_clamp( self[ 2 ] * other, 0, 255 ),
+                math_clamp( self[ 3 ] * other, 0, 255 ),
+                self[ 4 ]
             },
             Color
         )
     else
         return setmetatable(
             {
-                r = math_clamp( self.r * other.r, 0, 255 ),
-                g = math_clamp( self.g * other.g, 0, 255 ),
-                b = math_clamp( self.b * other.b, 0, 255 ),
-                a = self.a
+                math_clamp( self[ 1 ] * other[ 1 ], 0, 255 ),
+                math_clamp( self[ 2 ] * other[ 2 ], 0, 255 ),
+                math_clamp( self[ 3 ] * other[ 3 ], 0, 255 ),
+                self[ 4 ]
             },
             Color
         )
@@ -148,20 +183,20 @@ function Color:__div( other )
         ---@cast other number
         return setmetatable(
             {
-                r = math_clamp( self.r / other, 0, 255 ),
-                g = math_clamp( self.g / other, 0, 255 ),
-                b = math_clamp( self.b / other, 0, 255 ),
-                a = self.a
+                math_clamp( self[ 1 ] / other, 0, 255 ),
+                math_clamp( self[ 2 ] / other, 0, 255 ),
+                math_clamp( self[ 3 ] / other, 0, 255 ),
+                self[ 4 ]
             },
             Color
         )
     else
         return setmetatable(
             {
-                r = math_clamp( self.r / other.r, 0, 255 ),
-                g = math_clamp( self.g / other.g, 0, 255 ),
-                b = math_clamp( self.b / other.b, 0, 255 ),
-                a = self.a
+                math_clamp( self[ 1 ] / other[ 1 ], 0, 255 ),
+                math_clamp( self[ 2 ] / other[ 2 ], 0, 255 ),
+                math_clamp( self[ 3 ] / other[ 3 ], 0, 255 ),
+                self[ 4 ]
             },
             Color
         )
@@ -172,14 +207,14 @@ end
 ---@protected
 ---@param other Color
 function Color:__lt( other )
-    return ( self.r + self.g + self.b + self.a ) < ( other.r + other.g + other.b + other.a )
+    return ( self[ 1 ] + self[ 2 ] + self[ 3 ] + self[ 4 ] ) < ( other[ 1 ] + other[ 2 ] + other[ 3 ] + other[ 4 ] )
 end
 
 ---@private
 ---@protected
 ---@param other Color
 function Color:__le( other )
-    return ( self.r + self.g + self.b + self.a ) <= ( other.r + other.g + other.b + other.a )
+    return ( self[ 1 ] + self[ 2 ] + self[ 3 ] + self[ 4 ] ) <= ( other[ 1 ] + other[ 2 ] + other[ 3 ] + other[ 4 ] )
 end
 
 ---@private
@@ -189,16 +224,16 @@ function Color:__concat( value )
     return self:toHex() .. tostring( value )
 end
 
---- Unpacks the color as r, g, b, a values.
+--- [SHARED AND MENU] Unpacks the color as r, g, b, a values.
 ---@return number
 ---@return number
 ---@return number
 ---@return number
 function Color:unpack()
-    return self.r, self.g, self.b, self.a
+    return self[ 1 ], self[ 2 ], self[ 3 ], self[ 4 ]
 end
 
---- Set the color as r, g, b, a values.
+--- [SHARED AND MENU] Set the color as r, g, b, a values.
 ---@param r number
 ---@param g number
 ---@param b number
@@ -206,48 +241,42 @@ end
 function Color:setUnpacked( r, g, b, a )
     r = math_clamp( r or 0, 0, 255 )
 
-    self.r = r
-    self.g = math_clamp( g or r, 0, 255 )
-    self.b = math_clamp( b or r, 0, 255 )
-    self.a = math_clamp( a or 255, 0, 255 )
+    self[ 1 ] = r
+    self[ 2 ] = math_clamp( g or r, 0, 255 )
+    self[ 3 ] = math_clamp( b or r, 0, 255 )
+    self[ 4 ] = math_clamp( a or 255, 0, 255 )
 end
 
---- Makes a copy of the color.
+--- [SHARED AND MENU] Makes a copy of the color.
 ---@return gpm.std.Color
 function Color:copy()
-    return self.__class( self.r, self.g, self.b, self.a )
+    return self.__class( self[ 1 ], self[ 2 ], self[ 3 ], self[ 4 ] )
 end
 
---- Returns the color as { r, g, b, a } table.
+--- [SHARED AND MENU] Returns the color as { r, g, b, a } table.
 ---@return table
 function Color:toTable()
-    return { self.r, self.g, self.b, self.a }
+    return { self[ 1 ], self[ 2 ], self[ 3 ], self[ 4 ] }
 end
 
---- Returns the color as hex string.
+--- [SHARED AND MENU] Returns the color as hex string.
 ---@return string
 function Color:toHex()
-    return string_format( "#%02x%02x%02x", self.r, self.g, self.b )
+    return string_format( "#%02x%02x%02x", self[ 1 ], self[ 2 ], self[ 3 ] )
 end
 
---- Returns the color as binary string.
+--- [SHARED AND MENU] Returns the color as binary string.
 ---@param withOutAlpha boolean
 ---@return string
 function Color:toBinary( withOutAlpha )
     if withOutAlpha then
-        return string_char( self.r, self.g, self.b )
+        return string_char( self[ 1 ], self[ 2 ], self[ 3 ] )
     else
-        return string_char( self.r, self.g, self.b, self.a )
+        return string_char( self[ 1 ], self[ 2 ], self[ 3 ], self[ 4 ] )
     end
 end
 
---- Returns the color as vector.
----@return Vector
-function Color:toVector()
-    return Vector( self.r * vconst, self.g * vconst, self.b * vconst )
-end
-
---- Returns the color as HSL values (hue, saturation, lightness).
+--- [SHARED AND MENU] Returns the color as HSL values (hue, saturation, lightness).
 ---@return number hue: The hue in degrees [0, 360].
 ---@return number saturation: The saturation as fraction [0, 1].
 ---@return number lightness: The lightness as fraction [0, 1].
@@ -255,7 +284,7 @@ function Color:toHSL()
     return ColorToHSL( self )
 end
 
---- Returns the color as HSV values (hue, saturation, value).
+--- [SHARED AND MENU] Returns the color as HSV values (hue, saturation, value).
 ---@return number hue: The hue in degrees [0, 360].
 ---@return number saturation: The saturation as fraction [0, 1].
 ---@return number value: The value as fraction [0, 1].
@@ -263,7 +292,7 @@ function Color:toHSV()
     return ColorToHSV( self )
 end
 
---- Returns the color as HWB values (hue, whiteness, blackness).
+--- [SHARED AND MENU] Returns the color as HWB values (hue, whiteness, blackness).
 ---@return number hue: The hue in degrees [0, 360].
 ---@return number whiteness: The whiteness as fraction [0, 1].
 ---@return number blackness: The blackness as fraction [0, 1].
@@ -272,17 +301,17 @@ function Color:toHWB()
     return hue, ( 1 - saturation ) * brightness, 1 - brightness
 end
 
---- Returns the color as CMYK values (cyan, magenta, yellow, black).
+--- [SHARED AND MENU] Returns the color as CMYK values (cyan, magenta, yellow, black).
 ---@return number cyan: The cyan as fraction [0, 1].
 ---@return number magenta: The magenta as fraction [0, 1].
 ---@return number yellow: The yellow as fraction [0, 1].
 ---@return number black: The black as fraction [0, 1].
 function Color:toCMYK()
-    local m = math_max( self.r, self.g, self.b )
-    return ( m - self.r ) / m, ( m - self.g ) / m, ( m - self.b ) / m, math_min( self.r, self.g, self.b ) / 255
+    local m = math_max( self[ 1 ], self[ 2 ], self[ 3 ] )
+    return ( m - self[ 1 ] ) / m, ( m - self[ 2 ] ) / m, ( m - self[ 3 ] ) / m, math_min( self[ 1 ], self[ 2 ], self[ 3 ] ) / 255
 end
 
---- Smoothing a color object to another color object.
+--- [SHARED AND MENU] Smoothing a color object to another color object.
 ---@param color Color: The color to lerp.
 ---@param frac number: The fraction to lerp [0, 1].
 ---@param withAlpha boolean?: Whether to lerp alpha channel.
@@ -290,21 +319,21 @@ end
 function Color:lerp( color, frac, withAlpha )
     frac = math_clamp( frac, 0, 1 )
 
-    self.r = math_lerp( frac, self.r, color.r )
-    self.g = math_lerp( frac, self.g, color.g )
-    self.b = math_lerp( frac, self.b, color.b )
+    self[ 1 ] = math_lerp( frac, self[ 1 ], color[ 1 ] )
+    self[ 2 ] = math_lerp( frac, self[ 2 ], color[ 2 ] )
+    self[ 3 ] = math_lerp( frac, self[ 3 ], color[ 3 ] )
 
     if withAlpha then
-        self.a = math_lerp( frac, self.a, color.a )
+        self[ 4 ] = math_lerp( frac, self[ 4 ], color[ 4 ] )
     end
 
     return self
 end
 
---- Inverts current color.
+--- [SHARED AND MENU] Inverts current color.
 ---@return Color
 function Color:invert()
-    self.r, self.g, self.b = math_clamp( math_abs( 255 - self.r ), 0, 255 ), math_clamp( math_abs( 255 - self.g ), 0, 255 ), math_clamp( math_abs( 255 - self.b ), 0, 255 )
+    self[ 1 ], self[ 2 ], self[ 3 ] = math_clamp( math_abs( 255 - self[ 1 ] ), 0, 255 ), math_clamp( math_abs( 255 - self[ 2 ] ), 0, 255 ), math_clamp( math_abs( 255 - self[ 3 ] ), 0, 255 )
     return self
 end
 
@@ -314,7 +343,7 @@ end
 ---@overload fun(r: number?, g: number?, b: number?, a: number?): gpm.std.Color
 local ColorClass = std.class.create( Color )
 
---- Creates a color object from hex string.
+--- [SHARED AND MENU] Creates a color object from hex string.
 ---
 --- Supports hex strings from `0` to `8` characters.
 ---@param hex string: The hex string. If the first character is `#`, it will be ignored.
@@ -323,10 +352,10 @@ function ColorClass.fromHex( hex )
     if is_number( hex ) then
         return setmetatable(
             {
-                r = bit_rshift( bit_band( hex, 0xFF0000 ), 16 ),
-                g = bit_rshift( bit_band( hex, 0xFF00 ), 8 ),
-                b = bit_band( hex, 0xFF ),
-                a = 255
+                bit_rshift( bit_band( hex, 0xFF0000 ), 16 ),
+                bit_rshift( bit_band( hex, 0xFF00 ), 8 ),
+                bit_band( hex, 0xFF ),
+                255
             },
             Color
         )
@@ -341,10 +370,10 @@ function ColorClass.fromHex( hex )
         local r = string_byte( hex, 1 )
         return setmetatable(
             {
-                r = tonumber( string_char( r, r ), 16 ),
-                g = 0,
-                b = 0,
-                a = 255
+                tonumber( string_char( r, r ), 16 ),
+                0,
+                0,
+                255
             },
             Color
         )
@@ -352,10 +381,10 @@ function ColorClass.fromHex( hex )
         local r, g = string_byte( hex, 1, 2 )
         return setmetatable(
             {
-                r = tonumber( string_char( r, r ), 16 ),
-                g = tonumber( string_char( g, g ), 16 ),
-                b = 0,
-                a = 255
+                tonumber( string_char( r, r ), 16 ),
+                tonumber( string_char( g, g ), 16 ),
+                0,
+                255
             },
             Color
         )
@@ -363,10 +392,10 @@ function ColorClass.fromHex( hex )
         local r, g, b = string_byte( hex, 1, 3 )
         return setmetatable(
             {
-                r = tonumber( string_char( r, r ), 16 ),
-                g = tonumber( string_char( g, g ), 16 ),
-                b = tonumber( string_char( b, b ), 16 ),
-                a = 255
+                tonumber( string_char( r, r ), 16 ),
+                tonumber( string_char( g, g ), 16 ),
+                tonumber( string_char( b, b ), 16 ),
+                255
             },
             Color
         )
@@ -374,39 +403,39 @@ function ColorClass.fromHex( hex )
         local r, g, b, a = string_byte( hex, 1, 4 )
         return setmetatable(
             {
-                r = tonumber( string_char( r, r ), 16 ),
-                g = tonumber( string_char( g, g ), 16 ),
-                b = tonumber( string_char( b, b ), 16 ),
-                a = tonumber( string_char( a, a ), 16 )
+                tonumber( string_char( r, r ), 16 ),
+                tonumber( string_char( g, g ), 16 ),
+                tonumber( string_char( b, b ), 16 ),
+                tonumber( string_char( a, a ), 16 )
             },
             Color
         )
     elseif length == 6 then
         return setmetatable(
             {
-                r = tonumber( string_sub( hex, 1, 2 ), 16 ),
-                g = tonumber( string_sub( hex, 3, 4 ), 16 ),
-                b = tonumber( string_sub( hex, 5, 6 ), 16 ),
-                a = 255
+                tonumber( string_sub( hex, 1, 2 ), 16 ),
+                tonumber( string_sub( hex, 3, 4 ), 16 ),
+                tonumber( string_sub( hex, 5, 6 ), 16 ),
+                255
             },
             Color
         )
     elseif length == 8 then
         return setmetatable(
             {
-                r = tonumber( string_sub( hex, 1, 2 ), 16 ),
-                g = tonumber( string_sub( hex, 3, 4 ), 16 ),
-                b = tonumber( string_sub( hex, 5, 6 ), 16 ),
-                a = tonumber( string_sub( hex, 7, 8 ), 16 )
+                tonumber( string_sub( hex, 1, 2 ), 16 ),
+                tonumber( string_sub( hex, 3, 4 ), 16 ),
+                tonumber( string_sub( hex, 5, 6 ), 16 ),
+                tonumber( string_sub( hex, 7, 8 ), 16 )
             },
             Color
         )
     else
-        return setmetatable( { r = 0, g = 0, b = 0, a = 255 }, Color )
+        return setmetatable( { 0, 0, 0, 255 }, Color )
     end
 end
 
---- Creates a color object from binary string.
+--- [SHARED AND MENU] Creates a color object from binary string.
 ---@param binary string: The binary string.
 ---@return Color: The color object.
 function ColorClass.fromBinary( binary )
@@ -414,62 +443,47 @@ function ColorClass.fromBinary( binary )
     if length == 1 then
         return setmetatable(
             {
-                r = string_byte( binary, 1 ),
-                g = 0,
-                b = 0,
-                a = 255
+                string_byte( binary, 1 ),
+                0,
+                0,
+                255
             },
             Color
         )
     elseif length == 2 then
         return setmetatable(
             {
-                r = string_byte( binary, 1 ),
-                g = string_byte( binary, 2 ),
-                b = 0,
-                a = 255
+                string_byte( binary, 1 ),
+                string_byte( binary, 2 ),
+                0,
+                255
             },
             Color
         )
     elseif length == 3 then
         return setmetatable(
             {
-                r = string_byte( binary, 1 ),
-                g = string_byte( binary, 2 ),
-                b = string_byte( binary, 3 ),
-                a = 255
+                string_byte( binary, 1 ),
+                string_byte( binary, 2 ),
+                string_byte( binary, 3 ),
+                255
             },
             Color
         )
     else
         return setmetatable(
             {
-                r = string_byte( binary, 1 ),
-                g = string_byte( binary, 2 ),
-                b = string_byte( binary, 3 ),
-                a = string_byte( binary, 4 )
+                string_byte( binary, 1 ),
+                string_byte( binary, 2 ),
+                string_byte( binary, 3 ),
+                string_byte( binary, 4 )
             },
             Color
         )
     end
 end
 
---- Creates a color object from vector.
----@param vector Vector: The vector.
----@return Color: The color object.
-function ColorClass.fromVector( vector )
-    return setmetatable(
-        {
-            r = vector[ 1 ] * 255,
-            g = vector[ 2 ] * 255,
-            b = vector[ 3 ] * 255,
-            a = 255
-        },
-        Color
-    )
-end
-
---- Creates a color object from HSL values.
+--- [SHARED AND MENU] Creates a color object from HSL values.
 ---@param hue number: The hue in degrees [0, 360].
 ---@param saturation number: The saturation [0, 1].
 ---@param lightness number: The lightness [0, 1].
@@ -478,7 +492,7 @@ function ColorClass.fromHSL( hue, saturation, lightness )
     return setmetatable( HSLToColor( hue, saturation, lightness ), Color )
 end
 
---- Creates a color object from HSV values.
+--- [SHARED AND MENU] Creates a color object from HSV values.
 ---@param hue number: The hue in degrees [0, 360].
 ---@param saturation number: The saturation [0, 1].
 ---@param brightness number: The brightness [0, 1].
@@ -487,7 +501,7 @@ function ColorClass.fromHSV( hue, saturation, brightness )
     return setmetatable( HSVToColor( hue, saturation, brightness ), Color )
 end
 
---- Creates a color object from HWB values.
+--- [SHARED AND MENU] Creates a color object from HWB values.
 ---@param hue number: The hue in degrees [0, 360].
 ---@param saturation number: The saturation [0, 1].
 ---@param brightness number: The brightness [0, 1].
@@ -496,7 +510,7 @@ function ColorClass.fromHWB( hue, saturation, brightness )
     return setmetatable( HSVToColor( hue, 1 - saturation / ( 1 - brightness ), 1 - brightness ), Color )
 end
 
---- Creates a color object from CMYK values.
+--- [SHARED AND MENU] Creates a color object from CMYK values.
 ---@param cyan number: The cyan as fraction [0, 1].
 ---@param magenta number: The magenta as fraction [0, 1].
 ---@param yellow number: The yellow as fraction [0, 1].
@@ -513,14 +527,14 @@ function ColorClass.fromCMYK( cyan, magenta, yellow, black )
     )
 end
 
---- Creates a color object from table.
+--- [SHARED AND MENU] Creates a color object from table.
 ---@param tbl number[] | table: The table.
 ---@return Color: The color object.
 function ColorClass.fromTable( tbl )
-    return ColorClass( tbl[ 1 ] or tbl.r, tbl[ 2 ] or tbl.g, tbl[ 3 ] or tbl.b, tbl[ 4 ] or tbl.a )
+    return ColorClass( tbl[ 1 ] or tbl[ 1 ], tbl[ 2 ] or tbl[ 2 ], tbl[ 3 ] or tbl[ 3 ], tbl[ 4 ] or tbl[ 4 ] )
 end
 
---- Creates a color object from lerp.
+--- [SHARED AND MENU] Creates a color object from lerp.
 ---@param frac number: The fraction [0, 1].
 ---@param a Color: The "from" color.
 ---@param b Color: The "to" color.
@@ -529,47 +543,39 @@ end
 function ColorClass.lerp( frac, a, b, alpha )
     frac = math_clamp( frac, 0, 1 )
     return ColorClass(
-        math_lerp( frac, a.r, b.r ),
-        math_lerp( frac, a.g, b.g ),
-        math_lerp( frac, a.b, b.b ),
-        alpha or math_lerp( frac, a.a, b.a )
+        math_lerp( frac, a[ 1 ], b[ 1 ] ),
+        math_lerp( frac, a[ 2 ], b[ 2 ] ),
+        math_lerp( frac, a[ 3 ], b[ 3 ] ),
+        alpha or math_lerp( frac, a[ 4 ], b[ 4 ] )
     )
 end
 
 if std.CLIENT then
-    do
 
-        local render_ReadPixel = _G.render.ReadPixel
+    local render_ReadPixel = _G.render.ReadPixel
+    local NamedColor = _G.NamedColor
 
-        --- Creates a color object from screen coordinates by reading a pixel.
-        ---
-        --- Requires `render.CapturePixels` call before using.
-        ---
-        ---@see https://wiki.facepunch.com/gmod/render.ReadPixel
-        ---@param x integer: The x coordinate.
-        ---@param y integer: The y coordinate.
-        ---@param alpha number? The alpha channel.
-        ---@return Color
-        function ColorClass.fromScreen( x, y, alpha )
-            local r, g, b, a = render_ReadPixel( x, y )
-            return ColorClass( r, g, b, alpha or a )
-        end
-
+    --- [CLIENT] Creates a color object from screen coordinates by reading a pixel.
+    ---
+    --- Requires `render.CapturePixels` call before using.
+    ---
+    ---@see https://wiki.facepunch.com/gmod/render.ReadPixel
+    ---@param x integer: The x coordinate.
+    ---@param y integer: The y coordinate.
+    ---@param alpha number? The alpha channel.
+    ---@return Color
+    function ColorClass.fromScreen( x, y, alpha )
+        local r, g, b, a = render_ReadPixel( x, y )
+        return ColorClass( r, g, b, alpha or a )
     end
 
-    do
-
-        local NamedColor = _G.NamedColor
-
-        --- Creates a color object from `resource/ClientScheme.res`.
-        ---@param name string
-        ---@return Color?
-        function ColorClass.fromScheme( name )
-            local tbl = NamedColor( name )
-            if tbl == nil then return end
-            return setmetatable( tbl, Color )
-        end
-
+    --- [CLIENT] Creates a color object from `resource/ClientScheme.res`.
+    ---@param name string
+    ---@return Color?
+    function ColorClass.fromScheme( name )
+        local tbl = NamedColor( name )
+        if tbl == nil then return end
+        return setmetatable( tbl, Color )
     end
 
 end
