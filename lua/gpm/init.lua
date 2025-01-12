@@ -371,9 +371,13 @@ do
 
     setmetatable( is, {
         __index = function( _, key )
-            local function fn( value ) return type( value ) == key end
-            is[ key ] = fn
-            return fn
+            if is_string( key ) then
+                local function fn( value ) return type( value ) == key end
+                is[ key ] = fn
+                return fn
+            else
+                error( "string expected, got " .. type( key ), 2 )
+            end
         end
     } )
 
@@ -1028,6 +1032,10 @@ std.crypto = crypto
 -- Bit intenger class
 std.BigInt = include( "std/bigint.lua" )
 
+-- ByteStream and BitStream classes
+std.ByteStream = include( "std/byte_stream.lua" )
+std.BitStream = include( "std/bit_stream.lua" )
+
 --- console library
 ---@class gpm.std.console
 local console = include( "std/console.lua" )
@@ -1179,11 +1187,8 @@ std.game = game
 --- level library
 std.level = include( "std/level.lua" )
 
---- Vector class
-std.Vector3 = include( "std/vector3.lua" )
-
---- Angle class
-std.Angle3 = include( "std/angle3.lua" )
+--- Vector3 and Angle3 classes
+include( "std/vector3.lua" )
 
 if CLIENT_SERVER then
     -- physics library
