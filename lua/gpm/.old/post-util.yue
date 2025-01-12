@@ -1461,23 +1461,3 @@ do
                 return @
 
         util.BitStream = environment.extend( util.ByteStream, "BitStream", metatable )
-
--- Version
-do
-
-    import ByteSplit, lower from string
-
-    do
-
-        import URL, isurl from environment
-        import Flip from table
-
-        string.PathFromURL = ( url ) ->
-            unless isurl( url )
-                url = URL( url )
-
-            if not url.hostname or url.hostname == ""
-                return url.scheme .. "/" .. lower(url.pathname)
-
-            return url.scheme .. "/" .. concat( Flip( ByteSplit( lower(url.hostname), 0x2E --[[ . ]] ) ), "/" ) .. lower(url.pathname)
-

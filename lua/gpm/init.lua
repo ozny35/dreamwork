@@ -371,11 +371,8 @@ do
 
     setmetatable( is, {
         __index = function( _, key )
-            local function fn( value )
-                return type( value ) == key
-            end
-
-            rawset( is, key, fn )
+            local function fn( value ) return type( value ) == key end
+            is[ key ] = fn
             return fn
         end
     } )
@@ -854,8 +851,35 @@ include( "std/string.extensions.lua" )
 -- Version class
 std.Version = include( "std/version.lua" )
 
--- URL class
+-- URL and URLSearchParams classes
 include( "std/url.lua" )
+
+-- Additional `File.path` function
+do
+
+    local string_byteSplit, string_lower = string.byteSplit, string.lower
+    local table_flip = table.flip
+    local is_url = std.is.url
+    local URL = std.URL
+
+    ---@class gpm.std.File.path
+    local path = File.path
+
+    --- Converts a URL to a file path.
+    ---@param url string | URL: The URL to convert.
+    ---@return string: The file path.
+    function path.fromURL( url )
+        if not is_url( url ) then
+            ---@cast url string
+            url = URL( url )
+        end
+
+        ---@cast url URL
+
+        return url.scheme .. "/" .. ( ( url.hostname and url.hostname ~= "" ) and table_concat( table_flip( string_byteSplit( string_lower( url.hostname ), 0x2E --[[ . ]] ) ), "/" ) or "" ) .. string_lower( url.pathname )
+    end
+
+end
 
 -- Queue class
 do

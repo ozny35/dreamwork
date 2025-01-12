@@ -2139,7 +2139,7 @@ function URL:__newindex( key, value )
 end
 
 --- Checks if the given value is a `URL`.
----@param value boolean: The value to check.
+---@param value any: The value to check.
 ---@return boolean: Returns `true` if the value is a URL, otherwise `false`.
 function is.url( value )
 	return getmetatable( value ) == URL
