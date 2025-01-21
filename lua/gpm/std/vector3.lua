@@ -67,6 +67,10 @@ local math_min, math_max = math.min, math.max
 ---@alias Vector3 gpm.std.Vector3
 ---@class gpm.std.Vector3: gpm.std.Object
 ---@field __class gpm.std.Vector3Class
+---@operator add: Vector3
+---@operator sub: Vector3
+---@operator mul: Vector3 | number
+---@operator div: Vector3 | number
 local Vector3 = std.class.base( "Vector3" )
 
 ---@class gpm.std.Vector3Class: gpm.std.Vector3
@@ -78,6 +82,10 @@ std.Vector3 = Vector3Class
 ---@alias Angle3 gpm.std.Angle3
 ---@class gpm.std.Angle3: gpm.std.Object
 ---@field __class gpm.std.Angle3Class
+---@operator add: Angle3
+---@operator sub: Angle3
+---@operator mul: Angle3 | number
+---@operator div: Angle3 | number
 local Angle3 = std.class.base( "Angle3" )
 
 ---@class gpm.std.Angle3Class: gpm.std.Angle3
@@ -128,6 +136,8 @@ function Vector3:__index( key )
     end
 end
 
+-- TODO: https://github.com/thegrb93/StarfallEx/blob/master/lua/starfall/libs_sh/vectors.lua#L391
+
 ---
 ---@param vector Vector3
 ---@return Vector3
@@ -149,7 +159,11 @@ end
 ---@param vector Vector3
 ---@return Vector3
 function Vector3:__sub( vector )
-    return setmetatable( { self[ 1 ] - vector[ 1 ], self[ 2 ] - vector[ 2 ], self[ 3 ] - vector[ 3 ] }, Vector3 )
+    return setmetatable( {
+        self[ 1 ] - vector[ 1 ],
+        self[ 2 ] - vector[ 2 ],
+        self[ 3 ] - vector[ 3 ]
+    }, Vector3 )
 end
 
 ---
@@ -447,7 +461,19 @@ function Angle3.__new( pitch, yaw, roll )
     return setmetatable( { pitch, yaw, roll }, Angle3 )
 end
 
--- Addition
+
+-- TODO: https://github.com/thegrb93/StarfallEx/blob/master/lua/starfall/libs_sh/angles.lua
+
+---
+---@param angle Angle3
+---@return Angle3
+function Angle3:__add( angle )
+    return setmetatable( {
+        self[ 1 ] + angle[ 1 ],
+        self[ 2 ] + angle[ 2 ],
+        self[ 3 ] + angle[ 3 ]
+    }, Angle3 )
+end
 
 ---
 ---@param angle Angle3
@@ -462,15 +488,13 @@ end
 ---
 ---@param angle Angle3
 ---@return Angle3
-function Angle3:__add( angle )
+function Angle3:__sub( angle )
     return setmetatable( {
-        self[ 1 ] + angle[ 1 ],
-        self[ 2 ] + angle[ 2 ],
-        self[ 3 ] + angle[ 3 ]
+        self[ 1 ] - angle[ 1 ],
+        self[ 2 ] - angle[ 2 ],
+        self[ 3 ] - angle[ 3 ]
     }, Angle3 )
 end
-
--- Subtraction
 
 ---
 ---@param angle Angle3
@@ -482,24 +506,37 @@ function Angle3:sub( angle )
     return self
 end
 
----
----@param angle Angle3
+---@param angle Angle3 | number
 ---@return Angle3
-function Angle3:__sub( angle )
-    return setmetatable( {
-        self[ 1 ] - angle[ 1 ],
-        self[ 2 ] - angle[ 2 ],
-        self[ 3 ] - angle[ 3 ]
-    }, Angle3 )
+function Angle3:__mul( angle )
+    if is_number( angle ) then
+        ---@cast angle number
+        return setmetatable( {
+            self[ 1 ] * angle,
+            self[ 2 ] * angle,
+            self[ 3 ] * angle
+        }, Angle3 )
+    else
+        ---@cast angle Angle3
+        return setmetatable( {
+            self[ 1 ] * angle[ 1 ],
+            self[ 2 ] * angle[ 2 ],
+            self[ 3 ] * angle[ 3 ]
+        }, Angle3 )
+    end
 end
 
--- Multiplication
+---
+---@param angle Angle3 | number
+---@return Angle3
 function Angle3:mul( angle )
     if is_number( angle ) then
+        ---@cast angle number
         self[ 1 ] = self[ 1 ] * angle
         self[ 2 ] = self[ 2 ] * angle
         self[ 3 ] = self[ 3 ] * angle
     else
+        ---@cast angle Angle3
         self[ 1 ] = self[ 1 ] * angle[ 1 ]
         self[ 2 ] = self[ 2 ] * angle[ 2 ]
         self[ 3 ] = self[ 3 ] * angle[ 3 ]
@@ -508,17 +545,10 @@ function Angle3:mul( angle )
     return self
 end
 
----
----@param angle Angle3
----@return Angle3
-function Angle3:__mul( angle )
-    return setmetatable( is_number( angle ) and { self[ 1 ] * angle, self[ 2 ] * angle, self[ 3 ] * angle } or { self[ 1 ] * angle[ 1 ], self[ 2 ] * angle[ 2 ], self[ 3 ] * angle[ 3 ] }, Angle3 )
-end
-
 -- Division
 
 ---
----@param angle Angle3
+---@param angle Angle3 | number
 ---@return Angle3
 function Angle3:div( angle )
     if is_number( angle ) then
@@ -540,11 +570,31 @@ end
 function Angle3:__div( angle )
     if is_number( angle ) then
         ---@cast angle number
-        return setmetatable( { self[ 1 ] / angle, self[ 2 ] / angle, self[ 3 ] / angle }, Angle3 )
+        return setmetatable( {
+            self[ 1 ] / angle,
+            self[ 2 ] / angle,
+            self[ 3 ] / angle
+        }, Angle3 )
     else
         ---@cast angle Angle3
-        return setmetatable( { self[ 1 ] / angle[ 1 ], self[ 2 ] / angle[ 2 ], self[ 3 ] / angle[ 3 ] }, Angle3 )
+        return setmetatable( {
+            self[ 1 ] / angle[ 1 ],
+            self[ 2 ] / angle[ 2 ],
+            self[ 3 ] / angle[ 3 ]
+        }, Angle3 )
     end
+end
+
+function Angle3:__unm()
+    return setmetatable( {
+        -self[ 1 ],
+        -self[ 2 ],
+        -self[ 3 ]
+    }, Angle3 )
+end
+
+function Angle3:__eq( angle )
+    return self[ 1 ] == angle[ 1 ] and self[ 2 ] == angle[ 2 ] and self[ 3 ] == angle[ 3 ]
 end
 
 ---

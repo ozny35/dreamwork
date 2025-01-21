@@ -40,6 +40,9 @@ else
     end
 end
 
+local error = _G.error
+std.error = error
+
 std.assert = std.assert or _G.assert
 std.getmetatable = std.getmetatable or _G.getmetatable
 std.setmetatable = std.setmetatable or _G.setmetatable
@@ -86,8 +89,10 @@ if SERVER then
         AddCSLuaFile( "gpm/detour.lua" )
 
         local files = _G.file.Find( "gpm/std/*", "lsv" )
+        local string_find = _G.string.find
+
         for i = 1, #files do
-            if not string.find( files[i], ".meta.lua$" ) then
+            if not string_find( files[ i ], ".meta.lua$" ) then
                 AddCSLuaFile( "gpm/std/" .. files[ i ] )
             end
         end
@@ -303,7 +308,7 @@ do
                 is[ key ] = fn
                 return fn
             else
-                error( "string expected, got " .. type( key ), 2 )
+                std.error( "string expected, got " .. type( key ), 2 )
             end
         end
     } )
@@ -336,16 +341,7 @@ local tonumber = _G.tonumber
 ---@return number: The numeric representation of the value with the given base, or `nil` if the conversion failed.
 function std.tonumber( value, base )
     local metatable = debug_getmetatable( value )
-    if metatable == nil then
-        return tonumber( value, base )
-    end
-
-    local fn = rawget( metatable, "__tonumber" )
-    if is_function( fn ) then
-        return fn( value, base )
-    end
-
-    return tonumber( value, base )
+    return ( metatable ~= nil and metatable.__tonumber or tonumber )( value, base )
 end
 
 --- Attempts to convert the value to a boolean.
@@ -411,16 +407,14 @@ std.class = class
 -- symbol class
 do
 
-    ---@class gpm.std.Symbol : userdata
-    ---@alias Symbol gpm.std.Symbol
-
     local function __tostring( self )
         return rawget( debug_getmetatable( self ), "__type" )
     end
 
     local debug_newproxy = debug.newproxy
 
-    -- TODO: rewrite as class with custom __new
+    ---@class gpm.std.Symbol : userdata
+    ---@alias Symbol gpm.std.Symbol
 
     ---@param name string: The name of the symbol.
     ---@return Symbol: The new symbol.
@@ -428,7 +422,7 @@ do
         ---@class gpm.std.Symbol
         local obj = debug_newproxy( true )
         local metatable = debug_getmetatable( obj )
-        metatable.__type = "Symbol(\"" .. tostring( name ) .. "\")"
+        metatable.__type = string_format( "Symbol: %p ['%s']", obj, name )
         metatable.__tostring = __tostring
         return obj
     end
@@ -436,12 +430,10 @@ do
 end
 
 --- File class
----@class gpm.std.File
 local File = include( "std/file.lua" )
 std.File = File
 
 --- Color class
----@class gpm.std.Color
 local Color = include( "std/color.lua" )
 std.Color = Color
 
@@ -1380,11 +1372,13 @@ http.github = include( "std/http.github.lua" )
 std.Addon = include( "std/addon.lua" )
 
 if CLIENT_MENU then
+
     -- menu library
     std.menu = include( "std/menu.lua" )
 
     -- client library
     std.client = include( "std/client.lua" )
+
 end
 
 -- server library

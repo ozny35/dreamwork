@@ -240,6 +240,7 @@ function Version:toNumber()
 end
 
 local keys = {}
+setmetatable( keys, { __mode = "kv" } )
 
 function Version:unpack()
 	local values = rawget( keys, self )
@@ -251,6 +252,7 @@ function Version:__index( key )
 end
 
 local names = {}
+setmetatable( names, { __mode = "kv" } )
 
 function Version:__tostring()
 	return names[ self ] or "unknown"
@@ -490,6 +492,8 @@ do
 	end
 
 	local cache = {}
+
+	setmetatable( cache, { __mode = "kv" } )
 
 	---@protected
 	function Version.__new( major, minor, patch, pre_release, build )

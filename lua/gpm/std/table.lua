@@ -1,11 +1,10 @@
 local _G = _G
-local glua_table = _G.table
-
----@class gpm.std
-local std = _G.gpm.std
+local std, glua_table = _G.gpm.std, _G.table
+local math = std.math
 
 local select, pairs, setmetatable, rawget, rawset, next = std.select, std.pairs, std.setmetatable, std.rawget, std.rawset, std.next
 local debug_getmetatable = std.debug.getmetatable
+local table_remove = glua_table.remove
 
 local string_sub, string_find, string_len, string_lower
 do
@@ -13,19 +12,11 @@ do
     string_sub, string_find, string_len, string_lower = string.sub, string.find, string.len, string.lower
 end
 
-local math_random, math_fdiv
-do
-    local math = std.math
-    math_random, math_fdiv = math.random, math.fdiv
-end
-
 local is_table, is_string, is_function
 do
     local is = std.is
     is_table, is_string, is_function = is.table, is.string, is["function"]
 end
-
-local table_remove = glua_table.remove
 
 
 ---@class gpm.std.table
@@ -708,57 +699,70 @@ function table.fill( tbl, value, from, to )
     return tbl
 end
 
---- Shuffles the given table.
----@param tbl table: The table.
----@return table: The shuffled table.
-function table.shuffle( tbl )
-    local j, length = 0, #tbl
-    for i = length, 1, -1 do
-        j = math_random( 1, length )
-        tbl[ i ], tbl[ j ] = tbl[ j ], tbl[ i ]
-    end
+do
 
-    return tbl
-end
+    local math_random = math.random
 
---- Returns a random value from the given list (table).
----@param tbl table: The table.
----@return any: The value.
----@return number: The index of the value.
-function table.random( tbl )
-    local length = #tbl
-    if length == 0 then
-        return nil, -1
-    elseif length == 1 then
-        return tbl[ 1 ], 1
-    else
-        local index = math_random( 1, length )
-        return tbl[ index ], index
-    end
-end
-
---- Reverses the given list (table).
----@param tbl table: The table to reverse.
----@param noCopy? boolean: If `true`, the table will not be copied.
----@return table: The reversed table.
-function table.reverse( tbl, noCopy )
-    local length = #tbl
-    if noCopy then
-        length = length + 1
-
-        for index = 1, math_fdiv( length, 2 ), 1 do
-            tbl[ index ], tbl[ length - index ] = tbl[ length - index ], tbl[ index ]
+    --- Shuffles the given table.
+    ---@param tbl table: The table.
+    ---@return table: The shuffled table.
+    function table.shuffle( tbl )
+        local j, length = 0, #tbl
+        for i = length, 1, -1 do
+            j = math_random( 1, length )
+            tbl[ i ], tbl[ j ] = tbl[ j ], tbl[ i ]
         end
 
         return tbl
-    else
-        local result = {}
-        for index = length, 1, -1 do
-            result[ length - index + 1 ] = tbl[ index ]
+    end
+
+    --- Returns a random value from the given list (table).
+    ---@param tbl table: The table.
+    ---@return any: The value.
+    ---@return number: The index of the value.
+    function table.random( tbl )
+        local length = #tbl
+        if length == 0 then
+            return nil, -1
+        elseif length == 1 then
+            return tbl[ 1 ], 1
+        else
+            local index = math_random( 1, length )
+            return tbl[ index ], index
+        end
+    end
+
+end
+
+do
+
+    local math_fmul = math.fmul
+
+    --- Reverses the given list (table).
+    ---@param tbl table: The table to reverse.
+    ---@param noCopy? boolean: If `true`, the table will not be copied.
+    ---@return table: The reversed table.
+    function table.reverse( tbl, noCopy )
+        local length = #tbl
+        length = length + 1
+
+        if noCopy then
+            for i = 1, math_fmul( length - 1, 0.5 ), 1 do
+                local j = length - i
+                tbl[ i ], tbl[ j ] = tbl[ j ], tbl[ i ]
+            end
+
+            return tbl
         end
 
-        return result
+        local reversed = {}
+        for index = length - 1, 1, -1 do
+            reversed[ length - index ] = tbl[ index ]
+        end
+
+        return reversed
     end
+
 end
 
 do

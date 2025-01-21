@@ -53,12 +53,8 @@ local lua_game_paths = {
 ---@alias File gpm.std.File
 ---@class gpm.std.File: gpm.std.Object
 ---@field __class gpm.std.FileClass
+---@field path gpm.std.File.path
 local File = std.class.base( "File" )
-
----@protected
-function File:__init( filePath )
-
-end
 
 ---@class gpm.std.FileClass: gpm.std.File
 ---@field __base gpm.std.File
@@ -163,6 +159,29 @@ do
             return filePath
         end
     end
+
+end
+
+do
+
+    local file_Open = glua_file.Open
+
+    ---@protected
+    function File:__init( mode, filePath, gamePath, skipNormalize )
+        if not skipNormalize then
+            filePath, gamePath = normalizeGamePath( filePath, gamePath )
+        end
+
+        local handler = file_Open( filePath, mode, gamePath )
+        if handler == nil then
+            error( "Cannot open file '" .. filePath .. "' in game path '" .. gamePath .. "'.", 3 )
+        end
+
+        self.handler = handler
+    end
+
+    local File = std.debug.findmetatable( "File" )
+
 
 end
 

@@ -26,8 +26,9 @@ std.setmetatable( valid, {
 } )
 
 -- nil ( 0 )
-local object = nil
 do
+
+    local object = nil
 
     local metatable = debug_getmetatable( object )
     if metatable == nil then
@@ -47,8 +48,9 @@ do
 end
 
 -- boolean ( 1 )
-object = false
 do
+
+    local object = false
 
     local metatable = debug_getmetatable( object )
     if metatable == nil then
@@ -72,8 +74,9 @@ end
 -- light userdata ( 2 )
 
 -- number ( 3 )
-object = 0
 do
+
+    local object = 0
 
     local metatable = debug_getmetatable( object )
     if metatable == nil then
@@ -93,8 +96,9 @@ do
 end
 
 -- string ( 4 )
-object = ""
 do
+
+    local object = ""
 
     local metatable = debug_getmetatable( object )
     if metatable == nil then
@@ -117,8 +121,9 @@ end
 is.table = _G.istable
 
 -- function ( 6 )
-object = debug.fempty
 do
+
+    local object = debug.fempty
 
     local metatable = debug_getmetatable( object )
     if metatable == nil then
@@ -151,8 +156,9 @@ end
 -- userdata ( 7 )
 
 -- thread ( 8 )
-object = _G.coroutine.create( object )
 do
+
+    local object = std.coroutine.create( debug.fempty )
 
     local metatable = debug_getmetatable( object )
     if metatable == nil then

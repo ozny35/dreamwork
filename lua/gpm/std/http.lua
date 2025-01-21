@@ -1,7 +1,7 @@
 local _G = _G
 local gpm = _G.gpm
 local std, Logger = gpm.std, gpm.Logger
-local Future, tonumber, HTTPClientError, timer_simple = std.Future, std.tonumber, std.HTTPClientError, std.timer.simple
+local Future, tostring, tonumber, HTTPClientError, timer_simple = std.Future, std.tostring, std.tonumber, std.HTTPClientError, std.timer.simple
 
 local string_gmatch, string_upper
 do
@@ -85,8 +85,9 @@ do
 
     local cvar_data = {
         name = "gpm_http_timeout",
-        default = "10",
         description = "Default http timeout for gpm http library.",
+        type = "number",
+        default = 10,
         min = 0,
         max = 300,
         flags = std.MENU and 128 or std.bit.bor( 8192, 128 )
@@ -95,8 +96,8 @@ do
     gpm_http_timeout = std.console.Variable( cvar_data )
 
     cvar_data.name = "gpm_http_lifetime"
-    cvar_data.default = "1"
     cvar_data.description = "Cache lifetime for gpm http library in minutes."
+    cvar_data.default = 1
     cvar_data.min = 0
     cvar_data.max = 40320
 
@@ -123,12 +124,9 @@ end
 ---@return HTTPResponse
 ---@async
 local function request( parameters )
-    local f = Future()
-
     local url = parameters.url
     if not is_string( url ) then
-        f:setError( HTTPClientError( "url must be a string" ) )
-        return f:await()
+        url = tostring( url )
     end
 
     local method = parameters.method
@@ -143,12 +141,16 @@ local function request( parameters )
 
     local timeout = parameters.timeout
     if not is_number( timeout ) then
-        timeout = gpm_http_timeout:getInteger()
+        ---@diagnostic disable-next-line: cast-local-type
+        timeout = gpm_http_timeout:get()
+        ---@cast timeout number
         parameters.timeout = timeout
     end
 
     -- TODO: add package logger searching
     Logger:debug( "%s HTTP request to '%s', using '%s', with timeout %d seconds.", method, url, client_name, timeout )
+
+    local f = Future()
 
     ---@diagnostic disable-next-line: inject-field
     function parameters.success( status, body, headers )
@@ -180,7 +182,7 @@ local function request( parameters )
         parameters.lifetime = nil
 
         if not is_number( lifetime ) then
-            lifetime = gpm_http_lifetime:getInteger() * 60
+            lifetime = gpm_http_lifetime:get() * 60
         end
 
         -- future, start, age
