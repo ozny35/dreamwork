@@ -252,3 +252,39 @@ ParsedFilePath.ext = ""
 --- Whether the file path is absolute.
 ---@type boolean
 ParsedFilePath.abs = false
+
+--- The params table that was used in `Addon` search functions.
+---@class WorkshopSearchParams
+local WorkshopSearchParams = {}
+
+--- The type of items to retrieve.
+---@type gpm.std.WORKSHOP_SEARCH?
+WorkshopSearchParams.type = nil
+
+--- A table of tags to match.
+---@type string[]?
+WorkshopSearchParams.tags = nil
+
+--- How much of results to skip from first one.
+---@type number?
+WorkshopSearchParams.offset = 0
+
+--- How many items to retrieve, up to 50 at a time.
+---@type number?
+WorkshopSearchParams.count = 50
+
+--- This determines a time period, in range of days from 0 to 365.
+---@type number?
+WorkshopSearchParams.days = 365
+
+--- If specified, receives items from the workshop created by the owner of SteamID64.
+---@type string?
+WorkshopSearchParams.steamid64 = "0"
+
+--- If specified, retrieves items from your workshop, and also eliminates the 'steamid64' key.
+---@type boolean?
+WorkshopSearchParams.owned = false
+
+--- Response time, after which the function will be terminated with an error (default 30)
+---@type number?
+WorkshopSearchParams.timeout = 30

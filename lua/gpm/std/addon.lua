@@ -60,6 +60,17 @@ local is_string = is.string
 ---| `"scenes"`
 ---| `"other"`
 
+---@alias gpm.std.WORKSHOP_SEARCH
+---| string # The workshop search types.
+---| `"friendfavorite"` # The client friends favorite addons.
+---| `"subscribed"` # The addons to which the client is subscribed.
+---| `"friends"` # The addons created by client friends.
+---| `"favorite"` # The client's favorite addons.
+---| `"trending"` # The addons sorted by popularity.
+---| `"popular"` # The addons are actively gaining popularity right now.
+---| `"latest"` # The most recently published addons.
+---| `"mine"` # The addons published by the client.
+
 ---@alias Addon gpm.std.Addon
 ---@class gpm.std.Addon: gpm.std.Object
 ---@field __class gpm.std.AddonClass
@@ -85,14 +96,35 @@ do
 
     --- Returns all subscribed addons.
     ---@return Addon[]: The subscribed addons.
-    function AddonClass.getAll()
+    ---@return integer: The length of the addons found array (`#addons`).
+    function AddonClass.getDownloaded()
         local addons = engine_GetAddons()
 
-        for i = 1, #addons, 1 do
+        local count = #addons
+        for i = 1, count, 1 do
             addons[ i ] = AddonClass( addons[ i ].wsid )
         end
 
-        return addons
+        return addons, count
+    end
+
+    --- Returns all mounted addons.
+    ---@return Addon[]: The mounted addons.
+    ---@return integer: The length of the addons found array (`#addons`).
+    function AddonClass.getMounted()
+        local addons = engine_GetAddons()
+
+        local result, length = {}, 0
+        for i = 1, #addons, 1 do
+            local data = addons[ i ]
+
+            if data.mounted then
+                length = length + 1
+                result[ length ] = AddonClass( data.wsid )
+            end
+        end
+
+        return result, length
     end
 
 end
@@ -710,98 +742,109 @@ end
 
 do
 
-    -- TODO: https://wiki.facepunch.com/gmod/steamworks.GetList
-    -- https://github.com/search?q=repo%3AFacepunch%2Fgarrysmod+steamworks.GetList&type=code
+    local math_max, math_clamp = std.math.max, std.math.clamp
     local steamworks_GetList = steamworks.GetList
 
-    -- steamworks_GetList( "mine", {"addon"}, 0, 25, 0, "1", function( data )
-    --     for i = 1, #data do
-    --         print( i, AddonClass( data[ i ].wsid ) )
-    --     end
-    -- end )
+    local type2type = {
+        subscribed = "followed",
+        friendfavorite = "friend_favs"
+    }
 
-    -- -- steamworks_GetList( "latest", {}, 0, 10, 365, "0", function( data )
-    -- --     for i = 1, #data do
+    setmetatable( type2type, { __index = function( _, key ) return key end } )
 
-    -- --     end
-    -- -- end )
-
-    --- [SHARED AND MENU] TODO
+    --- [SHARED AND MENU] Performs a search for addons.
+    ---@param params WorkshopSearchParams: The search parameters.
     ---@async
-    function AddonClass.getPopular()
+    function AddonClass.search( params )
         local f = Future()
 
-        -- steamworks_GetList(
-        --     "popular",
-        --     {},
-        -- )
+        steamworks_GetList( type2type[ params.type or "latest" ], params.tags, math_max( 0, params.offset or 0 ), math_clamp( params.count or 50, 1, 50 ), math_clamp( params.days or 365, 1, 365 ), params.owned and "1" or ( params.steamid64 or "0" ), function( data )
+            f:setResult( data )
+        end )
 
-        return f:await()
+        timer_simple( params.timeout or 30, function()
+            if f:isPending() then
+                f:setError( "failed to perform quick workshop search, timed out." )
+            end
+        end )
+
+        local data = f:await()
+        local results, count = data.results, data.numresults
+
+        local addons = {}
+        for i = 0, count - 1, 1 do
+            addons[ i + 1 ] = AddonClass( results[ i ] )
+        end
+
+        return addons, count, data.totalresults
     end
 
-    --- [SHARED AND MENU] TODO
+    --- [SHARED AND MENU] Performs a quick search for addons.
+    ---@param wtype gpm.std.WORKSHOP_SEARCH: The type of the search.
+    ---@param wtags string[]?: The tags of the search.
+    ---@param woffset integer?: The offset of the search.
+    ---@param timeout number?: The timeout in seconds of the search.
+    ---@return Addon[]: The found addons.
+    ---@return integer: The length of the addons found array (`#addons`).
+    ---@return integer: The total number of addons found.
     ---@async
-    function AddonClass.getTrending()
+    function AddonClass.qickSearch( wtype, wtags, woffset, timeout )
         local f = Future()
 
-        -- steamworks_GetList( "trending",  )
+        ---@diagnostic disable-next-line: param-type-mismatch
+        steamworks_GetList( type2type[ wtype or "latest" ], wtags, math_max( 0, woffset or 0 ), 50, 365, "0", function( data )
+            f:setResult( data )
+        end )
 
+        timer_simple( timeout or 30, function()
+            if f:isPending() then
+                f:setError( "failed to perform quick workshop search, timed out." )
+            end
+        end )
 
-        return f:await()
+        local data = f:await()
+        local results, count = data.results, data.numresults
 
+        local addons = {}
+        for i = 0, count - 1, 1 do
+            addons[ i + 1 ] = AddonClass( results[ i ] )
+        end
+
+        return addons, count, data.totalresults
     end
 
-    --- [SHARED AND MENU] TODO
+    --- [SHARED AND MENU] Returns a list of addons published by the client.
+    ---@param wtype gpm.std.WORKSHOP_SEARCH: The type of the search.
+    ---@param wtags string[]?: The tags of the search.
+    ---@param woffset integer?: The offset of the search.
+    ---@param timeout number?: The timeout in seconds of the search.
+    ---@return Addon[]: The found addons.
+    ---@return integer: The length of the addons found array (`#addons`).
+    ---@return integer: The total number of addons found.
     ---@async
-    function AddonClass.getRecent()
+    function AddonClass.getPublished( wtype, wtags, woffset, timeout )
         local f = Future()
 
-        -- steamworks_GetList( "latest",  )
+        ---@diagnostic disable-next-line: param-type-mismatch
+        steamworks_GetList( type2type[ wtype or "latest" ], wtags, math_max( 0, woffset or 0 ), 50, 365, "1", function( data )
+            f:setResult( data )
+        end )
 
+        timer_simple( timeout or 30, function()
+            if f:isPending() then
+                f:setError( "failed to perform quick workshop search, timed out." )
+            end
+        end )
 
-        return f:await()
-    end
+        local data = f:await()
+        local results, count = data.results, data.numresults
 
-    --- [SHARED AND MENU] TODO
-    ---@async
-    function AddonClass.getFavorite()
-        local f = Future()
+        local addons = {}
+        for i = 0, count - 1, 1 do
+            addons[ i + 1 ] = AddonClass( results[ i ] )
+        end
 
-        -- steamworks_GetList( "favorite",  )
-
-
-        return f:await()
-    end
-
-    --- [SHARED AND MENU] TODO
-    ---@async
-    function AddonClass.getFriends()
-        local f = Future()
-
-        -- steamworks_GetList( "friends", )
-
-
-        return f:await()
-    end
-
-    --- [SHARED AND MENU] TODO
-    ---@async
-    function AddonClass.getFriendFavorite()
-
-        -- steamworks_GetList( "friend_favs",  )
-
-
-    end
-
-    --- [SHARED AND MENU] TODO
-    ---@async
-    function AddonClass.getSubscribed()
-        local f = Future()
-
-        -- steamworks_GetList( "followed",  )
-
-
-        return f:await()
+        return addons, count, data.totalresults
     end
 
 end
