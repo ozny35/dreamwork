@@ -101,9 +101,6 @@ std.debug = debug
 -- garbage collector
 debug.gc = include( "std/garbage-collection.lua" )
 
--- bit library
-std.bit = include( "std/bit.lua" )
-
 local debug_getmetatable = debug.getmetatable
 
 --- coroutine library
@@ -163,128 +160,58 @@ do
     end
 end
 
+-- bit library
+std.bit = include( "std/bit.lua" )
+
+--- math library
 ---@class gpm.std.math
 local math = include( "std/math.lua" )
 std.math = math
 
 do
 
-    local math_fadd = math.fadd
+    local number_metatable = debug.findmetatable( "number" )
 
-    function math.fadd( a, b )
-        local metatable = debug_getmetatable( a )
-        if metatable == nil then
-            return math_fadd( a, b )
-        end
-
-        local fn = rawget( metatable, "__iadd" )
-        if is_function( fn ) then
-            return fn( a, b )
-        else
-            return math_fadd( a, b )
-        end
+    if number_metatable == nil then
+        error( "math: number metatable not found" )
+    else
+        number_metatable.__iadd = math.fadd
+        number_metatable.__isub = math.fsub
+        number_metatable.__imul = math.fmul
+        number_metatable.__idiv = math.fdiv
+        number_metatable.__imod = math.fmod
     end
 
 end
 
-do
-
-    local math_fsub = math.fsub
-
-    function math.fsub( a, b )
-        local metatable = debug_getmetatable( a )
-        if metatable == nil then
-            return math_fsub( a, b )
-        end
-
-        local fn = rawget( metatable, "__isub" )
-        if is_function( fn ) then
-            return fn( a, b )
-        else
-            return math_fsub( a, b )
-        end
-    end
-
+function math.fadd( a, b )
+    local metatable = debug_getmetatable( a )
+    return metatable and metatable.__iadd( a, b )
 end
 
-do
-
-    local math_fdiv = math.fdiv
-
-    function math.fdiv( a, b )
-        local metatable = debug_getmetatable( a )
-        if metatable == nil then
-            return math_fdiv( a, b )
-        end
-
-        local fn = rawget( metatable, "__idiv" )
-        if is_function( fn ) then
-            return fn( a, b )
-        else
-            return math_fdiv( a, b )
-        end
-    end
-
+function math.fsub( a, b )
+    local metatable = debug_getmetatable( a )
+    return metatable and metatable.__isub( a, b )
 end
 
-do
-
-    local math_fmul = math.fmul
-
-    function math.fmul( a, b )
-        local metatable = debug_getmetatable( a )
-        if metatable == nil then
-            return math_fmul( a, b )
-        end
-
-        local fn = rawget( metatable, "__imul" )
-        if is_function( fn ) then
-            return fn( a, b )
-        else
-            return math_fmul( a, b )
-        end
-    end
-
+function math.fdiv( a, b )
+    local metatable = debug_getmetatable( a )
+    return metatable and metatable.__idiv( a, b )
 end
 
-do
-
-    local math_fmod = math.fmod
-
-    function math.fmod( a, b )
-        local metatable = debug_getmetatable( a )
-        if metatable == nil then
-            return math_fmod( a, b )
-        end
-
-        local fn = rawget( metatable, "__imod" )
-        if is_function( fn ) then
-            return fn( a, b )
-        else
-            return math_fmod( a, b )
-        end
-    end
-
+function math.fmul( a, b )
+    local metatable = debug_getmetatable( a )
+    return metatable and metatable.__imul( a, b )
 end
 
-do
+function math.fmod( a, b )
+    local metatable = debug_getmetatable( a )
+    return metatable and metatable.__imod( a, b )
+end
 
-    local math_fpow = math.fpow
-
-    function math.fpow( a, b )
-        local metatable = debug_getmetatable( a )
-        if metatable == nil then
-            return math_fpow( a, b )
-        end
-
-        local fn = rawget( metatable, "__ipow" )
-        if is_function( fn ) then
-            return fn( a, b )
-        else
-            return math_fpow( a, b )
-        end
-    end
-
+function math.fpow( a, b )
+    local metatable = debug_getmetatable( a )
+    return metatable and metatable.__ipow( a, b )
 end
 
 --- string library
@@ -425,17 +352,17 @@ end
 ---@param value any: The value to convert.
 ---@return boolean
 function std.toboolean( value )
-    local metatable = debug_getmetatable( value )
-    if metatable == nil then
-        return false
-    end
+    if value == nil or value == false then return false end
 
-    local fn = rawget( metatable, "__tobool" )
-    if is_function( fn ) then
+    local metatable = debug_getmetatable( value )
+    if metatable == nil then return false end
+
+    local fn = metatable.__tobool
+    if fn == nil then
+        return true
+    else
         return fn( value )
     end
-
-    return true
 end
 
 std.tobool = std.toboolean
@@ -447,16 +374,7 @@ std.tobool = std.toboolean
 ---@return any: The previous key in the table (by default `nil`).
 function std.pairs( tbl )
     local metatable = debug_getmetatable( tbl )
-    if metatable == nil then
-        return pairs( tbl )
-    end
-
-    local fn = rawget( metatable, "__pairs" )
-    if is_function( fn ) then
-        return fn( tbl )
-    end
-
-    return pairs( tbl )
+    return ( metatable ~= nil and metatable.__pairs or pairs )( tbl )
 end
 
 --- Returns a [Stateless Iterator](https://www.lua.org/pil/7.3.html) for a [Generic For Loops](https://www.lua.org/pil/4.3.5.html), to return ordered key-value pairs from a table.
@@ -471,15 +389,15 @@ function std.ipairs( tbl )
     local metatable = debug_getmetatable( tbl )
     if metatable == nil or rawget( metatable, "__index" ) == nil then
         return ipairs( tbl )
-    else
-        local index = 0
-        return function()
-            index = index + 1
-            local value = tbl[ index ]
-            if value == nil then return end
-            return index, value
-        end, tbl, index
     end
+
+    local index = 0
+    return function()
+        index = index + 1
+        local value = tbl[ index ]
+        if value == nil then return end
+        return index, value
+    end, tbl, index
 end
 
 --- hook library
