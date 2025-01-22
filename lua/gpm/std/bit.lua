@@ -88,7 +88,7 @@ end
 --- [SHARED AND MENU] Returns the bitwise `not` of the value.
 ---@param value integer: The value to be manipulated.
 ---@return integer: The bitwise `not` of the value.
-bit.bnot = bit_lib.bnot or function( value )
+local bit_bnot = bit_lib.bnot or function( value )
     local result = 0
     for i = 0, 31, 1 do
         if value % 2 == 0 then
@@ -100,6 +100,8 @@ bit.bnot = bit_lib.bnot or function( value )
 
     return bit_tobit( result )
 end
+
+bit.bnot = bit_bnot
 
 --- [SHARED AND MENU] Performs the bitwise `and for all values specified.
 ---@param value integer: The value to be manipulated.
@@ -219,6 +221,29 @@ end
 ---@return boolean: `true` if all values are `true`, `false` otherwise.
 function bit.btest( value, ... )
     return bit_band( value, ... ) ~= 0
+end
+
+--- [SHARED AND MENU] Returns the unsigned number formed by the bits field to field + width - 1 from n. Bits are numbered from 0 (least significant) to 31 (most significant).
+---
+--- All accessed bits must be in the range [0, 31].
+---@param value integer: The value to be manipulated.
+---@param field integer: The starting bit.
+---@param width integer?: The number of bits to extract.
+---@return integer: The extracted value.
+function bit.extract( value, field, width )
+    width = width or 1
+    return bit_band( bit_rshift( value, field ), 2 ^ width - 1 )
+end
+
+--- [SHARED AND MENU] Replaces the bits field to field + width - 1 with the specified value.
+---@param value integer: The value to be manipulated.
+---@param extract integer: The value to be extracted.
+---@param field integer: The starting bit.
+---@param width integer?: The number of bits to extract.
+---@return number: The modified value.
+function bit.replace( value, extract, field, width )
+    local mask = 2 ^ ( width or 1 ) - 1
+    return bit_band( value, bit_bnot( bit_lshift( mask, field ) ) ) + bit_lshift( bit_band( extract, mask ), field )
 end
 
 return bit
