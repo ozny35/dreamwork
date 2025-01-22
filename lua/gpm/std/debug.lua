@@ -162,6 +162,26 @@ end
 
 local std = _G.gpm.std
 
+if std.jit then
+
+    local util_funcinfo = std.jit.util.funcinfo
+
+    --- [SHARED AND MENU] Checks if the function is jit compilable.
+    ---@param fn function: The function to check.
+    ---@return boolean: `true` if the function is jit compilable, otherwise `false`.
+    function debug.isjitcompilable( fn )
+        local info = util_funcinfo( fn )
+        return info and info.ffid ~= nil
+    end
+
+else
+
+    function debug.isjitcompilable( fn )
+        return false
+    end
+
+end
+
 do
 
     local string_format = glua_string.format

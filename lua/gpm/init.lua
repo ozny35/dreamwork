@@ -165,59 +165,13 @@ do
     end
 end
 
--- bit library
-std.bit = include( "std/bit.lua" )
-
 --- math library
 ---@class gpm.std.math
 local math = include( "std/math.lua" )
 std.math = math
 
-do
-
-    local number_metatable = debug.findmetatable( "number" )
-
-    if number_metatable == nil then
-        error( "math: number metatable not found" )
-    else
-        number_metatable.__iadd = math.fadd
-        number_metatable.__isub = math.fsub
-        number_metatable.__imul = math.fmul
-        number_metatable.__idiv = math.fdiv
-        number_metatable.__imod = math.fmod
-    end
-
-end
-
-function math.fadd( a, b )
-    local metatable = debug_getmetatable( a )
-    return metatable and metatable.__iadd( a, b )
-end
-
-function math.fsub( a, b )
-    local metatable = debug_getmetatable( a )
-    return metatable and metatable.__isub( a, b )
-end
-
-function math.fdiv( a, b )
-    local metatable = debug_getmetatable( a )
-    return metatable and metatable.__idiv( a, b )
-end
-
-function math.fmul( a, b )
-    local metatable = debug_getmetatable( a )
-    return metatable and metatable.__imul( a, b )
-end
-
-function math.fmod( a, b )
-    local metatable = debug_getmetatable( a )
-    return metatable and metatable.__imod( a, b )
-end
-
-function math.fpow( a, b )
-    local metatable = debug_getmetatable( a )
-    return metatable and metatable.__ipow( a, b )
-end
+-- bit library
+std.bit = include( "std/bit.lua" )
 
 --- string library
 ---@class gpm.std.string

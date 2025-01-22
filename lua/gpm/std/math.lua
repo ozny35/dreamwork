@@ -1,12 +1,6 @@
 local _G = _G
-local glua_math = _G.math
+local glua_math, std = _G.math, _G.gpm.std
 local math_abs, math_atan, math_ceil, math_min, math_max, math_random, math_sqrt, math_floor, math_log, math_deg, math_pi = glua_math.abs, glua_math.atan, glua_math.ceil, glua_math.min, glua_math.max, glua_math.random, glua_math.sqrt, glua_math.floor, glua_math.log, glua_math.deg, glua_math.pi
-
----@class gpm.std
-local std = _G.gpm.std
-
----@class gpm.std.is
-local is = std.is
 
 local e = glua_math.exp( 1 )
 local ln2 = math_log( 2 )
@@ -15,7 +9,7 @@ local nan = 0 / 0
 local inf = 1 / 0
 local neg_inf = -inf
 
-local atan = function( y, x )
+local function atan( y, x )
     if x == nil then
         return math_atan( y )
     elseif y == 0 then
@@ -483,7 +477,7 @@ math.inrage = inrage
 
 do
 
-    local is_number = is.number
+    local is_number = std.is.number
 
     --- Returns "integer" if x is an integer, "float" if it is a float, or nil if x is not a number.
     ---@param x number: The number to get the type of.
