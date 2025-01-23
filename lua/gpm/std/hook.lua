@@ -1,137 +1,284 @@
 local _G = _G
-local std = _G.gpm.std
-local rawset, getfenv, setmetatable, table_isEmpty, is_string = std.rawset, std.getfenv, std.setmetatable, std.table.isEmpty, std.is.string
+local gpm = _G.gpm
+local std = gpm.std
 
-local glua_hook = _G.hook
-local hook_Add, hook_GetTable, hook_Remove = glua_hook.Add, glua_hook.GetTable, glua_hook.Remove
+local table = std.table
+local table_remove = table.remove
 
-local hookMeta = {
-    __index = function( tbl, key )
-        local new = {}
-        rawset( tbl, key, new )
-        return new
-    end
-}
+--[[
 
--- https://github.com/Srlion/Hook-Library?tab=readme-ov-file#priorities
--- https://github.com/TeamUlysses/ulib/blob/master/lua/ulib/shared/hook.lua#L19
-local hook = {
-    --- This hook is guaranteed to be called under all circumstances, and cannot be interrupted by a return statement. You can rely on its consistent execution.
-    ---@diagnostic disable-next-line: undefined-field
-    PRE = _G.PRE_HOOK or -2,
+    Event structure
+    [-3] - returns vararg
+    [-2] - engine hook name
+    [-1] - mixer function
+    [0] - last callback index
 
-    --- Consider a scenario where you have an admin mod that checks for "!menu". In this case, your hook might not be called before it.
-    ---@diagnostic disable-next-line: undefined-field
-    PRE_RETURN = _G.PRE_HOOK_RETURN or -1,
+    [1] - identifier
+    [2] - function
+    [3] - hook_type
 
-    --- This hook is called after the normal hook, but before the post hook.
-    ---@diagnostic disable-next-line: undefined-field
-    NORMAL = _G.NORMAL_HOOK or 0,
+    [4] - identifier
+    [5] - function
+    [6] - hook_type
 
-    -- This allows for the modification of results returned from preceding hooks!
-    ---@diagnostic disable-next-line: undefined-field
-    POST_RETURN = _G.POST_HOOK_RETURN or 1,
+    [7] - identifier
+    [8] - function
+    [9] - hook_type
 
-    --- This hook is guaranteed to be called under all circumstances, and cannot be interrupted by a return statement. You can rely on its consistent execution.
-    ---@diagnostic disable-next-line: undefined-field
-    POST = _G.POST_HOOK or 2,
+    ...
 
-    call = glua_hook.Call,
-    run = glua_hook.Run
-}
+]]
 
----Add a hook to be called upon the given event occurring.
----@param eventName string
----@param identifier string | Entity
----@param fn function
----@param priority table | number
-function hook.add( eventName, identifier, fn, priority )
-    if not is_string( eventName ) then
-        ---@diagnostic disable-next-line: redundant-parameter
-        hook_Add( eventName, identifier, fn, priority )
-        return
-    end
+---@alias gpm.std.HOOK_TYPE
+---| number # The type of the hook.
+---| `-2` # PRE_HOOK - This hook is guaranteed to be called under all circumstances, and cannot be interrupted by a return statement. You can rely on its consistent execution.
+---| `-1` # PRE_HOOK_RETURN - Consider a scenario where you have an admin mod that checks for "!menu". In this case, your hook might not be called before it.
+---| `0` # NORMAL_HOOK - This hook is called after the normal hook, but before the post hook.
+---| `1` # POST_HOOK_RETURN - This allows for the modification of results returned from preceding hooks!
+---| `2` # POST_HOOK - This hook is guaranteed to be called under all circumstances, and cannot be interrupted by a return statement. You can rely on its consistent execution.
 
-    local fenv = getfenv( 2 )
-    if fenv == nil then
-        ---@diagnostic disable-next-line: redundant-parameter
-        hook_Add( eventName, identifier, fn, priority )
-        return
+---@alias Hook gpm.std.Hook
+---@class gpm.std.Hook: gpm.std.Object
+---@field __class gpm.std.HookClass
+local Hook = std.class.base( "Hook" )
+
+---@class gpm.std.HookClass: gpm.std.Hook
+---@field __base gpm.std.Hook
+---@overload fun( name: string?, returns_vararg: boolean? ): Hook
+local HookClass = std.class.create( Hook )
+
+do
+
+    local string_format = std.string.format
+
+    function Hook:__tostring()
+        return string_format( "Hook: %p [%s]", self, self[ -2 ] )
     end
 
-    local pkg = fenv.__package
-    if pkg == nil then
-        ---@diagnostic disable-next-line: redundant-parameter
-        hook_Add( eventName, identifier, fn, priority )
-        return
-    end
-
-    -- TODO: move this to the package class
-    local hooks = pkg.__hooks
-    if hooks == nil then
-        hooks = setmetatable( {}, hookMeta )
-        pkg.__hooks = hooks
-    end
-
-    hooks[ eventName ][ identifier ] = fn
-    ---@diagnostic disable-next-line: redundant-parameter
-    hook_Add( eventName, pkg.prefix .. identifier, fn, priority )
 end
 
----Removes the hook with the supplied identifier from the given event.
----@param eventName string
----@param identifier string | Entity
-function hook.remove( eventName, identifier )
-    local fenv = getfenv( 2 )
-    if fenv == nil then
-        hook_Remove( eventName, identifier )
-        return
-    end
+do
 
-    local pkg = fenv.__package
-    if pkg == nil then
-        hook_Remove( eventName, identifier )
-        return
-    end
+    local engine_hooks = {}
+    setmetatable( engine_hooks, { __mode = "v" } )
 
-    -- TODO: move this to the package class
-    local hooks = pkg.__hooks
-    if hooks == nil then
-        hooks = setmetatable( {}, hookMeta )
-        pkg.__hooks = hooks
-    end
+    local glua_hook = _G.hook
+    if glua_hook ~= nil then
+        local hook_Call = glua_hook.Call
+        if hook_Call ~= nil then
+            glua_hook.Call = gpm.detour.attach( hook_Call, function( fn, event_name, gamemode_table, ... )
+                local hook = engine_hooks[ event_name ]
+                if hook ~= nil then
+                    ---@cast hook Hook
+                    local a, b, c, d, e, f = hook:call( ... )
+                    if a ~= nil then
+                        return a, b, c, d, e, f
+                    end
+                end
 
-    local event = hooks[ eventName ]
-    event[ identifier ] = nil
-
-    if table_isEmpty( event ) then
-        hooks[ eventName ] = nil
-    end
-
-    hook_Remove( eventName, pkg.prefix .. identifier )
-end
-
----Returns a list of all the hooks registered with hook.add
----@return table
-function hook.getTable()
-    local fenv = getfenv( 2 )
-    if fenv == nil then
-        return hook_GetTable()
-    else
-        local pkg = fenv.__package
-        if pkg == nil then
-            return hook_GetTable()
-        else
-            -- TODO: move this to the package class
-            local hooks = pkg.__hooks
-            if hooks == nil then
-                hooks = setmetatable( {}, hookMeta )
-                pkg.__hook = hooks
-            end
-
-            return hooks
+                return fn( event_name, gamemode_table, ... )
+            end )
         end
     end
+
+    ---@param name string?: The name of the hook.
+    ---@param returns_vararg boolean?: Whether the hook returns vararg.
+    ---@protected
+    function Hook:__init( name, returns_vararg )
+        self[ -3 ] = returns_vararg == true
+        self[ -2 ] = name
+        self[ 0 ] = 0
+
+        if name ~= nil then
+            engine_hooks[ name ] = self
+        end
+    end
+
 end
 
-return hook
+--- Detaches a callback function from the hook.
+---@param identifier any: The unique name of the callback or object with `__isvalid` function in metatable.
+---@return boolean: Returns `true` if the callback was detached, otherwise `false`.
+function Hook:detach( identifier )
+    local callback_count = self[ 0 ]
+    for i = callback_count, 1, -3 do
+        if self[ i ] == identifier then
+            table_remove( self, i )
+            table_remove( self, i )
+            table_remove( self, i )
+            self[ 0 ] = callback_count - 3
+            return true
+        end
+    end
+
+    return false
+end
+
+do
+
+    local string_meta = std.debug.findmetatable( "string" )
+    local table_insert = table.insert
+    local math_clamp = std.math.clamp
+
+    --- Attaches a callback function to the hook.
+    ---@param identifier any: The unique name of the callback or object with `__isvalid` function in metatable.
+    ---@param fn function: The callback function.
+    ---@param hook_type gpm.std.HOOK_TYPE?: The type of the hook, default is `0`.
+    function Hook:attach( identifier, fn, hook_type )
+        local metatable = getmetatable( identifier )
+        if metatable == nil then
+            error( "Invalid callback identifier, it should be a string or a valid object.", 2 )
+        end
+
+        if metatable ~= string_meta then
+            local isvalid = metatable.__isvalid
+            if isvalid == nil then
+                error( "Invalid callback identifier, there should be a `__isvalid` function in its metatable.", 2 )
+            end
+
+            if not isvalid( identifier ) then
+                self:detach( identifier )
+                return
+            end
+
+            local callback_fn = fn
+            fn = function( ... )
+                if isvalid( identifier ) then
+                    return callback_fn( identifier, ... )
+                end
+
+                self:detach( identifier )
+            end
+        end
+
+        if hook_type == nil then
+            hook_type = 0
+        else
+            hook_type = math_clamp( hook_type, -2, 2 )
+        end
+
+        local callback_count = self[ 0 ]
+
+        for i = 1, callback_count, 3 do
+            if self[ i ] == identifier then
+                if self[ i + 2 ] == hook_type then
+                    self[ i + 1 ] = fn
+                    return
+                end
+
+                table_remove( self, i )
+                table_remove( self, i )
+                table_remove( self, i )
+                callback_count = callback_count - 3
+                self[ 0 ] = callback_count
+                break
+            end
+        end
+
+        local index = callback_count
+        for i = 3, callback_count, 3 do
+            if self[ i ] > hook_type then
+                index = ( i - 3 )
+                break
+            end
+        end
+
+        index = index + 1 -- move to identifier
+
+        table_insert( self, index, identifier )
+        table_insert( self, index + 1, fn )
+        table_insert( self, index + 2, hook_type )
+        self[ 0 ] = callback_count + 3
+    end
+
+end
+
+do
+
+    local table_unpack = table.unpack
+
+    local function call_without_mixer_and_vararg( self, ... )
+        local value
+        for i = 3, self[ 0 ], 3 do
+            local hook_type = self[ i ]
+            if hook_type == -2 or hook_type == 2 then
+                self[ i - 1 ]( ... )
+            else
+                value = self[ i - 1 ]( ... )
+            end
+        end
+
+        return value
+    end
+
+    local function call_without_mixer( self, ... )
+        local values
+        for i = 3, self[ 0 ], 3 do
+            local hook_type = self[ i ]
+            if hook_type == -2 or hook_type == 2 then
+                self[ i - 1 ]( ... )
+            else
+                values = { self[ i - 1 ]( ... ) }
+            end
+        end
+
+        return values and table_unpack( values )
+    end
+
+    local function call_with_mixer( self, mixer_fn, ... )
+        local old, new
+        for i = 3, self[ 0 ], 3 do
+            local hook_type = self[ i ]
+            if hook_type == -2 or hook_type == 2 then
+                self[ i - 1 ]( ... )
+            else
+                old, new = new, self[ i - 1 ]( ... )
+                mixer_fn( old, new )
+            end
+        end
+
+        return new
+    end
+
+    local function call_with_mixer_and_vararg( self, mixer_fn, ... )
+        local old, new
+        for i = 3, self[ 0 ], 3 do
+            local hook_type = self[ i ]
+            if hook_type == -2 or hook_type == 2 then
+                self[ i - 1 ]( ... )
+            else
+                old, new = new, { self[ i - 1 ]( ... ) }
+                mixer_fn( old, new )
+            end
+        end
+
+        return new and table_unpack( new )
+    end
+
+    --- Calls the hook.
+    ---@param ... any: The arguments to pass to the hook.
+    ---@return any ...: The return values from the hook.
+    function Hook:call( ... )
+        local fn = self[ -1 ]
+        if fn == nil then
+            if self[ -3 ] then
+                return call_without_mixer( self, ... )
+            else
+                return call_without_mixer_and_vararg( self, ... )
+            end
+        elseif self[ -3 ] then
+            return call_with_mixer( self, fn, ... )
+        else
+            return call_with_mixer_and_vararg( self, fn, ... )
+        end
+    end
+
+end
+
+--- A return mixer that is called after any call to the hook and allows the return values to be modified.
+---@param fn function?: The function to perform mixing, `nil` if no mixing is required.
+function Hook:mixer( fn )
+    self[ -1 ] = fn
+end
+
+return HookClass

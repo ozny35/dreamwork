@@ -1,10 +1,17 @@
 local _G = _G
 local gpm = _G.gpm
 local std = gpm.std
-local console_Variable = std.console.Variable
+local console_Variable, Hook = std.console.Variable, std.Hook
 
 ---@class gpm.std.server
-local server = {}
+local server = std.server or {}
+
+if std.CLIENT then
+
+    --- [CLIENT] Called once every processed server frame during lag.
+    server.TickHook = server.TickHook or Hook( "Think" )
+
+end
 
 if std.CLIENT_MENU then
 

@@ -136,6 +136,8 @@ if std.SERVER then
         console_Variable.set( "sv_gravity", value )
     end
 
+    level.AcceptInputHook = level.AcceptInputHook or std.Hook( "AcceptInput" )
+
 end
 
 --- Returns the gravity of the current level.

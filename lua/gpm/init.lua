@@ -350,9 +350,6 @@ function std.ipairs( tbl )
     end, tbl, index
 end
 
---- hook library
-std.hook = include( "std/hook.lua" )
-
 --- class library
 ---@class gpm.std.class
 local class = include( "std/class.lua" )
@@ -382,6 +379,21 @@ do
     end
 
 end
+
+--- hook library
+std.Hook = std.Hook or include( "std/hook.lua" )
+
+do
+
+    local Hook = std.Hook
+
+    --- [SHARED AND MENU] A hook that is called every tick.
+    std.TickHook = std.TickHook or Hook( "Tick" )
+
+end
+
+--- timer library
+std.timer = include( "std/timer.lua" )
 
 --- File class
 local File = include( "std/file.lua" )
@@ -871,9 +883,6 @@ do
     std.Queue = class.create( Queue )
 
 end
-
---- timer library
-std.timer = include( "std/timer.lua" )
 
 --- futures library
 ---@class gpm.std.futures
