@@ -251,26 +251,26 @@ do
     ---@param ... any: The arguments to pass to the hook.
     ---@return any ...: The return values from the hook.
     function Hook:call( ... )
-        local fn = self[ -1 ]
-        if fn == nil then
+        local mixer_fn = self[ -1 ]
+        if mixer_fn == nil then
             if self[ -3 ] then
                 return call_without_mixer( self, ... )
             else
                 return call_without_mixer_and_vararg( self, ... )
             end
         elseif self[ -3 ] then
-            return call_with_mixer( self, fn, ... )
+            return call_with_mixer( self, mixer_fn, ... )
         else
-            return call_with_mixer_and_vararg( self, fn, ... )
+            return call_with_mixer_and_vararg( self, mixer_fn, ... )
         end
     end
 
 end
 
 --- A return mixer that is called after any call to the hook and allows the return values to be modified.
----@param fn function?: The function to perform mixing, `nil` if no mixing is required.
-function Hook:mixer( fn )
-    self[ -1 ] = fn
+---@param mixer_fn function?: The function to perform mixing, `nil` if no mixing is required.
+function Hook:mixer( mixer_fn )
+    self[ -1 ] = mixer_fn
 end
 
 return HookClass
