@@ -163,8 +163,8 @@ do
     ---@param deepCopy boolean?: Whether to deep copy the table.
     ---@param copyKeys boolean?: Whether to copy the keys.
     ---@param copyMetatables boolean?: Whether to copy the metatables.
-    ---@param from number?: The start index.
-    ---@param to number?: The end index.
+    ---@param from integer?: The start index.
+    ---@param to integer?: The end index.
     ---@return table: The copied table.
     function table.copySequential( source, deepCopy, copyKeys, copyMetatables, from, to )
         from, to = from or 1, to or #source
@@ -270,7 +270,8 @@ do
     --- Returns the difference between two tables as a list of keys.
     ---@param a table The first table.
     ---@param b table The second table.
-    ---@return table, number
+    ---@return table: The list of keys.
+    ---@return integer: The length of the list.
     local function diffKeys( a, b, result, length )
         if result == nil then result = {} end
         if length == nil then length = 0 end
@@ -413,11 +414,11 @@ end
 
 --- Returns a slice of the given table.
 ---@param tbl table: The table to slice.
----@param to? number: The start position.
----@param from? number: The end position.
----@param step? number: The step.
+---@param to? integer: The start position.
+---@param from? integer: The end position.
+---@param step? integer: The step.
 ---@return table: The sliced table.
----@return number: The length of the sliced table.
+---@return integer: The length of the sliced table.
 function table.slice( tbl, from, to, step )
     from = from or 1
 
@@ -449,9 +450,9 @@ end
 
 --- Injects values from one table to another.
 ---@param source table: The source table.
----@param first number: The first index.
----@param last number: The last index.
----@param offset number: The offset.
+---@param first integer: The first index.
+---@param last integer: The last index.
+---@param offset integer: The offset.
 ---@param destination? table: The destination table.
 ---@return table destination: The destination table.
 function table.inject( source, first, last, offset, destination )
@@ -481,6 +482,27 @@ function table.removeByValue( tbl, value )
         if tbl[ index ] == value then
             table_remove( tbl, index )
         end
+    end
+end
+
+--- Removes a range of values from the given table.
+---@param tbl table: The table to remove from.
+---@param from integer: The start position.
+---@param to integer: The end position.
+function table.removeByRange( tbl, from, to )
+    local length = #tbl
+
+    if from > to then
+        from, to = to, from
+    end
+
+    for index = from, to, 1 do
+        tbl[ index ] = nil
+    end
+
+    local distance = to - from + 1
+    for index = to + 1, length, 1 do
+        tbl[ index - distance ], tbl[ index ] = tbl[ index ], nil
     end
 end
 
@@ -515,7 +537,7 @@ end
 --- Returns list (table) of keys and length of this list.
 ---@param tbl table: The table.
 ---@return any[]: The list of keys.
----@return number: The length of the list.
+---@return integer: The length of the list.
 function table.getKeys( tbl )
     local keys, length = {}, 0
     for key in pairs( tbl ) do
@@ -529,7 +551,7 @@ end
 --- Returns list (table) of values and length of this list.
 ---@param tbl table: The table.
 ---@return any[]: The list of values.
----@return number: The length of the list.
+---@return integer: The length of the list.
 function table.getValues( tbl )
     local values, length = {}, 0
     for _, value in pairs( tbl ) do
@@ -584,7 +606,7 @@ end
 --- Returns the list (table) of key/value pairs and length of this list.
 ---@param tbl table: The key/value table.
 ---@return table: The list.
----@return number: The length of the list.
+---@return integer: The length of the list.
 function table.getPairs( tbl )
     local result, length = {}, 0
     for key, value in pairs( tbl ) do
@@ -672,8 +694,8 @@ end
 --- Fills the given table with the given value.
 ---@param tbl table: The table to fill.
 ---@param value any: The value to fill the table with.
----@param from? number: The start position.
----@param to? number: The end position.
+---@param from? integer: The start position.
+---@param to? integer: The end position.
 ---@return table: The filled table.
 function table.fill( tbl, value, from, to )
     if from or to then
@@ -719,7 +741,7 @@ do
     --- Returns a random value from the given list (table).
     ---@param tbl table: The table.
     ---@return any: The value.
-    ---@return number: The index of the value.
+    ---@return integer: The index of the value.
     function table.random( tbl )
         local length = #tbl
         if length == 0 then
@@ -771,7 +793,7 @@ do
 
     --- Returns the length of the given table.
     ---@param tbl table: The table.
-    ---@return number: The length of the table.
+    ---@return integer: The length of the table.
     ---@diagnostic disable-next-line: undefined-field
     table.len = glua_table.len or function( tbl )
         local metatable = getmetatable( tbl )
@@ -793,7 +815,7 @@ do
 
     --- Creates a new table, filled with the given value and size.
     ---@param value any: The value to fill the table with.
-    ---@param ... number: The sizes of the table.
+    ---@param ... integer: The sizes of the table.
     ---@return table: The created table.
     local function create_table( value, size, ... )
         if size == nil then
@@ -814,8 +836,8 @@ end
 
 --- Removes values from the table.
 ---@param tbl table: The table.
----@param start number?: The start position.
----@param delete_count number?: The number of values to remove.
+---@param start integer?: The start position.
+---@param delete_count integer?: The number of values to remove.
 ---@param ... any: The values to remove.
 ---@return table: The table with removed values.
 function table.splice( tbl, start, delete_count, ... )
