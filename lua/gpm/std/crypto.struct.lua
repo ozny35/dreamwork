@@ -77,11 +77,11 @@ do
 
 	---@class gpm.std.struct.Cursor: gpm.std.Object
 	---@field __class gpm.std.struct.CursorClass
-	---@field private pointer number
-	---@field private size number
-	---@field private data string
-	---@field private buffer_size number
-	---@field private buffer table
+	---@field protected pointer number
+	---@field protected size number
+	---@field protected data string
+	---@field protected buffer_size number
+	---@field protected buffer table
 	local Cursor = class.base( "Cursor" )
 
 	---@protected

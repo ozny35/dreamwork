@@ -10,7 +10,7 @@ local console = std.console
 local console_Variable = console.Variable
 
 ---@class gpm.std.level
-local level = {
+local level = std.level or {
     getName = glua_game.GetMap
 }
 
@@ -61,6 +61,7 @@ if std.SERVER then
 
         local glua_navmesh = _G.navmesh
 
+        -- T0D0: make a classes
         local navmesh = {
             getEditCursorPosition = glua_navmesh.GetEditCursorPosition,
             getPlayerSpawnName = glua_navmesh.GetPlayerSpawnName,
@@ -132,7 +133,7 @@ if std.SERVER then
     --- Sets the gravity of the current level.
     ---@param value integer: The value to set. Default: 600
     function level.setGravity( value )
-        console_Variable.setInteger( "sv_gravity", value )
+        console_Variable.set( "sv_gravity", value )
     end
 
 end
@@ -140,7 +141,7 @@ end
 --- Returns the gravity of the current level.
 ---@return integer: The gravity of the current level.
 function level.getGravity()
-    return console_Variable.getInteger( "sv_gravity" )
+    return console_Variable.getNumber( "sv_gravity" )
 end
 
 do

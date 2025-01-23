@@ -74,7 +74,7 @@ local is_string = is.string
 ---@alias Addon gpm.std.Addon
 ---@class gpm.std.Addon: gpm.std.Object
 ---@field __class gpm.std.AddonClass
----@field private wsid string: The workshop ID of the addon.
+---@field wsid string: The workshop ID of the addon.
 local Addon = std.class.base( "Addon" )
 
 ---@class gpm.std.AddonClass: gpm.std.Addon
@@ -162,7 +162,7 @@ do
     end
 
     ---@protected
-    function Addon.__new( wsid )
+    function Addon:__new( wsid )
         return cache[ wsid ]
     end
 

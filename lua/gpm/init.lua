@@ -170,9 +170,6 @@ end
 local math = include( "std/math.lua" )
 std.math = math
 
--- bit library
-std.bit = include( "std/bit.lua" )
-
 --- string library
 ---@class gpm.std.string
 local string = include( "std/string.lua" )
@@ -196,6 +193,9 @@ do
     end
 
 end
+
+-- bit library
+std.bit = include( "std/bit.lua" )
 
 --- os library
 ---@class gpm.std.os
@@ -755,8 +755,8 @@ do
     ---@alias Queue gpm.std.Queue
     ---@class gpm.std.Queue : gpm.std.Object
     ---@field __class gpm.std.QueueClass
-    ---@field private front integer
-    ---@field private back integer
+    ---@field protected front integer
+    ---@field protected back integer
     local Queue = class.base( "Queue" )
 
     ---@protected
@@ -948,6 +948,7 @@ do
         "Hello World!",
         "Star Glide ♪",
         "Once Again ♪",
+        "Without Us ♪",
         "Data Loss ♪",
         "Sandblast ♪",
         "Now on LLS!",

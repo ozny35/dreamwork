@@ -32,17 +32,18 @@ if std.CLIENT then
     do
 
         local voice_chat_state = false
-        local hook = std.hook
 
-        hook.add( "PlayerStartVoice", "client.getVoiceChat", function( ply )
-            if ply ~= LocalPlayer() then return end
-            voice_chat_state = true
-        end, hook.PRE )
+        -- TODO: replace with new hook system
+        -- local hook = std.hook
+        -- hook.add( "PlayerStartVoice", "client.getVoiceChat", function( ply )
+        --     if ply ~= LocalPlayer() then return end
+        --     voice_chat_state = true
+        -- end, hook.PRE )
 
-        hook.add( "PlayerEndVoice", "client.getVoiceChat", function( ply )
-            if ply ~= LocalPlayer() then return end
-            voice_chat_state = true
-        end, hook.PRE )
+        -- hook.add( "PlayerEndVoice", "client.getVoiceChat", function( ply )
+        --     if ply ~= LocalPlayer() then return end
+        --     voice_chat_state = true
+        -- end, hook.PRE )
 
         function client.getVoiceChat()
             return voice_chat_state

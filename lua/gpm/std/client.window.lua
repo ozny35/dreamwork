@@ -25,17 +25,18 @@ do
 
 end
 
-do
+-- TODO: replace with new hook system
+-- do
 
-    local hook = std.hook
+--     local hook = std.hook
 
-    hook.add( "OnScreenSizeChanged", gpm.PREFIX .. "::ScreenSize", function( old_width, old_height, new_width, new_height )
-        width, height = new_width, new_height
-        window.width, window.height = new_width, new_height
-        hook.run( "ScreenSizeChanged", new_width, new_height, old_width, old_height )
-    end, hook.PRE )
+--     hook.add( "OnScreenSizeChanged", gpm.PREFIX .. "::ScreenSize", function( old_width, old_height, new_width, new_height )
+--         width, height = new_width, new_height
+--         window.width, window.height = new_width, new_height
+--         hook.run( "ScreenSizeChanged", new_width, new_height, old_width, old_height )
+--     end, hook.PRE )
 
-end
+-- end
 
 --- [CLIENT AND MENU] Returns the width and height of the game's window (in pixels).
 ---@return number: The width of the game's window (in pixels).

@@ -85,7 +85,7 @@ Vector3Class.Angle = Angle3Class
 ---@param y number?
 ---@param z number?
 ---@return Vector3
-function Vector3.__new( x, y, z )
+function Vector3:__new( x, y, z )
     return setmetatable( { x, y, z }, Vector3 )
 end
 
@@ -534,7 +534,7 @@ function Angle3:copy()
 end
 
 ---@protected
-function Angle3.__new( pitch, yaw, roll )
+function Angle3:__new( pitch, yaw, roll )
     return setmetatable( { pitch, yaw, roll }, Angle3 )
 end
 
@@ -800,7 +800,6 @@ do
 
     local string_format = std.string.format
 
-    ---@private
     ---@protected
     ---@return string
     function Vector3:__tostring()
@@ -808,7 +807,6 @@ do
     end
 
     ---@protected
-    ---@private
     ---@return string
     function Angle3:__tostring()
         return string_format( "Angle3: %p [%f, %f, %f]", self, self:unpack() )

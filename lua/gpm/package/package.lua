@@ -30,7 +30,7 @@ function Package:__init( name, version )
 end
 
 ---@protected
-function Package.__new( name, version )
+function Package:__new( name, version )
     return cache[ name .. "@" .. version ]
 end
 

@@ -80,7 +80,7 @@ end
 ---@param g number?: The green color channel.
 ---@param b number?: The blue color channel.
 ---@param a number?: The alpha color channel.
-function Color.__new( r, g, b, a )
+function Color:__new( r, g, b, a )
     r = math_clamp( r or 0, 0, 255 )
     return setmetatable( {
         r,
@@ -90,20 +90,17 @@ function Color.__new( r, g, b, a )
     }, Color )
 end
 
----@private
 ---@protected
 function Color:__tostring()
     return string_format( "Color: %p [%d, %d, %d, %d]", self, self[ 1 ], self[ 2 ], self[ 3 ], self[ 4 ] )
 end
 
----@private
 ---@protected
 ---@param other Color
 function Color:__eq( other )
     return self[ 1 ] == other[ 1 ] and self[ 2 ] == other[ 2 ] and self[ 3 ] == other[ 3 ] and self[ 4 ] == other[ 4 ]
 end
 
----@private
 ---@protected
 function Color:__unm()
     return setmetatable(
@@ -117,7 +114,6 @@ function Color:__unm()
     )
 end
 
----@private
 ---@protected
 ---@param color Color
 function Color:__add( color )
@@ -132,7 +128,6 @@ function Color:__add( color )
     )
 end
 
----@private
 ---@protected
 ---@param color Color
 function Color:__sub( color )
@@ -147,7 +142,6 @@ function Color:__sub( color )
     )
 end
 
----@private
 ---@protected
 ---@param other Color | number
 function Color:__mul( other )
@@ -175,7 +169,6 @@ function Color:__mul( other )
     end
 end
 
----@private
 ---@protected
 ---@param other Color | number
 function Color:__div( other )
@@ -203,21 +196,18 @@ function Color:__div( other )
     end
 end
 
----@private
 ---@protected
 ---@param other Color
 function Color:__lt( other )
     return ( self[ 1 ] + self[ 2 ] + self[ 3 ] + self[ 4 ] ) < ( other[ 1 ] + other[ 2 ] + other[ 3 ] + other[ 4 ] )
 end
 
----@private
 ---@protected
 ---@param other Color
 function Color:__le( other )
     return ( self[ 1 ] + self[ 2 ] + self[ 3 ] + self[ 4 ] ) <= ( other[ 1 ] + other[ 2 ] + other[ 3 ] + other[ 4 ] )
 end
 
----@private
 ---@protected
 ---@param value Color
 function Color:__concat( value )

@@ -83,7 +83,7 @@ do
 
     ---@param name string
     ---@return gpm.std.console.Command?
-    function Command.__new( name )
+    function Command:__new( name )
         return cache[ name ]
     end
 
@@ -203,8 +203,8 @@ do
     ---@alias ConsoleVariable gpm.std.console.Variable
     ---@class gpm.std.console.Variable: gpm.std.Object
     ---@field __class gpm.std.console.Variable
-    ---@field private object ConVar: The `ConVar` object.
-    ---@field private type ConsoleVariableType: The type of the console variable.
+    ---@field protected object ConVar: The `ConVar` object.
+    ---@field protected type ConsoleVariableType: The type of the console variable.
     ---@field name string: The name of the console variable.
     local Variable = class.base( "Variable" )
 
@@ -282,7 +282,7 @@ do
 
     ---@param name string
     ---@return gpm.std.console.Variable?
-    function Variable.__new( name )
+    function Variable:__new( name )
         return cache[ name ]
     end
 

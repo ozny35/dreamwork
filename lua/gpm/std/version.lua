@@ -496,7 +496,7 @@ do
 	setmetatable( cache, { __mode = "kv" } )
 
 	---@protected
-	function Version.__new( major, minor, patch, pre_release, build )
+	function Version:__new( major, minor, patch, pre_release, build )
 		if getmetatable( major ) == Version then return major end
 
 		major, minor, patch, pre_release, build = parse( major, minor, patch, pre_release, build )

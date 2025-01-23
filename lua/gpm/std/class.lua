@@ -90,7 +90,7 @@ class.init = init
 local function new( base, ... )
     local fn = rawget( base, "__new" )
     if is_function( fn ) then
-        local obj = fn( ... )
+        local obj = fn( base.__class, ... )
         if obj ~= nil then
             return obj
         end

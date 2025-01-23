@@ -231,8 +231,7 @@ end
 ---@param width integer?: The number of bits to extract.
 ---@return integer: The extracted value.
 function bit.extract( value, field, width )
-    width = width or 1
-    return bit_band( bit_rshift( value, field ), 2 ^ width - 1 )
+    return bit_band( bit_rshift( value, field ), 2 ^ ( width or 1 ) - 1 )
 end
 
 --- [SHARED AND MENU] Replaces the bits field to field + width - 1 with the specified value.
