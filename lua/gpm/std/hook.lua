@@ -3,7 +3,7 @@ local gpm = _G.gpm
 local std = gpm.std
 
 local table = std.table
-local table_remove = table.remove
+local table_removeByRange = table.removeByRange
 
 --[[
 
@@ -103,9 +103,7 @@ function Hook:detach( identifier )
     local callback_count = self[ 0 ]
     for i = callback_count, 1, -3 do
         if self[ i ] == identifier then
-            table_remove( self, i )
-            table_remove( self, i )
-            table_remove( self, i )
+            table_removeByRange( self, i, i + 2 )
             self[ 0 ] = callback_count - 3
             return true
         end
@@ -166,9 +164,7 @@ do
                     return
                 end
 
-                table_remove( self, i )
-                table_remove( self, i )
-                table_remove( self, i )
+                table_removeByRange( self, i, i + 2 )
                 callback_count = callback_count - 3
                 self[ 0 ] = callback_count
                 break
@@ -183,7 +179,7 @@ do
             end
         end
 
-        index = index + 1 -- move to identifier
+        index = index + 1
 
         table_insert( self, index, identifier )
         table_insert( self, index + 1, fn )
@@ -195,16 +191,14 @@ end
 
 do
 
-    local table_unpack = table.unpack
-
     local function call_without_mixer_and_vararg( self, ... )
         local value
-        for i = 3, self[ 0 ], 3 do
-            local hook_type = self[ i ]
+        for index = 3, self[ 0 ], 3 do
+            local hook_type = self[ index ]
             if hook_type == -2 or hook_type == 2 then
-                self[ i - 1 ]( ... )
+                self[ index - 1 ]( ... )
             else
-                value = self[ i - 1 ]( ... )
+                value = self[ index - 1 ]( ... )
             end
         end
 
@@ -212,28 +206,27 @@ do
     end
 
     local function call_without_mixer( self, ... )
-        local values
-        for i = 3, self[ 0 ], 3 do
-            local hook_type = self[ i ]
+        local a, b, c, d, e, f
+        for index = 3, self[ 0 ], 3 do
+            local hook_type = self[ index ]
             if hook_type == -2 or hook_type == 2 then
-                self[ i - 1 ]( ... )
+                self[ index - 1 ]( ... )
             else
-                values = { self[ i - 1 ]( ... ) }
+                a, b, c, d, e, f = self[ index - 1 ]( ... )
             end
         end
 
-        return values and table_unpack( values )
+        return a, b, c, d, e, f
     end
 
     local function call_with_mixer( self, mixer_fn, ... )
         local old, new
-        for i = 3, self[ 0 ], 3 do
-            local hook_type = self[ i ]
+        for index = 3, self[ 0 ], 3 do
+            local hook_type = self[ index ]
             if hook_type == -2 or hook_type == 2 then
-                self[ i - 1 ]( ... )
+                self[ index - 1 ]( ... )
             else
-                old, new = new, self[ i - 1 ]( ... )
-                mixer_fn( old, new )
+                old, new = new, mixer_fn( old, self[ index - 1 ]( ... ) )
             end
         end
 
@@ -241,18 +234,17 @@ do
     end
 
     local function call_with_mixer_and_vararg( self, mixer_fn, ... )
-        local old, new
-        for i = 3, self[ 0 ], 3 do
-            local hook_type = self[ i ]
+        local a, b, c, d, e, f, g, h, i, j, k, l
+        for index = 3, self[ 0 ], 3 do
+            local hook_type = self[ index ]
             if hook_type == -2 or hook_type == 2 then
-                self[ i - 1 ]( ... )
+                self[ index - 1 ]( ... )
             else
-                old, new = new, { self[ i - 1 ]( ... ) }
-                mixer_fn( old, new )
+                a, b, c, d, e, f, g, h, i, j, k, l = g, h, i, j, k, l, mixer_fn( { a, b, c, d, e, f }, { self[ index - 1 ]( ... ) } )
             end
         end
 
-        return new and table_unpack( new )
+        return g, h, i, j, k, l
     end
 
     --- Calls the hook.
