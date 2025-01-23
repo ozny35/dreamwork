@@ -561,6 +561,15 @@ function math.euclideanMod( numerator, denominator )
     return result < 0 and result + denominator or result
 end
 
+--- Checks if a number is near another number.
+---@param a number: The first number.
+---@param b number?: The second number.
+---@param tolerance number?: The maximum difference between the numbers.
+---@return boolean: `true` if the numbers are near, otherwise `false`.
+function math.isNear( a, b, tolerance )
+    return math_abs( a - ( b or 0 ) ) <= ( tolerance or 0 )
+end
+
 --- Converts a bits number to a byte number.
 ---@param x number: The bits number.
 ---@return number bytes: The byte number.
