@@ -40,12 +40,12 @@ local table_removeByRange = table.removeByRange
 ---@alias Hook gpm.std.Hook
 ---@class gpm.std.Hook: gpm.std.Object
 ---@field __class gpm.std.HookClass
-local Hook = std.class.base( "Hook" )
+local Hook = std.Hook ~= nil and std.Hook.__base or std.class.base( "Hook" )
 
 ---@class gpm.std.HookClass: gpm.std.Hook
 ---@field __base gpm.std.Hook
 ---@overload fun( name: string?, returns_vararg: boolean? ): Hook
-local HookClass = std.class.create( Hook )
+local HookClass = std.Hook or std.class.create( Hook )
 
 do
 

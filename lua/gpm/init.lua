@@ -381,7 +381,7 @@ do
 end
 
 --- hook library
-std.Hook = std.Hook or include( "std/hook.lua" )
+std.Hook = include( "std/hook.lua" )
 
 do
 
@@ -1267,7 +1267,7 @@ do
     local head = "lua/bin/gm" .. ( ( CLIENT and not MENU ) and "cl" or "sv" ) .. "_"
     local tail = "_" .. ( { "osx64", "osx", "linux64", "linux", "win64", "win32" } )[ ( os_name == "Windows" and 4 or 0 ) + ( os_name == "Linux" and 2 or 0 ) + ( is32 and 1 or 0 ) + 1 ] .. ".dll"
 
-    --- Checks if a binary module is installed and returns its path.
+    --- [SHARED AND MENU] Checks if a binary module is installed and returns its path.
     ---@param name string: The binary module name.
     ---@return boolean: `true` if the binary module is installed, `false` otherwise.
     ---@return string: The absolute path to the binary module.
@@ -1293,7 +1293,7 @@ do
 
     local sv_allowcslua = SERVER and console.Variable.get( "sv_allowcslua", "boolean" )
 
-    --- Loads a binary module
+    --- [SHARED AND MENU] Loads a binary module
     ---@param name string The binary module name, for example: "chttp"
     ---@return boolean success: true if the binary module is installed
     ---@return table? module: the binary module table
@@ -1342,6 +1342,9 @@ if CLIENT_MENU then
 
     -- client library
     std.client = include( "std/client.lua" )
+
+    -- input library
+    std.input = include( "std/input.lua" )
 
 end
 

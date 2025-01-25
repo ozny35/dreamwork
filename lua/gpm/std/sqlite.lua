@@ -5,10 +5,11 @@ local error, string = std.error, std.string
 
 local glua_sql = _G.sql
 
+--- [SHARED AND MENU] The local SQLite library.
 ---@class gpm.std.sqlite
 local sqlite = {}
 
---- Returns the last error message from the last query.
+--- [SHARED AND MENU] Returns the last error message from the last query.
 ---@return string: The last error message.
 function sqlite.getLastError()
     return glua_sql.m_strError
@@ -19,7 +20,7 @@ do
 
     local string_sqlSafe = string.sqlSafe
 
-    --- Converts a string to a safe string for use in an SQL query.
+    --- [SHARED AND MENU] Converts a string to a safe string for use in an SQL query.
     ---@param str string?: The string to convert.
     ---@return string: The safe string.
     function escape( str )
@@ -39,7 +40,7 @@ do
     local getfenv = std.getfenv
     local type = std.type
 
-    --- Executes a raw SQL query.
+    --- [SHARED AND MENU] Executes a raw SQL query.
     ---@param str string: The SQL query to execute.
     ---@return table?: The result of the query.
     function rawQuery( str )
@@ -68,14 +69,14 @@ end
 
 sqlite.rawQuery = rawQuery
 
---- Checks if a table exists in the database.
+--- [SHARED AND MENU] Checks if a table exists in the database.
 ---@param name string: The name of the table to check.
 ---@return boolean: `true` if the table exists, `false` otherwise.
 function sqlite.tableExists( name )
     return rawQuery( "select name from sqlite_master where name=" .. escape( name ) .. " and type='table'" ) ~= nil
 end
 
---- Checks if an index exists in the database.
+--- [SHARED AND MENU] Checks if an index exists in the database.
 ---@param name string: The name of the index to check.
 ---@return boolean: `true` if the index exists, `false` otherwise.
 function sqlite.indexExists( name )
@@ -87,7 +88,7 @@ do
 
     local string_gsub = string.gsub
 
-    --- Executes a SQL query with parameters.
+    --- [SHARED AND MENU] Executes a SQL query with parameters.
     ---@param str string: The SQL query to execute.
     ---@param ... string: The parameters to use in the query.
     ---@return table?: The result of the query.
@@ -118,7 +119,7 @@ do
 
 end
 
---- Executes a SQL query and returns a specific row.
+--- [SHARED AND MENU] Executes a SQL query and returns a specific row.
 ---@param str string: The SQL query to execute.
 ---@param row number?: The row to return.
 ---@param ... string?: The parameters to use in the query.
@@ -134,7 +135,7 @@ end
 
 sqlite.queryRow = queryRow
 
---- Executes a SQL query and returns the first row.
+--- [SHARED AND MENU] Executes a SQL query and returns the first row.
 ---@param str string: The SQL query to execute.
 ---@param ... string?: The parameters to use in the query.
 ---@return table?: The first row of the result.
@@ -148,7 +149,7 @@ do
 
     local next = std.next
 
-    --- Executes a SQL query and returns the first value of the first row.
+    --- [SHARED AND MENU] Executes a SQL query and returns the first value of the first row.
     ---@param str string: The SQL query to execute.
     ---@param ... string?: The parameters to use in the query.
     ---@return any: The first value of the first row of the result.
@@ -167,7 +168,7 @@ do
 
     local pcall = std.pcall
 
-    --- Executes a transaction of SQL queries in one block.
+    --- [SHARED AND MENU] Executes a transaction of SQL queries in one block.
     ---@param fn function: The function to execute all SQL queries in one transaction.
     ---@return any: The result of function execution.
     function sqlite.transaction( fn )
