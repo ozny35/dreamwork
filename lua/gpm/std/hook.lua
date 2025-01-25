@@ -3,11 +3,14 @@ local gpm = _G.gpm
 local std = gpm.std
 
 local table = std.table
-local table_removeByRange = table.removeByRange
+local table_insert = table.insert
 
 --[[
 
     Event structure
+    [-6] - attached list
+    [-5] - detached list
+    [-4] - is in call
     [-3] - returns vararg
     [-2] - engine hook name
     [-1] - mixer function
@@ -86,36 +89,57 @@ do
     ---@protected
     function Hook:__init( name, returns_vararg )
         self[ -3 ] = returns_vararg == true
-        self[ -2 ] = name
+        self[ -4 ] = false
         self[ 0 ] = 0
 
-        if name ~= nil then
+        if name == nil then
+            name = "unnamed"
+        else
             engine_hooks[ name ] = self
         end
+
+        self[ -2 ] = name
     end
 
 end
 
---- Detaches a callback function from the hook.
----@param identifier any: The unique name of the callback or object with `__isvalid` function in metatable.
----@return boolean: Returns `true` if the callback was detached, otherwise `false`.
-function Hook:detach( identifier )
-    local callback_count = self[ 0 ]
-    for i = callback_count, 1, -3 do
-        if self[ i ] == identifier then
-            table_removeByRange( self, i, i + 2 )
-            self[ 0 ] = callback_count - 3
-            return true
+do
+
+    local table_removeByRange = table.removeByRange
+    local debug_fempty = std.debug.fempty
+
+    --- Detaches a callback function from the hook.
+    ---@param identifier any: The unique name of the callback or object with `__isvalid` function in metatable.
+    ---@return boolean: Returns `true` if the callback was detached, otherwise `false`.
+    function Hook:detach( identifier )
+        for i = self[ 0 ] - 2, 1, -3 do
+            if self[ i ] == identifier then
+                if self[ -4 ] then
+                    self[ i + 1 ] = debug_fempty
+
+                    local detach = self[ -5 ]
+                    if detach == nil then
+                        self[ -5 ] = { identifier }
+                    else
+                        table_insert( detach, identifier )
+                    end
+                else
+                    table_removeByRange( self, i, i + 2 )
+                    self[ 0 ] = self[ 0 ] - 3
+                end
+
+                return true
+            end
         end
+
+        return false
     end
 
-    return false
 end
 
 do
 
     local string_meta = std.debug.findmetatable( "string" )
-    local table_insert = table.insert
     local math_clamp = std.math.clamp
 
     --- Attaches a callback function to the hook.
@@ -140,7 +164,7 @@ do
             end
 
             local callback_fn = fn
-            fn = function( ... )
+            function fn( ... )
                 if isvalid( identifier ) then
                     return callback_fn( identifier, ... )
                 end
@@ -155,21 +179,30 @@ do
             hook_type = math_clamp( hook_type, -2, 2 )
         end
 
-        local callback_count = self[ 0 ]
-
-        for i = 1, callback_count, 3 do
+        for i = self[ 0 ] - 2, 1, -3 do
             if self[ i ] == identifier then
                 if self[ i + 2 ] == hook_type then
                     self[ i + 1 ] = fn
                     return
                 end
 
-                table_removeByRange( self, i, i + 2 )
-                callback_count = callback_count - 3
-                self[ 0 ] = callback_count
+                self:detach( identifier )
                 break
             end
         end
+
+        if self[ -4 ] then
+            local attach = self[ -6 ]
+            if attach == nil then
+                self[ -6 ] = { { identifier, fn, hook_type } }
+            else
+                table_insert( attach, { identifier, fn, hook_type } )
+            end
+
+            return
+        end
+
+        local callback_count = self[ 0 ]
 
         local index = callback_count
         for i = 3, callback_count, 3 do
@@ -183,13 +216,42 @@ do
 
         table_insert( self, index, identifier )
         table_insert( self, index + 1, fn )
-        table_insert( self, index + 2, hook_type )
-        self[ 0 ] = callback_count + 3
+        self[ 0 ] = table_insert( self, index + 2, hook_type )
     end
 
 end
 
 do
+
+    --- Stops the hook.
+    ---@return boolean: Returns `true` if the hook was stopped, otherwise `false`.
+    local function hook_stop( self )
+        if not self[ -4 ] then return false end
+        self[ -4 ] = false
+
+        local detach = self[ -5 ]
+        if detach ~= nil then
+            self[ -5 ] = nil
+
+            for i = 1, #detach, 1 do
+                self:detach( detach[ i ] )
+            end
+        end
+
+        local attach = self[ -6 ]
+        if attach ~= nil then
+            self[ -6 ] = nil
+
+            for i = 1, #attach, 1 do
+                local data = attach[ i ]
+                self:attach( data[ 1 ], data[ 2 ], data[ 3 ] )
+            end
+        end
+
+        return true
+    end
+
+    Hook.stop = hook_stop
 
     local function call_without_mixer_and_vararg( self, ... )
         local value
@@ -197,11 +259,12 @@ do
             local hook_type = self[ index ]
             if hook_type == -2 or hook_type == 2 then
                 self[ index - 1 ]( ... )
-            else
+            elseif self[ -4 ] then
                 value = self[ index - 1 ]( ... )
             end
         end
 
+        hook_stop( self )
         return value
     end
 
@@ -211,11 +274,12 @@ do
             local hook_type = self[ index ]
             if hook_type == -2 or hook_type == 2 then
                 self[ index - 1 ]( ... )
-            else
+            elseif self[ -4 ] then
                 a, b, c, d, e, f = self[ index - 1 ]( ... )
             end
         end
 
+        hook_stop( self )
         return a, b, c, d, e, f
     end
 
@@ -225,32 +289,39 @@ do
             local hook_type = self[ index ]
             if hook_type == -2 or hook_type == 2 then
                 self[ index - 1 ]( ... )
-            else
-                old, new = new, mixer_fn( old, self[ index - 1 ]( ... ) )
+            elseif self[ -4 ] then
+                old, new = new, self[ index - 1 ]( ... )
+                new = mixer_fn( old, new ) or new
             end
         end
 
+        hook_stop( self )
         return new
     end
 
     local function call_with_mixer_and_vararg( self, mixer_fn, ... )
-        local a, b, c, d, e, f, g, h, i, j, k, l
+        local old1, old2, old3, old4, old5, old6, new1, new2, new3, new4, new5, new6
         for index = 3, self[ 0 ], 3 do
             local hook_type = self[ index ]
             if hook_type == -2 or hook_type == 2 then
                 self[ index - 1 ]( ... )
-            else
-                a, b, c, d, e, f, g, h, i, j, k, l = g, h, i, j, k, l, mixer_fn( { a, b, c, d, e, f }, { self[ index - 1 ]( ... ) } )
+            elseif self[ -4 ] then
+                old1, old2, old3, old4, old5, old6, new1, new2, new3, new4, new5, new6 = new1, new2, new3, new4, new5, new6, self[ index - 1 ]( ... )
+                local mixed1, mixed2, mixed3, mixed4, mixed5, mixed6 = mixer_fn( { old1, old2, old3, old4, old5, old6 }, { new1, new2, new3, new4, new5, new6 } )
+                if mixed1 ~= nil then new1, new2, new3, new4, new5, new6 = mixed1, mixed2, mixed3, mixed4, mixed5, mixed6 end
             end
         end
 
-        return g, h, i, j, k, l
+        hook_stop( self )
+        return new1, new2, new3, new4, new5, new6
     end
 
     --- Calls the hook.
     ---@param ... any: The arguments to pass to the hook.
     ---@return any ...: The return values from the hook.
     function Hook:call( ... )
+        self[ -4 ] = true
+
         local mixer_fn = self[ -1 ]
         if mixer_fn == nil then
             if self[ -3 ] then
@@ -259,9 +330,9 @@ do
                 return call_without_mixer_and_vararg( self, ... )
             end
         elseif self[ -3 ] then
-            return call_with_mixer( self, mixer_fn, ... )
-        else
             return call_with_mixer_and_vararg( self, mixer_fn, ... )
+        else
+            return call_with_mixer( self, mixer_fn, ... )
         end
     end
 
