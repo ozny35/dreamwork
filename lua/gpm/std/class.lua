@@ -1,15 +1,11 @@
 local std = _G.gpm.std
-
+local pairs = std.pairs
 local rawget = std.rawget
 local rawset = std.rawset
-
-local string = std.string
-local string_sub = string.sub
-local string_format = string.format
-
-local pairs = std.pairs
 local is_function = std.is.fn
+local string_sub = std.string.sub
 local setmetatable = std.setmetatable
+local string_format = std.string.format
 local debug_getmetatable = std.debug.getmetatable
 
 --- [SHARED AND MENU] The class library.

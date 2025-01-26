@@ -509,7 +509,8 @@ end
 
 path.resolve = resolve
 
---- Returns the relative path from "from" to "to".<br>
+--- Returns the relative path from "from" to "to".
+---
 --- If no relative path can be solved, then "to" is returned.
 ---@param pathFrom string: The file path.
 ---@param pathTo string: The file path.

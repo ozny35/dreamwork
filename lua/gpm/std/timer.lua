@@ -195,7 +195,8 @@ function timer.stop( identifier )
     return glua_timer_Stop( pkg.prefix .. identifier )
 end
 
---- Returns amount of time left (in seconds) before the timer executes its function.<br>
+--- Returns amount of time left (in seconds) before the timer executes its function.
+---
 --- NOTE: If the timer is paused, the amount will be negative.
 ---@param identifier string: Identifier of the timer.
 ---@return number: The amount of time left (in seconds).
@@ -247,7 +248,8 @@ function timer.unpause( identifier )
     return glua_timer_UnPause( pkg.prefix .. identifier )
 end
 
---- Returns the table of timers created by `timer.create`.<br>(WORKS ONLY IN PACKAGES)
+--- Returns the table of timers created by `timer.create`.
+---(WORKS ONLY IN PACKAGES)
 ---@return table | nil: The table of timers or `nil` if the table doesn't exist.
 function timer.getTable()
     local fenv = getfenv( 2 )

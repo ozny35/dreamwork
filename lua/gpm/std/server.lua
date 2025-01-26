@@ -1,5 +1,7 @@
 local _G = _G
 local gpm = _G.gpm
+
+---@class gpm.std
 local std = gpm.std
 local console_Variable, Hook = std.console.Variable, std.Hook
 
@@ -28,8 +30,19 @@ end
 -- GM:GameDetails( server_name, loading_url, map_name, max_players, player_steamid64, gamemode_name )
 if std.MENU then
 
+    --- [MENU] Called when the game details are updated.
+    local GameDetailsHook = std.GameDetailsHook or std.Hook( "GameDetails" )
+    std.GameDetailsHook = GameDetailsHook
+
     local function gameDetails( server_name, loading_url, map_name, max_players, player_steamid64, gamemode_name )
-        std.hook.run( "GameDetails", server_name, loading_url, map_name, max_players, player_steamid64, gamemode_name )
+        GameDetailsHook:call( {
+            server_name = server_name,
+            loading_url = loading_url,
+            map_name = map_name,
+            max_players = max_players,
+            player_steamid64 = player_steamid64,
+            gamemode_name = gamemode_name
+        } )
     end
 
     if std.is.fn( _G.GameDetails ) then

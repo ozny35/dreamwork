@@ -75,7 +75,9 @@ do
         ---
         ---
         --- `PNG`, `JPEG`, `GIF`, and `TGA` files will work, but only if they have the `.png` or `.jpg` file extensions (even if the actual image format doesn't match the file extension)
-        ---@param name string The material name or path relative to the materials/ folder.<br>Paths outside the materials/ folder like data/MyImage.jpg or maps/thumb/gm_construct.png will also work for when generating materials.<br>To retrieve a Lua material created with CreateMaterial, just prepend a ! to the material name.
+        ---@param name string The material name or path relative to the `materials/` folder.
+        --- Paths outside the `materials/` folder like `data/MyImage.jpg` or `maps/thumb/gm_construct.png` will also work for when generating materials.
+        --- To retrieve a Lua material created with `CreateMaterial`, just prepend a `!` to the material name.
         ---@param parameters? number A bit flag of material parameters.
         ---@return IMaterial
         function std.Material( name, parameters )

@@ -47,7 +47,7 @@ local Hook = std.Hook ~= nil and std.Hook.__base or std.class.base( "Hook" )
 
 ---@class gpm.std.HookClass: gpm.std.Hook
 ---@field __base gpm.std.Hook
----@overload fun( name: string?, returns_vararg: boolean? ): Hook
+---@overload fun( engine_name: string?, returns_vararg: boolean? ): Hook
 local HookClass = std.Hook or std.class.create( Hook )
 
 do
@@ -65,40 +65,50 @@ do
     local engine_hooks = {}
     setmetatable( engine_hooks, { __mode = "v" } )
 
-    local glua_hook = _G.hook
-    if glua_hook ~= nil then
-        local hook_Call = glua_hook.Call
-        if hook_Call ~= nil then
-            glua_hook.Call = gpm.detour.attach( hook_Call, function( fn, event_name, gamemode_table, ... )
-                local hook = engine_hooks[ event_name ]
-                if hook ~= nil then
-                    ---@cast hook Hook
-                    local a, b, c, d, e, f = hook:call( ... )
-                    if a ~= nil then
-                        return a, b, c, d, e, f
-                    end
-                end
-
-                return fn( event_name, gamemode_table, ... )
-            end )
-        end
-    end
-
-    ---@param name string?: The name of the hook.
+    ---@param engine_name string?: The name of the hook in the engine.
     ---@param returns_vararg boolean?: Whether the hook returns vararg.
     ---@protected
-    function Hook:__init( name, returns_vararg )
-        self[ -3 ] = returns_vararg == true
-        self[ -4 ] = false
-        self[ 0 ] = 0
+    function Hook:__init( engine_name, returns_vararg )
+        self[ 0 ], self[ -3 ], self[ -4 ] = 0, returns_vararg == true, false
 
-        if name == nil then
-            name = "unnamed"
+        if engine_name == nil then
+            engine_name = "unnamed"
         else
-            engine_hooks[ name ] = self
+            engine_hooks[ engine_name ] = self
         end
 
-        self[ -2 ] = name
+        self[ -2 ] = engine_name
+    end
+
+    local hook = _G.hook
+    if hook == nil then
+        ---@diagnostic disable-next-line: inject-field
+        hook = {}; _G.hook = hook
+    end
+
+    local hook_Call = hook.Call
+    if hook_Call == nil then
+        function hook.Call( event_name, _, ... )
+            local obj = engine_hooks[ event_name ]
+            if obj == nil then return nil end
+
+            ---@cast obj Hook
+            local a, b, c, d, e, f = obj:call( ... )
+            if a == nil then return nil end
+
+            return a, b, c, d, e, f
+        end
+    else
+        hook.Call = gpm.detour.attach( hook_Call, function( fn, event_name, gamemode_table, ... )
+            local obj = engine_hooks[ event_name ]
+            if obj ~= nil then
+                ---@cast obj Hook
+                local a, b, c, d, e, f = obj:call( ... )
+                if a ~= nil then return a, b, c, d, e, f end
+            end
+
+            return fn( event_name, gamemode_table, ... )
+        end )
     end
 
 end

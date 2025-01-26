@@ -160,21 +160,32 @@ do
             return future
         end
 
-        _G.concommand.Run = gpm.detour.attach( _G.concommand.Run, function( fn, ply, cmd, args, argumentString )
+        local function engine_hook( ply, cmd, args, argumentString )
             local lst = callbacks[ cmd ]
-            if lst ~= nil then
-                for i = #lst, 1, -1 do
-                    local data = lst[ i ]
-                    data[ 2 ]( data[ 1 ], ply, args, argumentString )
+            if lst == nil then return end
 
-                    if data[ 4 ] then
-                        table_remove( lst, i )
-                    end
-                end
+            for i = #lst, 1, -1 do
+                local data = lst[ i ]
+                data[ 2 ]( data[ 1 ], ply, args, argumentString )
+                if data[ 4 ] then table_remove( lst, i ) end
             end
+        end
 
-            return fn( ply, cmd, args, argumentString )
-        end )
+        local concommand = _G.concommand
+        if concommand == nil then
+            ---@diagnostic disable-next-line: inject-field
+            concommand = {}; _G.concommand = concommand
+        end
+
+        local concommand_Run = concommand.Run
+        if concommand_Run == nil then
+            concommand.Run = engine_hook
+        else
+            concommand.Run = gpm.detour.attach( concommand_Run, function( fn, ply, cmd, args, argumentString )
+                engine_hook( ply, cmd, args, argumentString )
+                return fn( ply, cmd, args, argumentString )
+            end )
+        end
 
     end
 

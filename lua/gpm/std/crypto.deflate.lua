@@ -258,7 +258,8 @@ do
 
 end
 
----Calculate the Adler-32 checksum of the string. <br>
+---Calculate the Adler-32 checksum of the string.
+---
 ---See RFC1950 Page 9 https://tools.ietf.org/html/rfc1950 for the
 ---definition of Adler-32 checksum.
 ---@param str string the input string to calcuate its Adler-32 checksum.
@@ -334,10 +335,12 @@ end
 --
 ---local dict = deflate.CreateDictionary(dict_str, 10, 187433486)
 --
----@param str string The string used as the preset dictionary. <br>
+---@param str string The string used as the preset dictionary.
+---
 ---You should put stuffs that frequently appears in the dictionary
 ---string and preferablely put more frequently appeared stuffs toward the end
----of the string. <br>
+---of the string.
+---
 ---Empty string and string longer than 32768 bytes are not allowed.
 ---@param strlen number: The length of 'str'. Please pass in this parameter
 ---as a hardcoded constant, in order to verify the content of 'str'. The value
@@ -1784,8 +1787,10 @@ local function Deflate( configs, WriteBits, WriteString, FlushWriter, str, dicti
     end
 end
 
----The description to compression configuration table. <br>
----Any field can be nil to use its default. <br>
+---The description to compression configuration table. 
+---
+---Any field can be nil to use its default. 
+---
 ---Table with keys other than those below is an invalid table.
 ---@class compression_configs
 ---@field level number: The compression level ranged from 0 to 9. 0 is no compression. 9 is the slowest but best compression. Use nil for default level.
@@ -1869,7 +1874,8 @@ end
 ---. If nil, use the default configuration.
 ---@return string The compressed data.
 ---@return number The number of bits padded at the end of output.
----0 <= bits < 8  <br>
+---0 <= bits < 8  
+---
 ---This means the most significant "bits" of the last byte of the returned
 ---compressed data are padding bits and they don't affect decompression.
 ---You don't need to use this value unless you want to do some postprocessing
@@ -1893,7 +1899,8 @@ end
 ---. If nil, use the default configuration.
 ---@return string The compressed data.
 ---@return number The number of bits padded at the end of output.
----0 <= bits < 8  <br>
+---0 <= bits < 8  
+---
 ---This means the most significant "bits" of the last byte of the returned
 ---compressed data are padding bits and they don't affect decompression.
 ---You don't need to use this value unless you want to do some postprocessing
@@ -2593,7 +2600,8 @@ end
 ---unprocessed bytes in the input compressed data. This return value is a
 ---positive integer if the input data is a valid compressed data appended by an
 ---arbitary non-empty string. This return value is 0 if the input data does not
----contain any extra bytes.<br>
+---contain any extra bytes.
+---
 ---If the decompression fails (The first return value of this function is nil),
 ---this return value is undefined.
 ---@see deflate.CompressDeflate
@@ -2620,7 +2628,8 @@ end
 ---unprocessed bytes in the input compressed data. This return value is a
 ---positive integer if the input data is a valid compressed data appended by an
 ---arbitary non-empty string. This return value is 0 if the input data does not
----contain any extra bytes.<br>
+---contain any extra bytes.
+---
 ---If the decompression fails (The first return value of this function is nil),
 ---this return value is undefined.
 ---@see deflate.CompressDeflateWithDict
@@ -2642,7 +2651,8 @@ end
 ---unprocessed bytes in the input compressed data. This return value is a
 ---positive integer if the input data is a valid compressed data appended by an
 ---arbitary non-empty string. This return value is 0 if the input data does not
----contain any extra bytes.<br>
+---contain any extra bytes.
+---
 ---If the decompression fails (The first return value of this function is nil),
 ---this return value is undefined.
 ---@see deflate.CompressZlib
@@ -2669,7 +2679,8 @@ end
 ---unprocessed bytes in the input compressed data. This return value is a
 ---positive integer if the input data is a valid compressed data appended by an
 ---arbitary non-empty string. This return value is 0 if the input data does not
----contain any extra bytes.<br>
+---contain any extra bytes.
+---
 ---If the decompression fails (The first return value of this function is nil),
 ---this return value is undefined.
 ---@see deflate.CompressZlibWithDict
@@ -2740,14 +2751,16 @@ do
     end
 end
 
----Create a custom codec with encoder and decoder. <br>
+---Create a custom codec with encoder and decoder. 
+---
 ---This codec is used to convert an input string to make it not contain
 ---some specific bytes.
 ---This created codec and the parameters of this function do NOT take
 ---localization into account. One byte (0-255) in the string is exactly one
 ---character (0-255).
 ---Credits to LibCompress.
----The code has been rewritten by the author of deflate. <br>
+---The code has been rewritten by the author of deflate. 
+---
 ---@param reserved_chars string The created encoder will ensure encoded
 ---data does not contain any single character in reserved_chars. This parameter
 ---should be non-empty.
@@ -2762,11 +2775,14 @@ end
 ---@param map_chars string The created encoder will map every
 ---reserved\_chars:sub(i, i) (1 <= i <= #map\_chars) to map\_chars:sub(i, i).
 ---This parameter CAN be empty string.
----@return table? codec: If the codec cannot be created, return nil.<br>
+---@return table? codec: If the codec cannot be created, return nil.
+---
 ---If the codec can be created according to the given
 ---parameters, return the codec, which is a encode/decode table.
----The table contains two functions: <br>
----t:Encode(str) returns the encoded string. <br>
+---The table contains two functions: 
+---
+---t:Encode(str) returns the encoded string. 
+---
 ---t:Decode(str) returns the decoded string if succeeds. nil if fails.
 ---@return string? message: If the codec is successfully created, return nil.
 ---If not, return a string that describes the reason why the codec cannot be
@@ -2916,7 +2932,8 @@ local function GenerateWoWAddonChannelCodec()
 end
 
 ---Encode the string to make it ready to be transmitted in World of
----Warcraft addon channel. <br>
+---Warcraft addon channel. 
+---
 ---The encoded string is guaranteed to contain no NULL ("\000") character.
 ---@param str string The string to be encoded.
 ---@return string result The encoded string.
@@ -2943,7 +2960,8 @@ end
 
 ---For World of Warcraft Chat Channel Encoding
 ---Credits to LibCompress.
----The code has been rewritten by the author of deflate. <br>
+---The code has been rewritten by the author of deflate. 
+---
 ---Following byte values are not allowed:
 ---\000, s, S, \010, \013, \124, %
 ---Because SendChatMessage will error
@@ -2977,7 +2995,8 @@ end
 local _chat_channel_codec
 
 ---Encode the string to make it ready to be transmitted in World of
----Warcraft chat channel. <br>
+---Warcraft chat channel. 
+---
 ---See also https://wow.gamepedia.com/ValidChatMessageCharacters
 ---@param str string The string to be encoded.
 ---@return string The encoded string.
@@ -3141,11 +3160,14 @@ local _6bit_to_byte = {
     [41] = 63
 }
 
----Encode the string to make it printable. <br>
+---Encode the string to make it printable. 
+---
 ---
 ---Credit to WeakAuras2, this function is equivalant to the implementation
----it is using right now. <br>
----The code has been rewritten by the author of deflate. <br>
+---it is using right now. 
+---
+---The code has been rewritten by the author of deflate. 
+---
 ---The encoded string will be 25% larger than the origin string. However, every
 ---single byte of the encoded string will be one of 64 printable ASCII
 ---characters, which are can be easier copied, pasted and displayed.

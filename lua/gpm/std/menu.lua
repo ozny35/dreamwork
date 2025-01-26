@@ -110,7 +110,8 @@ do
         return console_Variable.getBoolean( "snd_mute_losefocus" )
     end
 
-    --- Returns the selected game language.<br>
+    --- Returns the selected game language.
+    ---
     --- All language codes https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes.
     ---@return string: ISO 639-1 language code.
     function options.getLanguage()
@@ -185,7 +186,8 @@ do
             console_Variable.set( "snd_mute_losefocus", mute )
         end
 
-        --- Sets the selected game language.<br>
+        --- Sets the selected game language.
+        ---
         --- All language codes https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes.
         ---@param language string: ISO 639-1 language code.
         function options.setLanguage( language )
