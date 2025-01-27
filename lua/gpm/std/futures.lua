@@ -51,9 +51,6 @@ futures.coroutine_listeners = futures.coroutine_listeners or setmetatable( {}, {
 ---@alias gpm.std.futures.AsyncIterator<K, V> table<K, V> | nil
 ---@alias AsyncIterator<K, V> gpm.std.futures.AsyncIterator<K, V>
 
----@alias gpm.std.futures.AsyncFn async fun(...): ...
----@alias AsyncFn gpm.std.futures.AsyncFn
-
 ---@alias gpm.std.futures.Awaitable { await: async fun(...): ... }
 ---@alias Awaitable gpm.std.futures.Awaitable
 
@@ -811,23 +808,6 @@ do
 
 end
 
-
---- Converts all async functions to tasks
----@param awaitables (Awaitable | AsyncFn)[]
----@return Awaitable[]
-local function adaptAwaitables( awaitables, ... )
-    for i = 1, #awaitables do
-        local awaitable = awaitables[ i ]
-        if is.fn( awaitable ) then
-            ---@cast awaitable AsyncFn
-            awaitables[ i ] = futures.Task( awaitable, ... )
-        end
-    end
-
-    ---@cast awaitables Awaitable[]
-    return awaitables
-end
-
 ---@async
 ---@param awaitables Awaitable[]
 ---@return any[]
@@ -857,11 +837,9 @@ end
 --- 
 --- On error also cancels all other awaitables.
 ---@async
----@param awaitables (Awaitable | AsyncFn)[]
+---@param awaitables Awaitable[]
 ---@return any[]
-function futures.all( awaitables, ... )
-    awaitables = adaptAwaitables( awaitables, ... )
-
+function futures.all( awaitables )
     local ok, result = pcall( awaitList, awaitables )
     if not ok then
         cancelList(awaitables)
