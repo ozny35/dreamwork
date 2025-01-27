@@ -51,6 +51,9 @@ futures.coroutine_listeners = futures.coroutine_listeners or setmetatable( {}, {
 ---@alias gpm.std.futures.AsyncIterator<K, V> table<K, V> | nil
 ---@alias AsyncIterator<K, V> gpm.std.futures.AsyncIterator<K, V>
 
+---@alias gpm.std.futures.AsyncFn async fun(...): ...
+---@alias AsyncFn gpm.std.futures.AsyncFn
+
 ---@alias gpm.std.futures.Awaitable { await: async fun(...): ... }
 ---@alias Awaitable gpm.std.futures.Awaitable
 
@@ -677,7 +680,7 @@ do
 
     ---@class gpm.std.futures.TaskClass : gpm.std.futures.Task
     ---@field __base gpm.std.futures.Task
-    ---@overload fun(fn: async fun(...): any, ...: any): gpm.std.futures.Task
+    ---@overload fun(fn: (async fun(...): any), ...: any): gpm.std.futures.Task
     futures.Task = class.create( Task )
 
 end
@@ -808,6 +811,64 @@ do
 
 end
 
---- TODO: add helper function, i.e. futures.all, futures.any
+
+--- Converts all async functions to tasks
+---@param awaitables (Awaitable | AsyncFn)[]
+---@return Awaitable[]
+local function adaptAwaitables( awaitables, ... )
+    for i = 1, #awaitables do
+        local awaitable = awaitables[ i ]
+        if is.fn( awaitable ) then
+            ---@cast awaitable AsyncFn
+            awaitables[ i ] = futures.Task( awaitable, ... )
+        end
+    end
+
+    ---@cast awaitables Awaitable[]
+    return awaitables
+end
+
+---@async
+---@param awaitables Awaitable[]
+---@return any[]
+local function awaitList( awaitables )
+    local results = {}
+    for i = 1, #awaitables do
+        results[ i ] = awaitables[ i ]:await()
+    end
+    return results
+end
+
+---@param awaitables (Awaitable | { cancel: function })[]
+local function cancelList( awaitables )
+    for i = 1, #awaitables do
+        local awaitable = awaitables[ i ]
+        if is.fn( awaitable.cancel ) then
+            awaitable:cancel()
+        end
+    end
+end
+
+--- Awaits concurrently all given `awaitables` and returns results in table
+--- 
+--- if any of awaitables throws an error, it will be thrown.
+--- 
+--- if any of awaitables if function, it will be asynchronously executed with given vararg
+--- 
+--- On error also cancels all other awaitables.
+---@async
+---@param awaitables (Awaitable | AsyncFn)[]
+---@return any[]
+function futures.all( awaitables, ... )
+    awaitables = adaptAwaitables( awaitables, ... )
+
+    local ok, result = pcall( awaitList, awaitables )
+    if not ok then
+        cancelList(awaitables)
+        error( result )
+    end
+ 
+    return result
+end
 
 return futures
