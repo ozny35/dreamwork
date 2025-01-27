@@ -8,25 +8,24 @@ local table_insert = table.insert
 --[[
 
     Event structure
-    [-6] - attached list
-    [-5] - detached list
-    [-4] - is in call
-    [-3] - returns vararg
-    [-2] - engine hook name
-    [-1] - mixer function
+    [-5] - queue list ( to add or remove callbacks ) ( table[] )
+    [-4] - hook is running ( boolean )
+    [-3] - returns vararg ( boolean )
+    [-2] - engine hook name ( string )
+    [-1] - mixer function ( function )
     [0] - last callback index
 
-    [1] - identifier
-    [2] - function
-    [3] - hook_type
+    [1] - identifier ( string )
+    [2] - function ( function )
+    [3] - hook_type ( number )
 
-    [4] - identifier
-    [5] - function
-    [6] - hook_type
+    [4] - identifier ( string )
+    [5] - function ( function )
+    [6] - hook_type ( number )
 
-    [7] - identifier
-    [8] - function
-    [9] - hook_type
+    [7] - identifier ( string )
+    [8] - function ( function )
+    [9] - hook_type ( number )
 
     ...
 
@@ -50,14 +49,8 @@ local Hook = std.Hook ~= nil and std.Hook.__base or std.class.base( "Hook" )
 ---@overload fun( engine_name: string?, returns_vararg: boolean? ): Hook
 local HookClass = std.Hook or std.class.create( Hook )
 
-do
-
-    local string_format = std.string.format
-
-    function Hook:__tostring()
-        return string_format( "Hook: %p [%s]", self, self[ -2 ] )
-    end
-
+function Hook:__tostring()
+    return std.string.format( "Hook: %p [%s]", self, self[ -2 ] )
 end
 
 do
@@ -127,11 +120,11 @@ do
                 if self[ -4 ] then
                     self[ i + 1 ] = debug_fempty
 
-                    local detach = self[ -5 ]
-                    if detach == nil then
-                        self[ -5 ] = { identifier }
+                    local queue = self[ -5 ]
+                    if queue == nil then
+                        self[ -5 ] = { { false, identifier } }
                     else
-                        table_insert( detach, identifier )
+                        table_insert( queue, { false, identifier } )
                     end
                 else
                     table_removeByRange( self, i, i + 2 )
@@ -202,11 +195,11 @@ do
         end
 
         if self[ -4 ] then
-            local attach = self[ -6 ]
-            if attach == nil then
-                self[ -6 ] = { { identifier, fn, hook_type } }
+            local queue = self[ -5 ]
+            if queue == nil then
+                self[ -5 ] = { { true, identifier, fn, hook_type } }
             else
-                table_insert( attach, { identifier, fn, hook_type } )
+                table_insert( queue, { true, identifier, fn, hook_type } )
             end
 
             return
@@ -231,34 +224,46 @@ do
 
 end
 
+--- Checks if the hook is running.
+---@return boolean: Returns `true` if the hook is running, otherwise `false`.
+function Hook:isRunning()
+    return self[ -4 ]
+end
+
 do
 
     --- Stops the hook.
-    ---@return boolean: Returns `true` if the hook was stopped, otherwise `false`.
+    ---@return boolean: Returns `true` if the hook was stopped, `false` if it was already stopped.
     local function hook_stop( self )
         if not self[ -4 ] then return false end
         self[ -4 ] = false
 
-        local detach = self[ -5 ]
-        if detach ~= nil then
+        local queue = self[ -5 ]
+        if queue ~= nil then
             self[ -5 ] = nil
 
-            for i = 1, #detach, 1 do
-                self:detach( detach[ i ] )
-            end
-        end
-
-        local attach = self[ -6 ]
-        if attach ~= nil then
-            self[ -6 ] = nil
-
-            for i = 1, #attach, 1 do
-                local data = attach[ i ]
-                self:attach( data[ 1 ], data[ 2 ], data[ 3 ] )
+            for i = 1, #queue, 1 do
+                local args = queue[ i ]
+                if args[ 1 ] then
+                    self:attach( args[ 2 ], args[ 3 ], args[ 4 ] )
+                else
+                    self:detach( args[ 2 ] )
+                end
             end
         end
 
         return true
+    end
+
+    --- Clears the hook from all callbacks.
+    function Hook:clear()
+        hook_stop( self )
+
+        for i = 1, self[ 0 ], 1 do
+            self[ i ] = nil
+        end
+
+        self[ 0 ] = 0
     end
 
     Hook.stop = hook_stop
@@ -266,10 +271,12 @@ do
     local function call_without_mixer_and_vararg( self, ... )
         local value
         for index = 3, self[ 0 ], 3 do
+            if self[ -4 ] then break end
+
             local hook_type = self[ index ]
             if hook_type == -2 or hook_type == 2 then
                 self[ index - 1 ]( ... )
-            elseif self[ -4 ] then
+            else
                 value = self[ index - 1 ]( ... )
             end
         end
@@ -281,10 +288,12 @@ do
     local function call_without_mixer( self, ... )
         local a, b, c, d, e, f
         for index = 3, self[ 0 ], 3 do
+            if self[ -4 ] then break end
+
             local hook_type = self[ index ]
             if hook_type == -2 or hook_type == 2 then
                 self[ index - 1 ]( ... )
-            elseif self[ -4 ] then
+            else
                 a, b, c, d, e, f = self[ index - 1 ]( ... )
             end
         end
@@ -296,10 +305,12 @@ do
     local function call_with_mixer( self, mixer_fn, ... )
         local old, new
         for index = 3, self[ 0 ], 3 do
+            if self[ -4 ] then break end
+
             local hook_type = self[ index ]
             if hook_type == -2 or hook_type == 2 then
                 self[ index - 1 ]( ... )
-            elseif self[ -4 ] then
+            else
                 old, new = new, self[ index - 1 ]( ... )
                 new = mixer_fn( old, new ) or new
             end
@@ -312,10 +323,12 @@ do
     local function call_with_mixer_and_vararg( self, mixer_fn, ... )
         local old1, old2, old3, old4, old5, old6, new1, new2, new3, new4, new5, new6
         for index = 3, self[ 0 ], 3 do
+            if self[ -4 ] then break end
+
             local hook_type = self[ index ]
             if hook_type == -2 or hook_type == 2 then
                 self[ index - 1 ]( ... )
-            elseif self[ -4 ] then
+            else
                 old1, old2, old3, old4, old5, old6, new1, new2, new3, new4, new5, new6 = new1, new2, new3, new4, new5, new6, self[ index - 1 ]( ... )
                 local mixed1, mixed2, mixed3, mixed4, mixed5, mixed6 = mixer_fn( { old1, old2, old3, old4, old5, old6 }, { new1, new2, new3, new4, new5, new6 } )
                 if mixed1 ~= nil then new1, new2, new3, new4, new5, new6 = mixed1, mixed2, mixed3, mixed4, mixed5, mixed6 end

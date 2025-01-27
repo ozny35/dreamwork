@@ -380,7 +380,7 @@ do
 
 end
 
---- hook library
+--- [SHARED AND MENU] Hook class
 std.Hook = include( "std/hook.lua" )
 
 do
@@ -392,14 +392,14 @@ do
 
 end
 
---- timer library
-std.timer = include( "std/timer.lua" )
+--- [SHARED AND MENU] Timer class
+std.Timer = include( "std/timer.lua" )
 
---- File class
+--- [SHARED AND MENU] File class
 local File = include( "std/file.lua" )
 std.File = File
 
---- Color class
+--- [SHARED AND MENU] Color class
 local Color = include( "std/color.lua" )
 std.Color = Color
 
@@ -891,6 +891,7 @@ std.futures = futures
 
 std.apairs = futures.apairs
 std.yield = futures.yield
+std.sleep = futures.sleep
 
 std.Future = futures.Future
 std.Task = futures.Task
