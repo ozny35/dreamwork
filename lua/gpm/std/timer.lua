@@ -1,281 +1,380 @@
-local _G = _G
-local std = _G.gpm.std
-
-local getfenv, table_unpack = std.getfenv, std.table.unpack
-
-local glua_timer_Adjust, glua_timer_Create, glua_timer_Exists, glua_timer_Pause, glua_timer_Remove, glua_timer_RepsLeft, glua_timer_Start, glua_timer_Stop, glua_timer_TimeLeft, glua_timer_Toggle, glua_timer_UnPause, glua_timer_Simple
+local timer, std
 do
-    local glua_timer = _G.timer
-    glua_timer_Adjust, glua_timer_Create, glua_timer_Exists, glua_timer_Pause, glua_timer_Remove, glua_timer_RepsLeft, glua_timer_Start, glua_timer_Stop, glua_timer_TimeLeft, glua_timer_Toggle, glua_timer_UnPause, glua_timer_Simple = glua_timer.Adjust, glua_timer.Create, glua_timer.Exists, glua_timer.Pause, glua_timer.Remove, glua_timer.RepsLeft, glua_timer.Start, glua_timer.Stop, glua_timer.TimeLeft, glua_timer.Toggle, glua_timer.UnPause, glua_timer.Simple
+    local _G = _G
+    timer, std = _G.timer, _G.gpm.std
 end
 
----@class gpm.std.timer
-local timer = {
-    simple = glua_timer_Simple
-}
+---@alias Timer gpm.std.Timer
+---@class gpm.std.Timer: gpm.std.Object
+---@field __class gpm.std.TimerClass
+local Timer = std.class.base( "Timer" )
 
---- Adjusts a previously created timer by `timer.create` with the given identifier.
----@param identifier string: Identifier of the timer to adjust.
----@param delay number: The delay interval in seconds.
----@param repetitions number?: Repetitions. Use 0 for infinite or nil to keep previous value.
----@param func function?: The new function. Use nil to keep previous value.
----@return boolean: True if successful, false otherwise.
-function timer.adjust( identifier, delay, repetitions, func )
-    local fenv = getfenv( 2 )
-    if fenv == nil then
-        return glua_timer_Adjust( identifier, delay, repetitions, func )
+---@class gpm.std.TimerClass: gpm.std.Timer
+---@field __base gpm.std.Timer
+---@overload fun( name: string, delay: number?, repetitions: integer? ): Timer
+local TimerClass = std.class.create( Timer )
+
+do
+
+    local status2string = {
+        [ 0 ] = "removed",
+        [ 1 ] = "stopped",
+        [ 2 ] = "paused",
+        [ 3 ] = "running"
+    }
+
+    function Timer:__tostring()
+        return std.string.format( "Timer: %p [%s][%s]", self, self[ -2 ], status2string[ self[ -1 ] ] or "unknown" )
     end
 
-    local pkg = fenv.__package
-    if pkg == nil then
-        return glua_timer_Adjust( identifier, delay, repetitions, func )
-    end
-
-    local timers = pkg.__timers
-    if timers == nil then
-        timers = {}; pkg.__timers = timers
-    end
-
-    local data = timers[ identifier ]
-    if data == nil then
-        return false
-    end
-
-    delay = delay or data[ 1 ]
-    data[ 1 ] = delay
-
-    repetitions = repetitions or data[ 2 ]
-    data[ 2 ] = repetitions
-
-    func = func or data[ 3 ]
-    data[ 3 ] = func
-
-    return glua_timer_Adjust( pkg.prefix .. identifier, delay, repetitions, func )
 end
 
---- Creates a new timer that will repeat its function given amount of times. This function also requires the timer to be named, which allows you to control it after it was created via the timer.
----@param identifier string: Identifier of the timer to create. Must be unique. If a timer already exists with the same identifier, that timer will be updated to the new settings and reset.
----@param delay number: The delay interval in seconds. If the delay is too small, the timer will fire on the next Tick.
----@param repetitions number: The number of times to repeat the timer. Enter 0 or any value below 0 for infinite repetitions.
----@param func function: Function called when timer has finished the countdown.
-function timer.create( identifier, delay, repetitions, func )
-    local fenv = getfenv( 2 )
-    if fenv == nil then
-        glua_timer_Create( identifier, delay, repetitions, func )
+---@alias gpm.std.TIMER_STATUS
+---| number # The timer status code.
+---| `0` # Hook removed.
+---| `1` # Hook stopped.
+---| `2` # Hook paused.
+---| `3` # Hook running.
+
+do
+
+    local timer_Create = timer.Create
+
+    ---@protected
+    function Timer:__init( name, delay, repetitions )
+        if repetitions == nil then repetitions = 1 end
+        if delay == nil then delay = 0 end
+
+        self[ 0 ] = 0
+        self[ -1 ] = 2
+        self[ -2 ] = name
+        self[ -3 ] = delay
+        self[ -4 ] = repetitions
+        self[ -5 ] = false
+
+        timer_Create( name, delay, repetitions, function()
+            self[ -5 ] = true
+
+            for i = 2, self[ 0 ], 2 do
+                if not self[ -5 ] then break end
+                self[ i ]( self )
+            end
+
+            self[ -5 ] = false
+
+            local queue = self[ -6 ]
+            if queue ~= nil then
+                self[ -6 ] = nil
+
+                for i = 1, #queue, 1 do
+                    local args = queue[ i ]
+                    if args[ 1 ] then
+                        self:attach( args[ 3 ], args[ 2 ] )
+                    else
+                        self:detach( args[ 2 ] )
+                    end
+                end
+            end
+        end )
+    end
+
+end
+
+--- [SHARED AND MENU] Attaches a callback to the timer.
+---@param fn function: The callback function.
+---@param name string?: The name of the callback, default is `unnamed`.
+function Timer:attach( fn, name )
+    if name == nil then name = "unnamed" end
+
+    if self[ -5 ] then
+        local queue = self[ -6 ]
+        if queue == nil then
+            self[ -6 ] = { { true, name, fn } }
+        else
+            queue[ #queue + 1 ] = { true, name, fn }
+        end
+
         return
     end
 
-    local pkg = fenv.__package
-    if pkg == nil then
-        glua_timer_Create( identifier, delay, repetitions, func )
-        return
+    for i = 1, self[ 0 ], 2 do
+        if self[ i ] == name then
+            self[ i + 1 ] = fn
+            return
+        end
     end
 
-    local timers = pkg.__timers
-    if timers == nil then
-        timers = {}; pkg.__timers = timers
-    end
+    local index = self[ 0 ] + 1
+    self[ index ] = name
 
-    local data = timers[ identifier ]
-    if data == nil then
-        timers[ identifier ] = { delay, repetitions, func }
-    else
-        data[ 1 ] = delay
-        data[ 2 ] = repetitions
-        data[ 3 ] = func
-    end
+    index = index + 1
+    self[ index ] = fn
 
-    glua_timer_Create( pkg.prefix .. identifier, delay, repetitions, func )
+    self[ 0 ] = index
 end
 
---- Returns whenever the given timer exists or not.
----@param identifier string: Identifier of the timer.
----@return boolean: Returns `true` if the timer exists, `false` if it doesn't
-function timer.exists( identifier )
-    local fenv = getfenv( 2 )
-    if fenv == nil then
-        return glua_timer_Exists( identifier )
+do
+
+    local table_removeByRange = std.table.removeByRange
+    local debug_fempty = std.debug.fempty
+
+    --- [SHARED AND MENU] Detaches a callback from the timer.
+    ---@param name string: The name of the callback to detach.
+    function Timer:detach( name )
+        for i = 1, self[ 0 ], 2 do
+            if self[ i ] == name then
+                if self[ -5 ] then
+                    self[ i + 1 ] = debug_fempty
+
+                    local queue = self[ -6 ]
+                    if queue == nil then
+                        self[ -6 ] = { { false, name } }
+                    else
+                        queue[ #queue + 1 ] = { false, name }
+                    end
+                else
+                    table_removeByRange( self, i, i + 1 )
+                    self[ 0 ] = self[ 0 ] - 2
+                end
+
+                break
+            end
+        end
     end
 
-    local pkg = fenv.__package
-    if pkg == nil then
-        return glua_timer_Exists( identifier )
-    end
-
-    return glua_timer_Exists( pkg.prefix .. identifier )
 end
 
---- Pauses the given timer.
----@param identifier string: Identifier of the timer.
----@return boolean: `false` if the timer didn't exist or was already paused, `true` otherwise.
-function timer.pause( identifier )
-    local fenv = getfenv( 2 )
-    if fenv == nil then
-        return glua_timer_Pause( identifier )
+--- [SHARED AND MENU] Detaches all timer callbacks.
+function Timer:clear()
+    self[ -5 ] = false
+
+    for i = 1, self[ 0 ], 1 do
+        self[ i ] = nil
     end
 
-    local pkg = fenv.__package
-    if pkg == nil then
-        return glua_timer_Pause( identifier )
-    end
-
-    return glua_timer_Pause( pkg.prefix .. identifier )
+    self[ 0 ] = 0
 end
 
---- Stops and removes a timer created by `timer.create`.
----@param identifier string: Identifier of the timer to remove.
-function timer.remove( identifier )
-    local fenv = getfenv( 2 )
-    if fenv == nil then
-        return glua_timer_Remove( identifier )
-    end
-
-    local pkg = fenv.__package
-    if pkg == nil then
-        return glua_timer_Remove( identifier )
-    end
-
-    local timers = pkg.__timers
-    if timers == nil then
-        timers = {}; pkg.__timers = timers
-    end
-
-    timers[ identifier ] = nil
-    return glua_timer_Remove( pkg.prefix .. identifier )
+---@protected
+function Timer:__isvalid()
+    return self[ -1 ] ~= 0
 end
 
---- Returns amount of repetitions/executions left before the timer destroys itself.
----@param identifier string: Identifier of the timer.
----@return number: The amount of executions left.
-function timer.repetitionsLeft( identifier )
-    local fenv = getfenv( 2 )
-    if fenv == nil then
-        return glua_timer_RepsLeft( identifier )
+do
+
+    local timer_Start = timer.Start
+
+    --- [SHARED AND MENU] Start the timer.
+    ---@return boolean: Returns `true` if successful, otherwise `false`.
+    function Timer:start()
+        local status = self[ -1 ]
+        if status == 0 or status == 3 then return false end
+
+        if status == 2 then
+            self:setPause( false )
+        end
+
+        timer_Start( self[ -2 ] )
+        self[ -1 ] = 3
+        return true
     end
 
-    local pkg = fenv.__package
-    if pkg == nil then
-        return glua_timer_RepsLeft( identifier )
+    --- [SHARED AND MENU] Restart the timer.
+    ---@return boolean: Returns `true` if successful, otherwise `false`.
+    function Timer:restart()
+        if self[ -1 ] == 0 then return false end
+        self:setPause( false )
+
+        timer_Start( self[ -2 ] )
+        self[ -1 ] = 3
+        return true
     end
 
-    return glua_timer_RepsLeft( pkg.prefix .. identifier )
 end
 
---- Restarts the given timer.
----@param identifier string: Identifier of the timer.
----@return boolean: `true` if the timer exists, `false` if it doesn't.
-function timer.start( identifier )
-    local fenv = getfenv( 2 )
-    if fenv == nil then
-        return glua_timer_Start( identifier )
+do
+
+    local timer_Stop = timer.Stop
+
+    --- [SHARED AND MENU] Stops the timer.
+    ---@return boolean: Returns `true` if successful, otherwise `false`.
+    function Timer:stop()
+        local status = self[ -1 ]
+        if status == 0 or status == 1 then return false end
+
+        if status == 2 then
+            self:setPause( false )
+        end
+
+        timer_Stop( self[ -2 ] )
+        self[ -1 ] = 1
+        return true
     end
 
-    local pkg = fenv.__package
-    if pkg == nil then
-        return glua_timer_Start( identifier )
-    end
-
-    return glua_timer_Start( pkg.prefix .. identifier )
 end
 
---- Stops the given timer and rewinds it.
----@param identifier string: Identifier of the timer.
----@return boolean: `false` if the timer didn't exist or was already stopped, `true` otherwise.
-function timer.stop( identifier )
-    local fenv = getfenv( 2 )
-    if fenv == nil then
-        return glua_timer_Stop( identifier )
+do
+
+    local timer_Adjust = timer.Adjust
+
+    --- [SHARED AND MENU] Returns the number of timer repetitions.
+    ---@return integer: The number of timer repetitions.
+    function Timer:getRepetitions()
+        return self[ -4 ]
     end
 
-    local pkg = fenv.__package
-    if pkg == nil then
-        return glua_timer_Stop( identifier )
+    --- [SHARED AND MENU] Sets the number of timer repetitions.
+    ---@param repetitions integer?: The number of timer repetitions.
+    ---@return boolean: Returns `true` if successful, otherwise `false`.
+    function Timer:setRepetitions( repetitions )
+        if self[ -1 ] == 0 then return false end
+        repetitions = self[ -4 ] or repetitions
+        self[ -4 ] = repetitions
+
+        timer_Adjust( self[ -2 ], self[ -3 ], repetitions )
+        return true
     end
 
-    return glua_timer_Stop( pkg.prefix .. identifier )
+    do
+
+        local timer_RepsLeft = timer.RepsLeft
+
+        --- [SHARED AND MENU] Returns the number of timer repetitions left.
+        ---@return integer: The number of timer repetitions left.
+        function Timer:getRepetitionsLeft()
+            if self[ -1 ] == 0 then return 0 end
+            return timer_RepsLeft( self[ -1 ] )
+        end
+
+    end
+
+    --- [SHARED AND MENU] Returns the delay between repetitions of the timer in seconds.
+    ---@return number: The delay between repetitions in seconds.
+    function Timer:getDelay()
+        return self[ -3 ]
+    end
+
+    --- [SHARED AND MENU] Sets the delay between repetitions of the timer in seconds.
+    ---@param delay number?: The delay between repetitions in seconds.
+    ---@return boolean: Returns `true` if successful, otherwise `false`.
+    function Timer:setDelay( delay )
+        if self[ -1 ] == 0 then return false end
+        delay = self[ -3 ] or delay
+        self[ -3 ] = delay
+
+        ---@cast delay number
+
+        timer_Adjust( self[ -2 ], delay )
+        return true
+    end
+
+    do
+
+        local timer_TimeLeft = timer.TimeLeft
+        local math_inf = std.math.inf
+
+        --- [SHARED AND MENU] Returns the time left to the next callbacks call in seconds.
+        ---@return number: The time left in seconds.
+        function Timer:getTimeLeft()
+            if self[ -1 ] ~= 3 then return math_inf end
+            return timer_TimeLeft( self[ -2 ] )
+        end
+
+    end
+
 end
 
---- Returns amount of time left (in seconds) before the timer executes its function.
----
---- NOTE: If the timer is paused, the amount will be negative.
----@param identifier string: Identifier of the timer.
----@return number: The amount of time left (in seconds).
-function timer.timeLeft( identifier )
-    local fenv = getfenv( 2 )
-    if fenv == nil then
-        return glua_timer_TimeLeft( identifier )
+do
+
+    local timer_Remove = timer.Remove
+
+    --- [SHARED AND MENU] Removes the timer.
+    ---@return boolean: Returns `true` if successful, `false` if timer already removed.
+    function Timer:remove()
+        if self[ -1 ] == 0 then return false end
+        self[ -1 ] = 0
+        self:clear()
+
+        timer_Remove( self[ -1 ] )
+        return true
     end
 
-    local pkg = fenv.__package
-    if pkg == nil then
-        return glua_timer_TimeLeft( identifier )
-    end
-
-    return glua_timer_TimeLeft( pkg.prefix .. identifier )
 end
 
---- Runs either `timer.pause` or `timer.unpause` based on the timer's current status.
----@param identifier string: Identifier of the timer.
----@return boolean: `true` if timer was not paused, `false` if it was.
-function timer.toggle( identifier )
-    local fenv = getfenv( 2 )
-    if fenv == nil then
-        return glua_timer_Toggle( identifier )
-    end
-
-    local pkg = fenv.__package
-    if pkg == nil then
-        return glua_timer_Toggle( identifier )
-    end
-
-    return glua_timer_Toggle( pkg.prefix .. identifier )
+--- [SHARED AND MENU] Checks if the timer is valid.
+---@return boolean: Returns `true` if the timer is valid (not removed), otherwise `false`.
+function Timer:isValid()
+    return self[ -1 ] ~= 0
 end
 
---- Unpauses the timer.
----@param identifier string: Identifier of the timer.
----@return boolean: `false` if the timer didn't exist or was already running, `true` otherwise.
-function timer.unpause( identifier )
-    local fenv = getfenv( 2 )
-    if fenv == nil then
-        return glua_timer_UnPause( identifier )
-    end
-
-    local pkg = fenv.__package
-    if pkg == nil then
-        return glua_timer_UnPause( identifier )
-    end
-
-    return glua_timer_UnPause( pkg.prefix .. identifier )
+--- [SHARED AND MENU] Checks if the timer is stopped.
+---@return boolean: Returns `true` if the timer is stopped, otherwise `false`.
+function Timer:isStopped()
+    return self[ -1 ] == 1
 end
 
---- Returns the table of timers created by `timer.create`.
----(WORKS ONLY IN PACKAGES)
----@return table | nil: The table of timers or `nil` if the table doesn't exist.
-function timer.getTable()
-    local fenv = getfenv( 2 )
-    if fenv == nil then
-        return nil
-    end
-
-    local pkg = fenv.__package
-    if pkg == nil then
-        return nil
-    end
-
-    local timers = pkg.__timers
-    if timers == nil then
-        timers = {}; pkg.__timers = timers
-    end
-
-    return timers
+--- [SHARED AND MENU] Checks if the timer is paused.
+---@return boolean: Returns `true` if the timer is paused, otherwise `false`.
+function Timer:isPaused()
+    return self[ -1 ] == 2
 end
 
---- Runs the function in the next engine tick.
----@param fn function: Function to run.
----@param ... any: Arguments to pass to the function.
-function timer.tick( fn, ... )
-    local args = { ... }
-    glua_timer_Simple( 0, function() fn( table_unpack( args ) ) end )
+--- [SHARED AND MENU] Checks if the timer is running.
+---@return boolean: Returns `true` if the timer is running, otherwise `false`.
+function Timer:isRunning()
+    return self[ -1 ] == 3
 end
 
-return timer
+do
+
+    local timer_Pause, timer_UnPause = timer.Pause, timer.UnPause
+
+    --- [SHARED AND MENU] Pauses/unpauses the timer.
+    ---@param value boolean: `true` to pause, `false` to unpause.
+    ---@return boolean: Returns `true` if successful, otherwise `false`.
+    function Timer:setPause( value )
+        local status = self[ -1 ]
+        if status == 0 or status == 1 then return false end
+
+        if value then
+            if status == 2 then return false end
+            timer_Pause( self[ -2 ] )
+            self[ -1 ] = 2
+        else
+            if status == 3 then return false end
+            timer_UnPause( self[ -2 ] )
+            self[ -1 ] = 3
+        end
+
+        return true
+    end
+
+end
+
+do
+
+    local timer_Simple = timer.Simple
+
+    --- [SHARED AND MENU] Creates a simple timer.
+    ---@param fn function: The callback function.
+    ---@param seconds number?: The delay in seconds.
+    function TimerClass.wait( fn, seconds )
+        return timer_Simple( seconds or 0, fn )
+    end
+
+end
+
+do
+
+    local timer_Exists = timer.Exists
+
+    --- [SHARED AND MENU] Checks if the timer exists.
+    ---@param name string: The name of the timer.
+    ---@return boolean: Returns `true` if the timer exists, otherwise `false`.
+    function TimerClass.exists( name )
+        return timer_Exists( name )
+    end
+
+end
+
+return TimerClass
