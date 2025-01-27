@@ -849,4 +849,32 @@ function futures.all( awaitables )
     return result
 end
 
+
+--- Returns first result of futures, or error
+--- 
+--- Other awaitables will be cancelled after first result or error
+---@async
+---@param futureList Future[]
+---@return any
+function futures.any( futureList )
+    local co = futures.running()
+    local finished = false
+
+    local function callback(fut)
+        if not finished then
+            finished = true
+            futures.wakeup( co, fut )
+        end
+    end
+
+    for i = 1, #futureList do
+        futureList[ i ]:addCallback( callback )
+    end
+
+    ---@type Future
+    local fut = futures.pending()
+    cancelList( futureList )
+    return fut:result()
+end
+
 return futures
