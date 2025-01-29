@@ -8,7 +8,7 @@ local Queue = std.Queue
 local tostring, pcall, xpcall = std.tostring, pcall, xpcall
 ---@type coroutinelib
 local coroutine = std.coroutine
-local timer_simple = std.timer.simple
+local Timer_wait = std.Timer.wait
 
 ---@class gpm.std.futures
 local futures = std.futures or {}
@@ -213,7 +213,7 @@ end
 
 
 --- Puts current coroutine to sleep for given amount of seconds
---- uses internally `timer.simple`.
+--- uses internally `Timer.wait`.
 ---
 ---@see gpm.std.futures.pending
 ---@see gpm.std.futures.wakeup
@@ -222,9 +222,9 @@ end
 function futures.sleep( seconds )
     local co = futures.running()
 
-    timer_simple( seconds, function()
+    Timer_wait( function()
         futures.wakeup( co )
-    end )
+    end, seconds )
 
     return futures.pending()
 end

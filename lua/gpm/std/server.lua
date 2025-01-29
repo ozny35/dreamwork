@@ -253,7 +253,7 @@ end
 if std.MENU then
 
     local glua_serverlist = _G.serverlist
-    local timer_simple = std.timer.simple
+    local Timer_wait = std.Timer.wait
     local Future = std.Future
 
     do
@@ -262,9 +262,10 @@ if std.MENU then
 
         --- [MENU] Queries a server for its information/ping.
         ---@param address string: The address of the server. ( IP:Port like `127.0.0.1:27015` )
+        ---@param timeout number?: The timeout in seconds. Set to `false` to disable the timeout.
         ---@return ServerInfo: The server information.
         ---@async
-        function server.ping( address )
+        function server.ping( address, timeout )
             local f = Future()
 
             serverlist_PingServer( address, function( server_ping, server_name, gamemode_title, map_name, player_count, player_limit, bot_count, has_password, last_played_time, server_address, gamemode_name, gamemode_workshopid, is_anonymous_server, gmod_version, server_localization, gamemode_category )
@@ -289,11 +290,13 @@ if std.MENU then
                 } )
             end )
 
-            timer_simple( 30, function()
-                if f:isPending() then
-                    f:setError( "timed out" )
-                end
-            end )
+            if timeout ~= false then
+                Timer_wait( function()
+                    if f:isPending() then
+                        f:setError( "timed out" )
+                    end
+                end, timeout or 30 )
+            end
 
             return f:await()
         end
@@ -306,20 +309,26 @@ if std.MENU then
 
         --- [MENU] Queries a server for it's player list.
         ---@param address string: The address of the server. ( IP:Port like `127.0.0.1:27015` )
+        ---@param timeout number?: The timeout in seconds. Set to `false` to disable the timeout.
         ---@async
-        function server.getPlayers( address )
+        function server.getPlayers( address, timeout )
             local f = Future()
 
-            local finished = false
             serverlist_PlayerList( address, function( data )
-                finished = true
-                f:setResult( data )
+                if data == nil then
+                    f:setError( "failed to get player list" )
+                else
+                    f:setResult( data )
+                end
             end )
 
-            timer_simple( 30, function()
-                if finished then return end
-                f:setError( "timed out" )
-            end )
+            if timeout ~= false then
+                Timer_wait( function()
+                    if f:isPending() then
+                        f:setError( "timed out" )
+                    end
+                end, timeout or 30 )
+            end
 
             return f:await()
         end

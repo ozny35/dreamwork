@@ -1,7 +1,7 @@
 local _G = _G
 local gpm = _G.gpm
 local std, Logger = gpm.std, gpm.Logger
-local Future, tostring, tonumber, HTTPClientError, timer_simple = std.Future, std.tostring, std.tonumber, std.HTTPClientError, std.timer.simple
+local Future, tostring, tonumber, HTTPClientError, Timer_wait = std.Future, std.tostring, std.tonumber, std.HTTPClientError, std.Timer.wait
 
 local string_gmatch, string_upper
 do
@@ -64,7 +64,7 @@ do
         queue[ length ] = { parameters }
     end
 
-    timer_simple( 0, function()
+    Timer_wait( function()
         make_request = http_client
 
         for i = 1, length do
@@ -263,9 +263,10 @@ if std.MENU then
     local GetAPIManifest = _G.GetAPIManifest
 
     --- Gets miscellaneous information from Facepunches API.
+    ---@param timeout number?: The timeout in seconds.
     ---@return table data: The data returned from the API.
     ---@async
-    function http.getFacepunchManifest()
+    function http.getFacepunchManifest( timeout )
         local f = Future()
 
         GetAPIManifest( function( json )
@@ -280,11 +281,11 @@ if std.MENU then
             f:setError( HTTPClientError( "failed to get facepunch manifest" ) )
         end )
 
-        timer_simple( 30, function()
+        Timer_wait( function()
             if f:isPending() then
                 f:setError( HTTPClientError( "timed out getting facepunch manifest" ) )
             end
-        end )
+        end, timeout or 30 )
 
         return f:await()
     end

@@ -57,6 +57,7 @@ local math_min, math_max = math.min, math.max
 ---@operator sub: Vector3
 ---@operator mul: Vector3
 ---@operator div: Vector3
+---@operator unm: Vector3
 local Vector3 = std.class.base( "Vector3" )
 
 ---@class gpm.std.Vector3Class: gpm.std.Vector3
@@ -72,6 +73,7 @@ std.Vector3 = Vector3Class
 ---@operator sub: Angle3
 ---@operator mul: Angle3
 ---@operator div: Angle3
+---@operator unm: Angle3
 local Angle3 = std.class.base( "Angle3" )
 
 ---@class gpm.std.Angle3Class: gpm.std.Angle3
@@ -105,9 +107,17 @@ do
     function Angle3:__index( key )
         if is_number( key ) then
             return rawget( self, key ) or 0
+        else
+            return rawget( self, key2index[ key ] or key ) or Angle3[ key ]
         end
+    end
 
-        return rawget( self, key2index[ key ] or key ) or Angle3[ key ]
+    function Angle3:__newindex( key, value )
+        if is_number( key ) then
+            rawset( self, key, value )
+        else
+            rawset( self, key2index[ key ] or key, value )
+        end
     end
 
 end
@@ -128,6 +138,14 @@ do
         end
 
         return rawget( self, key2index[ key ] or key ) or Vector3[ key ]
+    end
+
+    function Vector3:__newindex( key, value )
+        if is_number( key ) then
+            rawset( self, key, value )
+        else
+            rawset( self, key2index[ key ] or key, value )
+        end
     end
 
 end
@@ -629,7 +647,7 @@ end
 
 ---@return Angle3: The negated angle
 function Angle3:__unm()
-    return self:copy():negate()
+    return setmetatable( { -self[ 1 ], -self[ 2 ], -self[ 3 ] }, Angle3 )
 end
 
 ---@param angle Angle3: The other angle.

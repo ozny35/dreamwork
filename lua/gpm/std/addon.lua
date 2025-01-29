@@ -7,7 +7,7 @@ local steamworks = _G.steamworks
 local std = gpm.std
 local Future, is = std.Future, std.is
 
-local timer_simple = std.timer.simple
+local Timer_wait = std.Timer.wait
 local is_string = is.string
 
 
@@ -592,11 +592,11 @@ do
             end
         end )
 
-        timer_simple( timeout or 30, function()
+        Timer_wait( function()
             if f:isPending() then
                 f:setError( "failed to download icon file for '" .. wsid .. "', timed out." )
             end
-        end )
+        end, timeout or 30 )
 
         return f:await()
     end
@@ -640,11 +640,11 @@ do
         end )
 
         if timeout ~= false then
-            timer_simple( timeout or 30, function()
+            Timer_wait( function()
                 if f:isPending() then
                     f:setError( "failed to download addon '" .. wsid .. "', timed out." )
                 end
-            end )
+            end, timeout or 30 )
         end
 
         return f:await()
@@ -685,11 +685,11 @@ do
         end )
 
         if timeout ~= false then
-            timer_simple( timeout or 30, function()
+            Timer_wait( function()
                 if f:isPending() then
                     f:setError( "failed to fetch info for addon '" .. wsid .. "', timed out." )
                 end
-            end )
+            end, timeout or 30 )
         end
 
         return f:await()
@@ -762,11 +762,11 @@ do
             f:setResult( data )
         end )
 
-        timer_simple( params.timeout or 30, function()
+        Timer_wait( function()
             if f:isPending() then
                 f:setError( "failed to perform quick workshop search, timed out." )
             end
-        end )
+        end, params.timeout or 30 )
 
         local data = f:await()
         local results, count = data.results, data.numresults
@@ -796,11 +796,11 @@ do
             f:setResult( data )
         end )
 
-        timer_simple( timeout or 30, function()
+        Timer_wait( function()
             if f:isPending() then
                 f:setError( "failed to perform quick workshop search, timed out." )
             end
-        end )
+        end, timeout or 30 )
 
         local data = f:await()
         local results, count = data.results, data.numresults
@@ -830,11 +830,11 @@ do
             f:setResult( data )
         end )
 
-        timer_simple( timeout or 30, function()
+        Timer_wait( function()
             if f:isPending() then
                 f:setError( "failed to perform quick workshop search, timed out." )
             end
-        end )
+        end, timeout or 30 )
 
         local data = f:await()
         local results, count = data.results, data.numresults

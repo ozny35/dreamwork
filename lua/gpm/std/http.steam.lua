@@ -1,17 +1,27 @@
 local _G = _G
 local std, steamworks = _G.gpm.std, _G.steamworks
-local Future, is_string, tonumber, timer_simple = std.Future, std.is.string, std.tonumber, std.timer.simple
+local Future, is_string, tonumber, Timer_wait = std.Future, std.is.string, std.tonumber, std.Timer.wait
 
+local string_byte, string_sub
+do
+    local string = std.string
+    string_byte, string_sub = string.byte, string.sub
+end
+
+---@class gpm.std.http.steam
 local steam = {}
 
-do
+
+if steamworks ~= nil then
 
     local steamworks_RequestPlayerInfo = steamworks.RequestPlayerInfo
 
     --- Returns the name of the player with the given Steam ID.
+    ---@param sid64 string: The SteamID64 of the player.
+    ---@param timeout number | false | nil: The timeout in seconds. Set to `false` to disable the timeout.
     ---@return string: The name of the player.
     ---@async
-    function steam.getPlayerName( sid64 )
+    function steam.getPlayerName( sid64, timeout )
         local f = Future()
 
         steamworks_RequestPlayerInfo( sid64, function( name )
@@ -23,18 +33,20 @@ do
             end
         end )
 
-        timer_simple( 30, function()
-            if f:isPending() then
-                f:setError( "failed to get player name for '" .. sid64 .. "', timed out" )
-            end
-        end )
+        if timeout ~= false then
+            Timer_wait( function()
+                if f:isPending() then
+                    f:setError( "failed to get player name for '" .. sid64 .. "', timed out" )
+                end
+            end, timeout or 30 )
+        end
 
         return f:await()
     end
 
 end
 
-do
+if steamworks ~= nil then
 
     local steamworks_Publish = steamworks.Publish
 
@@ -45,10 +57,18 @@ do
     ---@param description string?: The description of the addon.
     ---@param tags string[]: The tags for the addon.
     ---@param changeLog string?: The changelog of the publication.
+    ---@param timeout number | nil | false: The timeout in seconds. Set to `false` to disable the timeout.
     ---@return string: The workshop ID of the published addon.
     ---@async
-    function steam.publishItem( filePath, imagePath, title, description, tags, changeLog )
+    function steam.publishItem( filePath, imagePath, title, description, tags, changeLog, timeout )
+        -- TODO: make table structure instead arguments
         local f = Future()
+
+        if string_byte( filePath, 1 ) == 0x2F --[[ / ]] then
+            filePath = string_sub( filePath, 2 )
+        else
+            std.error( "invalid file path '" .. filePath .. "', expected absolute path" )
+        end
 
         steamworks_Publish( filePath, imagePath, title, description or "", tags, function( wsid, errorMsg )
             if is_string( errorMsg ) then
@@ -57,6 +77,14 @@ do
                 f:setResult( wsid )
             end
         end, nil, changeLog )
+
+        if timeout ~= false then
+            Timer_wait( function()
+                if f:isPending() then
+                    f:setError( "failed to publish addon, timed out" )
+                end
+            end, timeout or 30 )
+        end
 
         return f:await()
     end
@@ -73,7 +101,14 @@ do
     ---@return boolean: `true` if the update was successful, `false` otherwise.
     ---@async
     function steam.updateItem( filePath, imagePath, title, description, tags, wsid, changeLog, timeout )
+        -- TODO: make table structure instead arguments
         local f = Future()
+
+        if string_byte( filePath, 1 ) == 0x2F --[[ / ]] then
+            filePath = string_sub( filePath, 2 )
+        else
+            std.error( "invalid file path '" .. filePath .. "', expected absolute path" )
+        end
 
         steamworks_Publish( filePath, imagePath, title, description or "", tags, function( _, errorMsg )
             if is_string( errorMsg ) then
@@ -84,11 +119,11 @@ do
         end, tonumber( wsid, 10 ), changeLog )
 
         if timeout ~= false then
-            timer_simple( timeout or 30, function()
+            Timer_wait( function()
                 if f:isPending() then
                     f:setError( "failed to update addon '" .. wsid .. "', timed out" )
                 end
-            end )
+            end, timeout or 30 )
         end
 
         return f:await()

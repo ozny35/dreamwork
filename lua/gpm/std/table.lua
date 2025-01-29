@@ -334,6 +334,7 @@ do
             end
 
             if not ( debug_getmetatable( value ) or debug_getmetatable( alt ) ) and is_table( value ) and is_table( alt ) then
+                ---@cast alt table
                 result[ key ] = diff( value, alt )
             end
 
@@ -344,12 +345,13 @@ do
 
         for key, value in pairs( b ) do
             if result[ key ] == nil then
-                local alt = rawget(a, key)
+                local alt = rawget( a, key )
                 if alt == nil then
                     result[ key ] = { value, alt }
                 end
 
                 if not ( debug_getmetatable( value ) or debug_getmetatable( alt ) ) and is_table( value ) and is_table( alt ) then
+                    ---@cast alt table
                     result[ key ] = diff( value, alt )
                 end
 
