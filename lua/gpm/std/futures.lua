@@ -677,7 +677,7 @@ do
 
     ---@class gpm.std.futures.TaskClass : gpm.std.futures.Task
     ---@field __base gpm.std.futures.Task
-    ---@overload fun(fn: async fun(...): any, ...: any): gpm.std.futures.Task
+    ---@overload fun(fn: (async fun(...): any), ...: any): gpm.std.futures.Task
     futures.Task = class.create( Task )
 
 end
@@ -808,6 +808,73 @@ do
 
 end
 
---- TODO: add helper function, i.e. futures.all, futures.any
+---@async
+---@param awaitables Awaitable[]
+---@return any[]
+local function awaitList( awaitables )
+    local results = {}
+    for i = 1, #awaitables do
+        results[ i ] = awaitables[ i ]:await()
+    end
+    return results
+end
+
+---@param awaitables (Awaitable | { cancel: function })[]
+local function cancelList( awaitables )
+    for i = 1, #awaitables do
+        local awaitable = awaitables[ i ]
+        if is.fn( awaitable.cancel ) then
+            awaitable:cancel()
+        end
+    end
+end
+
+--- Awaits concurrently all given `awaitables` and returns results in table
+--- 
+--- if any of awaitables throws an error, it will be thrown.
+--- 
+--- if any of awaitables if function, it will be asynchronously executed with given vararg
+--- 
+--- On error also cancels all other awaitables.
+---@async
+---@param awaitables Awaitable[]
+---@return any[]
+function futures.all( awaitables )
+    local ok, result = pcall( awaitList, awaitables )
+    if not ok then
+        cancelList(awaitables)
+        error( result )
+    end
+ 
+    return result
+end
+
+
+--- Returns first result of futures, or error
+--- 
+--- Other awaitables will be cancelled after first result or error
+---@async
+---@param futureList Future[]
+---@return any
+function futures.any( futureList )
+    local co = futures.running()
+    local finished = false
+
+    local function callback(fut)
+        if not finished then
+            finished = true
+            futures.wakeup( co, fut )
+        end
+    end
+
+    for i = 1, #futureList do
+        futureList[ i ]:addCallback( callback )
+    end
+
+    ---@type Future
+    local fut = futures.pending()
+    cancelList( futureList )
+    return fut:result()
+end
 
 return futures
