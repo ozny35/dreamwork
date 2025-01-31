@@ -42,12 +42,12 @@ local table_insert = table.insert
 ---@alias Hook gpm.std.Hook
 ---@class gpm.std.Hook: gpm.std.Object
 ---@field __class gpm.std.HookClass
-local Hook = std.Hook ~= nil and std.Hook.__base or std.class.base( "Hook" )
+local Hook = std.class.base( "Hook" )
 
 ---@class gpm.std.HookClass: gpm.std.Hook
 ---@field __base gpm.std.Hook
 ---@overload fun( engine_name: string?, returns_vararg: boolean? ): Hook
-local HookClass = std.Hook or std.class.create( Hook )
+local HookClass = std.class.create( Hook )
 
 function Hook:__tostring()
     return std.string.format( "Hook: %p [%s]", self, self[ -2 ] )

@@ -44,6 +44,13 @@ local github = {}
 local mutationNextTime = 0
 local rateLimitReset = 0
 
+--- TODO
+---@param method any: TODO
+---@param url any: TODO
+---@param headers any: TODO
+---@param body any: TODO
+---@param cache any: TODO
+---@return HTTPResponse: TODO
 ---@async
 local function request( method, url, headers, body, cache )
     if not string_isURL( url ) then
@@ -112,6 +119,13 @@ end
 
 github.request = request
 
+--- TODO
+---@param method any: TODO
+---@param pathname any: TODO
+---@param headers any: TODO
+---@param body any: TODO
+---@param cache any: TODO
+---@return table: TODO
 ---@async
 local function apiRequest( method, pathname, headers, body, cache )
     local result = request( method, pathname, headers, body, cache )
@@ -130,9 +144,9 @@ end
 github.apiRequest = apiRequest
 
 --- TODO
----@param pathname any
----@param data any
----@return unknown
+---@param pathname any: TODO
+---@param data any: TODO
+---@return unknown: TODO
 local function template( pathname, data )
     return string_gsub( pathname, "{([%w_-]-)}", function( str )
         return tostring( data[ str ] )
@@ -142,6 +156,11 @@ end
 
 github.template = template
 
+--- TODO
+---@param method any: TODO
+---@param pathname any: TODO
+---@param data any: TODO
+---@return table: TODO
 ---@async
 local function templateRequest( method, pathname, data )
     return apiRequest( method, template( pathname, data ) )
@@ -149,29 +168,39 @@ end
 
 github.templateRequest = templateRequest
 
+--- TODO
+---@param owner string: The owner of the repository.
+---@param repo string: The name of the repository.
+---@return table: TODO
 ---@async
-local function getRepository( owner, repo )
+function github.getRepository( owner, repo )
     return templateRequest( "GET", "/repos/{owner}/{repo}", {
         owner = owner,
         repo = repo
     } )
 end
 
-github.getRepository = getRepository
-
+--- TODO
+---@param owner string: The owner of the repository.
+---@param repo string: The name of the repository.
+---@return table: TODO
 ---@async
-local function getRepositoryTags( owner, repo )
-    -- TODO: implement pagination?
+function github.getRepositoryTags( owner, repo )
+    -- TODO: implement pagination? - yes
     return templateRequest( "GET", "/repos/{owner}/{repo}/tags?per_page=100", {
         owner = owner,
         repo = repo
     } )
 end
 
-github.getRepositoryTags = getRepositoryTags
-
+--- TODO
+---@param owner string: The owner of the repository.
+---@param repo string: The name of the repository.
+---@param tree_sha any: TODO
+---@param recursive boolean?: TODO
+---@return table: TODO
 ---@async
-local function getTree( owner, repo, tree_sha, recursive )
+function github.getTree( owner, repo, tree_sha, recursive )
     return templateRequest( "GET", "/repos/{owner}/{repo}/git/trees/{tree_sha}?recursive={recursive}", {
         owner = owner,
         repo = repo,
@@ -180,10 +209,13 @@ local function getTree( owner, repo, tree_sha, recursive )
     } )
 end
 
-github.getTree = getTree
-
+--- TODO
+---@param owner string: The owner of the repository.
+---@param repo string: The name of the repository.
+---@param file_sha any: TODO
+---@return table: TODO
 ---@async
-local function getBlob( owner, repo, file_sha )
+function github.getBlob( owner, repo, file_sha )
     local result = templateRequest( "GET", "/repos/{owner}/{repo}/git/blobs/{file_sha}", {
         owner = owner,
         repo = repo,
@@ -198,10 +230,13 @@ local function getBlob( owner, repo, file_sha )
     return result
 end
 
-github.getBlob = getBlob
-
+--- TODO
+---@param owner string: The owner of the repository.
+---@param repo string: The name of the repository.
+---@param ref string: The reference to fetch.
+---@return string: TODO
 ---@async
-local function fetchZip( owner, repo, ref )
+function github.fetchZip( owner, repo, ref )
     local result = request( "GET", "/repos/" .. tostring( owner ) .. "/" .. tostring( repo ) .. "/zipball/" .. tostring( ref ) )
     if result.status ~= 200 then
         error( HTTPClientError( "Failed to fetch zipball (" .. tostring( owner ) .. "/" .. tostring( repo ) .. "/" .. tostring( ref ) .. ") from Github API (" .. tostring( result.status ) .. ")" ) )
@@ -209,7 +244,5 @@ local function fetchZip( owner, repo, ref )
 
     return result.body
 end
-
-github.fetchZip = fetchZip
 
 return github

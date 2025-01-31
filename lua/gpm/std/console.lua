@@ -16,9 +16,12 @@ local console = {}
 
 if std.MENU then
 
-    console.show = _G.gui.ShowConsole
-
     --- Shows the console.
+    console.show = _G.gui and _G.gui.ShowConsole or function()
+        RunConsoleCommand( "showconsole" )
+    end
+
+    --- Hides the console.
     function console.hide()
         RunConsoleCommand( "hideconsole" )
     end
