@@ -1,8 +1,10 @@
 local _G = _G
+
+---@class gpm.std
 local std = _G.gpm.std
 
 local math, string, bit = std.math, std.string, std.bit
-local is_number, setmetatable = std.is.number, std.setmetatable
+local isnumber, setmetatable = std.isnumber, std.setmetatable
 local math_abs, math_min, math_max, math_floor = math.abs, math.min, math.max, math.floor
 local string_char, string_byte, string_format, string_len = string.char, string.byte, string.format, string.len
 
@@ -23,6 +25,16 @@ local DIV255_CONST = 1 / 255
 ---@operator div(Color | integer): Color
 ---@operator unm(): Color
 local Color = std.class.base( "Color" )
+
+do
+
+    local debug_getmetatable = std.debug.getmetatable
+
+    function std.iscolor( value )
+        return debug_getmetatable( value ) == Color
+    end
+
+end
 
 ---@class gpm.std.ColorClass : gpm.std.Color
 ---@field __base Color
@@ -149,7 +161,7 @@ end
 ---@param other Color | integer
 ---@protected
 function Color:__mul( other )
-    if is_number( other ) then
+    if isnumber( other ) then
         ---@cast other integer
         return from_rgba(
             self[ 1 ] * other,
@@ -171,7 +183,7 @@ end
 ---@param other Color | integer
 ---@protected
 function Color:__div( other )
-    if is_number( other ) then
+    if isnumber( other ) then
         ---@cast other integer
         local multiplier = 1 / other
         return from_rgba(

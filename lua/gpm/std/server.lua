@@ -45,7 +45,7 @@ if std.MENU then
         } )
     end
 
-    if std.is.fn( _G.GameDetails ) then
+    if std.isfunction( _G.GameDetails ) then
         _G.GameDetails = gpm.detour.attach( _G.GameDetails, function( fn, ... )
             gameDetails( ... )
             return fn( ... )

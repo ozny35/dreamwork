@@ -5,16 +5,9 @@ local gpm = _G.gpm
 local std = gpm.std
 
 local os_time = std.os.time
-local error = std.error
 
 local sqlite = std.sqlite
 local sqlite_queryOne, sqlite_queryValue, sqlite_rawQuery, sqlite_query, sqlite_transaction = sqlite.queryOne, sqlite.queryValue, sqlite.rawQuery, sqlite.query, sqlite.transaction
-
-local is_string, is_number, is_table
-do
-    local is = std.is
-    is_string, is_number, is_table = is.string, is.number, is.table
-end
 
 -- http_cache table, used for etag caching in http library
 do
@@ -97,16 +90,18 @@ if std.SERVER then
         return sqlite_queryOne( "insert or ignore into 'gpm.repositories' (url) values (?); select * from 'gpm.repositories' where url=?", url, url )
     end
 
+    local isstring, isnumber, istable = std.isstring, std.isnumber, std.istable
+
     ---@param value table | number | string
     ---@return number?
     local function getRepositoryID( value )
-        if is_table( value ) then
+        if istable( value ) then
             ---@cast value table
             return value.id or getRepositoryID( value.url )
-        elseif is_number( value ) then
+        elseif isnumber( value ) then
             ---@cast value number
             return value
-        elseif is_string( value ) then
+        elseif isstring( value ) then
             ---@cast value string
             return sqlite_queryValue( "select id from 'gpm.repositories' where url=?", value )
         end
@@ -115,7 +110,7 @@ if std.SERVER then
     function repositories.removeRepository( repository )
         local repositoryID = getRepositoryID( repository )
         if repositoryID == nil then
-            error( "invalid repository '" .. tostring( repository ) .. "' was given as #1 argument" )
+            std.error( "invalid repository '" .. tostring( repository ) .. "' was given as #1 argument" )
         end
 
         local repositoryIDStr = tostring( repositoryID )
@@ -139,7 +134,7 @@ if std.SERVER then
     function repositories.getPackage( repository, name )
         local repositoryID = getRepositoryID( repository )
         if repositoryID == nil then
-            error( "invalid repository '" .. tostring( repository ) .. "' was given as #1 argument" )
+            std.error( "invalid repository '" .. tostring( repository ) .. "' was given as #1 argument" )
         end
 
         repository = nil
@@ -155,7 +150,7 @@ if std.SERVER then
     function repositories.getPackages( repository )
         local repositoryID = getRepositoryID( repository )
         if repositoryID == nil then
-            error( "invalid repository '" .. tostring( repository ) .. "' was given as #1 argument" )
+            std.error( "invalid repository '" .. tostring( repository ) .. "' was given as #1 argument" )
         end
 
         repository = nil
@@ -179,7 +174,7 @@ if std.SERVER then
     function repositories.updateRepository( repository, packages )
         local repositoryID = getRepositoryID( repository )
         if repositoryID == nil then
-            error( "invalid repository '" .. tostring( repository ) .. "' was given as #1 argument" )
+            std.error( "invalid repository '" .. tostring( repository ) .. "' was given as #1 argument" )
         end
 
         local repositoryIDStr = tostring( repositoryID )
@@ -374,11 +369,13 @@ do
 
     db.migrationExists = migrationExists
 
+    local isfunction = std.isfunction
+
     -- TODO: ls desc
     local function runMigration( migration )
-        -- if not isfunction( migration.execute ) then
-        --     error( "Migration '" .. tostring( migration.name ) .. "' does not have an execute function" )
-        -- end
+        if not isfunction( migration.execute ) then
+            std.error( "Migration '" .. tostring( migration.name ) .. "' does not have an execute function" )
+        end
 
         gpm.Logger:info( "Running migration '" .. tostring( migration.name ) .. "'...")
 
@@ -402,7 +399,7 @@ do
 
         -- find if given migration name exists
         if not migrationExists( name ) then
-            error( "Migration '" .. name .. "' not found", 2 )
+            std.error( "Migration '" .. name .. "' not found", 2 )
         end
 
         -- first execute migrations

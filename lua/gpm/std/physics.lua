@@ -1,6 +1,6 @@
 local _G = _G
 local std = _G.gpm.std
-local is_string = std.is.string
+local isstring = std.isstring
 local physenv, util = _G.physenv, _G.util
 local error, setmetatable = std.error, std.setmetatable
 
@@ -121,7 +121,7 @@ do
             error( "Invalid surface data", 2 )
         else
             local name = data.name
-            if is_string( name ) then
+            if isstring( name ) then
                 physenv_AddSurfaceData( "\"" .. name .. "\"\n{\n" .. table_concat( buffer, "", 1, length ) .. "}" )
             else
                 error( "Invalid surface name", 2 )

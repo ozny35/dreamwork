@@ -9,11 +9,7 @@ do
     string_gmatch, string_upper = string.gmatch, string.upper
 end
 
-local is_number, is_string, is_table
-do
-    local is = std.is
-    is_number, is_string, is_table = is.number, is.string, is.table
-end
+local isnumber, isstring, istable = std.isnumber, std.isstring, std.istable
 
 local http_client, client_name
 if std.SERVER and std.loadbinary( "reqwest" ) then
@@ -125,12 +121,12 @@ end
 ---@async
 local function request( parameters )
     local url = parameters.url
-    if not is_string( url ) then
+    if not isstring( url ) then
         url = tostring( url )
     end
 
     local method = parameters.method
-    if is_string( method ) then
+    if isstring( method ) then
         ---@cast method string
         method = string_upper( method )
     else
@@ -140,7 +136,7 @@ local function request( parameters )
     parameters.method = method
 
     local timeout = parameters.timeout
-    if not is_number( timeout ) then
+    if not isnumber( timeout ) then
         ---@diagnostic disable-next-line: cast-local-type
         timeout = gpm_http_timeout:get()
         ---@cast timeout number
@@ -181,7 +177,7 @@ local function request( parameters )
         local lifetime = parameters.lifetime
         parameters.lifetime = nil
 
-        if not is_number( lifetime ) then
+        if not isnumber( lifetime ) then
             lifetime = gpm_http_lifetime:get() * 60
         end
 
@@ -226,7 +222,7 @@ local function request( parameters )
         local data = http_cache_get( url )
         if data then
             local headers = parameters.headers
-            if is_table( headers ) then
+            if istable( headers ) then
                 headers[ "If-None-Match" ] = data.etag
             else
                 headers = { [ "If-None-Match" ] = data.etag }
@@ -270,7 +266,7 @@ if std.MENU then
         local f = Future()
 
         GetAPIManifest( function( json )
-            if is_string( json ) then
+            if isstring( json ) then
                 local data = json_deserialize( json, false, false )
                 if data ~= nil then
                     f:setResult( data )

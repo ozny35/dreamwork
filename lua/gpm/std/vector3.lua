@@ -42,7 +42,7 @@ local _G = _G
 local std = _G.gpm.std
 
 local setmetatable = std.setmetatable
-local is_number = std.is.number
+local isnumber = std.isnumber
 
 local math = std.math
 local math_abs = math.abs
@@ -105,7 +105,7 @@ do
     ---@param key string | number
     ---@return number | function | nil
     function Angle3:__index( key )
-        if is_number( key ) then
+        if isnumber( key ) then
             return rawget( self, key ) or 0
         else
             return rawget( self, key2index[ key ] or key ) or Angle3[ key ]
@@ -113,7 +113,7 @@ do
     end
 
     function Angle3:__newindex( key, value )
-        if is_number( key ) then
+        if isnumber( key ) then
             rawset( self, key, value )
         else
             rawset( self, key2index[ key ] or key, value )
@@ -133,7 +133,7 @@ do
     ---@param key string | number
     ---@return number | function | nil
     function Vector3:__index( key )
-        if is_number( key ) then
+        if isnumber( key ) then
             return rawget( self, key ) or 0
         end
 
@@ -141,7 +141,7 @@ do
     end
 
     function Vector3:__newindex( key, value )
-        if is_number( key ) then
+        if isnumber( key ) then
             rawset( self, key, value )
         else
             rawset( self, key2index[ key ] or key, value )
@@ -198,7 +198,7 @@ end
 ---@param value Vector3 | number: The other vector or a number.
 ---@return Vector3: The product of the two vectors or the vector multiplied by a number.
 function Vector3:mul( value )
-    if is_number( value ) then
+    if isnumber( value ) then
         ---@cast value number
         return self:scale( value )
     else
@@ -214,7 +214,7 @@ end
 ---@param value Vector3 | number: The other vector or a number.
 ---@return Vector3: The quotient of the two vectors or the vector divided by a number.
 function Vector3:div( value )
-    if is_number( value ) then
+    if isnumber( value ) then
         ---@cast value number
         return self:scale( 1 / value )
     else
@@ -437,7 +437,7 @@ end
 ---@param frac number: The interpolation factor.
 ---@return Vector3: The interpolated vector.
 function Vector3:lerp( vector, frac )
-    if is_number( vector ) then
+    if isnumber( vector ) then
         ---@cast vector number
         self[ 1 ] = math_lerp( frac, self[ 1 ], vector )
         self[ 2 ] = math_lerp( frac, self[ 2 ], vector )
@@ -580,7 +580,7 @@ end
 ---@param angle number | Angle3: The angle to multiply with.
 ---@return Angle3: The multiplied angle.
 function Angle3:mul( angle )
-    if is_number( angle ) then
+    if isnumber( angle ) then
         ---@cast angle number
         self[ 1 ] = self[ 1 ] * angle
         self[ 2 ] = self[ 2 ] * angle
@@ -599,7 +599,7 @@ end
 ---@param angle number | Angle3: The angle to divide with.
 ---@return Angle3: The divided angle.
 function Angle3:div( angle )
-    if is_number( angle ) then
+    if isnumber( angle ) then
         self[ 1 ] = self[ 1 ] / angle
         self[ 2 ] = self[ 2 ] / angle
         self[ 3 ] = self[ 3 ] / angle
@@ -661,7 +661,7 @@ end
 ---@param frac number: The interpolation factor.
 ---@return Angle3: The interpolated angle.
 function Angle3:lerp( angle, frac )
-    if is_number( angle ) then
+    if isnumber( angle ) then
         ---@cast angle number
         self[ 1 ] = math_lerp( frac, self[ 1 ], angle )
         self[ 2 ] = math_lerp( frac, self[ 2 ], angle )

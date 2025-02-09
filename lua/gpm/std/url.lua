@@ -13,13 +13,10 @@ local table = std.table
 
 -- TODO: glua functions below
 local string_byte, string_char, string_sub, string_gsub, string_lower, string_format, string_len = string.byte, string.char, string.sub, string.gsub, string.lower, string.format, string.len
+local isstring, isnumber, istable = std.isstring, std.isnumber, std.istable
 local rshift, lshift, band, bor = bit.rshift, bit.lshift, bit.band, bit.bor
 local concat, remove = table.concat, table.remove
 local floor = math.floor
-
----@class gpm.std.is
-local is = std.is
-local isstring, isnumber, istable = is.string, is.number, is.table
 
 --- TODO: docs
 ---@param chars table: TODO
@@ -2141,7 +2138,7 @@ end
 --- Checks if the given value is a `URL`.
 ---@param value any: The value to check.
 ---@return boolean: Returns `true` if the value is a URL, otherwise `false`.
-function is.url( value )
+function std.isurl( value )
 	return getmetatable( value ) == URL
 end
 

@@ -5,7 +5,7 @@ local std = _G.gpm.std
 local string, math, debug = std.string, std.math, std.debug
 
 local bitcount, getmetatable, table_len, debug_findmetatable = std.bitcount, std.getmetatable, std.table.len, debug.findmetatable
-local is_function = std.is.fn
+local isfunction = std.isfunction
 
 ---@class Entity
 local ENTITY = debug_findmetatable( "Entity" )
@@ -246,7 +246,7 @@ local function read( metatable, ... )
     end
 
     local fn = metatable.__rx
-    if is_function( fn ) then
+    if isfunction( fn ) then
         return fn( ... )
     else
         error( "metatable method __rx is missing", 2 )
@@ -263,7 +263,7 @@ local function write( value, ... )
     end
 
     local fn = value.__tx
-    if is_function( fn ) then
+    if isfunction( fn ) then
         return fn( value, ... )
     else
         error( "metatable method __tx is missing", 2 )

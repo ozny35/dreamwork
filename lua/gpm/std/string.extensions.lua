@@ -48,7 +48,7 @@ end
 
 do
 
-    local is_number, is_bool = std.is.number, std.is.bool
+    local isnumber, isboolean = std.isnumber, std.isboolean
     local pairs = std.pairs
 
     --- Trims a string by bytes.
@@ -61,11 +61,11 @@ do
         local startPos, endPos = 1, string_len( str )
 
         for key, value in pairs( bytes ) do
-            if is_number( value ) then
+            if isnumber( value ) then
                 bytes[ value ] = true
                 bytes[ key ] = nil
-            elseif is_bool( value ) then
-                if not is_number( key ) then
+            elseif isboolean( value ) then
+                if not isnumber( key ) then
                     error( "invalid bytes to trim", 2 )
                 end
             else

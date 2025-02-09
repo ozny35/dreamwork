@@ -145,30 +145,280 @@ do
 
 end
 
----@class gpm.std.is
-local is = include( "std/is.lua" )
-std.is = is
+local tonumber = _G.tonumber
 
-local is_table, is_string, is_function = is.table, is.string, is.fn
+--- Attempts to convert the value to a number.
+---@param value any: The value to convert.
+---@param base number: The base used in the string. Can be any integer between 2 and 36, inclusive. (Default: 10)
+---@return number: The numeric representation of the value with the given base, or `nil` if the conversion failed.
+function std.tonumber( value, base )
+    local metatable = debug_getmetatable( value )
+    return metatable ~= nil and metatable.__tonumber( value, base ) or 0
+end
+
+--- Attempts to convert the value to a boolean.
+---@param value any: The value to convert.
+---@return boolean
+function std.toboolean( value )
+    if value == nil or value == false then return false end
+
+    local metatable = debug_getmetatable( value )
+    return metatable ~= nil and metatable.__tobool( value ) or true
+end
+
+std.tobool = std.toboolean
+
+--- Checks if the value is valid.
+---@param value any: The value to check.
+---@return boolean: Returns `true` if the value is valid, otherwise `false`.
+function std.isvalid( value )
+    local metatable = debug_getmetatable( value )
+    return ( metatable ~= nil and metatable.__isvalid and metatable.__isvalid( value ) ) == true
+end
+
+local isstring, STRING, NUMBER
+do
+
+    local debug_registermetatable = debug.registermetatable
+    local debug_setmetatable = debug.setmetatable
+
+    -- nil ( 0 )
+    do
+
+        local NIL = debug_getmetatable( nil )
+        if NIL == nil then
+            NIL = {}
+            debug_setmetatable( nil, NIL )
+        end
+
+        debug_registermetatable( "nil", NIL )
+
+        NIL.__type = "nil"
+        NIL.__typeid = 0
+
+        function NIL.__tobool()
+            return false
+        end
+
+        function NIL.__tonumber()
+            return 0
+        end
+
+        NIL.__bitcount = NIL.__tonumber
+
+    end
+
+    -- boolean ( 1 )
+    do
+
+        local BOOLEAN = debug_getmetatable( false )
+        if BOOLEAN == nil then
+            BOOLEAN = {}
+            debug_setmetatable( false, BOOLEAN )
+        end
+
+        debug_registermetatable( "boolean", BOOLEAN )
+
+        BOOLEAN.__type = "boolean"
+        BOOLEAN.__typeid = 1
+
+        function BOOLEAN.__tobool( value )
+            return value
+        end
+
+        function BOOLEAN.__tonumber( value )
+            return value == true and 1 or 0
+        end
+
+        function BOOLEAN.__bitcount()
+            return 1
+        end
+
+        --- Checks if the value type is a `boolean`.
+        ---@param value any: The value to check.
+        ---@return boolean: Returns `true` if the value is a boolean, otherwise `false`.
+        function std.isboolean( value )
+            return debug_getmetatable( value ) == BOOLEAN
+        end
+
+    end
+
+    -- number ( 3 )
+    do
+
+        NUMBER = debug_getmetatable( 0 )
+        if NUMBER == nil then
+            NUMBER = {}
+            debug_setmetatable( 0, NUMBER )
+        end
+
+        debug_registermetatable( "number", NUMBER )
+
+        NUMBER.__type = "number"
+        NUMBER.__typeid = 3
+
+        function NUMBER.__tobool( value )
+            return value ~= 0
+        end
+
+        function NUMBER.__tonumber( value )
+            return value
+        end
+
+        --- Checks if the value type is a `number`.
+        ---@param value any: The value to check.
+        ---@return boolean: Returns `true` if the value is a number, otherwise `false`.
+        function std.isnumber( value )
+            return debug_getmetatable( value ) == NUMBER
+        end
+
+    end
+
+    -- string ( 4 )
+    do
+
+        STRING = debug_getmetatable( "" )
+        if STRING == nil then
+            STRING = {}
+            debug_setmetatable( "", STRING )
+        end
+
+        debug_registermetatable( "string", STRING )
+
+        STRING.__type = "string"
+        STRING.__typeid = 4
+
+        function STRING.__tobool( value )
+            return value ~= "" and value ~= "0" and value ~= "false"
+        end
+
+        STRING.__tonumber = tonumber
+
+        --- Checks if the value type is a `string`.
+        ---@param value any: The value to check.
+        ---@return boolean: Returns `true` if the value is a string, otherwise `false`.
+        function isstring( value )
+            return debug_getmetatable( value ) == STRING
+        end
+
+        std.isstring = isstring
+
+    end
+
+    -- table ( 5 )
+    std.istable = _G.istable
+
+    -- function ( 6 )
+    do
+
+        local object = debug.fempty
+
+        local FUNCTION = debug_getmetatable( object )
+        if FUNCTION == nil then
+            FUNCTION = {}
+            debug_setmetatable( object, FUNCTION )
+        end
+
+        debug_registermetatable( "function", FUNCTION )
+
+        --- Checks if the value type is a `function`.
+        ---@param value any
+        ---@return boolean isFunction returns true if the value is a function, otherwise false
+        function std.isfunction( value )
+            return debug_getmetatable( value ) == FUNCTION
+        end
+
+        --- Checks if the value is callable.
+        ---@param value any: The value to check.
+        ---@return boolean: Returns `true` if the value is can be called (like a function), otherwise `false`.
+        function std.iscallable( value )
+            local metatable = debug_getmetatable( value )
+            return metatable ~= nil and ( metatable == FUNCTION or debug_getmetatable( metatable.__call ) == FUNCTION )
+        end
+
+    end
+
+    -- thread ( 8 )
+    do
+
+        local object = std.coroutine.create( debug.fempty )
+
+        local THREAD = debug_getmetatable( object )
+        if THREAD == nil then
+            THREAD = {}
+            debug_setmetatable( object, THREAD )
+        end
+
+        debug_registermetatable( "thread", THREAD )
+
+        --- Checks if the value type is a `thread`.
+        ---@param value any: The value to check.
+        ---@return boolean: Returns `true` if the value is a thread, otherwise `false`.
+        function std.isthread( value )
+            return debug_getmetatable( value ) == THREAD
+        end
+
+    end
+
+end
 
 do
+
     local game = _G.game
     if game == nil then
         std.DEDICATED_SERVER = false
     else
         local game_isDedicatedServer = game.IsDedicated
-        if is_function( game_isDedicatedServer ) then
+        if std.isfunction( game_isDedicatedServer ) then
             std.DEDICATED_SERVER = game_isDedicatedServer()
         else
             std.DEDICATED_SERVER = false
         end
     end
+
 end
 
 --- math library
 ---@class gpm.std.math
 local math = include( "std/math.lua" )
 std.math = math
+
+do
+
+    local math_ceil, math_log, math_ln2, math_isfinite = math.ceil, math.log, math.ln2, math.isfinite
+
+    function NUMBER.__bitcount( value )
+        if math_isfinite( value ) then
+            if ( value % 1 ) == 0 then
+                return math_ceil( math_log( value + 1 ) / math_ln2 ) + ( value < 0 and 1 or 0 )
+            elseif value >= 1.175494351E-38 and value <= 3.402823466E+38 then
+                return 32
+            else
+                return 64
+            end
+        else
+            return 0
+        end
+    end
+
+    --- Returns the bit count of the given value.
+    ---@param value any: The value to get the bit count of.
+    ---@return number: The bit count of the value.
+    local function bitcount( value )
+        local metatable = debug_getmetatable( value )
+        return metatable and metatable.__bitcount( value ) or 0
+    end
+
+    std.bitcount = bitcount
+
+    --- Returns the byte count of the given value.
+    ---@param value any: The value to get the byte count of.
+    ---@return number: The byte count of the value.
+    function std.bytecount( value )
+        return math_ceil( bitcount( value ) * 0.125 )
+    end
+
+end
 
 --- string library
 ---@class gpm.std.string
@@ -177,6 +427,10 @@ std.string = string
 
 local string_format = string.format
 local string_len = string.len
+
+function STRING.__bitcount( value )
+    return string_len( value ) * 8
+end
 
 do
 
@@ -247,25 +501,13 @@ do
         local metatable = debug_getmetatable( value )
         if metatable ~= nil then
             local name = rawget( metatable, "__type" )
-            if is_string( name ) then return name end
+            if isstring( name ) then return name end
         end
 
         return glua_type( value )
     end
 
     std.type = type
-
-    setmetatable( is, {
-        __index = function( _, key )
-            if is_string( key ) then
-                local function fn( value ) return type( value ) == key end
-                is[ key ] = fn
-                return fn
-            else
-                std.error( "string expected, got " .. type( key ), 2 )
-            end
-        end
-    } )
 
     --- Validates the type of the argument and returns a boolean and an error message.
     ---@param value any: The argument value.
@@ -286,36 +528,6 @@ end
 
 -- utf8 library
 string.utf8 = include( "std/string.utf8.lua" )
-
-local tonumber = _G.tonumber
-
---- Attempts to convert the value to a number.
----@param value any: The value to convert.
----@param base number: The base used in the string. Can be any integer between 2 and 36, inclusive. (Default: 10)
----@return number: The numeric representation of the value with the given base, or `nil` if the conversion failed.
-function std.tonumber( value, base )
-    local metatable = debug_getmetatable( value )
-    return ( metatable ~= nil and metatable.__tonumber or tonumber )( value, base )
-end
-
---- Attempts to convert the value to a boolean.
----@param value any: The value to convert.
----@return boolean
-function std.toboolean( value )
-    if value == nil or value == false then return false end
-
-    local metatable = debug_getmetatable( value )
-    if metatable == nil then return false end
-
-    local fn = metatable.__tobool
-    if fn == nil then
-        return true
-    else
-        return fn( value )
-    end
-end
-
-std.tobool = std.toboolean
 
 --- Returns an iterator `next` for a for loop that will return the values of the specified table in an arbitrary order.
 ---@param tbl table: The table to iterate over.
@@ -616,7 +828,7 @@ do
     end
 
     function Error:display()
-        if is_string( self ) then
+        if isstring( self ) then
             ---@diagnostic disable-next-line: cast-type-mismatch
             ---@cast self string
             ErrorNoHaltWithStack( self )
@@ -739,7 +951,7 @@ do
 
     local string_byteSplit, string_lower = string.byteSplit, string.lower
     local table_flip = table.flip
-    local is_url = std.is.url
+    local is_url = std.isurl
     local URL = std.URL
 
     ---@class gpm.std.File.path
@@ -987,8 +1199,8 @@ do
 
     ---@diagnostic disable-next-line: undefined-field
     local CompileString, gmbc_load_bytecode = _G.CompileString, _G.gmbc_load_bytecode
-
     local string_byte = string.byte
+    local istable = std.istable
 
     --- Loads a chunk
     ---@param chunk string | function: The chunk to load, can be a string or a function.
@@ -1012,11 +1224,11 @@ do
                     fn = gmbc_load_bytecode( chunk )
                 end
             elseif ( mode == "bt" or mode == "tb" or mode == "t" ) then
-                if not is_string( chunkName ) then return nil, "chunk name must be a string" end
+                if not isstring( chunkName ) then return nil, "chunk name must be a string" end
                 ---@cast chunkName string
 
                 fn = CompileString( chunk, chunkName, false )
-                if is_string( fn ) then
+                if isstring( fn ) then
                     ---@cast fn string
                     return nil, fn
                 end
@@ -1026,7 +1238,7 @@ do
                 return nil, "wrong load mode"
             end
 
-            if is_table( env ) then
+            if istable( env ) then
                 setfenv( fn, env )
             else
                 return nil, "environment must be a table"
@@ -1321,7 +1533,7 @@ end
 
 -- https://github.com/WilliamVenner/gmsv_workshop
 ---@diagnostic disable-next-line: undefined-field
-if SERVER and not ( is_table( _G.steamworks ) and is_function( _G.steamworks.DownloadUGC ) ) then
+if SERVER and not ( std.istable( _G.steamworks ) and std.isfunction( _G.steamworks.DownloadUGC ) ) then
     loadbinary( "workshop" )
 end
 
@@ -1354,104 +1566,6 @@ end
 
 -- server library
 std.server = include( "std/server.lua" )
-
--- Type to bit count conversion
-do
-
-    local debug_findmetatable = debug.findmetatable
-
-    do
-
-        local metatable = debug_findmetatable( "nil" )
-
-        if metatable == nil then
-            logger:error( "Failed to find metatable for `nil`." )
-        else
-            function metatable.__tobool() return false end
-            function metatable.__bitcount() return 0 end
-            function metatable.__tonumber() return 0 end
-            metatable.__type = "nil"
-            metatable.__typeid = 0
-        end
-
-    end
-
-    -- boolean
-    do
-
-        local metatable = debug_findmetatable( "boolean" )
-        if metatable == nil then
-            logger:error( "Failed to find metatable for `boolean`." )
-        else
-            function metatable.__tobool( value ) return value end
-            function metatable.__bitcount() return 1 end
-            function metatable.__tonumber( value ) return value == true and 1 or 0 end
-            metatable.__type = "boolean"
-            metatable.__typeid = 1
-        end
-
-    end
-
-    -- number
-    do
-
-        local metatable = debug_findmetatable( "number" )
-        if metatable == nil then
-            logger:error( "Failed to find metatable for `number`." )
-        else
-            local math_ceil, math_log, math_ln2, math_isfinite = math.ceil, math.log, math.ln2, math.isfinite
-
-            function metatable.__tobool( value )
-                return value ~= 0
-            end
-
-            function metatable.__bitcount( value )
-                if math_isfinite( value ) then
-                    if ( value % 1 ) == 0 then
-                        return math_ceil( math_log( value + 1 ) / math_ln2 ) + ( value < 0 and 1 or 0 )
-                    elseif value >= 1.175494351E-38 and value <= 3.402823466E+38 then
-                        return 32
-                    else
-                        return 64
-                    end
-                else
-                    return 0
-                end
-            end
-
-            function metatable.__tonumber( value )
-                return value
-            end
-
-            metatable.__type = "number"
-            metatable.__typeid = 3
-        end
-
-    end
-
-    -- string
-    do
-
-        local metatable = debug_findmetatable( "string" )
-        if metatable == nil then
-            logger:error( "Failed to find metatable for `string`." )
-        else
-            function metatable.__bitcount( value )
-                return string_len( value ) * 8
-            end
-
-            function metatable.__tobool( value )
-                return value ~= "" and value ~= "0" and value ~= "false"
-            end
-
-            metatable.__tonumber = tonumber
-            metatable.__type = "string"
-            metatable.__typeid = 4
-        end
-
-    end
-
-end
 
 if std.TYPE.COUNT ~= 44 then
     logger:warn( "Global TYPE_COUNT mismatch, data corruption suspected. (" .. tostring( _G.TYPE_COUNT or "missing" ) .. " ~= 44)"  )

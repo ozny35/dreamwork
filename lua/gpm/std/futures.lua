@@ -1,11 +1,10 @@
 --- Python-like futures, made by Retro
 local std = gpm.std
-local is = std.is
-local error = std.error
-local class = std.class
-local Symbol = std.Symbol
-local Queue = std.Queue
-local tostring, pcall, xpcall = std.tostring, pcall, xpcall
+
+local class, error = std.class, std.error
+local Symbol, Queue = std.Symbol, std.Queue
+local tostring, pcall, xpcall, isfunction = std.tostring, std.pcall, std.xpcall, std.isfunction
+
 ---@type coroutinelib
 local coroutine = std.coroutine
 local Timer_wait = std.Timer.wait
@@ -61,21 +60,27 @@ local function displayError( message )
     return error( message, -2 )
 end
 
+local asyncThreadResult
+do
 
----@async
----@param ok boolean
-local function asyncThreadResult( ok, value, ... )
-    local fn = futures.listeners[ futures.running() ]
-    if is.fn( fn ) then
-        fn( ok, value, ... )
-    elseif not ok then
-        -- TODO: use errors instead of this string
-        if is.string( value ) and string.find( value, "Operation was cancelled" ) then
-            return
+    local isstring = std.isstring
+
+    ---@async
+    ---@param ok boolean
+    function asyncThreadResult( ok, value, ... )
+        local fn = futures.listeners[ futures.running() ]
+        if isfunction( fn ) then
+            fn( ok, value, ... )
+        elseif not ok then
+            -- TODO: use errors instead of this string
+            if isstring( value ) and string.find( value, "Operation was cancelled" ) then
+                return
+            end
+
+            error( value, -2 )
         end
-
-        error( value, -2 )
     end
+
 end
 
 ---@async
@@ -823,18 +828,18 @@ end
 local function cancelList( awaitables )
     for i = 1, #awaitables do
         local awaitable = awaitables[ i ]
-        if is.fn( awaitable.cancel ) then
+        if isfunction( awaitable.cancel ) then
             awaitable:cancel()
         end
     end
 end
 
 --- Awaits concurrently all given `awaitables` and returns results in table
---- 
+---
 --- if any of awaitables throws an error, it will be thrown.
---- 
+---
 --- if any of awaitables if function, it will be asynchronously executed with given vararg
---- 
+---
 --- On error also cancels all other awaitables.
 ---@async
 ---@param awaitables Awaitable[]
@@ -845,13 +850,13 @@ function futures.all( awaitables )
         cancelList(awaitables)
         error( result )
     end
- 
+
     return result
 end
 
 
 --- Returns first result of futures, or error
---- 
+---
 --- Other awaitables will be cancelled after first result or error
 ---@async
 ---@param futureList Future[]

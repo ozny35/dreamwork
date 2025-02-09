@@ -5,10 +5,10 @@ local steamworks = _G.steamworks
 --- [SHARED AND MENU] The addon library.
 ---@class gpm.std
 local std = gpm.std
-local Future, is = std.Future, std.is
+local Future = std.Future
 
 local Timer_wait = std.Timer.wait
-local is_string = is.string
+local isstring = std.isstring
 
 
 ---@alias gpm.std.CONTENT_TYPE
@@ -584,7 +584,7 @@ do
         local f = Future()
 
         steamworks_Download( wsid, uncompress, function( filePath )
-            if is_string( filePath ) then
+            if isstring( filePath ) then
                 ---@cast filePath string
                 f:setResult( "/" .. filePath )
             else
@@ -627,7 +627,7 @@ do
         local f = Future()
 
         steamworks_DownloadUGC( wsid, function( filePath, file )
-            if is_string( filePath ) then
+            if isstring( filePath ) then
                 f:setResult( "/" .. filePath )
             else
                 if file == nil then
@@ -665,7 +665,7 @@ end
 do
 
     local steamworks_FileInfo = steamworks.FileInfo
-    local is_table = is.table
+    local istable = std.istable
 
     --- [SHARED AND MENU] Fetches the info of the addon from Steam Workshop.
     ---@param wsid string: The workshop ID of the addon.
@@ -676,7 +676,7 @@ do
         local f = Future()
 
         steamworks_FileInfo( wsid, function( info )
-            if is_table( info ) then
+            if istable( info ) then
                 ---@cast info UGCFileInfo
                 f:setResult( info )
             else
@@ -726,7 +726,7 @@ if std.MENU then
     end
 
     local ListAddonPresets = _G.ListAddonPresets
-    if is.fn( ListAddonPresets ) then
+    if std.isfunction( ListAddonPresets ) then
         _G.ListAddonPresets = gpm.detour.attach( _G.ListAddonPresets, function( fn )
             listAddonPresets()
             return fn()

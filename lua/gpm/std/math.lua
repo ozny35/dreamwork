@@ -477,13 +477,13 @@ math.inrage = inrage
 
 do
 
-    local is_number = std.is.number
+    local isnumber = std.isnumber
 
     --- Returns "integer" if x is an integer, "float" if it is a float, or nil if x is not a number.
     ---@param x number: The number to get the type of.
     ---@return "integer" | "float" | nil: The type of the number.
     function math.type( x )
-        if is_number( x ) then
+        if isnumber( x ) then
             return ( x % 1 ) == 0 and "integer" or "float"
         end
 
@@ -582,29 +582,6 @@ end
 ---@return number bits: The bits number.
 function math.byte2bit( x )
     return math_ceil( x ) * 8
-end
-
-do
-
-    local debug_getmetatable = std.debug.getmetatable
-
-    --- Returns the bit count of the given value.
-    ---@param value any: The value to get the bit count of.
-    ---@return number: The bit count of the value.
-    local function bitcount( value )
-        local metatable = debug_getmetatable( value )
-        return metatable and metatable.__bitcount( value ) or 0
-    end
-
-    math.bitcount = bitcount
-
-    --- Returns the byte count of the given value.
-    ---@param value any: The value to get the byte count of.
-    ---@return number: The byte count of the value.
-    function math.bytecount( value )
-        return math_ceil( bitcount( value ) * 0.125 )
-    end
-
 end
 
 return math

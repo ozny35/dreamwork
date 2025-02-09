@@ -1,6 +1,6 @@
 local _G = _G
 local std, steamworks = _G.gpm.std, _G.steamworks
-local Future, is_string, tonumber, Timer_wait = std.Future, std.is.string, std.tonumber, std.Timer.wait
+local Future, isstring, tonumber, Timer_wait = std.Future, std.isstring, std.tonumber, std.Timer.wait
 
 local string_byte, string_sub
 do
@@ -25,7 +25,7 @@ if steamworks ~= nil then
         local f = Future()
 
         steamworks_RequestPlayerInfo( sid64, function( name )
-            if is_string( name ) then
+            if isstring( name ) then
                 ---@cast name string
                 f:setResult( name )
             else
@@ -71,7 +71,7 @@ if steamworks ~= nil then
         end
 
         steamworks_Publish( filePath, imagePath, title, description or "", tags, function( wsid, errorMsg )
-            if is_string( errorMsg ) then
+            if isstring( errorMsg ) then
                 f:setError( errorMsg )
             else
                 f:setResult( wsid )
@@ -111,7 +111,7 @@ if steamworks ~= nil then
         end
 
         steamworks_Publish( filePath, imagePath, title, description or "", tags, function( _, errorMsg )
-            if is_string( errorMsg ) then
+            if isstring( errorMsg ) then
                 f:setError( errorMsg )
             else
                 f:setResult( true )

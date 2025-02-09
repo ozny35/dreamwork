@@ -199,7 +199,7 @@ do
 
     local ConVarExists, GetConVar, CreateConVar = _G.ConVarExists, _G.GetConVar, _G.CreateConVar
     local tostring, tonumber, toboolean = std.tostring, std.tonumber, std.toboolean
-    local is_string, is_number = std.is.string, std.is.number
+    local isstring, isnumber = std.isstring, std.isnumber
     local type = std.type
 
     ---@alias ConsoleVariableType string
@@ -228,7 +228,7 @@ do
     ---@protected
     function Variable:__init( data )
         local cvar_type = data.type
-        if not is_string( cvar_type ) then
+        if not isstring( cvar_type ) then
             cvar_type = "string"
         end
 
@@ -236,7 +236,7 @@ do
         self.type = cvar_type
 
         local name = data.name
-        if not is_string( name ) then
+        if not isstring( name ) then
             error( "Console variable name must be a string.", 3 )
         end
 
@@ -261,26 +261,26 @@ do
             ---@cast default string
 
             local flags = data.flags
-            if not is_number( flags ) then flags = nil end
+            if not isnumber( flags ) then flags = nil end
 
             ---@cast flags integer
 
             local description = data.description
-            if not is_string( description ) then
+            if not isstring( description ) then
                 description = tostring( description ) or ""
             end
 
             ---@cast description string
 
             local min = data.min
-            if not is_number( min ) then
+            if not isnumber( min ) then
                 min = nil
             end
 
             ---@cast min number
 
             local max = data.max
-            if not is_number( max ) then
+            if not isnumber( max ) then
                 max = nil
             end
 

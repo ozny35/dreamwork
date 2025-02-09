@@ -12,12 +12,7 @@ do
     string_sub, string_find, string_len, string_lower = string.sub, string.find, string.len, string.lower
 end
 
-local is_table, is_string, is_function
-do
-    local is = std.is
-    is_table, is_string, is_function = is.table, is.string, is["function"]
-end
-
+local istable = std.istable
 
 ---@class gpm.std.table
 local table = {
@@ -57,11 +52,11 @@ do
 
         for key, value in pairs( source ) do
             local key_copy
-            if is_table( key ) then
+            if istable( key ) then
                 key_copy = lookup_table[ key ] or deep_copy_with_keys_and_meta( key, lookup_table )
             end
 
-            if is_table( value ) then
+            if istable( value ) then
                 copy[ key_copy or key ] = lookup_table[ value ] or deep_copy_with_keys_and_meta( value, lookup_table )
             else
                 copy[ key_copy or key ] = value
@@ -77,11 +72,11 @@ do
 
         for key, value in pairs( source ) do
             local key_copy
-            if is_table( key ) then
+            if istable( key ) then
                 key_copy = lookup_table[ key ] or deep_copy_with_keys( key, lookup_table )
             end
 
-            if is_table( value ) then
+            if istable( value ) then
                 copy[ key_copy or key ] = lookup_table[ value ] or deep_copy_with_keys( value, lookup_table )
             else
                 copy[ key_copy or key ] = value
@@ -100,7 +95,7 @@ do
         end
 
         for key, value in pairs( source ) do
-            if is_table( key ) then
+            if istable( key ) then
                 lookup_table = lookup_table or {}
                 lookup_table[ source ] = copy
                 copy[ key ] = lookup_table[ value ] or deep_copy_with_meta( value, lookup_table )
@@ -116,7 +111,7 @@ do
         local copy = {}
 
         for key, value in pairs( source ) do
-            if is_table( value ) then
+            if istable( value ) then
                 lookup_table = lookup_table or {}
                 lookup_table[ source ] = copy
                 copy[ key ] = lookup_table[ value ] or deep_copy( value, lookup_table )
@@ -181,7 +176,7 @@ do
             if copyKeys then
                 for index = from, to, 1 do
                     local value = rawget( source, index )
-                    if is_table( value ) then
+                    if istable( value ) then
                         if copyMetatables then
                             copy[ index ] = deep_copy_with_keys_and_meta( source, {} )
                         else
@@ -194,7 +189,7 @@ do
             else
                 for index = from, to, 1 do
                     local value = rawget( source, index )
-                    if is_table( value ) then
+                    if istable( value ) then
                         if copyMetatables then
                             copy[ index ] = deep_copy_with_meta( source )
                         else
@@ -234,7 +229,7 @@ do
                 return false
             end
 
-            if not ( debug_getmetatable( value ) or debug_getmetatable( alt ) ) and is_table( value ) and is_table( alt ) then
+            if not ( debug_getmetatable( value ) or debug_getmetatable( alt ) ) and istable( value ) and istable( alt ) then
                 return equal( value, alt )
             end
 
@@ -249,7 +244,7 @@ do
                 return false
             end
 
-            if not ( debug_getmetatable( value ) or debug_getmetatable( alt ) ) and is_table( value ) and is_table( alt ) then
+            if not ( debug_getmetatable( value ) or debug_getmetatable( alt ) ) and istable( value ) and istable( alt ) then
                 return equal( value, alt )
             end
 
@@ -284,7 +279,7 @@ do
                 result[ length ] = key
             end
 
-            if not ( debug_getmetatable( value ) or debug_getmetatable( alt ) ) and is_table( value ) and is_table( alt ) then
+            if not ( debug_getmetatable( value ) or debug_getmetatable( alt ) ) and istable( value ) and istable( alt ) then
                 result, length = diffKeys( value, alt, result, length )
             end
 
@@ -301,7 +296,7 @@ do
                 result[ length ] = key
             end
 
-            if not ( debug_getmetatable( value ) or debug_getmetatable( alt ) ) and is_table( value ) and is_table( alt ) then
+            if not ( debug_getmetatable( value ) or debug_getmetatable( alt ) ) and istable( value ) and istable( alt ) then
                 result, length = diffKeys( value, alt, result, length )
             end
 
@@ -333,7 +328,7 @@ do
                 result[ key ] = { value, alt }
             end
 
-            if not ( debug_getmetatable( value ) or debug_getmetatable( alt ) ) and is_table( value ) and is_table( alt ) then
+            if not ( debug_getmetatable( value ) or debug_getmetatable( alt ) ) and istable( value ) and istable( alt ) then
                 ---@cast alt table
                 result[ key ] = diff( value, alt )
             end
@@ -350,7 +345,7 @@ do
                     result[ key ] = { value, alt }
                 end
 
-                if not ( debug_getmetatable( value ) or debug_getmetatable( alt ) ) and is_table( value ) and is_table( alt ) then
+                if not ( debug_getmetatable( value ) or debug_getmetatable( alt ) ) and istable( value ) and istable( alt ) then
                     ---@cast alt table
                     result[ key ] = diff( value, alt )
                 end
@@ -370,6 +365,8 @@ end
 
 do
 
+    local isstring = std.isstring
+
     --- Converts a table to lowercase.
     ---@param tbl table The table to convert.
     ---@param lowerKeys? boolean Whether to convert keys to lowercase.
@@ -377,16 +374,16 @@ do
     ---@return table tbl
     local function lower( tbl, lowerKeys, lowerValues )
         for key, value in pairs( tbl ) do
-            if is_table( key ) then
+            if istable( key ) then
                 lower( key, lowerKeys, lowerValues )
-            elseif lowerKeys and is_string( key ) then
+            elseif lowerKeys and isstring( key ) then
                 tbl[ key ] = nil
                 key = string_lower( key )
             end
 
-            if is_table( value ) then
+            if istable( value ) then
                 lower( value, lowerKeys, lowerValues )
-            elseif lowerValues and is_string( value ) then
+            elseif lowerValues and isstring( value ) then
                 value = string_lower( value )
             end
 
@@ -659,7 +656,7 @@ function table.set( tbl, str, value )
             pointer = startPos + 1
 
             local tbl_value = rawget( tbl, key )
-            if is_table( tbl_value ) then
+            if istable( tbl_value ) then
                 tbl = tbl_value
             else
                 rawset( tbl, key, {} )
@@ -792,6 +789,7 @@ end
 do
 
     local getmetatable = std.getmetatable
+    local isfunction = std.isfunction
 
     --- Returns the length of the given table.
     ---@param tbl table: The table.
@@ -804,11 +802,7 @@ do
         end
 
         local fn = rawget( metatable, "__len" )
-        if is_function( fn ) then
-            return fn( tbl )
-        end
-
-        return #tbl
+        return isfunction( fn ) and fn( tbl ) or #tbl
     end
 
 end
