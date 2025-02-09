@@ -3,13 +3,10 @@ local _G = _G
 ---@class gpm.std
 local std = _G.gpm.std
 
----@class gpm.std.is
-local is = std.is
-
 ---@class gpm.std.class
 local class = std.class
 
-local error, tonumber, assert, is_number, type = std.error, std.tonumber, std.assert, is.number, std.type
+local error, tonumber, assert, isnumber, type = std.error, std.tonumber, std.assert, std.isnumber, std.type
 
 local string, math = std.string, std.math
 local string_char, string_byte, string_len, string_sub, string_format, string_match, string_find, string_rep = string.char, string.byte, string.len, string.sub, string.format, string.match, string.find, string.rep
@@ -28,47 +25,39 @@ local struct = {
 local endianness = {}
 struct.endianness = endianness
 
-local endianness_isBig, endianness_setBig, endianness_setLittle, endianness_revert
+local is_big_endianness
 do
 
 	local is_host_big = string_byte( string.dump( std.debug.fempty ), 7 ) == 0x00
-	local is_bit = is_host_big
+	is_big_endianness = is_host_big
 
 	function endianness.getDefault()
 		return is_host_big
 	end
 
-	function endianness_revert()
-		is_bit = is_host_big
+	function endianness.revert()
+		is_big_endianness = is_host_big
 	end
-
-	endianness.revert = endianness_revert
 
 	function endianness.get()
-		return is_bit and "big" or "little"
+		return is_big_endianness and "big" or "little"
 	end
 
-	function endianness_isBig()
-		return is_bit
+	function endianness.isBig()
+		return is_big_endianness
 	end
 
-	endianness.isBig = endianness_isBig
-
-	function endianness_setBig()
-		is_bit = true
+	function endianness.setBig()
+		is_big_endianness = true
 	end
-
-	endianness.setBig = endianness_setBig
 
 	function endianness.isLittle()
-		return not is_bit
+		return not is_big_endianness
 	end
 
-	function endianness_setLittle()
-		is_bit = false
+	function endianness.setLittle()
+		is_big_endianness = false
 	end
-
-	endianness.setLittle = endianness_setLittle
 
 end
 
@@ -83,6 +72,11 @@ do
 	---@field protected buffer_size number
 	---@field protected buffer table
 	local Cursor = class.base( "Cursor" )
+
+	---@class gpm.std.struct.CursorClass: gpm.std.struct.Cursor
+	---@field __base gpm.std.struct.Cursor
+	---@overload fun( data: string ): gpm.std.struct.Cursor
+	struct.Cursor = class.create( Cursor )
 
 	---@protected
 	function Cursor:__tostring()
@@ -178,18 +172,6 @@ do
 		return string_sub( self.data, pointer + 1, pointer + length )
 	end
 
-	---@class gpm.std.struct.CursorClass: gpm.std.struct.Cursor
-	---@field __base gpm.std.struct.Cursor
-	---@overload fun( data: string ): gpm.std.struct.Cursor
-	struct.Cursor = class.create( Cursor )
-
-	--- [SHARED AND MENU] Checks if `value` is a `Cursor`.
-	---@param value any: The value to check.
-	---@return boolean: `true` if `any` is a `Cursor`, otherwise `false`.
-	function is.cursor( value )
-		return getmetatable( value ) == Cursor
-	end
-
 end
 
 -- https://github.com/ToxicFrog/vstruct/blob/master/init.lua
@@ -262,28 +244,17 @@ do
 	local registerIO
 	do
 
-		---@return true
-		local function defaultValidate()
-			return true
-		end
-
 		local _base_0 = {
 			__index = {
 				getSize = defaultSize,
-				Validate = defaultValidate,
-				HasValue = function()
-					return false
-				end
+				hasValue = function() return false end
 			}
 		}
 
 		local _base_1 = {
 			__index = {
 				getSize = defaultTypeSize,
-				Validate = defaultValidate,
-				HasValue = function()
-					return true
-				end
+				hasValue = function() return true end
 			}
 		}
 
@@ -339,8 +310,8 @@ do
 	-- https://github.com/ToxicFrog/vstruct/blob/master/io.lua
 	-- big-endian
 	registerIO( ">", {
-		read = endianness_setBig,
-		write = endianness_setBig,
+		read = endianness.setBig,
+		write = endianness.setBig,
 		getSize = function( number )
 			assert( number == nil, "'>' is an endianness control, and does not have size" )
 			return 0
@@ -349,8 +320,8 @@ do
 
 	-- little-endian
 	registerIO( "<", {
-		read = endianness_setLittle,
-		write = endianness_setLittle,
+		read = endianness.setLittle,
+		write = endianness.setLittle,
 		getSize = function( number )
 			assert( number == nil, "'<' is an endianness control, and does not have size" )
 			return 0
@@ -359,8 +330,8 @@ do
 
 	-- host
 	registerIO( "=", {
-		read = endianness_revert,
-		write = endianness_revert,
+		read = endianness.revert,
+		write = endianness.revert,
 		getSize = function( number )
 			assert( number == nil, "'=' is an endianness control, and does not have size" )
 			return 0
@@ -394,7 +365,7 @@ do
 			if bytes == nil then bytes = 4 end
 
 			local number = 0
-			if endianness_isBig() then
+			if is_big_endianness then
 				for index = 1, bytes, 1 do
 					number = number * 0x100 + string_byte( binary, index, index )
 				end
@@ -416,7 +387,7 @@ do
 			number = math_trunc( number )
 
 			local buffer = {}
-			if endianness_isBig() then
+			if is_big_endianness then
 				for index = bytes, 1, -1 do
 					buffer[ index ] = string_char( number % 0x100 )
 					number = math_trunc( number * 0.00390625 )
@@ -457,7 +428,7 @@ do
 		---@return number
 		local function size( value )
 			if value == nil then value = 4 end
-			assert( is_number( value ), "unsigned integer size must be a number" )
+			assert( isnumber( value ), "unsigned integer size must be a number" )
 			return value
 		end
 
@@ -795,7 +766,7 @@ do
 	registerIO( "s", {
 		getSize = function( size )
 			if size then
-				assert( is_number( size ), "size must be a number" )
+				assert( isnumber( size ), "size must be a number" )
 				assert( size ~= 0, "size must be greater than 0" )
 			end
 		end,
@@ -872,7 +843,7 @@ do
 		if size == nil then size = string_len( binary ) end
 
 		local mask, length = {}, 0
-		if endianness_isBig() then
+		if is_big_endianness then
 			for index = size, 1, -1 do
 				local byte = string_byte( binary, index, index )
 				for _ = 1, 8 do
@@ -899,21 +870,13 @@ do
 
 	local function writeBitmask( _, bits, size )
 		local buffer, length = {}, 0
-		if endianness_isBig() then
-			for index = size * 8, 1, -8 do
-				length = length + 1
-				buffer[ length ] = implode( bits, 8, index - 1 )
-			end
 
-			return writeString( nil, string_char( table_unpack( buffer, 1, length ) ), size )
-		else
-			for index = 1, size * 8, 8 do
-				length = length + 1
-				buffer[ length ] = implode( bits, 8, index - 1 )
-			end
-
-			return writeString( nil, string_char( table_unpack( buffer, 1, length ) ), size )
+		for index = is_big_endianness and ( size * 8 ) or 1, is_big_endianness and 1 or ( size * 8 ), is_big_endianness and -8 or 8 do
+			length = length + 1
+			buffer[ length ] = string_char( implode( bits, 8, index - 1 ) )
 		end
+
+		return writeString( nil, length == 0 and "" or table_concat( buffer, "", 1, length ), size )
 	end
 
 	registerIO( "m", {
@@ -1476,7 +1439,7 @@ do
 
 			value = data[ string_match( key, "[^%.]+$" ) ]
 			assert( value ~= nil, "backreferenced field '" .. key .. "' has not been read yet" )
-			assert( is_number( value ), "backreferenced field '" .. key .. "' is not a numeric type" )
+			assert( isnumber( value ), "backreferenced field '" .. key .. "' is not a numeric type" )
 			return value
 		end
 
@@ -1506,15 +1469,21 @@ do
 		self.size = children.size
 	end
 
-	function Root:read( fileDescriptor, data )
-		endianness_revert()
-		self[ 1 ]:read( fileDescriptor, data )
-		return data
-	end
+	do
 
-	function Root:write( fileDescriptor, data )
-		endianness_revert()
-		self[ 1 ]:write( fileDescriptor, { data = data, n = 1 } )
+		local endianness_revert = endianness.revert
+
+		function Root:read( fileDescriptor, data )
+			endianness_revert()
+			self[ 1 ]:read( fileDescriptor, data )
+			return data
+		end
+
+		function Root:write( fileDescriptor, data )
+			endianness_revert()
+			self[ 1 ]:write( fileDescriptor, { data = data, n = 1 } )
+		end
+
 	end
 
 	---@class gpm.std.struct.ast.RootClass: gpm.std.struct.ast.Root
@@ -1684,9 +1653,8 @@ do
 			local byte_count = string_len( binary )
 			local data = { string_byte( binary, 1, byte_count ) }
 
-			local isBig = endianness_isBig()
-			local index = isBig and 1 or byte_count
-			local delta = isBig and 1 or -1
+			local index = is_big_endianness and 1 or byte_count
+			local delta = is_big_endianness and 1 or -1
 			local bit0 = 7
 
 			return function()
@@ -1707,9 +1675,8 @@ do
 				buffer[ index ] = 0
 			end
 
-			local isBig = endianness_isBig()
-			local index = isBig and 1 or size
-			local delta = isBig and 1 or -1
+			local index = is_big_endianness and 1 or size
+			local delta = is_big_endianness and 1 or -1
 			local bit0 = 7
 
 			return function( byte1 )
@@ -1801,7 +1768,7 @@ do
 		end
 
 		self.size = io[ name ].getSize( argv[ 1 ] )
-		self.hasvalue = io[ name ].HasValue()
+		self.hasvalue = io[ name ].hasValue()
 		self.argv = argv
 		argv.n = n
 	end
@@ -2098,12 +2065,12 @@ do
 	do
 
 		local Cursor = struct.Cursor
-		local is_string = is.string
+		local isstring = std.isstring
 
 		---@param fileDescriptor string | gpm.std.struct.Cursor
 		---@return gpm.std.struct.Cursor
 		function wrapFileDescriptor( fileDescriptor )
-			if is_string( fileDescriptor ) then
+			if isstring( fileDescriptor ) then
 				---@cast fileDescriptor string
 				return Cursor( fileDescriptor )
 			end
@@ -2122,18 +2089,20 @@ do
 
 	end
 
-	local is_cursor = is.cursor
+	-- local is_cursor = is.cursor
 	-- local is_table = is.table
 
 	---comment
 	---@param fileDescriptor any
 	---@return string
 	local function unwrapFileDescriptor( fileDescriptor )
-		if is_cursor( fileDescriptor ) then
-			return fileDescriptor:flush()
-		else
-			return fileDescriptor
-		end
+		-- TODO: !!!
+
+		-- if is_cursor( fileDescriptor ) then
+		-- 	return fileDescriptor:flush()
+		-- else
+		-- 	return fileDescriptor
+		-- end
 	end
 
 	api.UnwrapFileDescriptor = unwrapFileDescriptor
