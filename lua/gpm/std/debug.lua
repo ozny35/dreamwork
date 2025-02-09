@@ -1,5 +1,5 @@
 local _G = _G
-local glua_debug = _G.debug
+local std, glua_debug = _G.gpm.std, _G.debug
 local debug_getinfo, glua_string = glua_debug.getinfo, _G.string
 
 --- [SHARED AND MENU] Just empty function, do nothing.
@@ -76,8 +76,19 @@ do
         local debug_getmetatable = debug.getmetatable
         local type = _G.type
 
+        --- [SHARED AND MENU] Returns the metatable of the given value or `nil` if not found.
+        ---@param value any: The value.
+        ---@return table | nil: The metatable.
         function debug.getmetatable( value )
             return debug_getmetatable( value ) or registry[ type( value ) ]
+        end
+
+        --- [SHARED AND MENU] Returns `true` if value has a custom `__index`.
+        ---@param value any: The value.
+        ---@return boolean: Returns `true` if value has a custom `__index`, otherwise `false`.
+        function debug.hascustomindex( value )
+            local metatable = debug_getmetatable( value )
+            return not ( metatable == nil or rawget( metatable, "__index" ) == nil )
         end
 
     end
@@ -146,8 +157,8 @@ do
     local gsub_formatter = function( _, str ) return str end
 
     --- [SHARED AND MENU] Returns the path to the file in which it was called or an empty string if it could not be found.
-    ---@param location function | integer
-    ---@return string path
+    ---@param location function | integer: The function or location to get the path from.
+    ---@return string path: The path to the file in which it was called or an [b]empty string[/b] if it could not be found.
     function debug.getfpath( location )
         local info = debug_getinfo( location, "S" )
         if info.what == "main" then
@@ -159,8 +170,6 @@ do
     end
 
 end
-
-local std = _G.gpm.std
 
 if std.jit then
 
@@ -176,7 +185,7 @@ if std.jit then
 
 else
 
-    function debug.isjitcompilable( fn )
+    function debug.isjitcompilable()
         return false
     end
 
