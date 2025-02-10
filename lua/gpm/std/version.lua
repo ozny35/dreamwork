@@ -1,6 +1,11 @@
 -- Semver lua parser. Based on https://github.com/kikito/semver.lua
 -- https://github.com/Pika-Software/gpm_legacy/blob/main/lua/gpm/sh_semver.lua
 
+
+
+-- TODO: rewrite to class system
+
+
 local _G = _G
 local std = _G.gpm.std
 local table_sort = std.table.sort
@@ -12,11 +17,7 @@ do
 	bit_band, bit_bor, bit_lshift, bit_rshift = bit.band, bit.bor, bit.lshift, bit.rshift
 end
 
-local is_string, is_number
-do
-	local is = std.is
-	is_string, is_number = is.string, is.number
-end
+local isstring, isnumber = std.isstring, std.isnumber
 
 local math_isuint, math_max
 do

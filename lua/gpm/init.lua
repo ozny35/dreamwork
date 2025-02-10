@@ -597,12 +597,8 @@ std.Hook = include( "std/hook.lua" )
 
 do
 
-    local Hook = std.Hook
-
-    --- [SHARED AND MENU] A hook that is called every tick.
-    std.TickHook = std.TickHook or Hook( "Tick" )
-
-end
+--- [SHARED AND MENU] A hook that is called every tick.
+std.TickHook = std.TickHook or std.Hook( "Tick" )
 
 --- [SHARED AND MENU] Timer class
 std.Timer = include( "std/timer.lua" )
@@ -1166,6 +1162,7 @@ do
         "Blazing fast ☄",
         "Here For You ♪",
         "Good Enough ♪",
+        "MAKE A MOVE ♪",
         "v" .. version,
         "Hello World!",
         "Star Glide ♪",
