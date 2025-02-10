@@ -434,15 +434,13 @@ function table.slice( tbl, from, to, step )
 end
 
 --- [SHARED AND MENU] Injects values from one table to another.
+---@param destination table: The destination table.
 ---@param source table: The source table.
----@param destination? table: The destination table.
 ---@param position? integer: The position to inject.
 ---@param from? integer: The start position.
 ---@param to? integer: The end position.
 ---@return table: The destination table.
-function table.inject( source, destination, position, from, to )
-    if destination == nil then destination = {} end
-
+function table.inject( destination, source, position, from, to )
     if position == nil then
         -- if position, from and to are nil then just append to the end ( aka table.append )
         if from == nil and to == nil then
@@ -492,13 +490,24 @@ end
 
 --- [SHARED AND MENU] Removes a range of values from the given table.
 ---@param tbl table: The table to remove from.
----@param from integer: The start position.
----@param to integer: The end position.
-function table.removeByRange( tbl, from, to )
+---@param from? integer: The start position.
+---@param to? integer: The end position.
+---@return table: The same table.
+function table.eject( tbl, from, to )
     local length = #tbl
 
+    if from == nil then
+        if to == nil then
+            return tbl
+        end
+
+        from = 1
+    elseif to == nil then
+        to = length
+    end
+
     if from > to then
-        from, to = to, from
+        return tbl
     end
 
     for index = from, to, 1 do
@@ -509,6 +518,8 @@ function table.removeByRange( tbl, from, to )
     for index = to + 1, length, 1 do
         tbl[ index - distance ], tbl[ index ] = tbl[ index ], nil
     end
+
+    return tbl
 end
 
 --- [SHARED AND MENU] Returns true if the given list (table) contains the given value.

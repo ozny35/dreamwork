@@ -115,8 +115,8 @@ end
 
 do
 
-    local table_removeByRange = std.table.removeByRange
     local debug_fempty = std.debug.fempty
+    local table_eject = std.table.eject
 
     --- [SHARED AND MENU] Detaches a callback from the timer.
     ---@param name string: The name of the callback to detach.
@@ -133,7 +133,7 @@ do
                         queue[ #queue + 1 ] = { false, name }
                     end
                 else
-                    table_removeByRange( self, i, i + 1 )
+                    table_eject( self, i, i + 1 )
                     self[ 0 ] = self[ 0 ] - 2
                 end
 
