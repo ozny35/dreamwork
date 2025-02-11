@@ -8,6 +8,8 @@ local setmetatable = std.setmetatable
 local table_insert = std.table.insert
 local detour_attach = gpm.detour.attach
 
+local transducers = gpm.transducers
+
 --- [SHARED AND MENU] Source engine events library
 ---@class gpm.engine
 local engine = gpm.engine or {}
@@ -19,6 +21,26 @@ local engine_hookCall
 if engine.hookCatch == nil then
 
     local engine_hooks = {}
+
+    do
+
+        local AcceptInput = {}
+
+        setmetatable( AcceptInput, {
+            __call = function( self, entity, input, activator, caller, value )
+                entity, activator, caller = transducers[ entity ], transducers[ activator ], transducers[ caller ]
+
+                for i = 1, #self, 1 do
+                    local allow = self[ i ]( entity, input, activator, caller, value )
+                    if allow ~= nil then return not allow end
+                end
+            end,
+            __mode = "v"
+        } )
+
+        engine_hooks.AcceptInput = AcceptInput
+
+    end
 
     do
 

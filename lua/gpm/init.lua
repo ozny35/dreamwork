@@ -27,6 +27,10 @@ if gpm.detour == nil then
     gpm.detour = include( "detour.lua" )
 end
 
+---@class gpm.transducers
+local transducers = {}
+gpm.transducers = transducers
+
 --- gpm standard environment
 ---@class gpm.std
 ---@field DEDICATED_SERVER boolean: `true` if game is dedicated server, `false` otherwise.
@@ -44,8 +48,9 @@ local error = _G.error
 std.error = error
 
 std.assert = std.assert or _G.assert
-std.getmetatable = std.getmetatable or _G.getmetatable
-std.setmetatable = std.setmetatable or _G.setmetatable
+
+local getmetatable, setmetatable = std.getmetatable or _G.getmetatable, std.setmetatable or _G.setmetatable
+std.getmetatable, std.setmetatable = getmetatable, setmetatable
 
 do
 
@@ -99,6 +104,18 @@ if SERVER then
         end
     end
 end
+
+setmetatable( transducers, {
+    __index = function( self, value )
+        local metatable = getmetatable( value )
+        if metatable == nil then return value end
+
+        local fn = rawget( self, metatable )
+        if fn == nil then return value end
+
+        return fn( value )
+    end
+} )
 
 ---@class gpm.std.debug
 local debug = include( "std/debug.lua" )
@@ -540,31 +557,35 @@ function std.pairs( tbl )
     return ( metatable ~= nil and metatable.__pairs or pairs )( tbl )
 end
 
---- Returns a [Stateless Iterator](https://www.lua.org/pil/7.3.html) for a [Generic For Loops](https://www.lua.org/pil/4.3.5.html), to return ordered key-value pairs from a table.
----
---- This will only iterate though <b>numerical keys</b>, and these must also be sequential; starting at 1 with no gaps.
----
----@param tbl table: The table to iterate over.
----@return function: The iterator function.
----@return table: The table being iterated over.
----@return number: The origin index =0.
-function std.ipairs( tbl )
-    local metatable = debug_getmetatable( tbl )
-    if metatable == nil or rawget( metatable, "__index" ) == nil then
-        return ipairs( tbl )
+do
+
+    local debug_hascustomindex = debug.hascustomindex
+
+    --- Returns a [Stateless Iterator](https://www.lua.org/pil/7.3.html) for a [Generic For Loops](https://www.lua.org/pil/4.3.5.html), to return ordered key-value pairs from a table.
+    ---
+    --- This will only iterate though <b>numerical keys</b>, and these must also be sequential; starting at 1 with no gaps.
+    ---
+    ---@param tbl table: The table to iterate over.
+    ---@return function: The iterator function.
+    ---@return table: The table being iterated over.
+    ---@return number: The origin index =0.
+    function std.ipairs( tbl )
+        if debug_hascustomindex( tbl ) then
+            local index = 0
+            return function()
+                index = index + 1
+                local value = tbl[ index ]
+                if value == nil then return end
+                return index, value
+            end, tbl, index
+        else
+            return ipairs( tbl )
+        end
     end
 
-    local index = 0
-    return function()
-        index = index + 1
-        local value = tbl[ index ]
-        if value == nil then return end
-        return index, value
-    end, tbl, index
 end
 
 gpm.engine = include( "gpm/engine.lua" )
-
 
 --- class library
 ---@class gpm.std.class
