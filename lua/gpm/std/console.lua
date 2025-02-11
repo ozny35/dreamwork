@@ -174,21 +174,23 @@ do
             end
         end
 
-        local concommand = _G.concommand
-        if concommand == nil then
-            ---@diagnostic disable-next-line: inject-field
-            concommand = {}; _G.concommand = concommand
-        end
+        -- TODO: replace with gpm.engine
 
-        local concommand_Run = concommand.Run
-        if concommand_Run == nil then
-            concommand.Run = engine_hook
-        else
-            concommand.Run = gpm.detour.attach( concommand_Run, function( fn, ply, cmd, args, argumentString )
-                engine_hook( ply, cmd, args, argumentString )
-                return fn( ply, cmd, args, argumentString )
-            end )
-        end
+        -- local concommand = _G.concommand
+        -- if concommand == nil then
+        --     ---@diagnostic disable-next-line: inject-field
+        --     concommand = {}; _G.concommand = concommand
+        -- end
+
+        -- local concommand_Run = concommand.Run
+        -- if concommand_Run == nil then
+        --     concommand.Run = engine_hook
+        -- else
+        --     concommand.Run = gpm.detour.attach( concommand_Run, function( fn, ply, cmd, args, argumentString )
+        --         engine_hook( ply, cmd, args, argumentString )
+        --         return fn( ply, cmd, args, argumentString )
+        --     end )
+        -- end
 
     end
 
@@ -648,34 +650,36 @@ do
             return f:await()
         end
 
-        _G.cvars.OnConVarChanged = gpm.detour.attach( _G.cvars.OnConVarChanged, function( fn, name, old, new )
-            local lst = callbacks[ name ]
-            if lst ~= nil then
-                for i = #lst, 1, -1 do
-                    local data = lst[ i ]
+        -- TODO: replace with gpm.engine
 
-                    local cvar = data[ 1 ]
-                    local cvar_type = cvar.type
+        -- _G.cvars.OnConVarChanged = gpm.detour.attach( _G.cvars.OnConVarChanged, function( fn, name, old, new )
+        --     local lst = callbacks[ name ]
+        --     if lst ~= nil then
+        --         for i = #lst, 1, -1 do
+        --             local data = lst[ i ]
 
-                    local old_value, new_value
-                    if cvar_type == "boolean" then
-                        old_value, new_value = old == "1", new == "1"
-                    elseif cvar_type == "number" then
-                        old_value, new_value = tonumber( old, 10 ), tonumber( new, 10 )
-                    elseif cvar_type == "string" then
-                        old_value, new_value = old, new
-                    end
+        --             local cvar = data[ 1 ]
+        --             local cvar_type = cvar.type
 
-                    data[ 2 ]( cvar, old_value, new_value )
+        --             local old_value, new_value
+        --             if cvar_type == "boolean" then
+        --                 old_value, new_value = old == "1", new == "1"
+        --             elseif cvar_type == "number" then
+        --                 old_value, new_value = tonumber( old, 10 ), tonumber( new, 10 )
+        --             elseif cvar_type == "string" then
+        --                 old_value, new_value = old, new
+        --             end
 
-                    if data[ 4 ] then
-                        table_remove( lst, i )
-                    end
-                end
-            end
+        --             data[ 2 ]( cvar, old_value, new_value )
 
-            return fn( name, old, new )
-        end )
+        --             if data[ 4 ] then
+        --                 table_remove( lst, i )
+        --             end
+        --         end
+        --     end
+
+        --     return fn( name, old, new )
+        -- end )
 
     end
 

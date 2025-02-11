@@ -87,6 +87,7 @@ if SERVER then
     if AddCSLuaFile ~= nil then
         AddCSLuaFile( "gpm/database.lua" )
         AddCSLuaFile( "gpm/detour.lua" )
+        AddCSLuaFile( "gpm/engine.lua" )
 
         local files = _G.file.Find( "gpm/std/*", "lsv" )
         local string_find = _G.string.find
@@ -562,6 +563,9 @@ function std.ipairs( tbl )
     end, tbl, index
 end
 
+gpm.engine = include( "gpm/engine.lua" )
+
+
 --- class library
 ---@class gpm.std.class
 local class = include( "std/class.lua" )
@@ -594,11 +598,6 @@ end
 
 --- [SHARED AND MENU] Hook class
 std.Hook = include( "std/hook.lua" )
-
-do
-
---- [SHARED AND MENU] A hook that is called every tick.
-std.TickHook = std.TickHook or std.Hook( "Tick" )
 
 --- [SHARED AND MENU] Timer class
 std.Timer = include( "std/timer.lua" )
@@ -1173,7 +1172,8 @@ do
         "Now on LLS!",
         "That's me!",
         "I see you.",
-        "Light Up ♪"
+        "Light Up ♪",
+        "Majesty ♪"
     }
 
     local count = #splashes + 1
@@ -1573,6 +1573,12 @@ if std._VERSION ~= "Lua 5.1" then
 end
 
 logger:info( "Start-up time: %.4f sec.", SysTime() - gpm.StartTime )
+
+do
+    local start_time = SysTime()
+    std.debug.gc.collect()
+    logger:info( "Clean-up time: %.4f sec.", SysTime() - start_time )
+end
 
 -- TODO: put https://wiki.facepunch.com/gmod/Global.DynamicLight somewhere
 -- TODO: put https://wiki.facepunch.com/gmod/Global.ProjectedTexture somewhere

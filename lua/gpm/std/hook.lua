@@ -9,10 +9,10 @@ local getmetatable = std.getmetatable
 
     Event structure
     [-5] - queue list ( to add or remove callbacks ) ( table[] )
-    [-4] - hook is running ( boolean )
-    [-3] - returns vararg ( boolean )
+    [-4] - mixer function ( function )
+    [-3] - vararg support ( boolean )
     [-2] - engine hook name ( string )
-    [-1] - mixer function ( function )
+    [-1] - hook is running ( boolean )
     [0] - last callback index
 
     [1] - identifier ( string )
@@ -46,64 +46,18 @@ local Hook = std.class.base( "Hook" )
 
 ---@class gpm.std.HookClass: gpm.std.Hook
 ---@field __base gpm.std.Hook
----@overload fun( engine_name: string?, returns_vararg: boolean? ): Hook
+---@overload fun( name: string?, returns_vararg: boolean? ): Hook
 local HookClass = std.class.create( Hook )
 
 function Hook:__tostring()
-    return std.string.format( "Hook: %p [%s]", self, self[ -2 ] )
+    return std.string.format( "Hook: %p [%s][%s]", self, self[ -2 ], self[ -1 ] and "running" or "stopped" )
 end
 
-do
-
-    local engine_hooks = {}
-    setmetatable( engine_hooks, { __mode = "v" } )
-
-    ---@param engine_name string?: The name of the hook in the engine.
-    ---@param returns_vararg boolean?: Whether the hook returns vararg.
-    ---@protected
-    function Hook:__init( engine_name, returns_vararg )
-        self[ 0 ], self[ -3 ], self[ -4 ] = 0, returns_vararg == true, false
-
-        if engine_name == nil then
-            engine_name = "unnamed"
-        else
-            engine_hooks[ engine_name ] = self
-        end
-
-        self[ -2 ] = engine_name
-    end
-
-    local hook = _G.hook
-    if hook == nil then
-        ---@diagnostic disable-next-line: inject-field
-        hook = {}; _G.hook = hook
-    end
-
-    local hook_Call = hook.Call
-    if hook_Call == nil then
-        function hook.Call( event_name, _, ... )
-            local obj = engine_hooks[ event_name ]
-            if obj == nil then return nil end
-
-            ---@cast obj Hook
-            local a, b, c, d, e, f = obj:call( ... )
-            if a == nil then return nil end
-
-            return a, b, c, d, e, f
-        end
-    else
-        hook.Call = gpm.detour.attach( hook_Call, function( fn, event_name, gamemode_table, ... )
-            local obj = engine_hooks[ event_name ]
-            if obj ~= nil then
-                ---@cast obj Hook
-                local a, b, c, d, e, f = obj:call( ... )
-                if a ~= nil then return a, b, c, d, e, f end
-            end
-
-            return fn( event_name, gamemode_table, ... )
-        end )
-    end
-
+---@param name string?: The name of the hook.
+---@param returns_vararg boolean?: Whether the hook returns vararg.
+---@protected
+function Hook:__init( name, returns_vararg )
+    self[ 0 ], self[ -1 ], self[ -2 ], self[ -3 ] = 0, false, name or "unnamed", returns_vararg == true
 end
 
 do
@@ -119,7 +73,7 @@ do
 
         for i = self[ 0 ] - 2, 1, -3 do
             if self[ i ] == identifier then
-                if self[ -4 ] then
+                if self[ -1 ] then
                     self[ i + 1 ] = debug_fempty
 
                     local queue = self[ -5 ]
@@ -209,7 +163,7 @@ do
             end
         end
 
-        if self[ -4 ] then
+        if self[ -1 ] then
             local queue = self[ -5 ]
             if queue == nil then
                 self[ -5 ] = { { true, identifier, fn, hook_type } }
@@ -240,7 +194,7 @@ end
 --- Checks if the hook is running.
 ---@return boolean: Returns `true` if the hook is running, otherwise `false`.
 function Hook:isRunning()
-    return self[ -4 ]
+    return self[ -1 ]
 end
 
 do
@@ -248,8 +202,8 @@ do
     --- Stops the hook.
     ---@return boolean: Returns `true` if the hook was stopped, `false` if it was already stopped.
     local function hook_stop( self )
-        if not self[ -4 ] then return false end
-        self[ -4 ] = false
+        if not self[ -1 ] then return false end
+        self[ -1 ] = false
 
         local queue = self[ -5 ]
         if queue ~= nil then
@@ -285,7 +239,7 @@ do
     local function call_without_mixer_and_vararg( self, ... )
         local value
         for index = 3, self[ 0 ], 3 do
-            if not self[ -4 ] then break end
+            if not self[ -1 ] then break end
 
             local hook_type = self[ index ]
             if hook_type == -2 then -- pre hook
@@ -311,7 +265,7 @@ do
     local function call_without_mixer( self, ... )
         local a, b, c, d, e, f
         for index = 3, self[ 0 ], 3 do
-            if not self[ -4 ] then break end
+            if not self[ -1 ] then break end
 
             local hook_type = self[ index ]
             if hook_type == -2 then -- pre hook
@@ -337,7 +291,7 @@ do
     local function call_with_mixer( self, mixer_fn, ... )
         local old, new
         for index = 3, self[ 0 ], 3 do
-            if not self[ -4 ] then break end
+            if not self[ -1 ] then break end
 
             local hook_type = self[ index ]
             if hook_type == -2 then -- pre hook
@@ -367,7 +321,7 @@ do
     local function call_with_mixer_and_vararg( self, mixer_fn, ... )
         local old1, old2, old3, old4, old5, old6, new1, new2, new3, new4, new5, new6
         for index = 3, self[ 0 ], 3 do
-            if not self[ -4 ] then break end
+            if not self[ -1 ] then break end
 
             local hook_type = self[ index ]
             if hook_type == -2 then -- pre hook
@@ -398,9 +352,9 @@ do
     ---@param ... any: The arguments to pass to the hook.
     ---@return any ...: The return values from the hook.
     function Hook:call( ... )
-        self[ -4 ] = true
+        self[ -1 ] = true
 
-        local mixer_fn = self[ -1 ]
+        local mixer_fn = self[ -4 ]
         if mixer_fn == nil then
             if self[ -3 ] then
                 return call_without_mixer( self, ... )
@@ -421,7 +375,7 @@ end
 --- A return mixer that is called after any call to the hook and allows the return values to be modified.
 ---@param mixer_fn function?: The function to perform mixing, `nil` if no mixing is required.
 function Hook:mixer( mixer_fn )
-    self[ -1 ] = mixer_fn
+    self[ -4 ] = mixer_fn
 end
 
 return HookClass

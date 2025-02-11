@@ -710,32 +710,12 @@ end
 -- Addon presets stuff, I think an additional library/package will be needed in the future..
 if std.MENU then
 
-    local json_deserialize = std.crypto.json.deserialize
-    local LoadAddonPresets = _G.LoadAddonPresets
-    local hook_run = std.hook.run
+    --- [MENU] A hook that is called when addon presets are loaded.
+    local PresetsLoadedHook = std.Hook( "Addon.PresetsLoaded" )
+    gpm.engine.hookCatch( "AddonPresetsLoaded", PresetsLoadedHook, 1 )
+    AddonClass.PresetsLoadedHook = PresetsLoadedHook
 
-    local function listAddonPresets()
-        local json = LoadAddonPresets()
-        if not json then return end
-
-        local tbl = json_deserialize( json, true, true )
-        if not tbl then return end
-
-        -- GM:AddonPresetsLoaded( tbl )
-        hook_run( "AddonPresetsLoaded", tbl )
-    end
-
-    local ListAddonPresets = _G.ListAddonPresets
-    if std.isfunction( ListAddonPresets ) then
-        _G.ListAddonPresets = gpm.detour.attach( _G.ListAddonPresets, function( fn )
-            listAddonPresets()
-            return fn()
-        end )
-    else
-        _G.ListAddonPresets = listAddonPresets
-    end
-
-    AddonClass.getPresets = LoadAddonPresets
+    AddonClass.getPresets = _G.LoadAddonPresets
     AddonClass.setPresets = _G.SaveAddonPresets
 
 end

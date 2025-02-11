@@ -1,9 +1,11 @@
 local _G = _G
-local glua_engine, glua_game, glua_util, system_IsWindowed = _G.engine, _G.game, _G.util, _G.system.IsWindowed
 
-local std = _G.gpm.std
+local gpm = _G.gpm
+local std = gpm.std
 local debug = std.debug
 local console_Variable = std.console.Variable
+
+local glua_engine, glua_game, glua_util, system_IsWindowed = _G.engine, _G.game, _G.util, _G.system.IsWindowed
 
 ---@class gpm.std.game
 local game = {
@@ -244,6 +246,15 @@ if std.MENU then
             steamworks_ApplyAddons()
         end
     end
+
+end
+
+do
+
+    --- [SHARED AND MENU] A hook that is called every tick.
+    local obj = std.Hook( "game.Tick" )
+    gpm.engine.hookCatch( "Tick", obj, 1 )
+    game.TickHook = obj
 
 end
 

@@ -147,31 +147,31 @@ local function parse( major, minor, patch, pre_release, build )
 		error( "at least one parameter is needed", 2 )
 	end
 
-	if is_number( major ) then
+	if isnumber( major ) then
 		if not math_isuint( major ) then
 			error( "major version must be unsigned integer", 2 )
 		end
 
 		if minor == nil then
 			minor = 0
-		elseif not ( is_number( minor ) and math_isuint( minor ) ) then
+		elseif not ( isnumber( minor ) and math_isuint( minor ) ) then
 			error( "minor version must be unsigned integer number", 2 )
 			error( "minor version must be a number", 2 )
 		end
 
 		if patch == nil then
 			patch = 0
-		elseif not ( is_number( patch ) and math_isuint( patch ) ) then
+		elseif not ( isnumber( patch ) and math_isuint( patch ) ) then
 			error( "patch version must be unsigned integer number", 2 )
 		end
 
-		if is_string( build ) then
-			if is_string( pre_release ) then
+		if isstring( build ) then
+			if isstring( pre_release ) then
 				pre_release = parsePreRelease( pre_release )
 			end
 
 			build = parseBuild( build )
-		elseif is_number( pre_release ) then
+		elseif isnumber( pre_release ) then
 			pre_release, build = parsePreReleaseAndBuild( pre_release )
 		end
 	else

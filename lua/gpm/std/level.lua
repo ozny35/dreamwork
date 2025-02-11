@@ -1,9 +1,10 @@
 local _G = _G
 local glua_game, glua_engine, glua_util = _G.game, _G.engine, _G.util
 local file_Exists = _G.file.Exists
+local gpm = _G.gpm
 
 ---@class gpm.std
-local std = _G.gpm.std
+local std = gpm.std
 
 ---@class gpm.std.console
 local console = std.console
@@ -136,7 +137,14 @@ if std.SERVER then
         console_Variable.set( "sv_gravity", value )
     end
 
-    level.AcceptInputHook = level.AcceptInputHook or std.Hook( "AcceptInput" )
+    do
+
+        --- [SERVER] A hook that is called when map I/O event occurs.
+        local AcceptInputHook = std.Hook( "level.AcceptInput" )
+        gpm.engine.hookCatch( "AcceptInput", AcceptInputHook, 1 )
+        level.AcceptInputHook = AcceptInputHook
+
+    end
 
 end
 

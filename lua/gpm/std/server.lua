@@ -34,25 +34,27 @@ if std.MENU then
     local GameDetailsHook = std.GameDetailsHook or std.Hook( "GameDetails" )
     std.GameDetailsHook = GameDetailsHook
 
-    local function gameDetails( server_name, loading_url, map_name, max_players, player_steamid64, gamemode_name )
-        GameDetailsHook:call( {
-            server_name = server_name,
-            loading_url = loading_url,
-            map_name = map_name,
-            max_players = max_players,
-            player_steamid64 = player_steamid64,
-            gamemode_name = gamemode_name
-        } )
-    end
+    -- TODO: replace with gpm.engine
 
-    if std.isfunction( _G.GameDetails ) then
-        _G.GameDetails = gpm.detour.attach( _G.GameDetails, function( fn, ... )
-            gameDetails( ... )
-            return fn( ... )
-        end )
-    else
-        _G.GameDetails = gameDetails
-    end
+    -- local function gameDetails( server_name, loading_url, map_name, max_players, player_steamid64, gamemode_name )
+    --     GameDetailsHook:call( {
+    --         server_name = server_name,
+    --         loading_url = loading_url,
+    --         map_name = map_name,
+    --         max_players = max_players,
+    --         player_steamid64 = player_steamid64,
+    --         gamemode_name = gamemode_name
+    --     } )
+    -- end
+
+    -- if std.isfunction( _G.GameDetails ) then
+    --     _G.GameDetails = gpm.detour.attach( _G.GameDetails, function( fn, ... )
+    --         gameDetails( ... )
+    --         return fn( ... )
+    --     end )
+    -- else
+    --     _G.GameDetails = gameDetails
+    -- end
 
 end
 
