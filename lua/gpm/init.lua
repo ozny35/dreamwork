@@ -51,12 +51,9 @@ std.assert = std.assert or _G.assert
 std.getmetatable = std.getmetatable or _G.getmetatable
 std.setmetatable = std.setmetatable or _G.setmetatable
 
-do
-
-    std.getfenv = getfenv -- removed in Lua 5.2
-    std.setfenv = setfenv -- removed in Lua 5.2
-
-end
+local getfenv, setfenv = std.getfenv or _G.getfenv, std.setfenv or _G.setfenv
+std.getfenv = getfenv -- removed in Lua 5.2
+std.setfenv = setfenv -- removed in Lua 5.2
 
 local rawget, rawset = std.rawget or _G.rawget, std.rawset or _G.rawset
 std.rawget, std.rawset = rawget, rawset

@@ -1,7 +1,8 @@
 --[[
 
-    TODO: Make vector class
-    TODO: https://wiki.facepunch.com/gmod/gui.ScreenToVector ( Vector.FromScreen(X,Y) )
+    TODO:
+
+    https://wiki.facepunch.com/gmod/gui.ScreenToVector ( Vector.FromScreen(X,Y) )
 
     https://wiki.facepunch.com/gmod/util.AimVector
 
@@ -37,9 +38,10 @@
 ]]
 
 local _G = _G
+local gpm = _G.gpm
 
 ---@class gpm.std
-local std = _G.gpm.std
+local std = gpm.std
 
 local setmetatable = std.setmetatable
 local isnumber = std.isnumber
@@ -47,7 +49,7 @@ local isnumber = std.isnumber
 local math = std.math
 local math_abs = math.abs
 local math_cos, math_sin, math_rad = math.cos, math.sin, math.rad
-local math_lerp, math_sqrt = math.lerp, math.sqrt
+local math_lerp = math.lerp
 local math_min, math_max = math.min, math.max
 
 ---@alias Vector3 gpm.std.Vector3
@@ -76,6 +78,94 @@ std.Vector3 = Vector3Class
 ---@operator unm: Angle3
 local Angle3 = std.class.base( "Angle3" )
 
+do
+
+    local debug = std.debug
+
+    debug.registermetatable( "Vector3", Vector3 )
+
+    do
+
+        local Vector = _G.Vector
+        if Vector == nil then
+            gpm.Logger:error( "Vector3: Vector function is missing!" )
+        else
+            gpm.transducers[ Vector3 ] = function( vec3 )
+                return Vector( vec3[ 1 ], vec3[ 2 ], vec3[ 3 ] )
+            end
+        end
+
+    end
+
+    do
+
+        local VECTOR = debug.findmetatable( "Vector" )
+        if VECTOR == nil then
+            gpm.Logger:error( "Vector3: Vector metatable is missing!" )
+        else
+            ---@cast VECTOR Vector
+            local Unpack = VECTOR.Unpack
+
+            gpm.transducers[ VECTOR ] = function( vector )
+                return setmetatable( { Unpack( vector ) }, Vector3 )
+            end
+        end
+
+    end
+
+    debug.registermetatable( "Angle3", Angle3 )
+
+    do
+
+        local Angle = _G.Angle
+        if Angle == nil then
+            gpm.Logger:error( "Angle3: Angle function is missing!" )
+        else
+            gpm.transducers[ Angle3 ] = function( angle3 )
+                return Angle( angle3[ 1 ], angle3[ 2 ], angle3[ 3 ] )
+            end
+        end
+
+    end
+
+    do
+
+        local ANGLE = debug.findmetatable( "Angle" )
+        if ANGLE == nil then
+            gpm.Logger:error( "Angle3: Angle metatable is missing!" )
+        else
+            ---@cast ANGLE Angle
+            local Unpack = ANGLE.Unpack
+
+            gpm.transducers[ ANGLE ] = function( angle )
+                return setmetatable( { Unpack( angle ) }, Angle3 )
+            end
+        end
+
+    end
+
+    do
+
+        local debug_getmetatable = debug.getmetatable
+
+        --- [SHARED AND MENU] Returns `true` if the value is a `Vector3`.
+        ---@param value any: The value.
+        ---@return boolean: `true` if the value is a `Vector3`, `false` otherwise.
+        function std.isvector3( value )
+            return debug_getmetatable( value ) == Vector3
+        end
+
+        --- [SHARED AND MENU] Returns `true` if the value is an `Angle3`.
+        ---@param value any: The value.
+        ---@return boolean: `true` if the value is an `Angle3`, `false` otherwise.
+        function std.isangle3( value )
+            return debug_getmetatable( value ) == Angle3
+        end
+
+    end
+
+end
+
 ---@class gpm.std.Angle3Class: gpm.std.Angle3
 ---@field __base gpm.std.Angle3
 ---@overload fun( pitch: number?, yaw: number?, roll: number? ): Angle3
@@ -88,7 +178,7 @@ Vector3Class.Angle = Angle3Class
 ---@param z number?
 ---@return Vector3
 function Vector3:__new( x, y, z )
-    return setmetatable( { x, y, z }, Vector3 )
+    return setmetatable( { x or 0, y or 0, z or 0 }, Vector3 )
 end
 
 do
@@ -174,6 +264,40 @@ function Vector3:copy()
     return setmetatable( { self[ 1 ], self[ 2 ], self[ 3 ] }, Vector3 )
 end
 
+do
+
+    local math_nan, math_inf = math.nan, math.inf
+
+    --- Scales the vector.
+    ---@param scale number: The scale factor.
+    ---@return Vector3: The scaled vector.
+    function Vector3:scale( scale )
+        if scale == 0 or scale == math_nan then
+            self[ 1 ] = 0
+            self[ 2 ] = 0
+            self[ 3 ] = 0
+        elseif scale == math_inf then
+            self[ 1 ] = math_inf
+            self[ 2 ] = math_inf
+            self[ 3 ] = math_inf
+        else
+            self[ 1 ] = self[ 1 ] * scale
+            self[ 2 ] = self[ 2 ] * scale
+            self[ 3 ] = self[ 3 ] * scale
+        end
+
+        return self
+    end
+
+end
+
+--- Returns a scaled copy of the vector.
+---@param scale number: The scale factor.
+---@return Vector3: The scaled copy of the vector.
+function Vector3:getScaled( scale )
+    return self:copy():scale( scale )
+end
+
 --- Adds the vector to another vector.
 ---@param vector Vector3: The other vector.
 ---@return Vector3: The sum of the two vectors.
@@ -201,13 +325,13 @@ function Vector3:mul( value )
     if isnumber( value ) then
         ---@cast value number
         return self:scale( value )
-    else
-        ---@cast value Vector3
-        self[ 1 ] = self[ 1 ] * value[ 1 ]
-        self[ 2 ] = self[ 2 ] * value[ 2 ]
-        self[ 3 ] = self[ 3 ] * value[ 3 ]
-        return self
     end
+
+    ---@cast value Vector3
+    self[ 1 ] = self[ 1 ] * value[ 1 ]
+    self[ 2 ] = self[ 2 ] * value[ 2 ]
+    self[ 3 ] = self[ 3 ] * value[ 3 ]
+    return self
 end
 
 --- Divides the vector by another vector or a number.
@@ -217,13 +341,22 @@ function Vector3:div( value )
     if isnumber( value ) then
         ---@cast value number
         return self:scale( 1 / value )
-    else
-        ---@cast value Vector3
-        self[ 1 ] = self[ 1 ] / value[ 1 ]
-        self[ 2 ] = self[ 2 ] / value[ 2 ]
-        self[ 3 ] = self[ 3 ] / value[ 3 ]
-        return self
     end
+
+    ---@cast value Vector3
+    self[ 1 ] = self[ 1 ] / value[ 1 ]
+    self[ 2 ] = self[ 2 ] / value[ 2 ]
+    self[ 3 ] = self[ 3 ] / value[ 3 ]
+    return self
+end
+
+--- Negates the vector.
+---@return Vector3
+function Vector3:negate()
+    self[ 1 ] = -self[ 1 ]
+    self[ 2 ] = -self[ 2 ]
+    self[ 3 ] = -self[ 3 ]
+    return self
 end
 
 ---@param vector Vector3: The other vector.
@@ -250,39 +383,42 @@ function Vector3:__div( value )
     return self:copy():div( value )
 end
 
+---@return Vector3
+function Vector3:__unm()
+    return setmetatable( { -self[ 1 ], -self[ 2 ], -self[ 3 ] }, Vector3 )
+end
+
 ---@param vector Vector3: The other vector.
----@return boolean: `true` if the two vectors are equal, `false` otherwise
+---@return boolean: `true` if the two vectors are equal, `false` otherwise.
 function Vector3:__eq( vector )
     return self[ 1 ] == vector[ 1 ] and self[ 2 ] == vector[ 2 ] and self[ 3 ] == vector[ 3 ]
 end
 
 --- Calculates the squared length of the vector.
+---@param ignoreZ? boolean: `true` to ignore the z component of the vector, `false` otherwise.
 ---@return number: The squared length of the vector.
 function Vector3:getLengthSqr( ignoreZ )
     return self[ 1 ] ^ 2 + self[ 2 ] ^ 2 + ( ignoreZ and 0 or ( self[ 3 ] ^ 2 ) )
 end
 
---- Calculates the length of the vector.
----@return number: The length of the vector.
-function Vector3:getLength( ignoreZ )
-    return math_sqrt( self:getLengthSqr( ignoreZ ) )
-end
+do
 
---- Scales the vector.
----@param scale number: The scale factor.
----@return Vector3: The scaled vector.
-function Vector3:scale( scale )
-    self[ 1 ] = self[ 1 ] * scale
-    self[ 2 ] = self[ 2 ] * scale
-    self[ 3 ] = self[ 3 ] * scale
-    return self
-end
+    local math_sqrt = math.sqrt
 
---- Returns a scaled copy of the vector.
----@param scale number: The scale factor.
----@return Vector3: The scaled copy of the vector.
-function Vector3:getScaled( scale )
-    return self:copy():scale( scale )
+    --- Calculates the length of the vector.
+    ---@param ignoreZ? boolean: `true` to ignore the z component of the vector, `false` otherwise.
+    ---@return number: The length of the vector.
+    function Vector3:getLength( ignoreZ )
+        return math_sqrt( self:getLengthSqr( ignoreZ ) )
+    end
+
+    --- Calculates the distance between two vectors.
+    ---@param vector Vector3: The other vector.
+    ---@return number: The distance between the two vectors.
+    function Vector3:getDistance( vector )
+        return math_sqrt( ( vector[ 1 ] - self[ 1 ] ) ^ 2 + ( vector[ 2 ] - self[ 2 ] ) ^ 2 + ( vector[ 3 ] - self[ 3 ] ) ^ 2 )
+    end
+
 end
 
 --- Normalizes the vector.
@@ -296,13 +432,6 @@ end
 ---@return Vector3: The normalized copy of the vector.
 function Vector3:getNormalized()
     return self:copy():normalize()
-end
-
---- Calculates the distance between two vectors.
----@param vector Vector3: The other vector.
----@return number: The distance between the two vectors.
-function Vector3:getDistance( vector )
-    return math_sqrt( ( self[ 1 ] - vector[ 1 ] ) ^ 2 + ( self[ 2 ] - vector[ 2 ] ) ^ 2 + ( self[ 3 ] - vector[ 3 ] ) ^ 2 )
 end
 
 --- Checks if the vector is zero.
@@ -320,20 +449,6 @@ function Vector3:zero()
     self[ 2 ] = 0
     self[ 3 ] = 0
     return self
-end
-
---- Negates the vector.
----@return Vector3
-function Vector3:negate()
-    self[ 1 ] = -self[ 1 ]
-    self[ 2 ] = -self[ 2 ]
-    self[ 3 ] = -self[ 3 ]
-    return self
-end
-
----@return Vector3
-function Vector3:__unm()
-    return setmetatable( { -self[ 1 ], -self[ 2 ], -self[ 3 ] }, Vector3 )
 end
 
 --- Calculates the dot product of two vectors.
@@ -777,17 +892,15 @@ function Angle3:rotate( axis, rotation )
 end
 
 --- Returns a new vector from world position and world angle.
----@param local_position Vector3: The local position.
----@param local_angle Angle3: The local angle.
+---@param position Vector3: The local position.
+---@param angle Angle3: The local angle.
 ---@param world_position Vector3: The world position.
 ---@param world_angle Angle3: The world angle.
 ---@return Vector3: The new vector.
 ---@return Angle3: The new angle.
-function Vector3Class.fromWorldPosition( local_position, local_angle, world_position, world_angle )
-    -- TODO: implement this function
-
+function Vector3Class.translateToLocal( position, angle, world_position, world_angle )
+    return ( position - world_position ):getRotated( -world_angle ), angle - world_angle
 end
-
 
 --- Returns a new vector from local position and local angle.
 ---@param local_position Vector3: The local position.
@@ -796,9 +909,8 @@ end
 ---@param world_angle Angle3: The world angle.
 ---@return Vector3: The new vector.
 ---@return Angle3: The new angle.
-function Vector3Class.fromLocalPosition( local_position, local_angle, world_position, world_angle )
-    -- TODO: implement this function
-
+function Vector3Class.translateToWorld( local_position, local_angle, world_position, world_angle )
+    return world_position + local_position:getRotated( world_angle ), world_angle + local_angle
 end
 
 --- Returns a new vector from screen position.
@@ -811,7 +923,6 @@ end
 ---@return Vector3: The view direction.
 function Vector3Class.fromScreen( view_angle, view_fov, x, y, screen_width, screen_height )
     -- TODO: implement this function
-
 end
 
 do
