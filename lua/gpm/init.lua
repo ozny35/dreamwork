@@ -48,9 +48,8 @@ local error = _G.error
 std.error = error
 
 std.assert = std.assert or _G.assert
-
-local getmetatable, setmetatable = std.getmetatable or _G.getmetatable, std.setmetatable or _G.setmetatable
-std.getmetatable, std.setmetatable = getmetatable, setmetatable
+std.getmetatable = std.getmetatable or _G.getmetatable
+std.setmetatable = std.setmetatable or _G.setmetatable
 
 do
 
@@ -105,18 +104,6 @@ if SERVER then
     end
 end
 
-setmetatable( transducers, {
-    __index = function( self, value )
-        local metatable = getmetatable( value )
-        if metatable == nil then return value end
-
-        local fn = rawget( self, metatable )
-        if fn == nil then return value end
-
-        return fn( value )
-    end
-} )
-
 ---@class gpm.std.debug
 local debug = include( "std/debug.lua" )
 std.debug = debug
@@ -125,6 +112,18 @@ std.debug = debug
 debug.gc = include( "std/garbage-collection.lua" )
 
 local debug_getmetatable = debug.getmetatable
+
+setmetatable( transducers, {
+    __index = function( self, value )
+        local metatable = debug_getmetatable( value )
+        if metatable == nil then return value end
+
+        local fn = rawget( self, metatable )
+        if fn == nil then return value end
+
+        return fn( value )
+    end
+} )
 
 --- coroutine library
 --- Coroutines are similar to threads, however they do not run simultaneously.
@@ -559,7 +558,7 @@ end
 
 do
 
-    local debug_hascustomindex = debug.hascustomindex
+    local debug_getmetavalue = debug.getmetavalue
 
     --- Returns a [Stateless Iterator](https://www.lua.org/pil/7.3.html) for a [Generic For Loops](https://www.lua.org/pil/4.3.5.html), to return ordered key-value pairs from a table.
     ---
@@ -570,7 +569,9 @@ do
     ---@return table: The table being iterated over.
     ---@return number: The origin index =0.
     function std.ipairs( tbl )
-        if debug_hascustomindex( tbl ) then
+        if debug_getmetavalue( tbl, "__index" ) == nil then
+            return ipairs( tbl )
+        else
             local index = 0
             return function()
                 index = index + 1
@@ -578,8 +579,6 @@ do
                 if value == nil then return end
                 return index, value
             end, tbl, index
-        else
-            return ipairs( tbl )
         end
     end
 
@@ -596,6 +595,7 @@ std.class = class
 do
 
     local function __tostring( self )
+        ---@diagnostic disable-next-line: param-type-mismatch
         return rawget( debug_getmetatable( self ), "__type" )
     end
 
@@ -651,27 +651,27 @@ do
 
     local callStack, callStackSize = {}, 0
 
-    local function pushCallStack( stack )
-        local size = callStackSize + 1
-        callStack[ size ] = stack
-        callStackSize = size
-    end
+    -- local function pushCallStack( stack )
+    --     local size = callStackSize + 1
+    --     callStack[ size ] = stack
+    --     callStackSize = size
+    -- end
 
-    local function popCallStack()
-        local pos = callStackSize
-        if pos == 0 then
-            return nil
-        end
+    -- local function popCallStack()
+    --     local pos = callStackSize
+    --     if pos == 0 then
+    --         return nil
+    --     end
 
-        local stack = callStack[ pos ]
-        callStack[ pos ] = nil
-        callStackSize = pos - 1
-        return stack
-    end
+    --     local stack = callStack[ pos ]
+    --     callStack[ pos ] = nil
+    --     callStackSize = pos - 1
+    --     return stack
+    -- end
 
-    local function appendStack( stack )
-        return pushCallStack( { stack, callStack[ callStackSize ] } )
-    end
+    -- local function appendStack( stack )
+    --     return pushCallStack( { stack, callStack[ callStackSize ] } )
+    -- end
 
     local function mergeStack( stack )
         local pos = #stack

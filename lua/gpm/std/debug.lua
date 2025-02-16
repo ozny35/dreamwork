@@ -74,21 +74,26 @@ do
     do
 
         local debug_getmetatable = debug.getmetatable
-        local type = _G.type
 
-        --- [SHARED AND MENU] Returns the metatable of the given value or `nil` if not found.
-        ---@param value any: The value.
-        ---@return table | nil: The metatable.
-        function debug.getmetatable( value )
-            return debug_getmetatable( value ) or registry[ type( value ) ]
+        -- in case the game gets killed ( p.s. rubat and garry wants this )
+        if debug_getmetatable( fempty ) == nil then
+            local type = _G.type
+
+            --- [SHARED AND MENU] Returns the metatable of the given value or `nil` if not found.
+            ---@param value any: The value.
+            ---@return table | nil: The metatable.
+            function debug.getmetatable( value )
+                return debug_getmetatable( value ) or registry[ type( value ) ]
+            end
         end
 
-        --- [SHARED AND MENU] Returns `true` if value has a custom `__index`.
+        --- [SHARED AND MENU] Returns the value of the given key in the metatable of the given value or `nil` if not found.
         ---@param value any: The value.
-        ---@return boolean: Returns `true` if value has a custom `__index`, otherwise `false`.
-        function debug.hascustomindex( value )
+        ---@param key string: The key.
+        ---@return any | nil: The value.
+        function debug.getmetavalue( value, key )
             local metatable = debug_getmetatable( value )
-            return not ( metatable == nil or rawget( metatable, "__index" ) == nil )
+            return metatable and rawget( metatable, key )
         end
 
     end
