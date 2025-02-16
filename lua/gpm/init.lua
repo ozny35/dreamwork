@@ -23,7 +23,6 @@ gpm.StartTime = getTime()
 gpm.PREFIX = "gpm@" .. version
 
 if gpm.detour == nil then
-    ---@class gpm.detour
     gpm.detour = include( "detour.lua" )
 end
 
@@ -101,7 +100,6 @@ if SERVER then
     end
 end
 
----@class gpm.std.debug
 local debug = include( "std/debug.lua" )
 std.debug = debug
 
@@ -393,7 +391,6 @@ do
 end
 
 --- math library
----@class gpm.std.math
 local math = include( "std/math.lua" )
 std.math = math
 

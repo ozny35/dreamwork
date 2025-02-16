@@ -174,7 +174,7 @@ if engine.consoleCommandCatch == nil then
         __mode = "v"
     } )
 
-    function engine.consoleCommandCatch( name, fn, priority )
+    function engine.consoleCommandCatch( fn, priority )
         table_insert( lst, math_clamp( priority, 1, #lst + 1 ), fn )
     end
 

@@ -265,7 +265,6 @@ end
 ---@field __base gpm.std.Vector2
 ---@overload fun( x: number, y: number ): Vector2
 local Vector2Class = std.class.create( Vector2 )
-std.Vector2 = Vector2Class
 
 return Vector2Class
 
