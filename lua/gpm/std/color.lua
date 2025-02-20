@@ -10,7 +10,8 @@ local string_char, string_byte, string_format, string_len = string.char, string.
 
 local DIV255_CONST = 1 / 255
 
---- [SHARED AND MENU] The color class.
+--- [SHARED AND MENU]
+--- The color object.
 ---@diagnostic disable-next-line: duplicate-doc-alias
 ---@alias Color gpm.std.Color
 ---@class gpm.std.Color : gpm.std.Object
@@ -30,12 +31,18 @@ do
 
     local debug_getmetatable = std.debug.getmetatable
 
+    --- [SHARED AND MENU]
+    --- Checks if the value is a color object.
+    ---@param value any: The value to check.
+    ---@return boolean
     function std.iscolor( value )
         return debug_getmetatable( value ) == Color
     end
 
 end
 
+--- [SHARED AND MENU]
+--- The color class.
 ---@class gpm.std.ColorClass : gpm.std.Color
 ---@field __base Color
 ---@overload fun(r: integer?, g: integer?, b: integer?, a: integer?): gpm.std.Color
@@ -78,7 +85,8 @@ do
 
 end
 
---- [SHARED AND MENU] Creates a color object from RGBA values.
+--- [SHARED AND MENU]
+--- Creates a color object from RGBA values.
 ---@param r integer?: The 8-bit red channel.
 ---@param g integer?: The 8-bit green channel.
 ---@param b integer?: The 8-bit blue channel.
@@ -127,7 +135,8 @@ function Color:__unm()
     )
 end
 
---- [SHARED AND MENU] Inverts current color.
+--- [SHARED AND MENU]
+--- Inverts current color.
 ---@return Color: The color object.
 function Color:invert()
     self[ 1 ] = math_min( math_max( math_abs( 255 - self[ 1 ] ), 0 ), 255 )
@@ -221,7 +230,8 @@ function Color:__concat( value )
     return self:toHex() .. tostring( value )
 end
 
---- [SHARED AND MENU] Unpacks the color as r, g, b, a values.
+--- [SHARED AND MENU]
+--- Unpacks the color as r, g, b, a values.
 ---@return integer r: The 8-bit red channel.
 ---@return integer g: The 8-bit green channel.
 ---@return integer b: The 8-bit blue channel.
@@ -230,13 +240,15 @@ function Color:unpack()
     return self[ 1 ], self[ 2 ], self[ 3 ], self[ 4 ]
 end
 
---- [SHARED AND MENU] Makes a copy of the color.
+--- [SHARED AND MENU]
+--- Makes a copy of the color.
 ---@return Color: The copy of the color.
 function Color:copy()
     return setmetatable( { self[ 1 ], self[ 2 ], self[ 3 ], self[ 4 ] }, Color )
 end
 
---- [SHARED AND MENU] Makes color a copy of the another color.
+--- [SHARED AND MENU]
+--- Makes color a copy of the another color.
 ---@param color Color: The color to copy.
 ---@return Color: The copy of the color.
 function Color:copyFrom( color )
@@ -247,7 +259,8 @@ function Color:copyFrom( color )
     return self
 end
 
---- [SHARED AND MENU] Set the color as r, g, b, a values.
+--- [SHARED AND MENU]
+--- Set the color as r, g, b, a values.
 ---@param r integer: The 8-bit red channel.
 ---@param g integer: The 8-bit green channel.
 ---@param b integer: The 8-bit blue channel.
@@ -263,7 +276,8 @@ function Color:setUnpacked( r, g, b, a )
     return self
 end
 
---- [SHARED AND MENU] Returns the color as hex string.
+--- [SHARED AND MENU]
+--- Returns the color as hex string.
 ---@param withAlpha boolean?: Whether to include alpha.
 ---@return string: The hex string.
 function Color:toHex( withAlpha )
@@ -278,7 +292,8 @@ do
 
     local bit_bor, bit_lshift = bit.bor, bit.lshift
 
-    --- [SHARED AND MENU] Returns the color as 32-bit integer.
+    --- [SHARED AND MENU]
+    --- Returns the color as 32-bit integer.
     ---@param withAlpha boolean?: Whether to include alpha.
     ---@return integer: The 32-bit integer.
     function Color:toUInt32( withAlpha )
@@ -291,14 +306,16 @@ do
 
 end
 
---- [SHARED AND MENU] Returns the color as binary string.
+--- [SHARED AND MENU]
+--- Returns the color as binary string.
 ---@param withAlpha boolean?: Whether to include alpha.
 ---@return string: The binary string.
 function Color:toBinary( withAlpha )
     return withAlpha and string_char( self[ 1 ], self[ 2 ], self[ 3 ], self[ 4 ] ) or string_char( self[ 1 ], self[ 2 ], self[ 3 ] )
 end
 
---- [SHARED AND MENU] Returns the color as HSL values (hue, saturation, lightness).
+--- [SHARED AND MENU]
+--- Returns the color as HSL values (hue, saturation, lightness).
 ---@return integer hue: The hue in degrees [0, 360].
 ---@return number saturation: The saturation as fraction [0, 1].
 ---@return number lightness: The lightness as fraction [0, 1].
@@ -334,7 +351,8 @@ function Color:toHSL()
     return 0, 0, lightness
 end
 
---- [SHARED AND MENU] Returns the color as HSV values (hue, saturation, value).
+--- [SHARED AND MENU]
+--- Returns the color as HSV values (hue, saturation, value).
 ---@return integer hue: The hue in degrees [0, 360].
 ---@return number saturation: The saturation as fraction [0, 1].
 ---@return number value: The value as fraction [0, 1].
@@ -366,7 +384,8 @@ function Color:toHSV()
     return hue < 0 and hue + 360 or hue, saturation, max_value
 end
 
---- [SHARED AND MENU] Returns the color as HWB values (hue, whiteness, blackness).
+--- [SHARED AND MENU]
+--- Returns the color as HWB values (hue, whiteness, blackness).
 ---@return integer hue: The hue in degrees [0, 360].
 ---@return number whiteness: The whiteness as fraction [0, 1].
 ---@return number blackness: The blackness as fraction [0, 1].
@@ -375,7 +394,8 @@ function Color:toHWB()
     return hue, ( 1 - saturation ) * brightness, 1 - brightness
 end
 
---- [SHARED AND MENU] Returns the color as CMYK values (cyan, magenta, yellow, black).
+--- [SHARED AND MENU]
+--- Returns the color as CMYK values (cyan, magenta, yellow, black).
 ---@return number cyan: The cyan as fraction [0, 1].
 ---@return number magenta: The magenta as fraction [0, 1].
 ---@return number yellow: The yellow as fraction [0, 1].
@@ -389,7 +409,8 @@ do
 
     local math_lerp = math.lerp
 
-    --- [SHARED AND MENU] Smoothing a color object to another color object.
+    --- [SHARED AND MENU]
+    --- Smoothing a color object to another color object.
     ---@param color Color: The color to lerp.
     ---@param frac number?: The fraction to lerp [0, 1].
     ---@param withAlpha boolean?: Whether to lerp alpha channel.
@@ -410,7 +431,8 @@ do
 
 end
 
---- [SHARED AND MENU] Creates a color object from lerp.
+--- [SHARED AND MENU]
+--- Creates a color object from lerp.
 ---@param color Color: The "from" color.
 ---@param frac number?: The fraction [0, 1].
 ---@param withAlpha boolean?: Whether to lerp alpha channel.
@@ -419,7 +441,8 @@ function Color:getLerped( color, frac, withAlpha )
     return self:copy():lerp( color, frac, withAlpha )
 end
 
---- [SHARED AND MENU] Returns the color's hue.
+--- [SHARED AND MENU]
+--- Returns the color's hue.
 ---@return integer: The hue in degrees [0, 360].
 function Color:getHue()
     local red, green, blue = self[ 1 ] * DIV255_CONST, self[ 2 ] * DIV255_CONST, self[ 3 ] * DIV255_CONST
@@ -444,7 +467,8 @@ function Color:getHue()
     return hue < 0 and hue + 360 or hue
 end
 
---- [SHARED AND MENU] Sets the color's hue.
+--- [SHARED AND MENU]
+--- Sets the color's hue.
 ---@param hue integer: The hue in degrees [0, 360].
 ---@return Color: The color object.
 function Color:setHue( hue )
@@ -452,7 +476,8 @@ function Color:setHue( hue )
     return self:fromHSL( hue, saturation, lightness )
 end
 
---- [SHARED AND MENU] Returns the color's saturation.
+--- [SHARED AND MENU]
+--- Returns the color's saturation.
 ---@return number: The saturation as fraction [0, 1].
 function Color:getSaturation()
     local red, green, blue = self[ 1 ] * DIV255_CONST, self[ 2 ] * DIV255_CONST, self[ 3 ] * DIV255_CONST
@@ -460,7 +485,8 @@ function Color:getSaturation()
     return max_value == 0 and 0 or ( max_value - math_min( red, green, blue ) ) / max_value
 end
 
---- [SHARED AND MENU] Sets the color's saturation.
+--- [SHARED AND MENU]
+--- Sets the color's saturation.
 ---@param saturation number: The saturation as fraction [0, 1].
 ---@return Color: The color object.
 function Color:setSaturation( saturation )
@@ -468,13 +494,15 @@ function Color:setSaturation( saturation )
     return self:fromHSL( hue, saturation, lightness )
 end
 
---- [SHARED AND MENU] Returns the color's brightness.
+--- [SHARED AND MENU]
+--- Returns the color's brightness.
 ---@return number: The brightness as fraction [0, 1].
 function Color:getBrightness()
     return math_max( self[ 1 ], self[ 2 ], self[ 3 ] ) * DIV255_CONST
 end
 
---- [SHARED AND MENU] Sets the color's brightness.
+--- [SHARED AND MENU]
+--- Sets the color's brightness.
 ---@param brightness number: The brightness as fraction [0, 1].
 ---@return Color: The color object.
 function Color:setBrightness( brightness )
@@ -482,14 +510,16 @@ function Color:setBrightness( brightness )
     return self:fromHSV( hue, saturation, brightness )
 end
 
---- [SHARED AND MENU] Returns the color's lightness.
+--- [SHARED AND MENU]
+--- Returns the color's lightness.
 ---@return number: The lightness as fraction [0, 1].
 function Color:getLightness()
     local red, green, blue = self[ 1 ] * DIV255_CONST, self[ 2 ] * DIV255_CONST, self[ 3 ] * DIV255_CONST
     return ( math_max( red, green, blue ) + math_min( red, green, blue ) ) * 0.5
 end
 
---- [SHARED AND MENU] Sets the color's lightness.
+--- [SHARED AND MENU]
+--- Sets the color's lightness.
 ---@param lightness number: The lightness as fraction [0, 1].
 ---@return Color: The color object.
 function Color:setLightness( lightness )
@@ -497,14 +527,16 @@ function Color:setLightness( lightness )
     return self:fromHSL( hue, saturation, lightness )
 end
 
---- [SHARED AND MENU] Returns the color's whiteness.
+--- [SHARED AND MENU]
+--- Returns the color's whiteness.
 ---@return number: The whiteness as fraction [0, 1].
 function Color:getWhiteness()
     local _, saturation, brightness = self:toHSL()
     return ( 1 - saturation ) * brightness
 end
 
---- [SHARED AND MENU] Sets the color's whiteness.
+--- [SHARED AND MENU]
+--- Sets the color's whiteness.
 ---@param whiteness number: The whiteness as fraction [0, 1].
 ---@return Color: The color object.
 function Color:setWhiteness( whiteness )
@@ -512,14 +544,16 @@ function Color:setWhiteness( whiteness )
     return self:fromHWB( hue, whiteness, blackness )
 end
 
---- [SHARED AND MENU] Returns the color's blackness.
+--- [SHARED AND MENU]
+--- Returns the color's blackness.
 ---@return number: The blackness as fraction [0, 1].
 function Color:getBlackness()
     local _, __, brightness = self:toHSL()
     return 1 - brightness
 end
 
---- [SHARED AND MENU] Sets the color's blackness.
+--- [SHARED AND MENU]
+--- Sets the color's blackness.
 ---@param blackness number: The blackness as fraction [0, 1].
 ---@return Color: The color object.
 function Color:setBlackness( blackness )
@@ -554,7 +588,8 @@ do
         byte2number[ i ] = i - 87
     end
 
-    --- [SHARED AND MENU] Changes the color to hex string.
+    --- [SHARED AND MENU]
+    --- Changes the color to hex string.
     ---
     --- Supports hex strings from `0` to `8` characters.
     ---@param hex string: The hex string. If the first character is `#`, it will be ignored.
@@ -609,7 +644,8 @@ do
         return self
     end
 
-    --- [SHARED AND MENU] Creates a color object from hex string.
+    --- [SHARED AND MENU]
+    --- Creates a color object from hex string.
     ---@param hex string: The hex string. If the first character is `#`, it will be ignored.
     ---@return Color: The color object.
     function ColorClass.fromHex( hex )
@@ -622,7 +658,8 @@ do
 
     local bit_band, bit_rshift = bit.band, bit.rshift
 
-    --- [SHARED AND MENU] Changes the color to 32-bit uint.
+    --- [SHARED AND MENU]
+    --- Changes the color to 32-bit uint.
     ---@param uint32 integer: The 32-bit uint.
     ---@param withAlpha boolean?: Whether to include alpha.
     ---@return Color: The color object.
@@ -647,7 +684,8 @@ do
         return self
     end
 
-    --- [SHARED AND MENU] Creates a color object from 32-bit uint.
+    --- [SHARED AND MENU]
+    --- Creates a color object from 32-bit uint.
     ---@param uint32 integer: The 32-bit uint.
     ---@param withAlpha boolean?: Whether to include alpha.
     ---@return Color: The color object.
@@ -657,7 +695,8 @@ do
 
 end
 
---- [SHARED AND MENU] Changes the color to binary string.
+--- [SHARED AND MENU]
+--- Changes the color to binary string.
 ---@param binary string: The binary string.
 ---@return Color: The color object.
 function Color:fromBinary( binary )
@@ -687,14 +726,16 @@ function Color:fromBinary( binary )
     return self
 end
 
---- [SHARED AND MENU] Creates a color object from binary string.
+--- [SHARED AND MENU]
+--- Creates a color object from binary string.
 ---@param binary string: The binary string.
 ---@return Color: The color object.
 function ColorClass.fromBinary( binary )
     return from_rgba( 0, 0, 0, 255 ):fromBinary( binary )
 end
 
---- [SHARED AND MENU] Changes the color to HSL.
+--- [SHARED AND MENU]
+--- Changes the color to HSL.
 ---@param hue integer: The hue in degrees [0, 360].
 ---@param saturation number: The saturation [0, 1].
 ---@param lightness number: The lightness [0, 1].
@@ -727,7 +768,8 @@ function Color:fromHSL( hue, saturation, lightness )
     return self
 end
 
---- [SHARED AND MENU] Creates a color object from HSL values.
+--- [SHARED AND MENU]
+--- Creates a color object from HSL values.
 ---@param hue integer: The hue in degrees [0, 360].
 ---@param saturation number: The saturation [0, 1].
 ---@param lightness number: The lightness [0, 1].
@@ -736,7 +778,8 @@ function ColorClass.fromHSL( hue, saturation, lightness )
     return from_rgba( 0, 0, 0, 255 ):fromHSL( hue, saturation, lightness )
 end
 
---- [SHARED AND MENU] Changes the color to HSV values.
+--- [SHARED AND MENU]
+--- Changes the color to HSV values.
 ---@param hue integer: The hue in degrees [0, 360].
 ---@param saturation number: The saturation [0, 1].
 ---@param brightness number: The brightness [0, 1].
@@ -769,7 +812,8 @@ function Color:fromHSV( hue, saturation, brightness )
     return self
 end
 
---- [SHARED AND MENU] Creates a color object from HSV values.
+--- [SHARED AND MENU]
+--- Creates a color object from HSV values.
 ---@param hue integer: The hue in degrees [0, 360].
 ---@param saturation number: The saturation [0, 1].
 ---@param brightness number: The brightness [0, 1].
@@ -778,7 +822,8 @@ function ColorClass.fromHSV( hue, saturation, brightness )
     return from_rgba( 0, 0, 0, 255 ):fromHSV( hue, saturation, brightness )
 end
 
---- [SHARED AND MENU] Changes the color to HWB values.
+--- [SHARED AND MENU]
+--- Changes the color to HWB values.
 ---@param hue integer: The hue in degrees [0, 360].
 ---@param saturation number: The saturation [0, 1].
 ---@param brightness number: The brightness [0, 1].
@@ -788,7 +833,8 @@ function Color:fromHWB( hue, saturation, brightness )
     return self:fromHSV( hue, ( brightness > 0 ) and ( 1 - ( saturation / brightness ) ) or 0, brightness )
 end
 
---- [SHARED AND MENU] Creates a color object from HWB values.
+--- [SHARED AND MENU]
+--- Creates a color object from HWB values.
 ---@param hue integer: The hue in degrees [0, 360].
 ---@param saturation number: The saturation [0, 1].
 ---@param brightness number: The brightness [0, 1].
@@ -797,7 +843,8 @@ function ColorClass.fromHWB( hue, saturation, brightness )
     return from_rgba( 0, 0, 0, 255 ):fromHWB( hue, saturation, brightness )
 end
 
---- [SHARED AND MENU] Changes the color to CMYK values.
+--- [SHARED AND MENU]
+--- Changes the color to CMYK values.
 ---@param cyan number: The cyan as fraction [0, 1].
 ---@param magenta number: The magenta as fraction [0, 1].
 ---@param yellow number: The yellow as fraction [0, 1].
@@ -814,7 +861,8 @@ function Color:fromCMYK( cyan, magenta, yellow, black )
     return self
 end
 
---- [SHARED AND MENU] Creates a color object from CMYK values.
+--- [SHARED AND MENU]
+--- Creates a color object from CMYK values.
 ---@param cyan number: The cyan as fraction [0, 1].
 ---@param magenta number: The magenta as fraction [0, 1].
 ---@param yellow number: The yellow as fraction [0, 1].

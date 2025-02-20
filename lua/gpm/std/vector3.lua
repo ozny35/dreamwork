@@ -888,7 +888,6 @@ function Angle3:rotate( axis, rotation )
 
     -- TODO: implement this function
 
-    return self
 end
 
 --- Returns a new vector from world position and world angle.
@@ -899,7 +898,11 @@ end
 ---@return Vector3: The new vector.
 ---@return Angle3: The new angle.
 function Vector3Class.translateToLocal( position, angle, world_position, world_angle )
-    return ( position - world_position ):getRotated( -world_angle ), angle - world_angle
+
+
+    -- TODO: implement this function
+
+
 end
 
 --- Returns a new vector from local position and local angle.
@@ -910,7 +913,8 @@ end
 ---@return Vector3: The new vector.
 ---@return Angle3: The new angle.
 function Vector3Class.translateToWorld( local_position, local_angle, world_position, world_angle )
-    return world_position + local_position:getRotated( world_angle ), world_angle + local_angle
+    -- TODO: implement this function
+
 end
 
 --- Returns a new vector from screen position.
