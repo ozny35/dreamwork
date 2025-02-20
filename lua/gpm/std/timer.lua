@@ -4,11 +4,15 @@ do
     timer, std = _G.timer, _G.gpm.std
 end
 
+--- [SHARED AND MENU]
+--- Timer object.
 ---@alias Timer gpm.std.Timer
 ---@class gpm.std.Timer: gpm.std.Object
 ---@field __class gpm.std.TimerClass
 local Timer = std.class.base( "Timer" )
 
+--- [SHARED AND MENU]
+--- Timer class.
 ---@class gpm.std.TimerClass: gpm.std.Timer
 ---@field __base gpm.std.Timer
 ---@overload fun( name: string, delay: number?, repetitions: integer? ): Timer
@@ -80,7 +84,8 @@ do
 
 end
 
---- [SHARED AND MENU] Attaches a callback to the timer.
+--- [SHARED AND MENU]
+--- Attaches a callback to the timer.
 ---@param fn function: The callback function.
 ---@param name string?: The name of the callback, default is `unnamed`.
 function Timer:attach( fn, name )
@@ -118,7 +123,8 @@ do
     local debug_fempty = std.debug.fempty
     local table_eject = std.table.eject
 
-    --- [SHARED AND MENU] Detaches a callback from the timer.
+    --- [SHARED AND MENU]
+    --- Detaches a callback from the timer.
     ---@param name string: The name of the callback to detach.
     function Timer:detach( name )
         for i = 1, self[ 0 ], 2 do
@@ -144,7 +150,8 @@ do
 
 end
 
---- [SHARED AND MENU] Detaches all timer callbacks.
+--- [SHARED AND MENU]
+--- Detaches all timer callbacks.
 function Timer:clear()
     self[ -5 ] = false
 
@@ -164,7 +171,8 @@ do
 
     local timer_Start = timer.Start
 
-    --- [SHARED AND MENU] Start the timer.
+    --- [SHARED AND MENU]
+    --- Start the timer.
     ---@return boolean: Returns `true` if successful, otherwise `false`.
     function Timer:start()
         local status = self[ -1 ]
@@ -179,7 +187,8 @@ do
         return true
     end
 
-    --- [SHARED AND MENU] Restart the timer.
+    --- [SHARED AND MENU]
+    --- Restart the timer.
     ---@return boolean: Returns `true` if successful, otherwise `false`.
     function Timer:restart()
         if self[ -1 ] == 0 then return false end
@@ -196,7 +205,8 @@ do
 
     local timer_Stop = timer.Stop
 
-    --- [SHARED AND MENU] Stops the timer.
+    --- [SHARED AND MENU]
+    --- Stops the timer.
     ---@return boolean: Returns `true` if successful, otherwise `false`.
     function Timer:stop()
         local status = self[ -1 ]
@@ -217,13 +227,15 @@ do
 
     local timer_Adjust = timer.Adjust
 
-    --- [SHARED AND MENU] Returns the number of timer repetitions.
+    --- [SHARED AND MENU]
+    --- Returns the number of timer repetitions.
     ---@return integer: The number of timer repetitions.
     function Timer:getRepetitions()
         return self[ -4 ]
     end
 
-    --- [SHARED AND MENU] Sets the number of timer repetitions.
+    --- [SHARED AND MENU]
+    --- Sets the number of timer repetitions.
     ---@param repetitions integer?: The number of timer repetitions.
     ---@return boolean: Returns `true` if successful, otherwise `false`.
     function Timer:setRepetitions( repetitions )
@@ -239,7 +251,8 @@ do
 
         local timer_RepsLeft = timer.RepsLeft
 
-        --- [SHARED AND MENU] Returns the number of timer repetitions left.
+        --- [SHARED AND MENU]
+        --- Returns the number of timer repetitions left.
         ---@return integer: The number of timer repetitions left.
         function Timer:getRepetitionsLeft()
             if self[ -1 ] == 0 then return 0 end
@@ -248,13 +261,15 @@ do
 
     end
 
-    --- [SHARED AND MENU] Returns the delay between repetitions of the timer in seconds.
+    --- [SHARED AND MENU]
+    --- Returns the delay between repetitions of the timer in seconds.
     ---@return number: The delay between repetitions in seconds.
     function Timer:getDelay()
         return self[ -3 ]
     end
 
-    --- [SHARED AND MENU] Sets the delay between repetitions of the timer in seconds.
+    --- [SHARED AND MENU]
+    --- Sets the delay between repetitions of the timer in seconds.
     ---@param delay number?: The delay between repetitions in seconds.
     ---@return boolean: Returns `true` if successful, otherwise `false`.
     function Timer:setDelay( delay )
@@ -273,7 +288,8 @@ do
         local timer_TimeLeft = timer.TimeLeft
         local math_inf = std.math.inf
 
-        --- [SHARED AND MENU] Returns the time left to the next callbacks call in seconds.
+        --- [SHARED AND MENU]
+        --- Returns the time left to the next callbacks call in seconds.
         ---@return number: The time left in seconds.
         function Timer:getTimeLeft()
             if self[ -1 ] ~= 3 then return math_inf end
@@ -288,7 +304,8 @@ do
 
     local timer_Remove = timer.Remove
 
-    --- [SHARED AND MENU] Removes the timer.
+    --- [SHARED AND MENU]
+    --- Removes the timer.
     ---@return boolean: Returns `true` if successful, `false` if timer already removed.
     function Timer:remove()
         if self[ -1 ] == 0 then return false end
@@ -301,25 +318,29 @@ do
 
 end
 
---- [SHARED AND MENU] Checks if the timer is valid.
+--- [SHARED AND MENU]
+--- Checks if the timer is valid.
 ---@return boolean: Returns `true` if the timer is valid (not removed), otherwise `false`.
 function Timer:isValid()
     return self[ -1 ] ~= 0
 end
 
---- [SHARED AND MENU] Checks if the timer is stopped.
+--- [SHARED AND MENU]
+--- Checks if the timer is stopped.
 ---@return boolean: Returns `true` if the timer is stopped, otherwise `false`.
 function Timer:isStopped()
     return self[ -1 ] == 1
 end
 
---- [SHARED AND MENU] Checks if the timer is paused.
+--- [SHARED AND MENU]
+--- Checks if the timer is paused.
 ---@return boolean: Returns `true` if the timer is paused, otherwise `false`.
 function Timer:isPaused()
     return self[ -1 ] == 2
 end
 
---- [SHARED AND MENU] Checks if the timer is running.
+--- [SHARED AND MENU]
+--- Checks if the timer is running.
 ---@return boolean: Returns `true` if the timer is running, otherwise `false`.
 function Timer:isRunning()
     return self[ -1 ] == 3
@@ -329,7 +350,8 @@ do
 
     local timer_Pause, timer_UnPause = timer.Pause, timer.UnPause
 
-    --- [SHARED AND MENU] Pauses/unpauses the timer.
+    --- [SHARED AND MENU]
+    --- Pauses/unpauses the timer.
     ---@param value boolean: `true` to pause, `false` to unpause.
     ---@return boolean: Returns `true` if successful, otherwise `false`.
     function Timer:setPause( value )
@@ -355,7 +377,8 @@ do
 
     local timer_Simple = timer.Simple
 
-    --- [SHARED AND MENU] Creates a simple timer.
+    --- [SHARED AND MENU]
+    --- Creates a simple timer.
     ---@param fn function: The callback function.
     ---@param seconds number?: The delay in seconds.
     function TimerClass.wait( fn, seconds )
@@ -368,7 +391,8 @@ do
 
     local timer_Exists = timer.Exists
 
-    --- [SHARED AND MENU] Checks if the timer exists.
+    --- [SHARED AND MENU]
+    --- Checks if the timer exists.
     ---@param name string: The name of the timer.
     ---@return boolean: Returns `true` if the timer exists, otherwise `false`.
     function TimerClass.exists( name )

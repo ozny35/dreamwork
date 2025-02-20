@@ -1199,6 +1199,8 @@ local function get( str, index, utf8Length )
 	return codepoint( str, offset_fn( str, index - 1 ) )
 end
 
+--- [SHARED AND MENU]
+--- utf8 string library
 ---@class gpm.string.utf8
 ---@field charpattern string This is NOT a function, it's a pattern (a string, not a function) which matches exactly one UTF-8 byte sequence, assuming that the subject is a valid UTF-8 string.
 local utf8 = {

@@ -2,7 +2,8 @@ local _G = _G
 local std, glua_debug = _G.gpm.std, _G.debug
 local debug_getinfo, glua_string = glua_debug.getinfo, _G.string
 
---- [SHARED AND MENU] Just empty function, do nothing.
+--- [SHARED AND MENU]
+--- Just empty function, do nothing.
 local function fempty() end
 
 ---@class gpm.std.debug
@@ -36,7 +37,8 @@ local debug = {
     fempty = fempty
 }
 
---- [SHARED AND MENU] Call function with given arguments.
+--- [SHARED AND MENU]
+--- Call function with given arguments.
 ---@param func function: The function to call.
 ---@param ... any: Arguments to be passed to the function.
 ---@return any ...: The return values of the function.
@@ -53,7 +55,8 @@ do
         return registry
     end
 
-    --- [SHARED AND MENU] Returns the metatable of the given name or `nil` if not found.
+    --- [SHARED AND MENU]
+    --- Returns the metatable of the given name or `nil` if not found.
     ---@param name string: The name of the metatable.
     ---@return table | nil: The metatable.
     function debug.findmetatable( name )
@@ -79,7 +82,8 @@ do
         if debug_getmetatable( fempty ) == nil then
             local type = _G.type
 
-            --- [SHARED AND MENU] Returns the metatable of the given value or `nil` if not found.
+            --- [SHARED AND MENU]
+            --- Returns the metatable of the given value or `nil` if not found.
             ---@param value any: The value.
             ---@return table | nil: The metatable.
             function debug.getmetatable( value )
@@ -87,7 +91,8 @@ do
             end
         end
 
-        --- [SHARED AND MENU] Returns the value of the given key in the metatable of the given value or `nil` if not found.
+        --- [SHARED AND MENU]
+        --- Returns the value of the given key in the metatable of the given value or `nil` if not found.
         ---@param value any: The value.
         ---@param key string: The key.
         ---@return any | nil: The value.
@@ -100,7 +105,8 @@ do
 
     local RegisterMetaTable = _G.RegisterMetaTable or fempty
 
-    --- [SHARED AND MENU] Registers the metatable of the given name and table.
+    --- [SHARED AND MENU]
+    --- Registers the metatable of the given name and table.
     ---@param name string: The name of the metatable.
     ---@param tbl table: The metatable.
     ---@param do_full_register? boolean: If true, the metatable will be registered.
@@ -119,10 +125,11 @@ do
 
 end
 
---- [SHARED AND MENU] Returns current stack trace as a table with strings.
----@param startPos? integer
----@return table stack
----@return integer length
+--- [SHARED AND MENU]
+--- Returns current stack trace as a table with strings.
+---@param startPos? integer: The start position of the stack trace.
+---@return table stack: The stack trace.
+---@return integer length: The length of the stack trace.
 function debug.getstack( startPos )
     local stack, length = {}, 0
 
@@ -139,8 +146,9 @@ function debug.getstack( startPos )
     return stack, length
 end
 
---- [SHARED AND MENU] Returns the function within which the call was made or `nil` if not found.
----@return function | nil
+--- [SHARED AND MENU]
+--- Returns the function within which the call was made or `nil` if not found.
+---@return function | nil: The function within which the call was made or `nil` if not found.
 function debug.getfmain()
     for location = 2, 16, 1 do
         local info = debug_getinfo( location, "fS" )
@@ -161,7 +169,8 @@ do
     local string_sub, string_gsub = glua_string.sub, glua_string.gsub
     local gsub_formatter = function( _, str ) return str end
 
-    --- [SHARED AND MENU] Returns the path to the file in which it was called or an empty string if it could not be found.
+    --- [SHARED AND MENU]
+    --- Returns the path to the file in which it was called or an empty string if it could not be found.
     ---@param location function | integer: The function or location to get the path from.
     ---@return string path: The path to the file in which it was called or an [b]empty string[/b] if it could not be found.
     function debug.getfpath( location )
@@ -180,7 +189,8 @@ if std.jit then
 
     local util_funcinfo = std.jit.util.funcinfo
 
-    --- [SHARED AND MENU] Checks if the function is jit compilable.
+    --- [SHARED AND MENU]
+    --- Checks if the function is jit compilable.
     ---@param fn function: The function to check.
     ---@return boolean: `true` if the function is jit compilable, otherwise `false`.
     function debug.isjitcompilable( fn )
@@ -201,8 +211,9 @@ do
     local string_format = glua_string.format
     local tonumber = std.tonumber
 
-    --- [SHARED AND MENU] Returns the memory address of the value.
-    ---@param value any: The value.
+    --- [SHARED AND MENU]
+    --- Returns the memory address of the value.
+    ---@param value any: The value to get the memory address of.
     ---@return integer | nil: The memory address or `nil` if not found.
     function debug.getpointer( value )
         return tonumber( string_format( "%p", value ), 16 )
@@ -214,9 +225,10 @@ do
 
     local getfenv = std.getfenv
 
-    --- [SHARED AND MENU] Returns the function package or `nil` if not found.
+    --- [SHARED AND MENU]
+    --- Returns the function package or `nil` if not found.
     ---@param location function | integer: The function or stack level.
-    ---@return Package?
+    ---@return Package?: The function package or `nil` if not found.
     function debug.getfpackage( location )
         -- TODO: Check this after creating the package class
         local fenv = getfenv( location )
@@ -229,9 +241,10 @@ do
 
     local setfenv = std.setfenv
 
-    --- [SHARED AND MENU] Sets the function package.
+    --- [SHARED AND MENU]
+    --- Sets the function package.
     ---@param location function | integer: The function or stack level.
-    ---@param package Package
+    ---@param package Package: The package to set.
     function debug.setfpackage( location, package )
         -- TODO: Check this after creating the package class
         setfenv( location, package.env )

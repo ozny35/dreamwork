@@ -11,8 +11,9 @@ local Version = std.Version
 ---@class gpm.Package: gpm.std.Object
 ---@field __class gpm.PackageClass
 ---@field name string
+---@field prefix string
 ---@field version Version
----@field cvar_callbacks table
+---@field commands table
 local Package = class.base( "Package" )
 
 local cache = {}
@@ -22,11 +23,13 @@ local cache = {}
 ---@protected
 function Package:__init( name, version )
     local prefix = name .. "@" .. version
+    self.prefix = prefix
+
     self.version = Version( version )
+
+    package.console_variables = {}
+    package.console_commands = {}
     cache[ prefix ] = self
-
-    package.cvar_callbacks = {}
-
 end
 
 ---@protected

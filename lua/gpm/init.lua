@@ -9,12 +9,13 @@ local include = _G.include or _G.dofile
 ---@diagnostic disable-next-line: undefined-field
 local getTime = _G.SysTime or _G.os.time
 
+---@class gpm
+---@field VERSION string Package manager version in semver format.
+---@field PREFIX string Package manager unique prefix.
+---@field StartTime number SysTime point when package manager was started.
 local gpm = _G.gpm
 if gpm == nil then
     ---@class gpm
-    ---@field VERSION string Package manager version in semver format.
-    ---@field PREFIX string Package manager unique prefix.
-    ---@field StartTime number SysTime point when package manager was started.
     gpm = {}; _G.gpm = gpm
 end
 
@@ -100,10 +101,10 @@ if SERVER then
     end
 end
 
+---@class gpm.std.debug
 local debug = include( "std/debug.lua" )
 std.debug = debug
 
--- garbage collector
 debug.gc = include( "std/garbage-collection.lua" )
 
 local debug_getmetatable = debug.getmetatable
@@ -120,6 +121,7 @@ setmetatable( transducers, {
     end
 } )
 
+--- [SHARED AND MENU]
 --- coroutine library
 --- Coroutines are similar to threads, however they do not run simultaneously.
 ---
@@ -159,6 +161,7 @@ end
 
 local tonumber = _G.tonumber
 
+--- [SHARED AND MENU]
 --- Attempts to convert the value to a number.
 ---@param value any: The value to convert.
 ---@param base number: The base used in the string. Can be any integer between 2 and 36, inclusive. (Default: 10)
@@ -168,6 +171,7 @@ function std.tonumber( value, base )
     return metatable ~= nil and metatable.__tonumber( value, base ) or 0
 end
 
+--- [SHARED AND MENU]
 --- Attempts to convert the value to a boolean.
 ---@param value any: The value to convert.
 ---@return boolean
@@ -180,6 +184,7 @@ end
 
 std.tobool = std.toboolean
 
+--- [SHARED AND MENU]
 --- Checks if the value is valid.
 ---@param value any: The value to check.
 ---@return boolean: Returns `true` if the value is valid, otherwise `false`.
@@ -246,6 +251,7 @@ do
             return 1
         end
 
+        --- [SHARED AND MENU]
         --- Checks if the value type is a `boolean`.
         ---@param value any: The value to check.
         ---@return boolean: Returns `true` if the value is a boolean, otherwise `false`.
@@ -277,6 +283,7 @@ do
             return value
         end
 
+        --- [SHARED AND MENU]
         --- Checks if the value type is a `number`.
         ---@param value any: The value to check.
         ---@return boolean: Returns `true` if the value is a number, otherwise `false`.
@@ -306,6 +313,7 @@ do
 
         STRING.__tonumber = tonumber
 
+        --- [SHARED AND MENU]
         --- Checks if the value type is a `string`.
         ---@param value any: The value to check.
         ---@return boolean: Returns `true` if the value is a string, otherwise `false`.
@@ -333,6 +341,7 @@ do
 
         debug_registermetatable( "function", FUNCTION )
 
+        --- [SHARED AND MENU]
         --- Checks if the value type is a `function`.
         ---@param value any
         ---@return boolean isFunction returns true if the value is a function, otherwise false
@@ -340,6 +349,7 @@ do
             return debug_getmetatable( value ) == FUNCTION
         end
 
+        --- [SHARED AND MENU]
         --- Checks if the value is callable.
         ---@param value any: The value to check.
         ---@return boolean: Returns `true` if the value is can be called (like a function), otherwise `false`.
@@ -363,6 +373,7 @@ do
 
         debug_registermetatable( "thread", THREAD )
 
+        --- [SHARED AND MENU]
         --- Checks if the value type is a `thread`.
         ---@param value any: The value to check.
         ---@return boolean: Returns `true` if the value is a thread, otherwise `false`.
@@ -390,6 +401,7 @@ do
 
 end
 
+--- [SHARED AND MENU]
 --- math library
 local math = include( "std/math.lua" )
 std.math = math
@@ -412,7 +424,7 @@ do
         end
     end
 
-    --- Returns the bit count of the given value.
+    --- [SHARED AND MENU] Returns the bit count of the given value.
     ---@param value any: The value to get the bit count of.
     ---@return number: The bit count of the value.
     local function bitcount( value )
@@ -422,7 +434,7 @@ do
 
     std.bitcount = bitcount
 
-    --- Returns the byte count of the given value.
+    --- [SHARED AND MENU] Returns the byte count of the given value.
     ---@param value any: The value to get the byte count of.
     ---@return number: The byte count of the value.
     function std.bytecount( value )
@@ -431,6 +443,7 @@ do
 
 end
 
+--- [SHARED AND MENU]
 --- string library
 ---@class gpm.std.string
 local string = include( "std/string.lua" )
@@ -448,6 +461,7 @@ do
     local print = _G.print
     std.print = print
 
+    --- [SHARED AND MENU]
     --- Prints a formatted string to the console.
     ---
     --- Basically the same as `print( string.format( str, ... ) )`
@@ -459,9 +473,11 @@ do
 
 end
 
--- bit library
+--- [SHARED AND MENU]
+--- bit library
 std.bit = include( "std/bit.lua" )
 
+--- [SHARED AND MENU]
 --- os library
 ---@class gpm.std.os
 local os = include( "std/os.lua" )
@@ -493,6 +509,7 @@ do
 
 end
 
+--- [SHARED AND MENU]
 --- table library
 ---@class gpm.std.table
 local table = include( "std/table.lua" )
@@ -505,7 +522,7 @@ do
     local debug_getinfo = debug.getinfo
     local glua_type = _G.type
 
-    --- Returns a string representing the name of the type of the passed object.
+    --- [SHARED AND MENU] Returns a string representing the name of the type of the passed object.
     ---@param value any: The value to get the type of.
     ---@return string: The type name of the given value.
     local function type( value )
@@ -520,6 +537,7 @@ do
 
     std.type = type
 
+    --- [SHARED AND MENU]
     --- Validates the type of the argument and returns a boolean and an error message.
     ---@param value any: The argument value.
     ---@param arg_num number: The argument number.
@@ -537,9 +555,9 @@ do
 
 end
 
--- utf8 library
 string.utf8 = include( "std/string.utf8.lua" )
 
+--- [SHARED AND MENU]
 --- Returns an iterator `next` for a for loop that will return the values of the specified table in an arbitrary order.
 ---@param tbl table: The table to iterate over.
 ---@return function: The iterator function.
@@ -554,6 +572,7 @@ do
 
     local debug_getmetavalue = debug.getmetavalue
 
+    --- [SHARED AND MENU]
     --- Returns a [Stateless Iterator](https://www.lua.org/pil/7.3.html) for a [Generic For Loops](https://www.lua.org/pil/4.3.5.html), to return ordered key-value pairs from a table.
     ---
     --- This will only iterate though <b>numerical keys</b>, and these must also be sequential; starting at 1 with no gaps.
@@ -580,8 +599,6 @@ end
 
 gpm.engine = include( "gpm/engine.lua" )
 
---- class library
----@class gpm.std.class
 local class = include( "std/class.lua" )
 std.class = class
 
@@ -598,6 +615,7 @@ do
     ---@class gpm.std.Symbol : userdata
     ---@alias Symbol gpm.std.Symbol
 
+    --- [SHARED AND MENU] Creates a new symbol.
     ---@param name string: The name of the symbol.
     ---@return Symbol: The new symbol.
     function std.Symbol( name )
@@ -611,17 +629,12 @@ do
 
 end
 
---- [SHARED AND MENU] Hook class
 std.Hook = include( "std/hook.lua" )
-
---- [SHARED AND MENU] Timer class
 std.Timer = include( "std/timer.lua" )
 
---- [SHARED AND MENU] File class
 local File = include( "std/file.lua" )
 std.File = File
 
---- [SHARED AND MENU] Color class
 local Color = include( "std/color.lua" )
 std.Color = Color
 
@@ -756,6 +769,8 @@ do
 
     end
 
+    --- [SHARED AND MENU]
+    --- Error object.
     ---@alias Error gpm.std.Error
     ---@class gpm.std.Error : gpm.std.Object
     ---@field __class gpm.std.ErrorClass
@@ -837,6 +852,8 @@ do
         end
     end
 
+    --- [SHARED AND MENU]
+    --- Displays the error.
     function Error:display()
         if isstring( self ) then
             ---@diagnostic disable-next-line: cast-type-mismatch
@@ -889,23 +906,25 @@ do
         end
     end
 
+    --- [SHARED AND MENU]
+    --- Basic error class.
     ---@class gpm.std.ErrorClass : gpm.std.Error
     ---@field __base gpm.std.Error
     ---@overload fun(message: string, fileName: string?, lineNumber: number?, stackPos: number?): Error
     local ErrorClass = class.create( Error )
-
-    -- Basic error class
     std.Error = ErrorClass
 
-    --- Creates a new `Error` with custom name
-    ---@param name string
-    ---@param base Error | nil
-    ---@return Error
+    --- [SHARED AND MENU]
+    --- Creates a new `Error` with custom name.
+    ---@param name string: The name of the error.
+    ---@param base Error | nil: The base class of the error.
+    ---@return Error: The new error class.
     function ErrorClass.make( name, base )
         return class.create( class.base( name, base or ErrorClass ) ) ---@type Error
     end
 
-    -- Built-in errors
+    -- Built-in error classes.
+
     std.NotImplementedError = ErrorClass.make( "NotImplementedError" )
     std.FutureCancelError = ErrorClass.make( "FutureCancelError" )
     std.InvalidStateError = ErrorClass.make( "InvalidStateError" )
@@ -926,8 +945,9 @@ do
     ---| `-1` # ErrorNoHalt
     ---| `-2` # ErrorNoHaltWithStack
 
+    --- [SHARED AND MENU]
     --- Throws a Lua error.
-    ---@param message any: The error message to throw.
+    ---@param message string | Error: The error message to throw.
     ---@param level gpm.std.ErrorType?: The error level to throw.
     function std.error( message, level )
         -- async functions support
@@ -947,10 +967,9 @@ do
 
 end
 
--- Extensions for string library
+-- Extensions for string library.
 include( "std/string.extensions.lua" )
 
--- Version class
 std.Version = include( "std/version.lua" )
 
 -- URL and URLSearchParams classes
@@ -967,6 +986,7 @@ do
     ---@class gpm.std.File.path
     local path = File.path
 
+    --- [SHARED AND MENU]
     --- Converts a URL to a file path.
     ---@param url string | URL: The URL to convert.
     ---@return string: The file path.
@@ -1106,8 +1126,8 @@ do
 
 end
 
+--- [SHARED AND MENU]
 --- futures library
----@class gpm.std.futures
 local futures = include( "std/futures.lua" )
 std.futures = futures
 
@@ -1118,6 +1138,7 @@ std.sleep = futures.sleep
 std.Future = futures.Future
 std.Task = futures.Task
 
+--- [SHARED AND MENU]
 --- crypto library
 ---@class gpm.std.crypto
 local crypto = include( "std/crypto.lua" )
@@ -1125,15 +1146,11 @@ crypto.deflate = include( "std/crypto.deflate.lua" )
 crypto.struct = include( "std/crypto.struct.lua" )
 std.crypto = crypto
 
--- Bit intenger class
 std.BigInt = include( "std/bigint.lua" )
 
--- ByteStream and BitStream classes
 std.ByteStream = include( "std/byte_stream.lua" )
 std.BitStream = include( "std/bit_stream.lua" )
 
---- console library
----@class gpm.std.console
 local console = include( "std/console.lua" )
 std.console = console
 
@@ -1214,6 +1231,7 @@ do
     local string_byte = string.byte
     local istable = std.istable
 
+    --- [SHARED AND MENU]
     --- Loads a chunk
     ---@param chunk string | function: The chunk to load, can be a string or a function.
     ---@param chunkName string?: The chunk name, if chunk is binary the name will be ignored.
@@ -1278,33 +1296,17 @@ do
 
 end
 
---- game library
----@class gpm.std.game
-local game = include( "std/game.lua" )
-std.game = game
-
---- level library
+std.game = include( "std/game.lua" )
 std.level = include( "std/level.lua" )
 
---- Vector2 class
 std.Vector2 = include( "std/vector2.lua" )
-
---- Vector3 class
 std.Vector3 = include( "std/vector3.lua" )
 
 if CLIENT_SERVER then
-    -- physics library
     std.physics = include( "std/physics.lua" )
-
-    -- entity library
     std.entity = include( "std/entity.lua" )
-
-    -- player library
     std.player = include( "std/player.lua" )
-
-    -- network library
     -- std.net = include( "std/net.lua" )
-
 end
 
 local isInDebug
@@ -1312,7 +1314,6 @@ do
 
     local developer = console.Variable.get( "developer", "number" )
 
-    -- TODO: Think about engine lib in menu
     local getDeveloper
     if developer == nil then
         getDeveloper = function() return 1 end
@@ -1341,7 +1342,6 @@ do
 
 end
 
--- Logger
 local logger
 do
 
@@ -1379,6 +1379,8 @@ do
     ---@field interpolation? boolean
     ---@field debug? fun(): boolean
 
+    --- [SHARED AND MENU]
+    --- The logger object.
     ---@alias Logger gpm.std.Logger
     ---@class gpm.std.Logger : gpm.std.Object
     ---@field __class gpm.std.LoggerClass
@@ -1411,6 +1413,8 @@ do
         self.text_color = primaryTextColor
     end
 
+    --- [SHARED AND MENU]
+    --- Logs a message.
     ---@param color Color
     ---@param level string
     ---@param str string
@@ -1442,18 +1446,26 @@ do
         return nil
     end
 
+    --- [SHARED AND MENU]
+    --- Logs an info message.
     function Logger:info( ... )
         return self:log( infoColor, "INFO ", ... )
     end
 
+    --- [SHARED AND MENU]
+    --- Logs a warning message.
     function Logger:warn( ... )
         return self:log( warnColor, "WARN ", ... )
     end
 
+    --- [SHARED AND MENU]
+    --- Logs an error message.
     function Logger:error( ... )
         return self:log( errorColor, "ERROR", ... )
     end
 
+    --- [SHARED AND MENU]
+    --- Logs a debug message.
     function Logger:debug( ... )
         if self:debug_fn() then
             return self:log( debugColor, "DEBUG", ... )
@@ -1462,6 +1474,8 @@ do
         return nil
     end
 
+    --- [SHARED AND MENU]
+    --- The logger class.
     ---@class gpm.std.LoggerClass : gpm.std.Logger
     ---@field __base gpm.std.Logger
     ---@overload fun(title: string, options: gpm.std.LoggerOptions?): Logger
@@ -1476,10 +1490,7 @@ do
 
 end
 
--- sqlite library
 std.sqlite = include( "std/sqlite.lua" )
-
--- gpm database
 include( "database.lua" )
 
 local loadbinary
@@ -1552,6 +1563,7 @@ end
 -- https://github.com/willox/gmbc
 loadbinary( "gmbc" )
 
+--- [SHARED AND MENU]
 --- http library
 ---@class gpm.std.http
 local http = include( "std/http.lua" )
@@ -1560,23 +1572,14 @@ std.http = http
 http.steam = include( "std/http.steam.lua" )
 http.github = include( "std/http.github.lua" )
 
--- Addon class
 std.Addon = include( "std/addon.lua" )
 
 if CLIENT_MENU then
-
-    -- menu library
     std.menu = include( "std/menu.lua" )
-
-    -- client library
     std.client = include( "std/client.lua" )
-
-    -- input library
     std.input = include( "std/input.lua" )
-
 end
 
--- server library
 std.server = include( "std/server.lua" )
 
 if std.TYPE.COUNT ~= 44 then

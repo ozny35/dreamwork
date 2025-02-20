@@ -39,11 +39,15 @@ local getmetatable = std.getmetatable
 ---| `1`  # POST_HOOK_RETURN - This allows for the modification of results returned from preceding hooks!
 ---| `2`  # POST_HOOK - This hook is guaranteed to be called under all circumstances, and cannot be interrupted by a return statement. You can rely on its consistent execution.
 
+--- [SHARED AND MENU]
+--- Hook object.
 ---@alias Hook gpm.std.Hook
 ---@class gpm.std.Hook: gpm.std.Object
 ---@field __class gpm.std.HookClass
 local Hook = std.class.base( "Hook" )
 
+--- [SHARED AND MENU]
+--- Hook class.
 ---@class gpm.std.HookClass: gpm.std.Hook
 ---@field __base gpm.std.Hook
 ---@overload fun( name: string?, returns_vararg: boolean? ): Hook
@@ -65,6 +69,7 @@ do
     local debug_fempty = std.debug.fempty
     local table_eject = table.eject
 
+    --- [SHARED AND MENU]
     --- Detaches a callback function from the hook.
     ---@param identifier string | Hook | any: The unique name of the callback, Hook or object with `__isvalid` function in metatable.
     ---@return boolean: Returns `true` if the callback was detached, otherwise `false`.
@@ -102,6 +107,7 @@ do
     local table_inject = table.inject
     local math_clamp = std.math.clamp
 
+    --- [SHARED AND MENU]
     --- Attaches a callback function to the hook.
     ---@param identifier string | Hook | any: The unique name of the callback, Hook or object with `__isvalid` function in metatable.
     ---@param fn function | gpm.std.HOOK_TYPE?: The callback function or the type of the hook if `identifier` is a Hook.
@@ -191,6 +197,7 @@ do
 
 end
 
+--- [SHARED AND MENU]
 --- Checks if the hook is running.
 ---@return boolean: Returns `true` if the hook is running, otherwise `false`.
 function Hook:isRunning()
@@ -199,6 +206,7 @@ end
 
 do
 
+    --- [SHARED AND MENU]
     --- Stops the hook.
     ---@return boolean: Returns `true` if the hook was stopped, `false` if it was already stopped.
     local function hook_stop( self )
@@ -222,6 +230,7 @@ do
         return true
     end
 
+    --- [SHARED AND MENU]
     --- Clears the hook from all callbacks.
     function Hook:clear()
         hook_stop( self )
@@ -348,6 +357,7 @@ do
         return new1, new2, new3, new4, new5, new6
     end
 
+    --- [SHARED AND MENU]
     --- Calls the hook.
     ---@param ... any: The arguments to pass to the hook.
     ---@return any ...: The return values from the hook.
@@ -372,6 +382,7 @@ do
 
 end
 
+--- [SHARED AND MENU]
 --- A return mixer that is called after any call to the hook and allows the return values to be modified.
 ---@param mixer_fn function?: The function to perform mixing, `nil` if no mixing is required.
 function Hook:mixer( mixer_fn )
