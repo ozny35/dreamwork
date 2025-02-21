@@ -73,6 +73,8 @@ do
 
 end
 
+--- [SHARED AND MENU]
+--- http library
 ---@class gpm.std.http
 local http = {}
 
@@ -287,5 +289,8 @@ if std.MENU then
     end
 
 end
+
+http.steam = gpm.dofile( "http.steam.lua" )
+http.github = gpm.dofile( "http.github.lua" )
 
 return http

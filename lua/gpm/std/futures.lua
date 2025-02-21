@@ -9,6 +9,8 @@ local tostring, pcall, xpcall, isfunction = std.tostring, std.pcall, std.xpcall,
 local coroutine = std.coroutine
 local Timer_wait = std.Timer.wait
 
+--- [SHARED AND MENU]
+--- futures library
 ---@class gpm.std.futures
 local futures = std.futures or {}
 

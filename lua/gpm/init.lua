@@ -3,45 +3,50 @@ local version = "2.0.0"
 ---@class _G
 local _G = _G
 
----@diagnostic disable-next-line: undefined-field
-local include = _G.include or _G.dofile
-
----@diagnostic disable-next-line: undefined-field
-local getTime = _G.SysTime or _G.os.time
-
 ---@class gpm
 ---@field VERSION string Package manager version in semver format.
 ---@field PREFIX string Package manager unique prefix.
----@field StartTime number SysTime point when package manager was started.
+---@field StartTime number Time point when package manager was started in seconds.
 local gpm = _G.gpm
 if gpm == nil then
     ---@class gpm
     gpm = {}; _G.gpm = gpm
 end
 
-gpm.VERSION = version
+---@diagnostic disable-next-line: undefined-field
+local include = _G.include or _G.dofile
+gpm.dofile = include
+
+---@diagnostic disable-next-line: undefined-field
+local getTime = _G.SysTime or _G.os.time
 gpm.StartTime = getTime()
+
+gpm.VERSION = version
 gpm.PREFIX = "gpm@" .. version
 
 if gpm.detour == nil then
     gpm.detour = include( "detour.lua" )
 end
 
+--- object transducers
 ---@class gpm.transducers
 local transducers = {}
 gpm.transducers = transducers
 
 --- gpm standard environment
 ---@class gpm.std
----@field DEDICATED_SERVER boolean: `true` if game is dedicated server, `false` otherwise.
+---@field MENU boolean `true` if gpm is running on the menu, `false` otherwise.
+---@field CLIENT boolean `true` if gpm is running on the client, `false` otherwise.
+---@field SERVER boolean `true` if gpm is running on the server, `false` otherwise.
+---@field SHARED boolean `true` if gpm is running on the client or server, `false` otherwise.
+---@field CLIENT_MENU boolean `true` if gpm is running on the client or menu, `false` otherwise.
+---@field CLIENT_SERVER boolean `true` if gpm is running on the client or server, `false` otherwise.
+---@field DEDICATED_SERVER boolean `true` if gpm is running on a dedicated server, `false` otherwise.
+---@field DEVELOPER boolean cached value of `developer` console variable.
 local std = gpm.std
 if std == nil then
     std = include( "std/constants.lua" )
     gpm.std = std
-else
-    for key, value in std.pairs( include( "std/constants.lua" ) ) do
-        std[ key ] = value
-    end
 end
 
 local error = _G.error
@@ -79,7 +84,7 @@ std.pcall = std.pcall or _G.pcall
 local jit = std.jit or _G.jit
 std.jit = jit
 
-local CLIENT, SERVER, MENU, CLIENT_MENU, CLIENT_SERVER = std.CLIENT, std.SERVER, std.MENU, std.CLIENT_MENU, std.CLIENT_SERVER
+local CLIENT, SERVER, MENU = std.CLIENT, std.SERVER, std.MENU
 
 -- client-side files
 if SERVER then
@@ -109,7 +114,7 @@ debug.gc = include( "std/garbage-collection.lua" )
 
 local debug_getmetatable = debug.getmetatable
 
-setmetatable( transducers, {
+std.setmetatable( transducers, {
     __index = function( self, value )
         local metatable = debug_getmetatable( value )
         if metatable == nil then return value end
@@ -638,6 +643,9 @@ std.File = File
 local Color = include( "std/color.lua" )
 std.Color = Color
 
+--- [SHARED AND MENU] The white color object (255, 255, 255, 255).
+std.color_white = Color( 255, 255, 255, 255 )
+
 -- error
 do
 
@@ -1126,8 +1134,6 @@ do
 
 end
 
---- [SHARED AND MENU]
---- futures library
 local futures = include( "std/futures.lua" )
 std.futures = futures
 
@@ -1138,14 +1144,7 @@ std.sleep = futures.sleep
 std.Future = futures.Future
 std.Task = futures.Task
 
---- [SHARED AND MENU]
---- crypto library
----@class gpm.std.crypto
-local crypto = include( "std/crypto.lua" )
-crypto.deflate = include( "std/crypto.deflate.lua" )
-crypto.struct = include( "std/crypto.struct.lua" )
-std.crypto = crypto
-
+std.crypto = include( "std/crypto.lua" )
 std.BigInt = include( "std/bigint.lua" )
 
 std.ByteStream = include( "std/byte_stream.lua" )
@@ -1302,14 +1301,13 @@ std.level = include( "std/level.lua" )
 std.Vector2 = include( "std/vector2.lua" )
 std.Vector3 = include( "std/vector3.lua" )
 
-if CLIENT_SERVER then
+if std.CLIENT_SERVER then
     std.physics = include( "std/physics.lua" )
     std.entity = include( "std/entity.lua" )
     std.player = include( "std/player.lua" )
     -- std.net = include( "std/net.lua" )
 end
 
-local isInDebug
 do
 
     local developer = console.Variable.get( "developer", "number" )
@@ -1319,176 +1317,32 @@ do
         getDeveloper = function() return 1 end
     elseif std.DEDICATED_SERVER then
         local value = developer:get()
-        developer:addChangeCallback( "isInDebug", function( _, __, new ) value = new end )
+        developer:addChangeCallback( "gpm::init", function( _, __, new ) value = new end )
         getDeveloper = function() return value end
     else
         getDeveloper = function() return developer:get() end
     end
 
-    function isInDebug()
-        return getDeveloper() > 0
-    end
-
     local key2call = { DEVELOPER = getDeveloper }
 
-    setmetatable( std, {
+    std.setmetatable( std, {
         __index = function( _, key )
             local func = key2call[ key ]
-            if func ~= nil then
-                return func()
-            end
+            if func == nil then return end
+            return func()
         end
     } )
 
 end
 
-local logger
-do
+std.Logger = include( "std/logger.lua" )
 
-    local string_gsub, string_sub = string.gsub, string.sub
-    local console_write = console.write
-    local os_date = os.date
+local logger = std.Logger( gpm.PREFIX, {
+    color = Color( 180, 180, 255 ),
+    interpolation = false
+} )
 
-    local color_white = Color( 255 )
-    std.color_white = color_white
-
-    local infoColor = Color( 70, 135, 255 )
-    local warnColor = Color( 255, 130, 90 )
-    local errorColor = Color( 250, 55, 40 )
-    local debugColor = Color( 0, 200, 150 )
-    local secondaryTextColor = Color( 150 )
-    local primaryTextColor = Color( 200 )
-
-    local state, stateColor
-    if MENU then
-        state = "[Main Menu] "
-        stateColor = Color( 75, 175, 80 )
-    elseif CLIENT then
-        state = "[ Client ]  "
-        stateColor = Color( 225, 170, 10 )
-    elseif SERVER then
-        state = "[ Server ]  "
-        stateColor = Color( 5, 170, 250 )
-    else
-        state = "[ Unknown ] "
-        stateColor = color_white
-    end
-
-    ---@class gpm.std.LoggerOptions
-    ---@field color? Color
-    ---@field interpolation? boolean
-    ---@field debug? fun(): boolean
-
-    --- [SHARED AND MENU]
-    --- The logger object.
-    ---@alias Logger gpm.std.Logger
-    ---@class gpm.std.Logger : gpm.std.Object
-    ---@field __class gpm.std.LoggerClass
-    local Logger = class.base( "Logger" )
-
-    ---@protected
-    ---@param title string
-    ---@param options gpm.std.LoggerOptions?
-    function Logger:__init( title, options )
-        self.title = title
-        self.title_color = color_white
-        self.interpolation = true
-        self.debug_fn = isInDebug
-
-        if options then
-            if options.color then
-                -- argument( options.color, 2, "Color" )
-                self.title_color = options.color
-            end
-
-            if options.interpolation ~= nil then
-                self.interpolation = options.interpolation == true
-            end
-
-            if options.debug then
-                self.debug_fn = options.debug
-            end
-        end
-
-        self.text_color = primaryTextColor
-    end
-
-    --- [SHARED AND MENU]
-    --- Logs a message.
-    ---@param color Color
-    ---@param level string
-    ---@param str string
-    function Logger:log( color, level, str, ... )
-        if self.interpolation then
-            local args = { ... }
-            for index = 1, select( '#', ... ) do
-                args[ tostring( index ) ] = tostring( args[ index ] )
-            end
-
-            str = string_gsub( str, "{([0-9]+)}", args )
-        else
-            str = string_format( str, ... )
-        end
-
-        local title = self.title
-        local titleLength = string_len( title )
-        if titleLength > 64 then
-            title = string_sub( title, 1, 64 )
-            titleLength = 64
-            self.title = title
-        end
-
-        if ( string_len( str ) + titleLength ) > 950 then
-            str = string_sub( str, 1, 950 - titleLength ) .. "..."
-        end
-
-        console_write( secondaryTextColor, os_date( "%d-%m-%Y %H:%M:%S " ), stateColor, state, color, level, secondaryTextColor, " --> ", self.title_color, title, secondaryTextColor, " : ", self.text_color, str .. "\n")
-        return nil
-    end
-
-    --- [SHARED AND MENU]
-    --- Logs an info message.
-    function Logger:info( ... )
-        return self:log( infoColor, "INFO ", ... )
-    end
-
-    --- [SHARED AND MENU]
-    --- Logs a warning message.
-    function Logger:warn( ... )
-        return self:log( warnColor, "WARN ", ... )
-    end
-
-    --- [SHARED AND MENU]
-    --- Logs an error message.
-    function Logger:error( ... )
-        return self:log( errorColor, "ERROR", ... )
-    end
-
-    --- [SHARED AND MENU]
-    --- Logs a debug message.
-    function Logger:debug( ... )
-        if self:debug_fn() then
-            return self:log( debugColor, "DEBUG", ... )
-        end
-
-        return nil
-    end
-
-    --- [SHARED AND MENU]
-    --- The logger class.
-    ---@class gpm.std.LoggerClass : gpm.std.Logger
-    ---@field __base gpm.std.Logger
-    ---@overload fun(title: string, options: gpm.std.LoggerOptions?): Logger
-    std.Logger = class.create( Logger )
-
-    logger = std.Logger( gpm.PREFIX, {
-        color = Color( 180, 180, 255 ),
-        interpolation = false
-    } )
-
-    gpm.Logger = logger
-
-end
+gpm.Logger = logger
 
 std.sqlite = include( "std/sqlite.lua" )
 include( "database.lua" )
@@ -1563,18 +1417,10 @@ end
 -- https://github.com/willox/gmbc
 loadbinary( "gmbc" )
 
---- [SHARED AND MENU]
---- http library
----@class gpm.std.http
-local http = include( "std/http.lua" )
-std.http = http
-
-http.steam = include( "std/http.steam.lua" )
-http.github = include( "std/http.github.lua" )
-
+std.http = include( "std/http.lua" )
 std.Addon = include( "std/addon.lua" )
 
-if CLIENT_MENU then
+if std.CLIENT_MENU then
     std.menu = include( "std/menu.lua" )
     std.client = include( "std/client.lua" )
     std.input = include( "std/input.lua" )
@@ -1590,12 +1436,12 @@ if std._VERSION ~= "Lua 5.1" then
     logger:warn( "Lua version changed, possible unpredictable behavior. (" .. tostring( _G._VERSION or "missing") .. ")" )
 end
 
-logger:info( "Start-up time: %.4f sec.", SysTime() - gpm.StartTime )
+logger:info( "Start-up time: %.4f sec.", getTime() - gpm.StartTime )
 
 do
-    local start_time = SysTime()
+    local start_time = getTime()
     std.debug.gc.collect()
-    logger:info( "Clean-up time: %.4f sec.", SysTime() - start_time )
+    logger:info( "Clean-up time: %.4f sec.", getTime() - start_time )
 end
 
 -- TODO: put https://wiki.facepunch.com/gmod/Global.DynamicLight somewhere

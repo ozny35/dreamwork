@@ -1,8 +1,15 @@
 local _G = _G
+local gpm = _G.gpm
+local std = gpm.std
 local util = _G.util
 
+--- [SHARED AND MENU]
+--- crypto library
 ---@class gpm.std.crypto
-local crypto = {}
+local crypto = {
+    deflate = gpm.dofile( "crypto.deflate.lua" ),
+    struct = gpm.dofile( "crypto.struct.lua" )
+}
 
 ---@class gpm.std.crypto.lzma
 ---@field PROPS_SIZE number The size of the lzma properties.
@@ -16,15 +23,15 @@ crypto.lzma = lzma
 
 do
 
-    local string_byte = _G.string.byte
+    local string = std.string
+    local string_len = string.len
+    local string_byte = string.byte
 
     --- Returns the decompressed size of the given string.
     ---@param str string Compressed string.
     ---@return number: The decompressed size in bytes.
     function lzma.size( str )
-        if str == 0 then
-            return 0
-        end
+        if string_len( str ) < 20 then return 0 end
 
         local size = 0
         for i = 6, 19 do
