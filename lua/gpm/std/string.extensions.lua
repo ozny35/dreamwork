@@ -16,10 +16,10 @@ local table_concat = table.concat
 
 
 --- Pads the string.
----@param str string: The string.
----@param length integer: The length.
----@param char string: The character.
----@param direction integer: The direction. `1` for left, `-1` for right, `0` for both.
+---@param str string The string to pad.
+---@param length integer The desired length of the string.
+---@param char string The padding compensation symbol.
+---@param direction integer The compensation direction, `1` for left, `-1` for right, `0` for both.
 ---@return string: The padded string.
 function string.pad( str, length, char, direction )
     local missing_length = math_max( 0, length - string_len( str ) )

@@ -27,17 +27,17 @@ local string = {
 }
 
 --- Cuts the string into two.
----@param str string: The input string.
----@param index number: String cutting index.
+---@param str string The input string.
+---@param index number String cutting index.
 ---@return string, string: The first part of the string, the second part of the string.
 function string.cut( str, index )
     return string_sub( str, 1, index - 1 ), string_sub( str, index, string_len( str ) )
 end
 
 --- Inserts a value into the string.
----@param str string: The input string.
----@param index number: The string insertion index.
----@param value string: The string value to insert.
+---@param str string The input string.
+---@param index number The string insertion index.
+---@param value string The string value to insert.
 ---@return string: The resulting string.
 function string.insert( str, index, value )
     if value == nil then
@@ -48,9 +48,9 @@ function string.insert( str, index, value )
 end
 
 --- Removes a character from the string by index.
----@param str string: The input string.
----@param from number: The start index.
----@param to number: The end index.
+---@param str string The input string.
+---@param from number The start index.
+---@param to number The end index.
 ---@return string: The resulting string.
 function string.remove( str, from, to )
     if from == nil then from = string_len( str ) end
@@ -59,16 +59,16 @@ function string.remove( str, from, to )
 end
 
 --- Checks if the string starts with the start string.
----@param str string: The input string.
----@param startStr string: The start string.
+---@param str string The input string.
+---@param startStr string The start string.
 ---@return boolean: `true` if the string starts with the start string, otherwise `false`.
 function string.startsWith( str, startStr )
     return str == startStr or string_sub( str, 1, string_len( startStr ) ) == startStr
 end
 
 --- Checks if the string ends with the end string.
----@param str string: The input string.
----@param endStr string: The end string.
+---@param str string The input string.
+---@param endStr string The end string.
 ---@return boolean: `true` if the string ends with the end string, otherwise `false`.
 function string.endsWith( str, endStr )
     if endStr == "" or str == endStr then
@@ -80,8 +80,8 @@ function string.endsWith( str, endStr )
 end
 
 --- Checks if the string contains the searchable string.
----@param str string: The input string.
----@param searchable string: The searchable string.
+---@param str string The input string.
+---@param searchable string The searchable string.
 ---@param position? number: The position to start from.
 ---@param withPattern? boolean: If the pattern is used.
 ---@return number: The index of the searchable string, otherwise `-1`.
@@ -101,7 +101,7 @@ function string.indexOf( str, searchable, position, withPattern )
 end
 
 --- Splits the string.
----@param str string: The input string.
+---@param str string The input string.
 ---@param pattern? string: The pattern to split by.
 ---@param withPattern? boolean: If the pattern is used.
 ---@return string[] result, number length: The resulting string array and the length of the array.
@@ -138,8 +138,8 @@ function string.split( str, pattern, withPattern )
 end
 
 --- Extracts the string.
----@param str string: The input string.
----@param pattern string: The pattern to extract by.
+---@param str string The input string.
+---@param pattern string The pattern to extract by.
 ---@param default? string: The default value.
 ---@return string, string?: The resulting string and the extracted string.
 function string.extract( str, pattern, default )
@@ -152,7 +152,7 @@ function string.extract( str, pattern, default )
 end
 
 --- Returns the number of matches of a string.
----@param str string: The input string.
+---@param str string The input string.
 ---@param pattern? string: The pattern to count by.
 ---@param withPattern? boolean: If the pattern is used.
 ---@return number: The number of matches.
@@ -180,7 +180,7 @@ function string.count( str, pattern, withPattern )
 end
 
 --- Splits a string by a byte.
----@param str string: The input string.
+---@param str string The input string.
 ---@param byte? number: The byte to split by.
 ---@return string[] result: The split string.
 ---@return number length: The length of the split string.
@@ -211,7 +211,7 @@ function string.byteSplit( str, byte )
 end
 
 --- Returns the number of occurrences of a byte.
----@param str string: The input string.
+---@param str string The input string.
 ---@param byte? number: The byte to count.
 ---@return number: The number of occurrences.
 function string.byteCount( str, byte )
@@ -228,7 +228,7 @@ function string.byteCount( str, byte )
 end
 
 --- Trims a string by a byte.
----@param str string: The input string.
+---@param str string The input string.
 ---@param byte? number: The byte to trim by.
 ---@param direction? number: The direction to trim. `1` for left, `-1` for right, `0` for both.
 ---@return string str: The trimmed string.
@@ -254,17 +254,17 @@ function string.byteTrim( str, byte, direction )
 end
 
 --- Returns a character from the string by index.
----@param str string: The input string.
----@param index number: The character index.
+---@param str string The input string.
+---@param index number The character index.
 ---@return string: The character.
 function string.get( str, index )
     return string_sub( str, index, index )
 end
 
 --- Sets a character in the string by index.
----@param str string: The input string.
----@param index number: The character index.
----@param value string: The character.
+---@param str string The input string.
+---@param index number The character index.
+---@param value string The character.
 ---@return string: The resulting string.
 function string.set( str, index, value )
     return string_sub( str, 1, index - 1 ) .. value .. string_sub( str, index + 1, string_len( str ) )
@@ -286,7 +286,7 @@ do
     }
 
     --- Checks if a string is a number.
-    ---@param str string: The string.
+    ---@param str string The string.
     ---@param from? number: The start position.
     ---@param to? number: The end position.
     ---@return boolean: `true` if the string is a number, otherwise `false`.
@@ -311,9 +311,9 @@ do
 end
 
 --- Replaces all matches of a string.
----@param str string: The input string.
----@param searchable string: The pattern to search for.
----@param replaceable string: The string to replace.
+---@param str string The input string.
+---@param searchable string The pattern to search for.
+---@param replaceable string The string to replace.
 ---@param withPattern? boolean: Whether to use pattern or not.
 ---@return string str: The replaced string.
 function string.replace( str, searchable, replaceable, withPattern )
@@ -334,7 +334,7 @@ end
 do
 
     --- Unpacks a string.
-    ---@param str string: The input string.
+    ---@param str string The input string.
     ---@param from? number: The start position.
     ---@param to? number: The end position.
     ---@return ... string

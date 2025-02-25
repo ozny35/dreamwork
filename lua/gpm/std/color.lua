@@ -33,7 +33,7 @@ do
 
     --- [SHARED AND MENU]
     --- Checks if the value is a color object.
-    ---@param value any: The value to check.
+    ---@param value any The value to check.
     ---@return boolean
     function std.iscolor( value )
         return debug_getmetatable( value ) == Color
@@ -249,7 +249,7 @@ end
 
 --- [SHARED AND MENU]
 --- Makes color a copy of the another color.
----@param color Color: The color to copy.
+---@param color Color The color to copy.
 ---@return Color: The copy of the color.
 function Color:copyFrom( color )
     self[ 1 ] = color[ 1 ]
@@ -261,10 +261,10 @@ end
 
 --- [SHARED AND MENU]
 --- Set the color as r, g, b, a values.
----@param r integer: The 8-bit red channel.
----@param g integer: The 8-bit green channel.
----@param b integer: The 8-bit blue channel.
----@param a integer: The 8-bit alpha channel.
+---@param r integer The 8-bit red channel.
+---@param g integer The 8-bit green channel.
+---@param b integer The 8-bit blue channel.
+---@param a integer The 8-bit alpha channel.
 ---@return Color: The color object.
 function Color:setUnpacked( r, g, b, a )
     r = r and math_min( math_max( r, 0 ), 255 ) or 0
@@ -411,7 +411,7 @@ do
 
     --- [SHARED AND MENU]
     --- Smoothing a color object to another color object.
-    ---@param color Color: The color to lerp.
+    ---@param color Color The color to lerp.
     ---@param frac number?: The fraction to lerp [0, 1].
     ---@param withAlpha boolean?: Whether to lerp alpha channel.
     ---@return Color
@@ -433,7 +433,7 @@ end
 
 --- [SHARED AND MENU]
 --- Creates a color object from lerp.
----@param color Color: The "from" color.
+---@param color Color The "from" color.
 ---@param frac number?: The fraction [0, 1].
 ---@param withAlpha boolean?: Whether to lerp alpha channel.
 ---@return Color: The color object.
@@ -469,7 +469,7 @@ end
 
 --- [SHARED AND MENU]
 --- Sets the color's hue.
----@param hue integer: The hue in degrees [0, 360].
+---@param hue integer The hue in degrees [0, 360].
 ---@return Color: The color object.
 function Color:setHue( hue )
     local _, saturation, lightness = self:toHSL()
@@ -487,7 +487,7 @@ end
 
 --- [SHARED AND MENU]
 --- Sets the color's saturation.
----@param saturation number: The saturation as fraction [0, 1].
+---@param saturation number The saturation as fraction [0, 1].
 ---@return Color: The color object.
 function Color:setSaturation( saturation )
     local hue, _, lightness = self:toHSL()
@@ -503,7 +503,7 @@ end
 
 --- [SHARED AND MENU]
 --- Sets the color's brightness.
----@param brightness number: The brightness as fraction [0, 1].
+---@param brightness number The brightness as fraction [0, 1].
 ---@return Color: The color object.
 function Color:setBrightness( brightness )
     local hue, saturation, _ = self:toHSV()
@@ -520,7 +520,7 @@ end
 
 --- [SHARED AND MENU]
 --- Sets the color's lightness.
----@param lightness number: The lightness as fraction [0, 1].
+---@param lightness number The lightness as fraction [0, 1].
 ---@return Color: The color object.
 function Color:setLightness( lightness )
     local hue, saturation, _ = self:toHSL()
@@ -537,7 +537,7 @@ end
 
 --- [SHARED AND MENU]
 --- Sets the color's whiteness.
----@param whiteness number: The whiteness as fraction [0, 1].
+---@param whiteness number The whiteness as fraction [0, 1].
 ---@return Color: The color object.
 function Color:setWhiteness( whiteness )
     local hue, _, blackness = self:toHWB()
@@ -554,7 +554,7 @@ end
 
 --- [SHARED AND MENU]
 --- Sets the color's blackness.
----@param blackness number: The blackness as fraction [0, 1].
+---@param blackness number The blackness as fraction [0, 1].
 ---@return Color: The color object.
 function Color:setBlackness( blackness )
     local hue, saturation, _ = self:toHSL()
@@ -592,7 +592,7 @@ do
     --- Changes the color to hex string.
     ---
     --- Supports hex strings from `0` to `8` characters.
-    ---@param hex string: The hex string. If the first character is `#`, it will be ignored.
+    ---@param hex string The hex string. If the first character is `#`, it will be ignored.
     ---@return Color: The color object.
     function Color:fromHex( hex )
         if string_byte( hex, 1 ) == 0x23 --[[ # ]] then
@@ -646,7 +646,7 @@ do
 
     --- [SHARED AND MENU]
     --- Creates a color object from hex string.
-    ---@param hex string: The hex string. If the first character is `#`, it will be ignored.
+    ---@param hex string The hex string. If the first character is `#`, it will be ignored.
     ---@return Color: The color object.
     function ColorClass.fromHex( hex )
         return from_rgba( 0, 0, 0, 255 ):fromHex( hex )
@@ -660,7 +660,7 @@ do
 
     --- [SHARED AND MENU]
     --- Changes the color to 32-bit uint.
-    ---@param uint32 integer: The 32-bit uint.
+    ---@param uint32 integer The 32-bit uint.
     ---@param withAlpha boolean?: Whether to include alpha.
     ---@return Color: The color object.
     function Color:fromUInt32( uint32, withAlpha )
@@ -686,7 +686,7 @@ do
 
     --- [SHARED AND MENU]
     --- Creates a color object from 32-bit uint.
-    ---@param uint32 integer: The 32-bit uint.
+    ---@param uint32 integer The 32-bit uint.
     ---@param withAlpha boolean?: Whether to include alpha.
     ---@return Color: The color object.
     function ColorClass.fromUInt32( uint32, withAlpha )
@@ -697,7 +697,7 @@ end
 
 --- [SHARED AND MENU]
 --- Changes the color to binary string.
----@param binary string: The binary string.
+---@param binary string The binary string.
 ---@return Color: The color object.
 function Color:fromBinary( binary )
     local length = string_len( binary )
@@ -728,7 +728,7 @@ end
 
 --- [SHARED AND MENU]
 --- Creates a color object from binary string.
----@param binary string: The binary string.
+---@param binary string The binary string.
 ---@return Color: The color object.
 function ColorClass.fromBinary( binary )
     return from_rgba( 0, 0, 0, 255 ):fromBinary( binary )
@@ -736,9 +736,9 @@ end
 
 --- [SHARED AND MENU]
 --- Changes the color to HSL.
----@param hue integer: The hue in degrees [0, 360].
----@param saturation number: The saturation [0, 1].
----@param lightness number: The lightness [0, 1].
+---@param hue integer The hue in degrees [0, 360].
+---@param saturation number The saturation [0, 1].
+---@param lightness number The lightness [0, 1].
 ---@return Color: The color object.
 function Color:fromHSL( hue, saturation, lightness )
     hue = hue % 360
@@ -770,9 +770,9 @@ end
 
 --- [SHARED AND MENU]
 --- Creates a color object from HSL values.
----@param hue integer: The hue in degrees [0, 360].
----@param saturation number: The saturation [0, 1].
----@param lightness number: The lightness [0, 1].
+---@param hue integer The hue in degrees [0, 360].
+---@param saturation number The saturation [0, 1].
+---@param lightness number The lightness [0, 1].
 ---@return Color: The color object.
 function ColorClass.fromHSL( hue, saturation, lightness )
     return from_rgba( 0, 0, 0, 255 ):fromHSL( hue, saturation, lightness )
@@ -780,9 +780,9 @@ end
 
 --- [SHARED AND MENU]
 --- Changes the color to HSV values.
----@param hue integer: The hue in degrees [0, 360].
----@param saturation number: The saturation [0, 1].
----@param brightness number: The brightness [0, 1].
+---@param hue integer The hue in degrees [0, 360].
+---@param saturation number The saturation [0, 1].
+---@param brightness number The brightness [0, 1].
 ---@return Color: The color object.
 function Color:fromHSV( hue, saturation, brightness )
     hue = hue % 360
@@ -814,9 +814,9 @@ end
 
 --- [SHARED AND MENU]
 --- Creates a color object from HSV values.
----@param hue integer: The hue in degrees [0, 360].
----@param saturation number: The saturation [0, 1].
----@param brightness number: The brightness [0, 1].
+---@param hue integer The hue in degrees [0, 360].
+---@param saturation number The saturation [0, 1].
+---@param brightness number The brightness [0, 1].
 ---@return Color: The color object.
 function ColorClass.fromHSV( hue, saturation, brightness )
     return from_rgba( 0, 0, 0, 255 ):fromHSV( hue, saturation, brightness )
@@ -824,9 +824,9 @@ end
 
 --- [SHARED AND MENU]
 --- Changes the color to HWB values.
----@param hue integer: The hue in degrees [0, 360].
----@param saturation number: The saturation [0, 1].
----@param brightness number: The brightness [0, 1].
+---@param hue integer The hue in degrees [0, 360].
+---@param saturation number The saturation [0, 1].
+---@param brightness number The brightness [0, 1].
 ---@return Color: The color object.
 function Color:fromHWB( hue, saturation, brightness )
     brightness = 1 - brightness
@@ -835,9 +835,9 @@ end
 
 --- [SHARED AND MENU]
 --- Creates a color object from HWB values.
----@param hue integer: The hue in degrees [0, 360].
----@param saturation number: The saturation [0, 1].
----@param brightness number: The brightness [0, 1].
+---@param hue integer The hue in degrees [0, 360].
+---@param saturation number The saturation [0, 1].
+---@param brightness number The brightness [0, 1].
 ---@return Color: The color object.
 function ColorClass.fromHWB( hue, saturation, brightness )
     return from_rgba( 0, 0, 0, 255 ):fromHWB( hue, saturation, brightness )
@@ -845,10 +845,10 @@ end
 
 --- [SHARED AND MENU]
 --- Changes the color to CMYK values.
----@param cyan number: The cyan as fraction [0, 1].
----@param magenta number: The magenta as fraction [0, 1].
----@param yellow number: The yellow as fraction [0, 1].
----@param black number: The black as fraction [0, 1].
+---@param cyan number The cyan as fraction [0, 1].
+---@param magenta number The magenta as fraction [0, 1].
+---@param yellow number The yellow as fraction [0, 1].
+---@param black number The black as fraction [0, 1].
 ---@return Color: The color object.
 function Color:fromCMYK( cyan, magenta, yellow, black )
     cyan, magenta, yellow, black = cyan * 0.01, magenta * 0.01, yellow * 0.01, black * 0.01
@@ -863,10 +863,10 @@ end
 
 --- [SHARED AND MENU]
 --- Creates a color object from CMYK values.
----@param cyan number: The cyan as fraction [0, 1].
----@param magenta number: The magenta as fraction [0, 1].
----@param yellow number: The yellow as fraction [0, 1].
----@param black number: The black as fraction [0, 1].
+---@param cyan number The cyan as fraction [0, 1].
+---@param magenta number The magenta as fraction [0, 1].
+---@param yellow number The yellow as fraction [0, 1].
+---@param black number The black as fraction [0, 1].
 ---@return Color: The color object.
 function ColorClass.fromCMYK( cyan, magenta, yellow, black )
     return from_rgba( 0, 0, 0, 255 ):fromCMYK( cyan, magenta, yellow, black )
@@ -882,8 +882,8 @@ if std.CLIENT then
     --- Requires `render.CapturePixels` call before using.
     ---
     ---@see https://wiki.facepunch.com/gmod/render.ReadPixel
-    ---@param x integer: The x coordinate.
-    ---@param y integer: The y coordinate.
+    ---@param x integer The x coordinate.
+    ---@param y integer The y coordinate.
     ---@param alpha integer? The alpha channel.
     ---@return Color
     function ColorClass.fromScreen( x, y, alpha )
@@ -892,7 +892,7 @@ if std.CLIENT then
     end
 
     --- [CLIENT] Creates a color object from `resource/ClientScheme.res`.
-    ---@param name string: The color name in `resource/ClientScheme.res`.
+    ---@param name string The color name in `resource/ClientScheme.res`.
     ---@return Color?: The color object.
     function ColorClass.fromScheme( name )
         local tbl = NamedColor( name )

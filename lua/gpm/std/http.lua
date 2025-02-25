@@ -118,7 +118,7 @@ local function isValidCache( data )
 end
 
 --- Executes an asynchronous http request with the given parameters.
----@param parameters HTTPRequest: The request parameters. See `HTTPRequest` structure.
+---@param parameters HTTPRequest The request parameters. See `HTTPRequest` structure.
 ---@return HTTPResponse
 ---@async
 local function request( parameters )

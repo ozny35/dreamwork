@@ -45,11 +45,11 @@ local mutationNextTime = 0
 local rateLimitReset = 0
 
 --- TODO
----@param method any: TODO
----@param url any: TODO
----@param headers any: TODO
----@param body any: TODO
----@param cache any: TODO
+---@param method any TODO
+---@param url any TODO
+---@param headers any TODO
+---@param body any TODO
+---@param cache any TODO
 ---@return HTTPResponse: TODO
 ---@async
 local function request( method, url, headers, body, cache )
@@ -120,11 +120,11 @@ end
 github.request = request
 
 --- TODO
----@param method any: TODO
----@param pathname any: TODO
----@param headers any: TODO
----@param body any: TODO
----@param cache any: TODO
+---@param method any TODO
+---@param pathname any TODO
+---@param headers any TODO
+---@param body any TODO
+---@param cache any TODO
 ---@return table: TODO
 ---@async
 local function apiRequest( method, pathname, headers, body, cache )
@@ -144,8 +144,8 @@ end
 github.apiRequest = apiRequest
 
 --- TODO
----@param pathname any: TODO
----@param data any: TODO
+---@param pathname any TODO
+---@param data any TODO
 ---@return unknown: TODO
 local function template( pathname, data )
     return string_gsub( pathname, "{([%w_-]-)}", function( str )
@@ -157,9 +157,9 @@ end
 github.template = template
 
 --- TODO
----@param method any: TODO
----@param pathname any: TODO
----@param data any: TODO
+---@param method any TODO
+---@param pathname any TODO
+---@param data any TODO
 ---@return table: TODO
 ---@async
 local function templateRequest( method, pathname, data )
@@ -169,8 +169,8 @@ end
 github.templateRequest = templateRequest
 
 --- TODO
----@param owner string: The owner of the repository.
----@param repo string: The name of the repository.
+---@param owner string The owner of the repository.
+---@param repo string The name of the repository.
 ---@return table: TODO
 ---@async
 function github.getRepository( owner, repo )
@@ -181,8 +181,8 @@ function github.getRepository( owner, repo )
 end
 
 --- TODO
----@param owner string: The owner of the repository.
----@param repo string: The name of the repository.
+---@param owner string The owner of the repository.
+---@param repo string The name of the repository.
 ---@return table: TODO
 ---@async
 function github.getRepositoryTags( owner, repo )
@@ -194,9 +194,9 @@ function github.getRepositoryTags( owner, repo )
 end
 
 --- TODO
----@param owner string: The owner of the repository.
----@param repo string: The name of the repository.
----@param tree_sha any: TODO
+---@param owner string The owner of the repository.
+---@param repo string The name of the repository.
+---@param tree_sha any TODO
 ---@param recursive boolean?: TODO
 ---@return table: TODO
 ---@async
@@ -210,9 +210,9 @@ function github.getTree( owner, repo, tree_sha, recursive )
 end
 
 --- TODO
----@param owner string: The owner of the repository.
----@param repo string: The name of the repository.
----@param file_sha any: TODO
+---@param owner string The owner of the repository.
+---@param repo string The name of the repository.
+---@param file_sha any TODO
 ---@return table: TODO
 ---@async
 function github.getBlob( owner, repo, file_sha )
@@ -231,9 +231,9 @@ function github.getBlob( owner, repo, file_sha )
 end
 
 --- TODO
----@param owner string: The owner of the repository.
----@param repo string: The name of the repository.
----@param ref string: The reference to fetch.
+---@param owner string The owner of the repository.
+---@param repo string The name of the repository.
+---@param ref string The reference to fetch.
 ---@return string: TODO
 ---@async
 function github.fetchZip( owner, repo, ref )

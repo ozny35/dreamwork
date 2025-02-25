@@ -342,10 +342,10 @@ end
 ---of the string.
 ---
 ---Empty string and string longer than 32768 bytes are not allowed.
----@param strlen number: The length of 'str'. Please pass in this parameter
+---@param strlen number The length of 'str'. Please pass in this parameter
 ---as a hardcoded constant, in order to verify the content of 'str'. The value
 ---of this parameter should be known before your program runs.
----@param adler32 number: The Adler-32 checksum of 'str'. Please pass in this
+---@param adler32 number The Adler-32 checksum of 'str'. Please pass in this
 ---parameter as a hardcoded constant, in order to verify the content of 'str'.
 ---The value of this parameter should be known before your program runs.
 ---@return table: The dictionary used for preset dictionary compression and
@@ -604,8 +604,8 @@ local function CreateWriter()
     local result_buffer = {}
 
     ---Write bits with value "value" and bit length of "bitlen" into writer.
-    ---@param value number: The value being written
-    ---@param bitlen number: The bit length of "value"
+    ---@param value number The value being written
+    ---@param bitlen number The bit length of "value"
     local function WriteBits( value, bitlen )
         cache = cache + value * _pow2[ cache_bitlen ]
         cache_bitlen = cache_bitlen + bitlen
@@ -768,10 +768,10 @@ local function MinHeapPop( heap, heap_size )
 end
 
 ---Deflate defines a special huffman tree, which is unique once the bit length of huffman code of all symbols are known.
----@param bitlen_counts table: Number of symbols with a specific bitlen
----@param symbol_bitlens table: The bit length of a symbol
----@param max_symbol number: The max symbol among all symbols, which is (number of symbols - 1)
----@param max_bitlen number: The max huffman bit length among all symbols.
+---@param bitlen_counts table Number of symbols with a specific bitlen
+---@param symbol_bitlens table The bit length of a symbol
+---@param max_symbol number The max symbol among all symbols, which is (number of symbols - 1)
+---@param max_bitlen number The max huffman bit length among all symbols.
 ---@return table: The huffman code of all symbols.
 local function GetHuffmanCodeFromBitlen( bitlen_counts, symbol_bitlens, max_symbol, max_bitlen )
     local huffman_code = 0
@@ -819,9 +819,9 @@ local function SortByFirstThenSecond( a, b )
 end
 
 ---Calculate the huffman bit length and huffman code.
----@param symbol_counts table: A table whose table key is the symbol, and table value is the symbol frenquency (nil means 0 frequency).
----@param max_bitlen number: See description of return value.
----@param max_symbol number: The maximum symbol
+---@param symbol_counts table A table whose table key is the symbol, and table value is the symbol frenquency (nil means 0 frequency).
+---@param max_bitlen number See description of return value.
+---@param max_symbol number The maximum symbol
 ---@return table symbol_bitlens A table whose key is the symbol, and the value is the huffman bit bit length. We guarantee that all bit length <= max_bitlen.
 ---For 0<=symbol<=max_symbol, table value could be nil if the frequency of the symbol is 0 or nil.
 ---@return table: A table whose key is the symbol, and the value is the huffman code.
@@ -960,10 +960,10 @@ end
 
 ---Calculate the first huffman header in the dynamic huffman block
 ---@see RFC1951 Page 12
----@param lcode_bitlens table: The huffman bit length of literal/LZ77_length.
----@param max_non_zero_bitlen_lcode number: The maximum literal/LZ77_length symbol whose huffman bit length is not zero.
----@param dcode_bitlens table: The huffman bit length of LZ77 distance.
----@param max_non_zero_bitlen_dcode number: The maximum LZ77 distance symbol whose huffman bit length is not zero.
+---@param lcode_bitlens table The huffman bit length of literal/LZ77_length.
+---@param max_non_zero_bitlen_lcode number The maximum literal/LZ77_length symbol whose huffman bit length is not zero.
+---@param dcode_bitlens table The huffman bit length of LZ77 distance.
+---@param max_non_zero_bitlen_dcode number The maximum LZ77 distance symbol whose huffman bit length is not zero.
 ---@return table: The run length encoded codes.
 ---@return table: The extra bits. One entry for each rle code that needs extra bits. (code == 16 or 17 or 18).
 ---@return table: The count of appearance of each rle codes.
@@ -1079,8 +1079,8 @@ end
 ---characters. So if the hash matches, it guarantees 3 characters are matched.
 ---This optimization can be implemented because Lua table is a hash table.
 --
----@param level number: number that describes compression level.
----@param string_table table: table that stores the value of string to be compressed.
+---@param level number number that describes compression level.
+---@param string_table table table that stores the value of string to be compressed.
 --			The index of this table starts from 1.
 --			The caller needs to make sure all values needed by this function
 --			are loaded.
@@ -1095,12 +1095,12 @@ end
 --			input data string to be compressed, such that
 --			hash == str[index]*str[index+1]*str[index+2]
 --			Indexes are ordered in this array.
----@param block_start number: The indexes of the input data string to be compressed. that starts the LZ77 block.
----@param block_end number: The indexes of the input data string to be compressed. that stores the LZ77 block.
----@param offset number: str[index] is stored in string_table[index-offset],
+---@param block_start number The indexes of the input data string to be compressed. that starts the LZ77 block.
+---@param block_end number The indexes of the input data string to be compressed. that stores the LZ77 block.
+---@param offset number str[index] is stored in string_table[index-offset],
 --			This offset is mainly an optimization to limit the index
 --			of string_table, so lua can access this table quicker.
----@param dictionary table: See deflate.CreateDictionary
+---@param dictionary table See deflate.CreateDictionary
 ---@return table: literal/LZ77_length deflate codes.
 ---@return table: the extra bits of literal/LZ77_length deflate codes.
 ---@return table: the count of each literal/LZ77 deflate code.
@@ -1356,8 +1356,8 @@ local function GetBlockLZ77Result( level, string_table, hash_tables, block_start
 end
 
 ---Get the header data of dynamic block.
----@param lcodes_counts table: The count of each literal/LZ77_length codes.
----@param dcodes_counts table: The count of each Lz77 distance codes.
+---@param lcodes_counts table The count of each literal/LZ77_length codes.
+---@param dcodes_counts table The count of each Lz77 distance codes.
 ---@return number, number, number, table, table, table, table, table, table, table, table:a lots of stuffs.
 ---@see RFC1951 Page 12
 local function GetBlockDynamicHuffmanHeader( lcodes_counts, dcodes_counts )
@@ -1506,8 +1506,8 @@ local function CompressDynamicHuffmanBlock( WriteBits, is_last_block, lcodes, le
 end
 
 ---Get the size of fixed block without writing any bits into the writer.
----@param lcodes table: literal/LZ77_length deflate codes
----@param dcodes table: LZ77 distance deflate codes
+---@param lcodes table literal/LZ77_length deflate codes
+---@param dcodes table LZ77 distance deflate codes
 ---@return number: the bit length of the fixed block
 local function GetFixedHuffmanBlockSize( lcodes, dcodes )
     local block_bitlen = 3
@@ -1537,8 +1537,8 @@ local function GetFixedHuffmanBlockSize( lcodes, dcodes )
 end
 
 ---Write fixed block.
----@param lcodes table: literal/LZ77_length deflate codes
----@param dcodes table: LZ77 distance deflate codes
+---@param lcodes table literal/LZ77_length deflate codes
+---@param dcodes table LZ77 distance deflate codes
 local function CompressFixedHuffmanBlock( WriteBits, is_last_block, lcodes, lextra_bits, dcodes, dextra_bits )
     WriteBits( is_last_block and 1 or 0, 1 ) -- Last block identifier
     WriteBits( 1, 2 ) -- Fixed Huffman block identifier
@@ -1573,9 +1573,9 @@ local function CompressFixedHuffmanBlock( WriteBits, is_last_block, lcodes, lext
 end
 
 ---Get the size of store block without writing any bits into the writer.
----@param block_start number: The start index of the origin input string
----@param block_end number: The end index of the origin input string
----@param total_bitlen number: bit lens had been written into the compressed result before, because store block needs to shift to byte boundary.
+---@param block_start number The start index of the origin input string
+---@param block_end number The end index of the origin input string
+---@param total_bitlen number bit lens had been written into the compressed result before, because store block needs to shift to byte boundary.
 ---@return number: the bit length of the fixed block
 local function GetStoreBlockSize(block_start, block_end, total_bitlen)
     assert( block_end - block_start + 1 <= 65535 )
@@ -1787,14 +1787,14 @@ local function Deflate( configs, WriteBits, WriteString, FlushWriter, str, dicti
     end
 end
 
----The description to compression configuration table. 
+---The description to compression configuration table.
 ---
----Any field can be nil to use its default. 
+---Any field can be nil to use its default.
 ---
 ---Table with keys other than those below is an invalid table.
 ---@class compression_configs
----@field level number: The compression level ranged from 0 to 9. 0 is no compression. 9 is the slowest but best compression. Use nil for default level.
----@field strategy string: The compression strategy. "fixed" to only use fixed deflate compression block. "dynamic" to only use dynamic block. "huffman_only" to do no LZ77 compression. Only do huffman compression.
+---@field level number The compression level ranged from 0 to 9. 0 is no compression. 9 is the slowest but best compression. Use nil for default level.
+---@field strategy string The compression strategy. "fixed" to only use fixed deflate compression block. "dynamic" to only use dynamic block. "huffman_only" to do no LZ77 compression. Only do huffman compression.
 ---@see deflate.CompressDeflate(str, configs)
 ---@see deflate.CompressDeflateWithDict(str, dictionary, configs)
 local function CompressDeflateInternal( str, dictionary, configs )
@@ -1874,7 +1874,7 @@ end
 ---. If nil, use the default configuration.
 ---@return string The compressed data.
 ---@return number The number of bits padded at the end of output.
----0 <= bits < 8  
+---0 <= bits < 8
 ---
 ---This means the most significant "bits" of the last byte of the returned
 ---compressed data are padding bits and they don't affect decompression.
@@ -1899,7 +1899,7 @@ end
 ---. If nil, use the default configuration.
 ---@return string The compressed data.
 ---@return number The number of bits padded at the end of output.
----0 <= bits < 8  
+---0 <= bits < 8
 ---
 ---This means the most significant "bits" of the last byte of the returned
 ---compressed data are padding bits and they don't affect decompression.
@@ -1938,7 +1938,7 @@ end
 
 ---Compress using the zlib format with a preset dictionary.
 ---@param str string the data to be compressed.
----@param dictionary table: A preset dictionary produced
+---@param dictionary table A preset dictionary produced
 ---by deflate.CreateDictionary()
 ---@param configs table | nil: The configuration table to control the compression
 ---. If nil, use the default configuration.
@@ -1980,7 +1980,7 @@ local function CreateReader( input_string )
     ---To improve speed, this function does not
     ---check if the input has been exhausted.
     ---Use ReaderBitlenLeft() < 0 to check it.
-    ---@param bitlen number: the number of bits to read
+    ---@param bitlen number the number of bits to read
     ---@return number: the data is read.
     local function ReadBits( bitlen )
         local rshift_mask = _pow2[ bitlen ]
@@ -2007,9 +2007,9 @@ local function CreateReader( input_string )
 
     ---Read some bytes from the reader.
     ---Assume reader is on the byte boundary.
-    ---@param bytelen number: The number of bytes to be read.
-    ---@param buffer table: The byte read will be stored into this buffer.
-    ---@param buffer_size number: The buffer will be modified starting from
+    ---@param bytelen number The number of bytes to be read.
+    ---@param buffer table The byte read will be stored into this buffer.
+    ---@param buffer_size number The buffer will be modified starting from
     --	buffer[buffer_size+1], ending at buffer[buffer_size+bytelen-1]
     ---@return number: the new buffer_size
     local function ReadBytes( bytelen, buffer, buffer_size )
@@ -2047,7 +2047,7 @@ local function CreateReader( input_string )
     ---@see puff:Decode(...)
     ---@param huffman_bitlen_counts number
     ---@param huffman_symbols number
-    ---@param min_bitlen number: The minimum huffman bit length of all symbols
+    ---@param min_bitlen number The minimum huffman bit length of all symbols
     ---@return number: The decoded deflate code.
     --	Negative value is returned if decoding fails.
     local function Decode(huffman_bitlen_counts, huffman_symbols, min_bitlen)
@@ -2123,8 +2123,8 @@ local function CreateReader( input_string )
 end
 
 ---Create a deflate state, so I can pass in less arguments to functions.
----@param str string: the whole string to be decompressed.
----@param dictionary table: The preset dictionary. nil if not provided.
+---@param str string the whole string to be decompressed.
+---@param dictionary table The preset dictionary. nil if not provided.
 ---This dictionary should be produced by deflate.CreateDictionary(str)
 ---@return table: The decomrpess state.
 local function CreateDecompressState( str, dictionary )
@@ -2144,9 +2144,9 @@ end
 
 ---Get the stuffs needed to decode huffman codes
 ---@see puff.c:construct(...)
----@param huffman_bitlens table: The huffman bit length of the huffman codes.
----@param max_symbol number: The maximum symbol
----@param max_bitlen number: The min huffman bit length of all codes
+---@param huffman_bitlens table The huffman bit length of the huffman codes.
+---@param max_symbol number The maximum symbol
+---@param max_bitlen number The min huffman bit length of all codes
 ---@return number: zero or positive for success, negative for failure.
 ---@return table: The count of each huffman bit length.
 ---@return table: A table to convert huffman codes to deflate codes.
@@ -2200,7 +2200,7 @@ end
 ---Decode a fixed or dynamic huffman blocks, excluding last block identifier
 ---and block type identifer.
 ---@see puff.c:codes()
----@param state table: decompression state that will be modified by this function.
+---@param state table decompression state that will be modified by this function.
 ---@see CreateDecompressState
 ---@param ... any: Read the source code
 ---@return number: 0 on success, other value on failure.
@@ -2293,7 +2293,7 @@ local function DecodeUntilEndOfBlock( state, lcodes_huffman_bitlens, lcodes_huff
 end
 
 ---Decompress a store block
----@param state table: decompression state that will be modified by this function.
+---@param state table decompression state that will be modified by this function.
 ---@return number: 0 if succeeds, other value if fails.
 local function DecompressStoreBlock( state )
     local buffer, buffer_size, ReadBits, ReadBytes, ReaderBitlenLeft, SkipToByteBoundary, result_buffer = state.buffer, state.buffer_size, state.ReadBits, state.ReadBytes, state.ReaderBitlenLeft, state.SkipToByteBoundary, state.result_buffer
@@ -2340,14 +2340,14 @@ local function DecompressStoreBlock( state )
 end
 
 ---Decompress a fixed block
----@param state table: decompression state that will be modified by this function.
+---@param state table decompression state that will be modified by this function.
 ---@return number: 0 if succeeds other value if fails.
 local function DecompressFixBlock( state )
     return DecodeUntilEndOfBlock( state, _fix_block_literal_huffman_bitlen_count, _fix_block_literal_huffman_to_deflate_code, 7, _fix_block_dist_huffman_bitlen_count, _fix_block_dist_huffman_to_deflate_code, 5 )
 end
 
 ---Decompress a dynamic block
----@param state table: decompression state that will be modified by this function.
+---@param state table decompression state that will be modified by this function.
 ---@return number: 0 if success, other value if fails.
 local function DecompressDynamicBlock( state )
     local ReadBits, Decode = state.ReadBits, state.Decode
@@ -2465,7 +2465,7 @@ local function DecompressDynamicBlock( state )
 end
 
 ---Decompress a deflate stream
----@param state table: a decompression state
+---@param state table a decompression state
 ---@return string | nil: the decompressed string if succeeds. nil if fails.
 ---@return number | nil
 local function Inflate( state )
@@ -2751,7 +2751,7 @@ do
     end
 end
 
----Create a custom codec with encoder and decoder. 
+---Create a custom codec with encoder and decoder.
 ---
 ---This codec is used to convert an input string to make it not contain
 ---some specific bytes.
@@ -2759,7 +2759,7 @@ end
 ---localization into account. One byte (0-255) in the string is exactly one
 ---character (0-255).
 ---Credits to LibCompress.
----The code has been rewritten by the author of deflate. 
+---The code has been rewritten by the author of deflate.
 ---
 ---@param reserved_chars string The created encoder will ensure encoded
 ---data does not contain any single character in reserved_chars. This parameter
@@ -2779,9 +2779,9 @@ end
 ---
 ---If the codec can be created according to the given
 ---parameters, return the codec, which is a encode/decode table.
----The table contains two functions: 
+---The table contains two functions:
 ---
----t:Encode(str) returns the encoded string. 
+---t:Encode(str) returns the encoded string.
 ---
 ---t:Decode(str) returns the decoded string if succeeds. nil if fails.
 ---@return string? message: If the codec is successfully created, return nil.
@@ -2932,7 +2932,7 @@ local function GenerateWoWAddonChannelCodec()
 end
 
 ---Encode the string to make it ready to be transmitted in World of
----Warcraft addon channel. 
+---Warcraft addon channel.
 ---
 ---The encoded string is guaranteed to contain no NULL ("\000") character.
 ---@param str string The string to be encoded.
@@ -2960,7 +2960,7 @@ end
 
 ---For World of Warcraft Chat Channel Encoding
 ---Credits to LibCompress.
----The code has been rewritten by the author of deflate. 
+---The code has been rewritten by the author of deflate.
 ---
 ---Following byte values are not allowed:
 ---\000, s, S, \010, \013, \124, %
@@ -2995,7 +2995,7 @@ end
 local _chat_channel_codec
 
 ---Encode the string to make it ready to be transmitted in World of
----Warcraft chat channel. 
+---Warcraft chat channel.
 ---
 ---See also https://wow.gamepedia.com/ValidChatMessageCharacters
 ---@param str string The string to be encoded.
@@ -3160,13 +3160,12 @@ local _6bit_to_byte = {
     [41] = 63
 }
 
----Encode the string to make it printable. 
+--- Encode the string to make it printable.
 ---
 ---
----Credit to WeakAuras2, this function is equivalant to the implementation
----it is using right now. 
+--- Credit to WeakAuras2, this function is equivalant to the implementation it is using right now.
 ---
----The code has been rewritten by the author of deflate. 
+--- The code has been rewritten by the author of deflate.
 ---
 ---The encoded string will be 25% larger than the origin string. However, every
 ---single byte of the encoded string will be one of 64 printable ASCII

@@ -57,7 +57,7 @@ end
 ---
 --- Values smaller than 100 mean the collector will not wait to start a new cycle.
 --- A value of 200 means that the collector waits for the total memory in use to double before starting a new cycle.
----@param value number: The new value for the pause of the collector.
+---@param value number The new value for the pause of the collector.
 ---@return number: The previous value for pause.
 function gc.setPause( value )
     return collectgarbage( "setpause", value )
@@ -69,7 +69,7 @@ end
 ---
 --- You should not use values smaller than 100, because they make the collector too slow and can result in the collector never finishing a cycle.
 --- The default is 200, which means that the collector runs at "twice" the speed of memory allocation.
----@param size number: With a zero value, the collector will perform one basic (indivisible) step.
+---@param size number With a zero value, the collector will perform one basic (indivisible) step.
 --- For non-zero values, the collector will perform as if that amount of memory (in KBytes) had been allocated by Lua.
 ---@return boolean: Returns `true` if the step finished a collection cycle.
 function gc.setStep( size )
@@ -79,7 +79,7 @@ end
 --- [SHARED AND MENU]
 --- If you set the step multiplier to a very large number (larger than 10% of the maximum number of bytes that the program may use), the collector behaves like a stop-the-world collector.
 --- If you then set the pause to 200, the collector behaves as in old Lua versions, doing a complete collection every time Lua doubles its memory usage.
----@param value number: The new value for the step multiplier of the collector.
+---@param value number The new value for the step multiplier of the collector.
 ---@return number: The previous value for step.
 function gc.setStepMultiplier( value )
     return collectgarbage( "setstepmul", value )

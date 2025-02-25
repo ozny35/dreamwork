@@ -49,7 +49,7 @@ if std.MENU then
     end
 
     --- Quits the game.
-    ---@param noConfirm boolean: Whether to skip the confirmation prompt.
+    ---@param noConfirm boolean Whether to skip the confirmation prompt.
     --- NOTE: confirmation dialog is broken in Garry's mod and `noConfirm` do nothing.
     function menu.quit( noConfirm )
         RunGameUICommand( noConfirm and "QuitNoConfirm" or "Quit" )
@@ -157,31 +157,31 @@ do
     if std.MENU then
 
         --- Sets the master volume.
-        ---@param volume number: The volume to set, from 0 to 1.
+        ---@param volume number The volume to set, from 0 to 1.
         function options.setMasterVolume( volume )
             console_Variable.set( "volume", volume )
         end
 
         --- Sets the effects volume.
-        ---@param volume number: The volume to set, from 0 to 1.
+        ---@param volume number The volume to set, from 0 to 1.
         function options.setEffectsVolume( volume )
             console_Variable.set( "volume_sfx", volume )
         end
 
         --- Sets the music volume.
-        ---@param volume number: The volume to set, from 0 to 1.
+        ---@param volume number The volume to set, from 0 to 1.
         function options.setMusicVolume( volume )
             console_Variable.set( "snd_musicvolume", volume )
         end
 
         --- Sets the HEV suit volume.
-        ---@param volume number: The volume to set, from 0 to 1.
+        ---@param volume number The volume to set, from 0 to 1.
         function options.setSuitVolume( volume )
             console_Variable.set( "suitvolume", volume )
         end
 
         --- Sets whether to mute the volume when the game loses focus.
-        ---@param mute boolean: Whether to mute the volume.
+        ---@param mute boolean Whether to mute the volume.
         function options.setMuteVolumeOnLoseFocus( mute )
             console_Variable.set( "snd_mute_losefocus", mute )
         end
@@ -189,51 +189,51 @@ do
         --- Sets the selected game language.
         ---
         --- All language codes https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes.
-        ---@param language string: ISO 639-1 language code.
+        ---@param language string ISO 639-1 language code.
         function options.setLanguage( language )
             console_Variable.set( "gmod_language", language )
         end
 
         --- Sets whether the fast weapon switch is enabled.
-        ---@param value boolean: Whether the fast weapon switch is enabled.
+        ---@param value boolean Whether the fast weapon switch is enabled.
         function options.setFastWeaponSwitch( value )
             console_Variable.set( "hud_fastswitch", value )
         end
 
         --- Sets whether the quick info is enabled.
-        ---@param value boolean: Whether the quick info is enabled.
+        ---@param value boolean Whether the quick info is enabled.
         function options.setQuickInfo( value )
             console_Variable.set( "hud_quickinfo", value )
         end
 
         --- Sets whether the crosshair is enabled.
-        ---@param value boolean: Whether the crosshair is enabled.
+        ---@param value boolean Whether the crosshair is enabled.
         function options.setCrosshair( value )
             console_Variable.set( "crosshair", value )
         end
 
         --- Sets whether the HUD render (health, ammo, etc) is enabled.
-        ---@param value boolean: Whether the HUD render is enabled.
+        ---@param value boolean Whether the HUD render is enabled.
         function options.setDrawHUD( value )
             console_Variable.set( "cl_drawhud", value )
         end
 
         --- Sets the mouse sensitivity.
-        ---@param value number: The mouse sensitivity.
+        ---@param value number The mouse sensitivity.
         function options.setMouseSensitivity( value )
             console_Variable.set( "sensitivity", value )
         end
 
         --- Sets whether the loading URL is enabled.
-        ---@param value boolean: Whether the loading URL is enabled.
+        ---@param value boolean Whether the loading URL is enabled.
         function options.allowCustomLoadingScreen( value )
             console_Variable.set( "cl_enable_loadingurl", value )
         end
 
         --- Changes the resolution and display mode of the game window.
-        ---@param width number: The width of the game window.
-        ---@param height number: The height of the game window.
-        ---@param windowed boolean: Whether the game window is windowed.
+        ---@param width number The width of the game window.
+        ---@param height number The height of the game window.
+        ---@param windowed boolean Whether the game window is windowed.
         function options.setScreenResolution( width, height, windowed )
             command.run( "mat_setvideomode", width, height, windowed and 1 or 0 )
         end

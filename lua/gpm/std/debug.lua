@@ -39,7 +39,7 @@ local debug = {
 
 --- [SHARED AND MENU]
 --- Call function with given arguments.
----@param func function: The function to call.
+---@param func function The function to call.
 ---@param ... any: Arguments to be passed to the function.
 ---@return any ...: The return values of the function.
 function debug.fcall( func, ... )
@@ -57,7 +57,7 @@ do
 
     --- [SHARED AND MENU]
     --- Returns the metatable of the given name or `nil` if not found.
-    ---@param name string: The name of the metatable.
+    ---@param name string The name of the metatable.
     ---@return table | nil: The metatable.
     function debug.findmetatable( name )
         local cached = registry[ name ]
@@ -84,7 +84,7 @@ do
 
             --- [SHARED AND MENU]
             --- Returns the metatable of the given value or `nil` if not found.
-            ---@param value any: The value.
+            ---@param value any The value.
             ---@return table | nil: The metatable.
             function debug.getmetatable( value )
                 return debug_getmetatable( value ) or registry[ type( value ) ]
@@ -93,8 +93,8 @@ do
 
         --- [SHARED AND MENU]
         --- Returns the value of the given key in the metatable of the given value or `nil` if not found.
-        ---@param value any: The value.
-        ---@param key string: The key.
+        ---@param value any The value.
+        ---@param key string The key.
         ---@return any | nil: The value.
         function debug.getmetavalue( value, key )
             local metatable = debug_getmetatable( value )
@@ -107,8 +107,8 @@ do
 
     --- [SHARED AND MENU]
     --- Registers the metatable of the given name and table.
-    ---@param name string: The name of the metatable.
-    ---@param tbl table: The metatable.
+    ---@param name string The name of the metatable.
+    ---@param tbl table The metatable.
     ---@param do_full_register? boolean: If true, the metatable will be registered.
     ---@return integer: The ID of the metatable or -1 if not fully registered.
     function debug.registermetatable( name, tbl, do_full_register )
@@ -187,11 +187,12 @@ end
 
 if std.jit then
 
+    ---@diagnostic disable-next-line: undefined-field
     local util_funcinfo = std.jit.util.funcinfo
 
     --- [SHARED AND MENU]
     --- Checks if the function is jit compilable.
-    ---@param fn function: The function to check.
+    ---@param fn function The function to check.
     ---@return boolean: `true` if the function is jit compilable, otherwise `false`.
     function debug.isjitcompilable( fn )
         local info = util_funcinfo( fn )
@@ -213,7 +214,7 @@ do
 
     --- [SHARED AND MENU]
     --- Returns the memory address of the value.
-    ---@param value any: The value to get the memory address of.
+    ---@param value any The value to get the memory address of.
     ---@return integer | nil: The memory address or `nil` if not found.
     function debug.getpointer( value )
         return tonumber( string_format( "%p", value ), 16 )
@@ -244,7 +245,7 @@ do
     --- [SHARED AND MENU]
     --- Sets the function package.
     ---@param location function | integer: The function or stack level.
-    ---@param package Package: The package to set.
+    ---@param package Package The package to set.
     function debug.setfpackage( location, package )
         -- TODO: Check this after creating the package class
         setfenv( location, package.env )

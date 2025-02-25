@@ -86,7 +86,7 @@ end
 
 --- [SHARED AND MENU]
 --- Attaches a callback to the timer.
----@param fn function: The callback function.
+---@param fn function The callback function.
 ---@param name string?: The name of the callback, default is `unnamed`.
 function Timer:attach( fn, name )
     if name == nil then name = "unnamed" end
@@ -125,7 +125,7 @@ do
 
     --- [SHARED AND MENU]
     --- Detaches a callback from the timer.
-    ---@param name string: The name of the callback to detach.
+    ---@param name string The name of the callback to detach.
     function Timer:detach( name )
         for i = 1, self[ 0 ], 2 do
             if self[ i ] == name then
@@ -352,7 +352,7 @@ do
 
     --- [SHARED AND MENU]
     --- Pauses/unpauses the timer.
-    ---@param value boolean: `true` to pause, `false` to unpause.
+    ---@param value boolean `true` to pause, `false` to unpause.
     ---@return boolean: Returns `true` if successful, otherwise `false`.
     function Timer:setPause( value )
         local status = self[ -1 ]
@@ -379,7 +379,7 @@ do
 
     --- [SHARED AND MENU]
     --- Creates a simple timer.
-    ---@param fn function: The callback function.
+    ---@param fn function The callback function.
     ---@param seconds number?: The delay in seconds.
     function TimerClass.wait( fn, seconds )
         return timer_Simple( seconds or 0, fn )
@@ -393,7 +393,7 @@ do
 
     --- [SHARED AND MENU]
     --- Checks if the timer exists.
-    ---@param name string: The name of the timer.
+    ---@param name string The name of the timer.
     ---@return boolean: Returns `true` if the timer exists, otherwise `false`.
     function TimerClass.exists( name )
         return timer_Exists( name )

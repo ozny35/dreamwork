@@ -35,7 +35,7 @@ do
     end
 
     --- [SHARED AND MENU] Checks whether or not a game is currently mounted.
-    ---@param appID number: Steam AppID of the game.
+    ---@param appID number Steam AppID of the game.
     ---@return boolean: Returns `true` if the game is mounted, `false` otherwise.
     function game.isMounted( appID )
         local games = getAll()
@@ -57,13 +57,13 @@ if std.MENU then
     local tostring = std.tostring
 
     --- [MENU] Mounts a game on the client.
-    ---@param appID number: Steam AppID of the game.
+    ---@param appID number Steam AppID of the game.
     function game.mount( appID )
         SetMounted( tostring( appID ), true )
     end
 
     --- [MENU] Unmounts a game on the client.
-    ---@param appID number: Steam AppID of the game.
+    ---@param appID number Steam AppID of the game.
     function game.unmount( appID )
         SetMounted( tostring( appID ), false )
     end
@@ -214,7 +214,7 @@ if std.SERVER then
     game.print = _G.PrintMessage
 
     --- [SERVER] Enables Half-Life 2 aux suit power stuff.
-    ---@param bool boolean: `true` to enable Half-Life 2 aux suit power stuff, `false` to disable it.
+    ---@param bool boolean `true` to enable Half-Life 2 aux suit power stuff, `false` to disable it.
     function game.setHL2Suit( bool )
         console_Variable.setBool( "gmod_suit", bool )
     end

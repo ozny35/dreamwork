@@ -19,7 +19,7 @@ do
     end
 
     ---@class gpm.http_cache
-    ---@field MAX_SIZE number: The maximum size of cached content.
+    ---@field MAX_SIZE number The maximum size of cached content.
     local http_cache = {}
 
     --- Gets the cached content for the specified URL.
@@ -355,7 +355,7 @@ do
     sqlite_rawQuery( "create table if not exists 'gpm.migration_history' (name text, timestamp integer)" )
 
     --- Checks if a migration exists and returns `true` or `false`.
-    ---@param name string: The name of the migration.
+    ---@param name string The name of the migration.
     ---@return boolean: `true` if migration exists, `false` otherwise.
     local function migrationExists( name )
         for i = 1, #migrations do

@@ -13,7 +13,7 @@ do
     local string_format = std.string.format
 
     --- [SHARED AND MENU] Returns the hexadecimal representation of the number with the specified digits.
-    ---@param value integer: The value to be converted.
+    ---@param value integer The value to be converted.
     ---@param length integer?: The number of digits. Defaults to 8.
     ---@return string: The hexadecimal representation.
     bit.tohex = bit_lib.tohex or function( value, length )
@@ -23,7 +23,7 @@ do
 end
 
 --- [SHARED AND MENU] Normalizes the specified value and clamps it in the range of a signed 32bit integer.
----@param value integer: The value to be normalized.
+---@param value integer The value to be normalized.
 ---@return integer: The normalized value.
 local bit_tobit = bit_lib.tobit or function( value )
     value = value % 0x100000000
@@ -35,8 +35,8 @@ bit.tobit = bit_tobit
 local bit_lshift, bit_rshift
 
 --- [SHARED AND MENU] Returns the left shifted value.
----@param value integer: The value to be manipulated.
----@param shift integer: Amounts of bits to shift left by.
+---@param value integer The value to be manipulated.
+---@param shift integer Amounts of bits to shift left by.
 ---@return integer: The left shifted value.
 bit_lshift = bit_lib.lshift or function( value, shift )
     if shift < 0 then
@@ -53,8 +53,8 @@ end
 bit.lshift = bit_lshift
 
 --- [SHARED AND MENU] Returns the right shifted value.
----@param value integer: The value to be manipulated.
----@param shift integer: Amounts of bits to shift right by.
+---@param value integer The value to be manipulated.
+---@param shift integer Amounts of bits to shift right by.
 ---@return integer: The right shifted value.
 bit_rshift = bit_lib.rshift or function( value, shift )
     if shift < 0 then
@@ -71,22 +71,22 @@ end
 bit.rshift = bit_rshift
 
 --- [SHARED AND MENU] Returns the arithmetically shifted value.
----@param value integer: The value to be manipulated.
----@param shift integer: Amounts of bits to shift.
+---@param value integer The value to be manipulated.
+---@param shift integer Amounts of bits to shift.
 ---@return integer: The arithmetically shifted value.
 bit.arshift = bit_lib.arshift or function( value, shift )
     return bit_tobit( math_floor( value / ( 2 ^ shift ) ) * ( value >= 0x80000000 and -1 or 1 ) )
 end
 
 --- [SHARED AND MENU]  Swaps the byte order of a 32-bit integer.
----@param value integer: The 32-bit integer to be byte-swapped.
+---@param value integer The 32-bit integer to be byte-swapped.
 ---@return integer: The byte-swapped value.
 bit.bswap = bit_lib.bswap or function( value )
     return bit_tobit( ( ( value % 0x100 ) * 0x1000000 ) + ( ( math_floor( value / 0x100 ) % 0x100 ) * 0x10000 ) + ( ( math_floor( value / 0x10000 ) % 0x100 ) * 0x100 ) + ( math_floor( value / 0x1000000 ) % 0x100 ) )
 end
 
 --- [SHARED AND MENU] Returns the bitwise `not` of the value.
----@param value integer: The value to be manipulated.
+---@param value integer The value to be manipulated.
 ---@return integer: The bitwise `not` of the value.
 local bit_bnot = bit_lib.bnot or function( value )
     local result = 0
@@ -104,7 +104,7 @@ end
 bit.bnot = bit_bnot
 
 --- [SHARED AND MENU] Performs the bitwise `and for all values specified.
----@param value integer: The value to be manipulated.
+---@param value integer The value to be manipulated.
 ---@param ... integer?: Values bit and with.
 ---@return integer: The bitwise `and` result between all values.
 local bit_band = bit_lib.band or function( value, ... )
@@ -130,7 +130,7 @@ end
 bit.band = bit_band
 
 --- [SHARED AND MENU] Returns the bitwise `or` of all values specified.
----@param value integer: The value to be manipulated.
+---@param value integer The value to be manipulated.
 ---@param ... integer?: Values bit or with.
 ---@return integer: The bitwise `or` result between all values.
 bit.bor = bit_lib.bor or function( value, ... )
@@ -154,7 +154,7 @@ bit.bor = bit_lib.bor or function( value, ... )
 end
 
 --- [SHARED AND MENU] Returns the bitwise `xor` of all values specified.
----@param value integer: The value to be manipulated.
+---@param value integer The value to be manipulated.
 ---@param ... integer?: Values bit xor with.
 ---@return integer: Result of bitwise `xor` operation.
 bit.bxor = bit_lib.bxor or function( value, ... )
@@ -183,8 +183,8 @@ bit.bxor = bit_lib.bxor or function( value, ... )
 end
 
 --- [SHARED AND MENU] Returns the left rotated value.
----@param value integer: The value to be manipulated.
----@param shift integer: Amounts of bits to rotate left by.
+---@param value integer The value to be manipulated.
+---@param shift integer Amounts of bits to rotate left by.
 ---@return integer: The left rotated value.
 bit.rol = bit_lib.rol or function( value, shift )
     for _ = 1, shift, 1 do
@@ -199,8 +199,8 @@ bit.rol = bit_lib.rol or function( value, shift )
 end
 
 --- [SHARED AND MENU] Returns the right rotated value.
----@param value integer: The value to be manipulated.
----@param shift integer: Amounts of bits to rotate right by.
+---@param value integer The value to be manipulated.
+---@param shift integer Amounts of bits to rotate right by.
 ---@return integer: The right rotated value.
 bit.ror = bit_lib.ror or function( value, shift )
     for _ = 1, shift, 1 do
@@ -216,7 +216,7 @@ bit.ror = bit_lib.ror or function( value, shift )
 end
 
 --- [SHARED AND MENU] Performs the bitwise `test for all values specified.
----@param value integer: The value to be tested.
+---@param value integer The value to be tested.
 ---@param ... integer?: The values to be tested.
 ---@return boolean: `true` if all values are `true`, `false` otherwise.
 function bit.btest( value, ... )
@@ -226,8 +226,8 @@ end
 --- [SHARED AND MENU] Returns the unsigned number formed by the bits field to field + width - 1 from n. Bits are numbered from 0 (least significant) to 31 (most significant).
 ---
 --- All accessed bits must be in the range [0, 31].
----@param value integer: The value to be manipulated.
----@param field integer: The starting bit.
+---@param value integer The value to be manipulated.
+---@param field integer The starting bit.
 ---@param width integer?: The number of bits to extract.
 ---@return integer: The extracted value.
 function bit.extract( value, field, width )
@@ -235,9 +235,9 @@ function bit.extract( value, field, width )
 end
 
 --- [SHARED AND MENU] Replaces the bits field to field + width - 1 with the specified value.
----@param value integer: The value to be manipulated.
----@param extract integer: The value to be extracted.
----@param field integer: The starting bit.
+---@param value integer The value to be manipulated.
+---@param extract integer The value to be extracted.
+---@param field integer The starting bit.
 ---@param width integer?: The number of bits to extract.
 ---@return number: The modified value.
 function bit.replace( value, extract, field, width )

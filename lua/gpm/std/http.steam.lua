@@ -17,7 +17,7 @@ if steamworks ~= nil then
     local steamworks_RequestPlayerInfo = steamworks.RequestPlayerInfo
 
     --- Returns the name of the player with the given Steam ID.
-    ---@param sid64 string: The SteamID64 of the player.
+    ---@param sid64 string The SteamID64 of the player.
     ---@param timeout number | false | nil: The timeout in seconds. Set to `false` to disable the timeout.
     ---@return string: The name of the player.
     ---@async
@@ -51,9 +51,9 @@ if steamworks ~= nil then
     local steamworks_Publish = steamworks.Publish
 
     --- Publishes file to Steam Workshop.
-    ---@param filePath string: The absolute path to the addon file.
-    ---@param imagePath string: The absolute path to the image file.
-    ---@param title string: The title of the addon.
+    ---@param filePath string The absolute path to the addon file.
+    ---@param imagePath string The absolute path to the image file.
+    ---@param title string The title of the addon.
     ---@param description string?: The description of the addon.
     ---@param tags string[]: The tags for the addon.
     ---@param changeLog string?: The changelog of the publication.
@@ -90,12 +90,12 @@ if steamworks ~= nil then
     end
 
     --- Updates an file on Steam Workshop.
-    ---@param filePath string: The absolute path to the addon file.
-    ---@param imagePath string: The absolute path to the image file.
-    ---@param title string: The title of the addon.
+    ---@param filePath string The absolute path to the addon file.
+    ---@param imagePath string The absolute path to the image file.
+    ---@param title string The title of the addon.
     ---@param description? string: The description of the addon.
     ---@param tags string[]: The tags for the addon.
-    ---@param wsid string: The workshop ID of the addon.
+    ---@param wsid string The workshop ID of the addon.
     ---@param changeLog string?: The changelog of the publication.
     ---@param timeout number | nil | false: The timeout in seconds. Set to `false` to disable the timeout.
     ---@return boolean: `true` if the update was successful, `false` otherwise.

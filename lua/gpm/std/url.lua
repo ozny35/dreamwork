@@ -19,7 +19,7 @@ local concat, remove = table.concat, table.remove
 local floor = math.floor
 
 --- TODO: docs
----@param chars table: TODO
+---@param chars table TODO
 ---@return table: TODO
 local function compileCharacterTable( chars )
 	local result = {}
@@ -148,8 +148,8 @@ for _index_0 = 1, #_list_0 do
 end
 
 --- TODO: docs
----@param str string: TODO
----@param decodeSet table: TODO
+---@param str string TODO
+---@param decodeSet table TODO
 ---@return string: TODO
 local function percentDecode( str, decodeSet )
 	---@diagnostic disable-next-line: redundant-return-value
@@ -2136,7 +2136,7 @@ function URL:__newindex( key, value )
 end
 
 --- Checks if the given value is a `URL`.
----@param value any: The value to check.
+---@param value any The value to check.
 ---@return boolean: Returns `true` if the value is a URL, otherwise `false`.
 function std.isurl( value )
 	return getmetatable( value ) == URL
@@ -2164,28 +2164,28 @@ URLClass.serialize = serialize
 -- URLClass.deserialize = parse
 
 --- TODO: docs
----@param str string: TODO
+---@param str string TODO
 ---@return string: TODO
 function URLClass.encodeURI( str )
 	return percentEncode( str, URI_ENCODE_SET )
 end
 
 --- TODO: docs
----@param str string: TODO
+---@param str string TODO
 ---@return string: TODO
 function URLClass.decodeURI( str )
 	return percentDecode( str, URI_DECODE_SET )
 end
 
 --- TODO: docs
----@param str string: TODO
+---@param str string TODO
 ---@return string: TODO
 function URLClass.encodeURIComponent( str )
 	return percentEncode( str, COMPONENT_ENCODE_SET, true )
 end
 
 --- TODO: docs
----@param str string: TODO
+---@param str string TODO
 ---@return string: TODO
 function URLClass.decodeURIComponent( str )
 	return percentDecode( str, DECODE_LOOKUP_TABLE )

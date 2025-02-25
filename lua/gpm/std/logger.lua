@@ -77,9 +77,9 @@ do
 
     --- [SHARED AND MENU]
     --- Logs a message.
-    ---@param color Color: The log level color.
-    ---@param level string: The log level name.
-    ---@param str string: The log message.
+    ---@param color Color The log level color.
+    ---@param level string The log level name.
+    ---@param str string The log message.
     ---@param ... any: The log message arguments to format/interpolate.
     function Logger:log( color, level, str, ... )
         if self.interpolation then

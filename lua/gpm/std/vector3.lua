@@ -149,14 +149,14 @@ do
         local debug_getmetatable = debug.getmetatable
 
         --- [SHARED AND MENU] Returns `true` if the value is a `Vector3`.
-        ---@param value any: The value.
+        ---@param value any The value.
         ---@return boolean: `true` if the value is a `Vector3`, `false` otherwise.
         function std.isvector3( value )
             return debug_getmetatable( value ) == Vector3
         end
 
         --- [SHARED AND MENU] Returns `true` if the value is an `Angle3`.
-        ---@param value any: The value.
+        ---@param value any The value.
         ---@return boolean: `true` if the value is an `Angle3`, `false` otherwise.
         function std.isangle3( value )
             return debug_getmetatable( value ) == Angle3
@@ -249,9 +249,9 @@ function Vector3:unpack()
 end
 
 --- Sets the x, y, and z coordinates of the vector.
----@param x number: The x coordinate of the vector.
----@param y number: The y coordinate of the vector.
----@param z number: The z coordinate of the vector.
+---@param x number The x coordinate of the vector.
+---@param y number The y coordinate of the vector.
+---@param z number The z coordinate of the vector.
 function Vector3:setUnpacked( x, y, z )
     self[ 1 ] = x
     self[ 2 ] = y
@@ -269,7 +269,7 @@ do
     local math_nan, math_inf = math.nan, math.inf
 
     --- Scales the vector.
-    ---@param scale number: The scale factor.
+    ---@param scale number The scale factor.
     ---@return Vector3: The scaled vector.
     function Vector3:scale( scale )
         if scale == 0 or scale == math_nan then
@@ -292,14 +292,14 @@ do
 end
 
 --- Returns a scaled copy of the vector.
----@param scale number: The scale factor.
+---@param scale number The scale factor.
 ---@return Vector3: The scaled copy of the vector.
 function Vector3:getScaled( scale )
     return self:copy():scale( scale )
 end
 
 --- Adds the vector to another vector.
----@param vector Vector3: The other vector.
+---@param vector Vector3 The other vector.
 ---@return Vector3: The sum of the two vectors.
 function Vector3:add( vector )
     self[ 1 ] = self[ 1 ] + vector[ 1 ]
@@ -309,7 +309,7 @@ function Vector3:add( vector )
 end
 
 --- Subtracts the vector from another vector.
----@param vector Vector3: The other vector.
+---@param vector Vector3 The other vector.
 ---@return Vector3: The difference of the two vectors.
 function Vector3:sub( vector )
     self[ 1 ] = self[ 1 ] - vector[ 1 ]
@@ -359,13 +359,13 @@ function Vector3:negate()
     return self
 end
 
----@param vector Vector3: The other vector.
+---@param vector Vector3 The other vector.
 ---@return Vector3: The sum of the two vectors.
 function Vector3:__add( vector )
     return self:copy():add( vector )
 end
 
----@param vector Vector3: The other vector.
+---@param vector Vector3 The other vector.
 ---@return Vector3: The difference of the two vectors.
 function Vector3:__sub( vector )
     return self:copy():sub( vector )
@@ -388,7 +388,7 @@ function Vector3:__unm()
     return setmetatable( { -self[ 1 ], -self[ 2 ], -self[ 3 ] }, Vector3 )
 end
 
----@param vector Vector3: The other vector.
+---@param vector Vector3 The other vector.
 ---@return boolean: `true` if the two vectors are equal, `false` otherwise.
 function Vector3:__eq( vector )
     return self[ 1 ] == vector[ 1 ] and self[ 2 ] == vector[ 2 ] and self[ 3 ] == vector[ 3 ]
@@ -413,7 +413,7 @@ do
     end
 
     --- Calculates the distance between two vectors.
-    ---@param vector Vector3: The other vector.
+    ---@param vector Vector3 The other vector.
     ---@return number: The distance between the two vectors.
     function Vector3:getDistance( vector )
         return math_sqrt( ( vector[ 1 ] - self[ 1 ] ) ^ 2 + ( vector[ 2 ] - self[ 2 ] ) ^ 2 + ( vector[ 3 ] - self[ 3 ] ) ^ 2 )
@@ -452,14 +452,14 @@ function Vector3:zero()
 end
 
 --- Calculates the dot product of two vectors.
----@param vector Vector3: The other vector.
+---@param vector Vector3 The other vector.
 ---@return number: The dot product of two vectors.
 function Vector3:dot( vector )
     return self[ 1 ] * vector[ 1 ] + self[ 2 ] * vector[ 2 ] + self[ 3 ] * vector[ 3 ]
 end
 
 --- Calculates the cross product of two vectors.
----@param vector Vector3: The other vector.
+---@param vector Vector3 The other vector.
 ---@return Vector3: The cross product of two vectors.
 function Vector3:cross( vector )
     local x1, y1, z1 = self:unpack()
@@ -472,7 +472,7 @@ function Vector3:cross( vector )
 end
 
 --- Checks if the vector is within an axis-aligned box.
----@param vector Vector3: The other vector.
+---@param vector Vector3 The other vector.
 ---@return boolean: `true` if the vector is within the box, `false` otherwise.
 function Vector3:withinAABox( vector )
     if self[ 1 ] < math_min( self[ 1 ], vector[ 1 ] ) or self[ 1 ] > math_max( self[ 1 ], vector[ 1 ] ) then return false end
@@ -515,8 +515,8 @@ do
 end
 
 --- Checks if the vector is equal to the given vector with the given tolerance.
----@param vector Vector3: The vector to check.
----@param tolerance number: The tolerance to use.
+---@param vector Vector3 The vector to check.
+---@param tolerance number The tolerance to use.
 ---@return boolean: `true` if the vectors are equal, otherwise `false`.
 function Vector3:isNear( vector, tolerance )
     return math_abs( self[ 1 ] - vector[ 1 ] ) <= tolerance and
@@ -525,7 +525,7 @@ function Vector3:isNear( vector, tolerance )
 end
 
 --- Rotates the vector by the given angle.
----@param angle Angle3: The angle to rotate by.
+---@param angle Angle3 The angle to rotate by.
 ---@return Vector3: The rotated vector.
 function Vector3:rotate( angle )
     local pitch, yaw, roll = math_rad( angle[ 1 ] ), math_rad( angle[ 2 ] ), math_rad( angle[ 3 ] )
@@ -541,7 +541,7 @@ function Vector3:rotate( angle )
 end
 
 --- Returns a copy of the vector rotated by the given angle.
----@param angle Angle3: The angle to rotate by.
+---@param angle Angle3 The angle to rotate by.
 ---@return Vector3: The rotated vector.
 function Vector3:getRotated( angle )
     return self:copy():rotate( angle )
@@ -549,7 +549,7 @@ end
 
 --- Linear interpolation between two vectors.
 ---@param vector Vector3 | number: The other vector or a number.
----@param frac number: The interpolation factor.
+---@param frac number The interpolation factor.
 ---@return Vector3: The interpolated vector.
 function Vector3:lerp( vector, frac )
     if isnumber( vector ) then
@@ -569,14 +569,14 @@ end
 
 --- Returns a copy of the vector linearly interpolated between two vectors.
 ---@param vector Vector3 | number: The other vector or a number.
----@param frac number: The interpolation factor.
+---@param frac number The interpolation factor.
 ---@return Vector3: The interpolated vector.
 function Vector3:getLerped( vector, frac )
     return self:copy():lerp( vector, frac )
 end
 
 --- Projects the vector onto another vector.
----@param vector Vector3: The other vector.
+---@param vector Vector3 The other vector.
 ---@return Vector3: The projected vector.
 function Vector3:project( vector )
     local normalized = vector:getNormalized()
@@ -588,7 +588,7 @@ function Vector3:project( vector )
 end
 
 --- Returns a copy of the vector projected onto another vector.
----@param vector Vector3: The other vector.
+---@param vector Vector3 The other vector.
 ---@return Vector3: The projected vector.
 function Vector3:getProjected( vector )
     return self:copy():project( vector )
@@ -597,8 +597,8 @@ end
 --- Modifies the given vectors so that all of vector2's axis are larger than vector1's by switching them around.
 ---
 --- Also known as ordering vectors.
----@param mins Vector3: The first vector to modify.
----@param maxs Vector3: The second vector to modify.
+---@param mins Vector3 The first vector to modify.
+---@param maxs Vector3 The second vector to modify.
 function Vector3Class.order( mins, maxs )
     local x1, y1, z1 = mins:unpack()
     local x2, y2, z2 = maxs:unpack()
@@ -617,7 +617,7 @@ do
     local Color = ColorClass.__base
 
     --- Creates a color object from vector.
-    ---@param vector Vector3: The vector.
+    ---@param vector Vector3 The vector.
     ---@return Color: The color object.
     function ColorClass.fromVector3( vector )
         return setmetatable( {
@@ -672,7 +672,7 @@ function Angle3:__new( pitch, yaw, roll )
 end
 
 --- Adds the angle.
----@param angle Angle3: The angle to add.
+---@param angle Angle3 The angle to add.
 ---@return Angle3: The sum of the angles.
 function Angle3:add( angle )
     self[ 1 ] = self[ 1 ] + angle[ 1 ]
@@ -682,7 +682,7 @@ function Angle3:add( angle )
 end
 
 --- Subtracts the angle.
----@param angle Angle3: The angle to subtract.
+---@param angle Angle3 The angle to subtract.
 ---@return Angle3: The subtracted angle.
 function Angle3:sub( angle )
     self[ 1 ] = self[ 1 ] - angle[ 1 ]
@@ -736,13 +736,13 @@ function Angle3:negate()
     return self
 end
 
----@param angle Angle3: The other angle.
+---@param angle Angle3 The other angle.
 ---@return Angle3: The sum of the angles.
 function Angle3:__add( angle )
     return self:copy():add( angle )
 end
 
----@param angle Angle3: The angle to subtract.
+---@param angle Angle3 The angle to subtract.
 ---@return Angle3: The subtracted angle.
 function Angle3:__sub( angle )
     return self:copy():sub( angle )
@@ -765,7 +765,7 @@ function Angle3:__unm()
     return setmetatable( { -self[ 1 ], -self[ 2 ], -self[ 3 ] }, Angle3 )
 end
 
----@param angle Angle3: The other angle.
+---@param angle Angle3 The other angle.
 ---@return boolean: `true` if the angles are equal, `false` otherwise.
 function Angle3:__eq( angle )
     return self[ 1 ] == angle[ 1 ] and self[ 2 ] == angle[ 2 ] and self[ 3 ] == angle[ 3 ]
@@ -773,7 +773,7 @@ end
 
 --- Linearly interpolates the angle.
 ---@param angle Angle3 | number: The other angle.
----@param frac number: The interpolation factor.
+---@param frac number The interpolation factor.
 ---@return Angle3: The interpolated angle.
 function Angle3:lerp( angle, frac )
     if isnumber( angle ) then
@@ -793,7 +793,7 @@ end
 
 --- Returns a copy of the angle linearly interpolated between two angles.
 ---@param angle Angle3 | number: The other angle.
----@param frac number: The interpolation factor.
+---@param frac number The interpolation factor.
 ---@return Angle3: The interpolated angle.
 function Angle3:getLerped( angle, frac )
     return self:copy():lerp( angle, frac )
@@ -857,8 +857,8 @@ do
 end
 
 --- Checks if the angle is within the given tolerance of the given angle.
----@param angle Angle3: The angle to check against.
----@param tolerance number: The tolerance.
+---@param angle Angle3 The angle to check against.
+---@param tolerance number The tolerance.
 ---@return boolean: `true` if the angle is within the given tolerance of the given angle.
 function Angle3:isNear( angle, tolerance )
     return math_abs( self[ 1 ] - angle[ 1 ] ) <= tolerance and
@@ -882,8 +882,8 @@ function Angle3:zero()
 end
 
 --- Rotates the angle around the specified axis by the specified degrees.
----@param axis Vector3: The axis to rotate around as a normalized unit vector. When argument is not a unit vector, you will experience numerical offset errors in the rotated angle.
----@param rotation number: The degrees to rotate around the specified axis.
+---@param axis Vector3 The axis to rotate around as a normalized unit vector. When argument is not a unit vector, you will experience numerical offset errors in the rotated angle.
+---@param rotation number The degrees to rotate around the specified axis.
 function Angle3:rotate( axis, rotation )
 
     -- TODO: implement this function
@@ -891,10 +891,10 @@ function Angle3:rotate( axis, rotation )
 end
 
 --- Returns a new vector from world position and world angle.
----@param position Vector3: The local position.
----@param angle Angle3: The local angle.
----@param world_position Vector3: The world position.
----@param world_angle Angle3: The world angle.
+---@param position Vector3 The local position.
+---@param angle Angle3 The local angle.
+---@param world_position Vector3 The world position.
+---@param world_angle Angle3 The world angle.
 ---@return Vector3: The new vector.
 ---@return Angle3: The new angle.
 function Vector3Class.translateToLocal( position, angle, world_position, world_angle )
@@ -906,10 +906,10 @@ function Vector3Class.translateToLocal( position, angle, world_position, world_a
 end
 
 --- Returns a new vector from local position and local angle.
----@param local_position Vector3: The local position.
----@param local_angle Angle3: The local angle.
----@param world_position Vector3: The world position.
----@param world_angle Angle3: The world angle.
+---@param local_position Vector3 The local position.
+---@param local_angle Angle3 The local angle.
+---@param world_position Vector3 The world position.
+---@param world_angle Angle3 The world angle.
 ---@return Vector3: The new vector.
 ---@return Angle3: The new angle.
 function Vector3Class.translateToWorld( local_position, local_angle, world_position, world_angle )
@@ -918,12 +918,12 @@ function Vector3Class.translateToWorld( local_position, local_angle, world_posit
 end
 
 --- Returns a new vector from screen position.
----@param view_angle Angle3: The view angle.
----@param view_fov number: The view fov.
----@param x number: The x position.
----@param y number: The y position.
----@param screen_width number: The screen width.
----@param screen_height number: The screen height.
+---@param view_angle Angle3 The view angle.
+---@param view_fov number The view fov.
+---@param x number The x position.
+---@param y number The y position.
+---@param screen_width number The screen width.
+---@param screen_height number The screen height.
 ---@return Vector3: The view direction.
 function Vector3Class.fromScreen( view_angle, view_fov, x, y, screen_width, screen_height )
     -- TODO: implement this function

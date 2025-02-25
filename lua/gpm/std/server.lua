@@ -130,7 +130,7 @@ if std.SHARED then
     --- [SHARED] Enables or disables cheats.
     ---
     --- It gives all players access to commmands that would normally be abused or misused by players.
-    ---@param bool boolean: `true` to enable cheats, `false` to disable them.
+    ---@param bool boolean `true` to enable cheats, `false` to disable them.
     function server.setCheatsEnabled( bool )
         console_Variable.set( "sv_cheats", bool )
     end
@@ -154,7 +154,7 @@ if std.SERVER then
     end
 
     --- [SERVER] Sets the download URL of the server.
-    ---@param str string: The download URL to set.
+    ---@param str string The download URL to set.
     function server.setDownloadURL( str )
         console_Variable.set( "sv_downloadurl", str )
     end
@@ -166,7 +166,7 @@ if std.SERVER then
     end
 
     --- [SERVER] Allow clients to download files from the server.
-    ---@param bool boolean: Whether the server allows downloads.
+    ---@param bool boolean Whether the server allows downloads.
     function server.allowDownload( bool )
         console_Variable.set( "sv_allowdownload", bool )
     end
@@ -178,7 +178,7 @@ if std.SERVER then
     end
 
     --- [SERVER] Allow clients to upload customizations files to the server.
-    ---@param bool boolean: Whether the server allows uploads.
+    ---@param bool boolean Whether the server allows uploads.
     function server.allowUpload( bool )
         console_Variable.set( "sv_allowupload", bool )
     end
@@ -214,19 +214,19 @@ if std.SERVER then
     end
 
     --- [SERVER] Hides/unhides the server from the master server.
-    ---@param bool boolean: `true` to hide the server, `false` to unhide it.
+    ---@param bool boolean `true` to hide the server, `false` to unhide it.
     function server.setHidden( bool )
         console_Variable.set( "hide_server", bool )
     end
 
     --- [SERVER] Allow clients to run `lua_openscript_cl` and `lua_run_cl`.
-    ---@param bool boolean: `true` to allow clients to run lua_openscript_cl and lua_run_cl, `false` to disallow them.
+    ---@param bool boolean `true` to allow clients to run lua_openscript_cl and lua_run_cl, `false` to disallow them.
     function server.allowUserScripts( bool )
         console_Variable.set( "sv_allowcslua", bool )
     end
 
     --- [SERVER] Sets the name of the server.
-    ---@param str string: The name to set.
+    ---@param str string The name to set.
     function server.setName( str )
         return sv_hostname:set( str )
     end
@@ -263,7 +263,7 @@ if std.MENU then
         local serverlist_PingServer = glua_serverlist.PingServer
 
         --- [MENU] Queries a server for its information/ping.
-        ---@param address string: The address of the server. ( IP:Port like `127.0.0.1:27015` )
+        ---@param address string The address of the server. ( IP:Port like `127.0.0.1:27015` )
         ---@param timeout number?: The timeout in seconds. Set to `false` to disable the timeout.
         ---@return ServerInfo: The server information.
         ---@async
@@ -310,7 +310,7 @@ if std.MENU then
         local serverlist_PlayerList = glua_serverlist.PlayerList
 
         --- [MENU] Queries a server for it's player list.
-        ---@param address string: The address of the server. ( IP:Port like `127.0.0.1:27015` )
+        ---@param address string The address of the server. ( IP:Port like `127.0.0.1:27015` )
         ---@param timeout number?: The timeout in seconds. Set to `false` to disable the timeout.
         ---@async
         function server.getPlayers( address, timeout )
@@ -338,7 +338,7 @@ if std.MENU then
     end
 
     --- [MENU] Queries the master server for server list.
-    ---@param data ServerQueryData: The query data to send to the master server.
+    ---@param data ServerQueryData The query data to send to the master server.
     function server.getAll( data )
         data.GameDir = data.directory
         data.directory = nil

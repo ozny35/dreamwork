@@ -76,7 +76,7 @@ elseif std.CLIENT then
         } )
 
         --- Sends a message to the player chat.
-        ---@param text string: The message's content.
+        ---@param text string The message's content.
         ---@param teamChat boolean?: Whether the message should be sent as team chat.
         function chat.say( text, teamChat )
             command_run( teamChat and "say_team" or "say", text )

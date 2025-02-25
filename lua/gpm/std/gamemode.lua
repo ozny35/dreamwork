@@ -10,6 +10,6 @@ local gamemode = {
     derive = _G.DeriveGamemode
 }
 
-
+-- TODO: make gamemode class and gamemode handler
 
 return gamemode

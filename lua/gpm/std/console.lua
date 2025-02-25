@@ -61,14 +61,14 @@ do
     ---@alias ConsoleCommand gpm.std.console.Command
     ---@class gpm.std.console.Command : gpm.std.Object
     ---@field __class gpm.std.console.Command
-    ---@field name string: The name of the console command.
-    ---@field description string: The help text of the console command.
-    ---@field flags integer: The flags of the console command.
+    ---@field name string The name of the console command.
+    ---@field description string The help text of the console command.
+    ---@field flags integer The flags of the console command.
     local Command = class.base( "Command" )
 
     local commands = {}
 
-    ---@param name string: The name of the console command.
+    ---@param name string The name of the console command.
     ---@param description string?: The help text of the console command.
     ---@param ... gpm.std.FCVAR?: The flags of the console command.
     ---@protected
@@ -139,8 +139,8 @@ do
 
     --- [SHARED AND MENU]
     --- Adds a callback to the console command.
-    ---@param identifier any: The identifier of the callback.
-    ---@param fn function: The callback function.
+    ---@param identifier any The identifier of the callback.
+    ---@param fn function The callback function.
     ---@param once boolean?: Whether the callback should be called only once.
     function Command:addCallback( identifier, fn, once )
         local data = { fn, identifier, once }
@@ -156,7 +156,7 @@ do
 
     --- [SHARED AND MENU]
     --- Removes a callback from the console command.
-    ---@param identifier string: The identifier of the callback.
+    ---@param identifier string The identifier of the callback.
     function Command:removeCallback( identifier )
         local callbacks = self.callbacks
         for i = #callbacks, 1, -1 do
@@ -228,12 +228,12 @@ do
     ---@field __class gpm.std.console.Variable
     ---@field protected object ConVar: The `ConVar` object.
     ---@field protected type ConsoleVariableType: The type of the console variable.
-    ---@field name string: The name of the console variable.
+    ---@field name string The name of the console variable.
     local Variable = class.base( "Variable" )
 
     local variables = {}
 
-    ---@param data ConsoleVariableData: The data of the console variable.
+    ---@param data ConsoleVariableData The data of the console variable.
     ---@protected
     function Variable:__init( data )
         local cvar_type = data.type
@@ -339,7 +339,7 @@ do
 
     --- [SHARED AND MENU]
     --- Gets a `ConsoleVariable` object by its name.
-    ---@param name string: The name of the console variable.
+    ---@param name string The name of the console variable.
     ---@param cvar_type ConsoleVariableType?: The type of the console variable.
     ---@return gpm.std.console.Variable?
     function VariableClass.get( name, cvar_type )
@@ -364,7 +364,7 @@ do
 
     --- [SHARED AND MENU]
     --- Sets the value of the `ConsoleVariable` object.
-    ---@param value any: The value to set.
+    ---@param value any The value to set.
     function Variable:set( value )
         local cvar_type = self.type
         if cvar_type == "boolean" then
@@ -378,7 +378,7 @@ do
 
     --- [SHARED AND MENU]
     --- Sets the value of the `ConsoleVariable` object.
-    ---@param name string: The name of the console variable.
+    ---@param name string The name of the console variable.
     ---@param value boolean | string | number: The value to set.
     function VariableClass.set( name, value )
         local value_type = type( value )
@@ -401,7 +401,7 @@ do
 
     --- [SHARED AND MENU]
     --- Gets the value of the `ConsoleVariable` object as a string.
-    ---@param name string: The name of the console variable.
+    ---@param name string The name of the console variable.
     ---@return string: The value of the `ConsoleVariable` object.
     function VariableClass.getString( name )
         local object = GetConVar( name )
@@ -414,7 +414,7 @@ do
 
     --- [SHARED AND MENU]
     --- Gets the value of the `ConsoleVariable` object as a number.
-    ---@param name string: The name of the console variable.
+    ---@param name string The name of the console variable.
     ---@return number: The value of the `ConsoleVariable` object.
     function VariableClass.getNumber( name )
         local object = GetConVar( name )
@@ -427,7 +427,7 @@ do
 
     --- [SHARED AND MENU]
     --- Gets the value of the `ConsoleVariable` object as a boolean.
-    ---@param name string: The name of the console variable.
+    ---@param name string The name of the console variable.
     ---@return boolean: The value of the `ConsoleVariable` object.
     function VariableClass.getBoolean( name )
         local object = GetConVar( name )
@@ -448,7 +448,7 @@ do
 
     --- [SHARED AND MENU]
     --- Reverts the value of the `ConsoleVariable` object to its default value.
-    ---@param name string: The name of the console variable.
+    ---@param name string The name of the console variable.
     function VariableClass.revert( name )
         local object = GetConVar( name )
         if object == nil then
@@ -478,7 +478,7 @@ do
 
         --- [SHARED AND MENU]
         --- Gets the help text of the `ConsoleVariable` object.
-        ---@param name string: The name of the console variable.
+        ---@param name string The name of the console variable.
         ---@return string: The help text of the `ConsoleVariable` object.
         function VariableClass.getHelpText( name )
             local object = GetConVar( name )
@@ -500,7 +500,7 @@ do
 
     --- [SHARED AND MENU]
     --- Gets the default value of the `ConsoleVariable` object.
-    ---@param name string: The name of the console variable.
+    ---@param name string The name of the console variable.
     ---@return string: The default value of the `ConsoleVariable` object.
     function VariableClass.getDefault( name )
         local object = GetConVar( name )
@@ -524,7 +524,7 @@ do
 
         --- [SHARED AND MENU]
         --- Gets the `Enums/FCVAR` flags of the `ConsoleVariable` object.
-        ---@param name string: The name of the console variable.
+        ---@param name string The name of the console variable.
         ---@return number: The `Enums/FCVAR` flags of the `ConsoleVariable` object.
         function VariableClass.getFlags( name )
             local object = GetConVar( name )
@@ -543,7 +543,7 @@ do
 
         --- [SHARED AND MENU]
         --- Checks if the `Enums/FCVAR` flag is set on the `ConsoleVariable` object.
-        ---@param flag number: The `Enums/FCVAR` flag to check.
+        ---@param flag number The `Enums/FCVAR` flag to check.
         ---@return boolean: `true` if the `Enums/FCVAR` flag is set on the `ConsoleVariable` object, `false` otherwise.
         function Variable:isFlagSet( flag )
             return isFlagSet( self.object, flag )
@@ -551,8 +551,8 @@ do
 
         --- [SHARED AND MENU]
         --- Checks if the `Enums/FCVAR` flag is set on the `ConsoleVariable` object.
-        ---@param name string: The name of the console variable.
-        ---@param flag number: The `Enums/FCVAR` flag to check.
+        ---@param name string The name of the console variable.
+        ---@param flag number The `Enums/FCVAR` flag to check.
         ---@return boolean: `true` if the `Enums/FCVAR` flag is set on the `ConsoleVariable` object, `false` otherwise.
         function VariableClass.isFlagSet( name, flag )
             local object = GetConVar( name )
@@ -578,7 +578,7 @@ do
 
         --- [SHARED AND MENU]
         --- Gets the minimum value of the `ConsoleVariable` object.
-        ---@param name string: The name of the console variable.
+        ---@param name string The name of the console variable.
         ---@return number
         function VariableClass.getMin( name )
             local object = GetConVar( name )
@@ -598,7 +598,7 @@ do
 
         --- [SHARED AND MENU]
         --- Gets the maximum value of the `ConsoleVariable` object.
-        ---@param name string: The name of the console variable.
+        ---@param name string The name of the console variable.
         ---@return number
         function VariableClass.getMax( name )
             local object = GetConVar( name )
@@ -619,7 +619,7 @@ do
 
         --- [SHARED AND MENU]
         --- Gets the minimum and maximum values of the `ConsoleVariable` object.
-        ---@param name string: The name of the console variable.
+        ---@param name string The name of the console variable.
         ---@return number, number
         function VariableClass.getBounds( name )
             local object = GetConVar( name )

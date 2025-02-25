@@ -132,7 +132,7 @@ if std.SERVER then
     end
 
     --- Sets the gravity of the current level.
-    ---@param value integer: The value to set. Default: 600
+    ---@param value integer The value to set. Default: 600
     function level.setGravity( value )
         console_Variable.set( "sv_gravity", value )
     end

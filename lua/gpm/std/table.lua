@@ -124,7 +124,7 @@ do
     end
 
     --- [SHARED AND MENU] Copies a table.
-    ---@param source table: The table to copy.
+    ---@param source table The table to copy.
     ---@param deepCopy boolean?: Whether to deep copy the table.
     ---@param copyKeys boolean?: Whether to copy the keys.
     ---@param copyMetatables boolean?: Whether to copy the metatables.
@@ -154,7 +154,7 @@ do
     end
 
     --- [SHARED AND MENU] Copies a sequential table.
-    ---@param source table: The table to copy.
+    ---@param source table The table to copy.
     ---@param deepCopy boolean?: Whether to deep copy the table.
     ---@param copyKeys boolean?: Whether to copy the keys.
     ---@param copyMetatables boolean?: Whether to copy the metatables.
@@ -398,7 +398,7 @@ do
 end
 
 --- [SHARED AND MENU] Returns a slice of the given table.
----@param tbl table: The table to slice.
+---@param tbl table The table to slice.
 ---@param to? integer: The start position.
 ---@param from? integer: The end position.
 ---@param step? integer: The step.
@@ -434,8 +434,8 @@ function table.slice( tbl, from, to, step )
 end
 
 --- [SHARED AND MENU] Injects values from one table to another.
----@param destination table: The destination table.
----@param source table: The source table.
+---@param destination table The destination table.
+---@param source table The source table.
 ---@param position? integer: The position to inject.
 ---@param from? integer: The start position.
 ---@param to? integer: The end position.
@@ -478,8 +478,8 @@ function table.inject( destination, source, position, from, to )
 end
 
 --- [SHARED AND MENU] Remove all occurrences of the given value.
----@param tbl table: The table to remove from.
----@param value any: The value to remove.
+---@param tbl table The table to remove from.
+---@param value any The value to remove.
 function table.removeByValue( tbl, value )
     for index = #tbl, 1, -1 do
         if tbl[ index ] == value then
@@ -489,7 +489,7 @@ function table.removeByValue( tbl, value )
 end
 
 --- [SHARED AND MENU] Removes a range of values from the given table.
----@param tbl table: The table to remove from.
+---@param tbl table The table to remove from.
 ---@param from? integer: The start position.
 ---@param to? integer: The end position.
 ---@return table: The same table.
@@ -523,7 +523,7 @@ function table.eject( tbl, from, to )
 end
 
 --- [SHARED AND MENU] Returns true if the given list (table) contains the given value.
----@param tbl table: The table to check.
+---@param tbl table The table to check.
 ---@param value any The value to check.
 ---@return boolean: `true` if the table contains the value, `false` otherwise.
 function table.contains( tbl, value )
@@ -551,7 +551,7 @@ function table.hasValue( tbl, value )
 end
 
 --- [SHARED AND MENU] Returns list (table) of keys and length of this list.
----@param tbl table: The table.
+---@param tbl table The table.
 ---@return any[]: The list of keys.
 ---@return integer: The length of the list.
 function table.getKeys( tbl )
@@ -565,7 +565,7 @@ function table.getKeys( tbl )
 end
 
 --- [SHARED AND MENU] Returns list (table) of values and length of this list.
----@param tbl table: The table.
+---@param tbl table The table.
 ---@return any[]: The list of values.
 ---@return integer: The length of the list.
 function table.getValues( tbl )
@@ -579,7 +579,7 @@ function table.getValues( tbl )
 end
 
 --- [SHARED AND MENU] Returns the count of keys in the given table.
----@param tbl table: The table.
+---@param tbl table The table.
 ---@return integer: The count of keys.
 function table.count( tbl )
     local count = 0
@@ -591,7 +591,7 @@ function table.count( tbl )
 end
 
 --- [SHARED AND MENU] Flips the keys with values in the given list (table).
----@param tbl table: The table to flip.
+---@param tbl table The table to flip.
 ---@param noCopy? boolean: Do not copy the table.
 ---@return table: The flipped table.
 function table.flip( tbl, noCopy )
@@ -620,7 +620,7 @@ function table.flip( tbl, noCopy )
 end
 
 --- [SHARED AND MENU] Returns the list (table) of key/value pairs and length of this list.
----@param tbl table: The key/value table.
+---@param tbl table The key/value table.
 ---@return table: The list.
 ---@return integer: The length of the list.
 function table.getPairs( tbl )
@@ -634,7 +634,7 @@ function table.getPairs( tbl )
 end
 
 --- [SHARED AND MENU] Returns the value of the given key path.
----@param tbl table: The table to get the value from.
+---@param tbl table The table to get the value from.
 ---@param str string The key path to get.
 ---@return any: The value of the key path.
 function table.get( tbl, str )
@@ -658,9 +658,9 @@ function table.get( tbl, str )
 end
 
 --- [SHARED AND MENU] Sets the value of the given key path.
----@param tbl table: The table to set the value in.
----@param str string: The key path.
----@param value any: The value to set.
+---@param tbl table The table to set the value in.
+---@param str string The key path.
+---@param value any The value to set.
 function table.set( tbl, str, value )
     local pointer = 1
 
@@ -685,7 +685,7 @@ function table.set( tbl, str, value )
 end
 
 --- [SHARED AND MENU] Returns true if the given table is sequential.
----@param tbl table: The table to check.
+---@param tbl table The table to check.
 ---@return boolean: `true` if the table is sequential, `false` otherwise.
 function table.isSequential( tbl )
     local index = 1
@@ -701,15 +701,15 @@ function table.isSequential( tbl )
 end
 
 --- [SHARED AND MENU] Returns true if the given table is empty.
----@param tbl table: The table to check.
+---@param tbl table The table to check.
 ---@return boolean: `true` if the table is empty, `false` otherwise.
 function table.isEmpty( tbl )
     return next( tbl ) == nil
 end
 
 --- [SHARED AND MENU] Fills the given table with the given value.
----@param tbl table: The table to fill.
----@param value any: The value to fill the table with.
+---@param tbl table The table to fill.
+---@param value any The value to fill the table with.
 ---@param from? integer: The start position.
 ---@param to? integer: The end position.
 ---@return table: The filled table.
@@ -742,7 +742,7 @@ do
     local math_random = math.random
 
     --- [SHARED AND MENU] Shuffles the given table.
-    ---@param tbl table: The table.
+    ---@param tbl table The table.
     ---@return table: The shuffled table.
     function table.shuffle( tbl )
         local j, length = 0, #tbl
@@ -755,7 +755,7 @@ do
     end
 
     --- [SHARED AND MENU] Returns a random value from the given list (table).
-    ---@param tbl table: The table.
+    ---@param tbl table The table.
     ---@return any: The value.
     ---@return integer: The index of the value.
     function table.random( tbl )
@@ -777,7 +777,7 @@ do
     local math_fmul = math.fmul
 
     --- [SHARED AND MENU] Reverses the given list (table).
-    ---@param tbl table: The table to reverse.
+    ---@param tbl table The table to reverse.
     ---@param noCopy? boolean: If `true`, the table will not be copied.
     ---@return table: The reversed table.
     function table.reverse( tbl, noCopy )
@@ -809,7 +809,7 @@ do
     local isfunction = std.isfunction
 
     --- [SHARED AND MENU] Returns the length of the given table.
-    ---@param tbl table: The table.
+    ---@param tbl table The table.
     ---@return integer: The length of the table.
     ---@diagnostic disable-next-line: undefined-field
     table.len = glua_table.len or function( tbl )
@@ -827,7 +827,7 @@ end
 do
 
     --- [SHARED AND MENU] Creates a new table, filled with the given value and size.
-    ---@param value any: The value to fill the table with.
+    ---@param value any The value to fill the table with.
     ---@param ... integer: The sizes of the table.
     ---@return table: The created table.
     local function create_table( value, size, ... )
@@ -848,7 +848,7 @@ do
 end
 
 --- [SHARED AND MENU] Removes values from the table.
----@param tbl table: The table.
+---@param tbl table The table.
 ---@param start integer?: The start position.
 ---@param delete_count integer?: The number of values to remove.
 ---@param ... any: The values to remove.

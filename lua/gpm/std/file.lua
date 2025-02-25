@@ -340,7 +340,7 @@ do
     local file_Time = glua_file.Time
 
     ---
-    ---@param filePath string: The file or folder path.
+    ---@param filePath string The file or folder path.
     ---@param gamePath gpm.std.FILE_GAME_PATH?:
     ---@param skipNormalize boolean?:
     ---@return number: Seconds passed since Unix epoch, or 0 if the file is not found.
@@ -367,7 +367,7 @@ do
     local engine_GetAddons = _G.engine.GetAddons
 
     --- TODO
-    ---@param filePath string: The file or folder path.
+    ---@param filePath string The file or folder path.
     ---@param gamePath gpm.std.FILE_GAME_PATH?: The path to look for the files and directories in.
     ---@return string: The addon name.
     function FileClass.whereis( filePath, gamePath, skipNormalize )

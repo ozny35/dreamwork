@@ -168,8 +168,8 @@ local tonumber = _G.tonumber
 
 --- [SHARED AND MENU]
 --- Attempts to convert the value to a number.
----@param value any: The value to convert.
----@param base number: The base used in the string. Can be any integer between 2 and 36, inclusive. (Default: 10)
+---@param value any The value to convert.
+---@param base number The base used in the string. Can be any integer between 2 and 36, inclusive. (Default: 10)
 ---@return number: The numeric representation of the value with the given base, or `nil` if the conversion failed.
 function std.tonumber( value, base )
     local metatable = debug_getmetatable( value )
@@ -178,7 +178,7 @@ end
 
 --- [SHARED AND MENU]
 --- Attempts to convert the value to a boolean.
----@param value any: The value to convert.
+---@param value any The value to convert.
 ---@return boolean
 function std.toboolean( value )
     if value == nil or value == false then return false end
@@ -191,7 +191,7 @@ std.tobool = std.toboolean
 
 --- [SHARED AND MENU]
 --- Checks if the value is valid.
----@param value any: The value to check.
+---@param value any The value to check.
 ---@return boolean: Returns `true` if the value is valid, otherwise `false`.
 function std.isvalid( value )
     local metatable = debug_getmetatable( value )
@@ -258,7 +258,7 @@ do
 
         --- [SHARED AND MENU]
         --- Checks if the value type is a `boolean`.
-        ---@param value any: The value to check.
+        ---@param value any The value to check.
         ---@return boolean: Returns `true` if the value is a boolean, otherwise `false`.
         function std.isboolean( value )
             return debug_getmetatable( value ) == BOOLEAN
@@ -290,7 +290,7 @@ do
 
         --- [SHARED AND MENU]
         --- Checks if the value type is a `number`.
-        ---@param value any: The value to check.
+        ---@param value any The value to check.
         ---@return boolean: Returns `true` if the value is a number, otherwise `false`.
         function std.isnumber( value )
             return debug_getmetatable( value ) == NUMBER
@@ -320,7 +320,7 @@ do
 
         --- [SHARED AND MENU]
         --- Checks if the value type is a `string`.
-        ---@param value any: The value to check.
+        ---@param value any The value to check.
         ---@return boolean: Returns `true` if the value is a string, otherwise `false`.
         function isstring( value )
             return debug_getmetatable( value ) == STRING
@@ -356,7 +356,7 @@ do
 
         --- [SHARED AND MENU]
         --- Checks if the value is callable.
-        ---@param value any: The value to check.
+        ---@param value any The value to check.
         ---@return boolean: Returns `true` if the value is can be called (like a function), otherwise `false`.
         function std.iscallable( value )
             local metatable = debug_getmetatable( value )
@@ -380,7 +380,7 @@ do
 
         --- [SHARED AND MENU]
         --- Checks if the value type is a `thread`.
-        ---@param value any: The value to check.
+        ---@param value any The value to check.
         ---@return boolean: Returns `true` if the value is a thread, otherwise `false`.
         function std.isthread( value )
             return debug_getmetatable( value ) == THREAD
@@ -430,7 +430,7 @@ do
     end
 
     --- [SHARED AND MENU] Returns the bit count of the given value.
-    ---@param value any: The value to get the bit count of.
+    ---@param value any The value to get the bit count of.
     ---@return number: The bit count of the value.
     local function bitcount( value )
         local metatable = debug_getmetatable( value )
@@ -440,7 +440,7 @@ do
     std.bitcount = bitcount
 
     --- [SHARED AND MENU] Returns the byte count of the given value.
-    ---@param value any: The value to get the byte count of.
+    ---@param value any The value to get the byte count of.
     ---@return number: The byte count of the value.
     function std.bytecount( value )
         return math_ceil( bitcount( value ) * 0.125 )
@@ -528,7 +528,7 @@ do
     local glua_type = _G.type
 
     --- [SHARED AND MENU] Returns a string representing the name of the type of the passed object.
-    ---@param value any: The value to get the type of.
+    ---@param value any The value to get the type of.
     ---@return string: The type name of the given value.
     local function type( value )
         local metatable = debug_getmetatable( value )
@@ -544,9 +544,9 @@ do
 
     --- [SHARED AND MENU]
     --- Validates the type of the argument and returns a boolean and an error message.
-    ---@param value any: The argument value.
-    ---@param arg_num number: The argument number.
-    ---@param expected_type string: The expected type name.
+    ---@param value any The argument value.
+    ---@param arg_num number The argument number.
+    ---@param expected_type string The expected type name.
     ---@return boolean: `true` if the argument is of the expected type, `false` otherwise.
     ---@return string?: The error message.
     function std.arg( value, arg_num, expected_type )
@@ -564,7 +564,7 @@ string.utf8 = include( "std/string.utf8.lua" )
 
 --- [SHARED AND MENU]
 --- Returns an iterator `next` for a for loop that will return the values of the specified table in an arbitrary order.
----@param tbl table: The table to iterate over.
+---@param tbl table The table to iterate over.
 ---@return function: The iterator function.
 ---@return table: The table being iterated over.
 ---@return any: The previous key in the table (by default `nil`).
@@ -582,7 +582,7 @@ do
     ---
     --- This will only iterate though <b>numerical keys</b>, and these must also be sequential; starting at 1 with no gaps.
     ---
-    ---@param tbl table: The table to iterate over.
+    ---@param tbl table The table to iterate over.
     ---@return function: The iterator function.
     ---@return table: The table being iterated over.
     ---@return number: The origin index =0.
@@ -621,7 +621,7 @@ do
     ---@alias Symbol gpm.std.Symbol
 
     --- [SHARED AND MENU] Creates a new symbol.
-    ---@param name string: The name of the symbol.
+    ---@param name string The name of the symbol.
     ---@return Symbol: The new symbol.
     function std.Symbol( name )
         ---@class gpm.std.Symbol
@@ -924,7 +924,7 @@ do
 
     --- [SHARED AND MENU]
     --- Creates a new `Error` with custom name.
-    ---@param name string: The name of the error.
+    ---@param name string The name of the error.
     ---@param base Error | nil: The base class of the error.
     ---@return Error: The new error class.
     function ErrorClass.make( name, base )
@@ -1361,7 +1361,7 @@ do
     local tail = "_" .. ( { "osx64", "osx", "linux64", "linux", "win64", "win32" } )[ ( os_name == "Windows" and 4 or 0 ) + ( os_name == "Linux" and 2 or 0 ) + ( is32 and 1 or 0 ) + 1 ] .. ".dll"
 
     --- [SHARED AND MENU] Checks if a binary module is installed and returns its path.
-    ---@param name string: The binary module name.
+    ---@param name string The binary module name.
     ---@return boolean: `true` if the binary module is installed, `false` otherwise.
     ---@return string: The absolute path to the binary module.
     local function lookupbinary( name )

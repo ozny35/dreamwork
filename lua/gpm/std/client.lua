@@ -7,7 +7,8 @@ local string = std.string
 local tonumber = std.tonumber
 local glua_render = _G.render
 
---- [CLIENT AND MENU] The game's client library.
+--- [CLIENT AND MENU]
+--- The game's client library.
 ---@class gpm.std.client
 local client = {
     openURL = _G.gui.OpenURL,
@@ -60,13 +61,15 @@ if std.MENU then
     client.isConnecting = _G.IsInLoading
 else
 
-    --- [CLIENT AND MENU] Checks if the client is connected to the server.
+    --- [CLIENT AND MENU]
+    --- Checks if the client is connected to the server.
     ---
     --- NOTE: It always returns `true` on the client.
     ---@return boolean: `true` if connected, `false` if not.
     function client.isConnected() return true end
 
-    --- [CLIENT AND MENU] Checks if the client has connected to the server (looks at the loading screen).
+    --- [CLIENT AND MENU]
+    --- Checks if the client has connected to the server (looks at the loading screen).
     ---
     --- NOTE: It always returns `false` on the client.
     ---@return boolean: `true` if connecting, `false` if not.
@@ -78,19 +81,22 @@ do
 
     local command_run = std.console.Command.run
 
-    --- [CLIENT AND MENU] Disconnect game from server.
+    --- [CLIENT AND MENU]
+    --- Disconnect game from server.
     function client.disconnect()
         command_run( "disconnect" )
     end
 
-    --- [CLIENT AND MENU] Retry connection to last server.
+    --- [CLIENT AND MENU]
+    --- Retry connection to last server.
     function client.retry()
         command_run( "retry" )
     end
 
-    --- [CLIENT AND MENU] Take a screenshot.
-    ---@param quality integer: The quality of the screenshot (0-100), only used if `useTGA` is `false`.
-    ---@param fileName string: The name of the screenshot.
+    --- [CLIENT AND MENU]
+    --- Take a screenshot.
+    ---@param quality integer The quality of the screenshot (0-100), only used if `useTGA` is `false`.
+    ---@param fileName string The name of the screenshot.
     function client.screencap( quality, fileName )
         if std.menu.isVisible() then
             return false, "The menu is open, can't take a screenshot."
@@ -114,7 +120,8 @@ do
     end
 
     if std.CLIENT then
-        --- [CLIENT AND MENU] Connects client to the specified server.
+        --- [CLIENT AND MENU]
+        --- Connects client to the specified server.
         ---@param address string?: The address of the server. ( IP:Port like `127.0.0.1:27015` )
         client.connect = _G.permissions.AskToConnect or function( address ) command_run( "connect", address ) end
     else

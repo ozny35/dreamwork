@@ -27,8 +27,8 @@ function Vector2:unpack()
 end
 
 --- Sets the x and y coordinates of the vector.
----@param x number: The x coordinate of the vector.
----@param y number: The y coordinate of the vector.
+---@param x number The x coordinate of the vector.
+---@param y number The y coordinate of the vector.
 function Vector2:setUnpacked( x, y )
     self[ 1 ] = x
     self[ 2 ] = y
@@ -45,7 +45,7 @@ do
     local math_nan, math_inf = math.nan, math.inf
 
     --- Scales the vector.
-    ---@param scale number: The scale factor.
+    ---@param scale number The scale factor.
     ---@return Vector2: The scaled vector.
     function Vector2:scale( scale )
         if scale == 0 or scale == math_nan then
@@ -65,14 +65,14 @@ do
 end
 
 --- Returns a scaled copy of the vector.
----@param scale number: The scale factor.
+---@param scale number The scale factor.
 ---@return Vector2: The scaled copy of the vector.
 function Vector2:getScaled( scale )
     return self:copy():scale( scale )
 end
 
 --- Adds the vector to another vector.
----@param vector Vector2: The other vector.
+---@param vector Vector2 The other vector.
 ---@return Vector2: The sum of the two vectors.
 function Vector2:add( vector )
     self[ 1 ] = self[ 1 ] + vector[ 1 ]
@@ -81,7 +81,7 @@ function Vector2:add( vector )
 end
 
 --- Subtracts the vector from another vector.
----@param other Vector2: The other vector.
+---@param other Vector2 The other vector.
 ---@return Vector2: The difference of the two vectors.
 function Vector2:sub( other )
     self[ 1 ] = self[ 1 ] - other[ 1 ]
@@ -129,13 +129,13 @@ function Vector2:negate()
     return self
 end
 
----@param other Vector2: The other vector.
+---@param other Vector2 The other vector.
 ---@return Vector2: The sum of the two vectors.
 function Vector2:__add( other )
     return self:copy():add( other )
 end
 
----@param other Vector2: The other vector.
+---@param other Vector2 The other vector.
 ---@return Vector2: The difference of the two vectors.
 function Vector2:__sub( other )
     return self:copy():sub( other )
@@ -171,7 +171,7 @@ function Vector2:__unm()
     return setmetatable( { -self[ 1 ], -self[ 2 ] }, Vector2 )
 end
 
----@param vector Vector2: The other vector.
+---@param vector Vector2 The other vector.
 ---@return boolean: `true` if the two vectors are equal, `false` otherwise.
 function Vector2:__eq( vector )
     return self[ 1 ] == vector[ 1 ] and self[ 2 ] == vector[ 2 ]
@@ -194,7 +194,7 @@ do
     end
 
     --- Calculates the distance between two vectors.
-    ---@param vector Vector2: The other vector.
+    ---@param vector Vector2 The other vector.
     ---@return number: The distance between the two vectors.
     function Vector2:getDistance( vector )
         return math_sqrt( ( vector[ 1 ] - self[ 1 ] ) ^ 2 + ( vector[ 2 ] - self[ 2 ] ) ^ 2 )
@@ -231,14 +231,14 @@ function Vector2:zero()
 end
 
 --- Calculates the dot product of two vectors.
----@param vector Vector2: The other vector.
+---@param vector Vector2 The other vector.
 ---@return number: The dot product of two vectors.
 function Vector2:dot( vector )
     return self[ 1 ] * vector[ 1 ] + self[ 2 ] * vector[ 2 ]
 end
 
 --- Calculates the cross product of two vectors.
----@param vector Vector2: The other vector.
+---@param vector Vector2 The other vector.
 ---@return number: The cross product of two vectors.
 function Vector2:cross( vector )
     return self[ 1 ] * vector[ 2 ] - self[ 2 ] * vector[ 1 ]

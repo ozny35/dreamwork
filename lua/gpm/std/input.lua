@@ -144,8 +144,9 @@ do
             [ 106 ] = "KEY_SCROLL_LOCK_TOGGLE"
         }
 
-        --- [CLIENT AND MENU] Get the name of a key.
-        ---@param key integer: The key code.
+        --- [CLIENT AND MENU]
+        --- Get the name of a key.
+        ---@param key integer The key code.
         ---@return string: The name of the key.
         function keyboard.getKeyName( key )
             return key2name[ key ] or "unknown"
@@ -153,8 +154,9 @@ do
 
         local name2key = std.table.flip( key2name )
 
-        --- [CLIENT AND MENU] Get the key code of a name.
-        ---@param name string: The name of the key.
+        --- [CLIENT AND MENU]
+        --- Get the key code of a name.
+        ---@param name string The name of the key.
         ---@return integer: The key code.
         ---@see keyboard.getKeyName
         function keyboard.getKeyCode( name )

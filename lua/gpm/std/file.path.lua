@@ -18,7 +18,7 @@ local getfenv, rawget, select = std.getfenv, std.rawget, std.select
 local path = {}
 
 --- Get the file name with extension from filePath.
----@param filePath string: The file path.
+---@param filePath string The file path.
 ---@return string: The file name with extension.
 local function getFile( filePath )
     for index = string_len( filePath ), 1, -1 do
@@ -33,7 +33,7 @@ end
 path.getFile = getFile
 
 --- Get the file name from filePath.
----@param filePath string: The file path.
+---@param filePath string The file path.
 ---@param withExtension boolean?: Whether to include the extension.
 ---@return string: The file name.
 function path.getFileName( filePath, withExtension )
@@ -65,7 +65,7 @@ function path.getFileName( filePath, withExtension )
 end
 
 --- Get the directory from filePath.
----@param filePath string: The file path.
+---@param filePath string The file path.
 ---@param withTrailingSlash boolean?: Whether to include the trailing slash.
 ---@return string: The directory path.
 local function getDirectory( filePath, withTrailingSlash )
@@ -87,7 +87,7 @@ end
 path.getDirectory = getDirectory
 
 --- Get the extension from filePath.
----@param filePath string: The file path.
+---@param filePath string The file path.
 ---@param withDot boolean?: Whether to include the dot.
 ---@return string: The extension.
 local function getExtension( filePath, withDot )
@@ -110,7 +110,7 @@ end
 path.getExtension = getExtension
 
 --- Strip the file name from filePath.
----@param filePath string: The file path.
+---@param filePath string The file path.
 ---@return string: The directory path.
 ---@return string: The file name with extension.
 local function stripFile( filePath )
@@ -126,7 +126,7 @@ end
 path.stripFile = stripFile
 
 --- Strip the directory from filePath.
----@param filePath string: The file path.
+---@param filePath string The file path.
 ---@return string: The file name with extension.
 ---@return string: The directory path.
 local function stripDirectory( filePath )
@@ -142,7 +142,7 @@ end
 path.stripDirectory = stripDirectory
 
 --- Strip the extension from filePath.
----@param filePath string: The file path.
+---@param filePath string The file path.
 ---@param withDot boolean?: Whether to include the dot in the extension.
 ---@return string: The file name without extension.
 ---@return string: The extension.
@@ -166,16 +166,16 @@ end
 path.stripExtension = stripExtension
 
 --- Replace the file name from filePath.
----@param filePath string: The file path.
----@param newFile string: The new file name with extension.
+---@param filePath string The file path.
+---@param newFile string The new file name with extension.
 ---@return string: The new file path.
 function path.replaceFile( filePath, newFile )
     return stripFile( filePath ) .. newFile
 end
 
 --- Replace the directory from filePath.
----@param filePath string: The file path.
----@param newDirectory string: The new directory path.
+---@param filePath string The file path.
+---@param newDirectory string The new directory path.
 ---@return string: The new file path.
 function path.replaceDirectory( filePath, newDirectory )
     if string_byte( newDirectory, string_len( newDirectory ) ) ~= 0x2F --[[ / ]] then
@@ -186,15 +186,15 @@ function path.replaceDirectory( filePath, newDirectory )
 end
 
 --- Replace the extension from filePath.
----@param filePath string: The file path.
----@param newExtension string: The new extension.
+---@param filePath string The file path.
+---@param newExtension string The new extension.
 ---@return string: The new file path.
 function path.replaceExtension( filePath, newExtension )
     return stripExtension( filePath ) .. "." .. newExtension
 end
 
 --- Remove the trailing slash from filePath.
----@param filePath string: The file path.
+---@param filePath string The file path.
 ---@return string: The file path without the trailing slash.
 local function removeTrailingSlash( filePath )
     local length = string_len( filePath )
@@ -213,7 +213,7 @@ do
     local string_gsub = string.gsub
 
     --- Replaces all backslashes with forward slashes.
-    ---@param str string: The string to fix slashes in.
+    ---@param str string The string to fix slashes in.
     ---@return string: The fixed string.
     function fixSlashes( str )
         ---@diagnostic disable-next-line: redundant-return-value
@@ -294,7 +294,7 @@ path.delimiter = ":"
 path.sep = "/"
 
 --- Check if filePath is absolute, i.e. starts with a slash.
----@param filePath string: The file path.
+---@param filePath string The file path.
 ---@return boolean: `true` if filePath is absolute, `false` otherwise.
 local function isAbsolute( filePath )
     return string_byte( filePath, 1 ) == 0x2F
@@ -309,8 +309,8 @@ do
     if os_name == "Windows" or os_name == "OSX" then
         local string_lower = string.lower
         --- Check if filePath1 and filePath2 are equal.
-        ---@param a string: The first file path.
-        ---@param b string: The second file path.
+        ---@param a string The first file path.
+        ---@param b string The second file path.
         ---@return boolean: `true` if filePath1 and filePath2 are equal, `false` otherwise.
         function equal( a, b )
             if a and b then
@@ -329,7 +329,7 @@ do
 end
 
 --- Split a filename into [root, dir, basename].
----@param filePath string: The file path.
+---@param filePath string The file path.
 ---@return boolean: Whether filePath is absolute.
 ---@return string: The directory.
 ---@return string: The basename.
@@ -349,7 +349,7 @@ end
 path.splitPath = splitPath
 
 --- Get the directory of a file.
----@param filePath string: The file path.
+---@param filePath string The file path.
 ---@param withTrailingSlash boolean?: Whether to include the trailing slash.
 ---@return string: The directory path.
 function path.dirname( filePath, withTrailingSlash )
@@ -370,7 +370,7 @@ function path.dirname( filePath, withTrailingSlash )
 end
 
 --- Get the basename from filePath.
----@param filePath string: The file path.
+---@param filePath string The file path.
 ---@param stripSuffix boolean?: Whether to strip the extension.
 ---@return string: The basename.
 ---@return string: The file extension.
@@ -391,7 +391,7 @@ do
     local table_insert, table_remove = table.insert, table.remove
 
     --- Normalizes a file path by removing all "." and ".." parts.
-    ---@param filePath string: The file path.
+    ---@param filePath string The file path.
     ---@return string: The normalized file path.
     function normalize( filePath )
         local trailingSlashes = string_byte( filePath, string_len( filePath ) ) == 0x2F --[[ / ]]
@@ -512,8 +512,8 @@ path.resolve = resolve
 --- Returns the relative path from "from" to "to".
 ---
 --- If no relative path can be solved, then "to" is returned.
----@param pathFrom string: The file path.
----@param pathTo string: The file path.
+---@param pathFrom string The file path.
+---@param pathTo string The file path.
 ---@return string: The relative path.
 function path.relative( pathFrom, pathTo )
     local fromIsAbs, fromDir, fromBaseName = splitPath( resolve( pathFrom ) )
@@ -559,7 +559,7 @@ end
 ]]
 
 --- Parse a file path into [root, dir, basename, ext, name].
----@param filePath string: The file path.
+---@param filePath string The file path.
 ---@return ParsedFilePath: The parsed file path.
 function path.parse( filePath )
     local isAbs, dir, base = splitPath( filePath )

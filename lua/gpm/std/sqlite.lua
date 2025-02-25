@@ -41,7 +41,7 @@ do
     local type = std.type
 
     --- [SHARED AND MENU] Executes a raw SQL query.
-    ---@param str string: The SQL query to execute.
+    ---@param str string The SQL query to execute.
     ---@return table?: The result of the query.
     function rawQuery( str )
         local fenv = getfenv( 2 )
@@ -70,14 +70,14 @@ end
 sqlite.rawQuery = rawQuery
 
 --- [SHARED AND MENU] Checks if a table exists in the database.
----@param name string: The name of the table to check.
+---@param name string The name of the table to check.
 ---@return boolean: `true` if the table exists, `false` otherwise.
 function sqlite.tableExists( name )
     return rawQuery( "select name from sqlite_master where name=" .. escape( name ) .. " and type='table'" ) ~= nil
 end
 
 --- [SHARED AND MENU] Checks if an index exists in the database.
----@param name string: The name of the index to check.
+---@param name string The name of the index to check.
 ---@return boolean: `true` if the index exists, `false` otherwise.
 function sqlite.indexExists( name )
     return rawQuery( "select name from sqlite_master where name=" .. escape( name ) .. " and type='index'" ) ~= nil
@@ -89,7 +89,7 @@ do
     local string_gsub = string.gsub
 
     --- [SHARED AND MENU] Executes a SQL query with parameters.
-    ---@param str string: The SQL query to execute.
+    ---@param str string The SQL query to execute.
     ---@param ... string: The parameters to use in the query.
     ---@return table?: The result of the query.
     function query( str, ... )
@@ -120,7 +120,7 @@ do
 end
 
 --- [SHARED AND MENU] Executes a SQL query and returns a specific row.
----@param str string: The SQL query to execute.
+---@param str string The SQL query to execute.
 ---@param row number?: The row to return.
 ---@param ... string?: The parameters to use in the query.
 ---@return table?: The selected row of the result.
@@ -136,7 +136,7 @@ end
 sqlite.queryRow = queryRow
 
 --- [SHARED AND MENU] Executes a SQL query and returns the first row.
----@param str string: The SQL query to execute.
+---@param str string The SQL query to execute.
 ---@param ... string?: The parameters to use in the query.
 ---@return table?: The first row of the result.
 local function queryOne( str, ... )
@@ -150,7 +150,7 @@ do
     local next = std.next
 
     --- [SHARED AND MENU] Executes a SQL query and returns the first value of the first row.
-    ---@param str string: The SQL query to execute.
+    ---@param str string The SQL query to execute.
     ---@param ... string?: The parameters to use in the query.
     ---@return any: The first value of the first row of the result.
     function sqlite.queryValue( str, ... )
@@ -169,7 +169,7 @@ do
     local pcall = std.pcall
 
     --- [SHARED AND MENU] Executes a transaction of SQL queries in one block.
-    ---@param fn function: The function to execute all SQL queries in one transaction.
+    ---@param fn function The function to execute all SQL queries in one transaction.
     ---@return any: The result of function execution.
     function sqlite.transaction( fn )
         rawQuery( "begin" )

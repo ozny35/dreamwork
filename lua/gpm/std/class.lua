@@ -6,8 +6,8 @@ local rawget, getmetatable, setmetatable, string_format = std.rawget, std.getmet
 local class = {}
 
 ---@class gpm.std.Object
----@field __type string: The name of object type.
----@field __class Class: The class of the object (must be defined).
+---@field __type string The name of object type.
+---@field __class Class The class of the object (must be defined).
 ---@field __parent gpm.std.Object | nil: The parent of the object.
 ---@alias Object gpm.std.Object
 
@@ -17,8 +17,8 @@ local class = {}
 ---@field __inherited fun( parent: gpm.std.Class, child: gpm.std.Class ) | nil: The function that will be called when the class is inherited.
 ---@alias Class gpm.std.Class
 
----@param obj Object: The object to search in.
----@param key string: The key to search for.
+---@param obj Object The object to search in.
+---@param key string The key to search for.
 local function find_rawkey( obj, key )
     if obj == nil then return nil end
     return rawget( obj, key ) or find_rawkey( getmetatable( obj ), key )
@@ -29,14 +29,15 @@ do
     local string_sub = std.string.sub
     local pairs = std.pairs
 
-    ---@param obj Object: The object to convert to a string.
+    ---@param obj Object The object to convert to a string.
     ---@return string: The string representation of the object.
     local function base__tostring( obj )
         return string_format( "%s: %p", rawget( getmetatable( obj ), "__type" ), obj )
     end
 
-    --- [SHARED AND MENU] Creates a new class base ( metatable ).
-    ---@param name string: The name of the class.
+    --- [SHARED AND MENU]
+    --- Creates a new class base ( metatable ).
+    ---@param name string The name of the class.
     ---@param parent Class | unknown | nil: The parent of the class.
     ---@return Object: The base of the class.
     function class.base( name, parent )
@@ -75,9 +76,10 @@ do
     local class__call
     do
 
-        --- [SHARED AND MENU] Calls the base initialization function, <b>if it exists</b>, and returns the given object.
-        ---@param obj table: The object to initialize.
-        ---@param base Object: The base object, aka metatable.
+        --- [SHARED AND MENU]
+        --- Calls the base initialization function, <b>if it exists</b>, and returns the given object.
+        ---@param obj table The object to initialize.
+        ---@param base Object The base object, aka metatable.
         ---@param ... any?: Arguments to pass to the constructor.
         ---@return Object: The initialized object.
         local function init( obj, base, ... )
@@ -92,7 +94,7 @@ do
 
         class.init = init
 
-        ---@param self Class: The class.
+        ---@param self Class The class.
         ---@return Object: The new object.
         function class__call( self, ... )
             local base = find_rawkey( self, "__base" )
@@ -122,7 +124,7 @@ do
 
     end
 
-    ---@param cls Class: The class.
+    ---@param cls Class The class.
     ---@return string: The string representation of the class.
     local function class__tostring( cls )
         return string_format( "%sClass: %p", rawget( rawget( cls, "__base" ), "__type" ), cls )
@@ -130,8 +132,9 @@ do
 
     local rawset = std.rawset
 
-    --- [SHARED AND MENU] Creates a new class from the given base.
-    ---@param base Object: The base object, aka metatable.
+    --- [SHARED AND MENU]
+    --- Creates a new class from the given base.
+    ---@param base Object The base object, aka metatable.
     ---@return Class | unknown: The class.
     function class.create( base )
         local cls = {
