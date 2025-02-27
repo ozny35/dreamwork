@@ -286,14 +286,17 @@ do
     do
 
         local timer_TimeLeft = timer.TimeLeft
-        local math_inf = std.math.inf
+        local math_huge = std.math.huge
 
         --- [SHARED AND MENU]
         --- Returns the time left to the next callbacks call in seconds.
         ---@return number: The time left in seconds.
         function Timer:getTimeLeft()
-            if self[ -1 ] ~= 3 then return math_inf end
-            return timer_TimeLeft( self[ -2 ] )
+            if self[ -1 ] == 3 then
+                return timer_TimeLeft( self[ -2 ] )
+            else
+                return math_huge
+            end
         end
 
     end

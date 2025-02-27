@@ -42,18 +42,18 @@ end
 
 do
 
-    local math_nan, math_inf = math.nan, math.inf
+    local math_huge = math.huge
 
     --- Scales the vector.
     ---@param scale number The scale factor.
     ---@return Vector2: The scaled vector.
     function Vector2:scale( scale )
-        if scale == 0 or scale == math_nan then
+        if scale == 0 or scale ~= scale then
             self[ 1 ] = 0
             self[ 2 ] = 0
-        elseif scale == math_inf then
-            self[ 1 ] = math_inf
-            self[ 2 ] = math_inf
+        elseif scale == math_huge then
+            self[ 1 ] = math_huge
+            self[ 2 ] = math_huge
         else
             self[ 1 ] = self[ 1 ] * scale
             self[ 2 ] = self[ 2 ] * scale

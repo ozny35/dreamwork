@@ -5,9 +5,8 @@ local math_abs, math_atan, math_ceil, math_min, math_max, math_random, math_sqrt
 local e = glua_math.exp( 1 )
 local ln2 = math_log( 2 )
 
-local nan = 0 / 0
-local inf = 1 / 0
-local neg_inf = -inf
+local huge = glua_math.huge
+local tiny = -huge
 
 local function atan( y, x )
     if x == nil then
@@ -21,14 +20,15 @@ local function atan( y, x )
     return math_atan( y / x )
 end
 
+--- [SHARED AND MENU]
+--- The powerful math library.
 ---@class gpm.std.math
 ---@field e number A variable containing the mathematical constant e. (2.7182818284590)
 ---@field ln2 number A variable containing the mathematical constant natural logarithm of 2. (0.69314718055995)
 ---@field nan number A variable containing number "not a number". (nan)
----@field inf number A variable containing positive infinity. (inf)
 ---@field pi number A variable containing the mathematical constant pi. (3.1415926535898)
----@field ninf number A variable containing negative infinity. (-inf)
----@field huge number The float value HUGE_VAL, a value larger than any other numeric value. (inf)
+---@field huge number A variable that effectively represents infinity, in the sense that in any numerical comparison every number will be less than this. (inf)
+---@field tiny number A variable that effectively represents negative infinity, in the sense that in any numerical comparison every number will be greater than this. (-inf)
 ---@field ln10 number A variable containing the mathematical constant natural logarithm of 10. (2.3025850929940)
 ---@field log10e number A variable containing the mathematical constant logarithm of 10 to the base e. (0.43429448190325)
 ---@field log2e number A variable containing the mathematical constant logarithm of 2 to the base e. (1.4426950408889)
@@ -39,11 +39,10 @@ end
 local math = {
     e = e,
     ln2 = ln2,
-    nan = nan,
-    inf = inf,
+    huge = huge,
+    tiny = tiny,
+    nan = 0 / 0,
     pi = math_pi,
-    ninf = neg_inf,
-    huge = glua_math.huge,
     ln10 = math_log( 10.0 ),
     log10e = math_log( e, 10.0 ),
     log2e = math_log( e, 2.0 ),
@@ -190,21 +189,21 @@ end
 ---@param x number The number to check.
 ---@return boolean: `true` if the number is positive or negative infinity, otherwise `false`.
 function math.isinf( x )
-    return x == inf or x == neg_inf
+    return x == huge or x == tiny
 end
 
 --- Checks if a number is NaN.
 ---@param x number The number to check.
 ---@return boolean: `true` if the number is NaN, otherwise `false`.
 function math.isnan( x )
-    return x == nan
+    return x ~= x
 end
 
 --- Checks if a number is finite.
 ---@param x number The number to check.
 ---@return boolean: `true` if the number is finite, otherwise `false`.
 function math.isfinite( x )
-    return x ~= inf and x ~= neg_inf and x ~= nan
+    return x ~= huge and x ~= tiny and x ~= x
 end
 
 --- Checks if two numbers are equal with a given tolerance.
@@ -249,7 +248,7 @@ end
 ---@param x number The number to check.
 ---@return boolean: `true` if the number is positive, otherwise `false`.
 local function ispositive( x )
-    return x > 0 or ( 1 / x ) == inf
+    return x > 0 or ( 1 / x ) == huge
 end
 
 math.ispositive = ispositive
@@ -258,7 +257,7 @@ math.ispositive = ispositive
 ---@param x number The number to check.
 ---@return boolean: `true` if the number is negative, otherwise `false`.
 function math.isnegative( x )
-    return x < 0 or ( 1 / x ) == neg_inf
+    return x < 0 or ( 1 / x ) == tiny
 end
 
 --- Returns the sign of a number as 1 or -1.

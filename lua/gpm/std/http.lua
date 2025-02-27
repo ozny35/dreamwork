@@ -1,6 +1,10 @@
 local _G = _G
 local gpm = _G.gpm
-local std, Logger = gpm.std, gpm.Logger
+
+---@class gpm.std
+local std = gpm.std
+
+local Logger = gpm.Logger
 local Future, tostring, tonumber, HTTPClientError, Timer_wait = std.Future, std.tostring, std.tonumber, std.HTTPClientError, std.Timer.wait
 
 local string_gmatch, string_upper
@@ -290,7 +294,7 @@ if std.MENU then
 
 end
 
+std.http = http
+
 http.steam = gpm.dofile( "http.steam.lua" )
 http.github = gpm.dofile( "http.github.lua" )
-
-return http

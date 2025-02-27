@@ -406,8 +406,6 @@ do
 
 end
 
---- [SHARED AND MENU]
---- math library
 local math = include( "std/math.lua" )
 std.math = math
 
@@ -1417,7 +1415,8 @@ end
 -- https://github.com/willox/gmbc
 loadbinary( "gmbc" )
 
-std.http = include( "std/http.lua" )
+include( "std/http.lua" )
+
 std.Addon = include( "std/addon.lua" )
 
 if std.CLIENT_MENU then

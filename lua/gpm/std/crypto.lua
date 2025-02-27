@@ -8,6 +8,7 @@ local util = _G.util
 ---@class gpm.std.crypto
 local crypto = {
     deflate = gpm.dofile( "crypto.deflate.lua" ),
+    binary = gpm.dofile( "crypto.binary.lua" ),
     struct = gpm.dofile( "crypto.struct.lua" )
 }
 
