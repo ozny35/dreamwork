@@ -18,14 +18,14 @@ local binary = {}
 local function explode( number, max_size )
 	if max_size == nil then max_size = 0 end
 
-	local mask, length = {}, 0
+	local bits, length = {}, 0
 	while number ~= 0 or length < max_size do
 		length = length + 1
-		mask[ length ] = number % 2 ~= 0
+		bits[ length ] = number % 2 ~= 0
 		number = math_floor( number * 0.5 )
 	end
 
-	return mask, length
+	return bits, length
 end
 
 binary.explode = explode
@@ -320,7 +320,7 @@ end
 ---@param big_endian? boolean The endianness of the binary string.
 ---@return boolean[]: The sequence of bits.
 ---@return integer: The count of the sequence of bits.
-local function readBits( str, byte_count, big_endian, start_position )
+local function unpack( str, byte_count, big_endian, start_position )
 	if start_position == nil then start_position = 1 end
 	if byte_count == nil then byte_count = string_len( str ) end
 
@@ -339,7 +339,9 @@ local function readBits( str, byte_count, big_endian, start_position )
 	return result, length
 end
 
-local writeBits
+binary.unpack = unpack
+
+local pack
 do
 
 	local table_reverse = table.reverse
@@ -350,7 +352,7 @@ do
 	---@param size integer The size of the sequence of bits.
 	---@param big_endian? boolean The endianness of the binary string.
 	---@return string: The binary string.
-	function writeBits( bits, size, big_endian )
+	function pack( bits, size, big_endian )
 		local bytes, length = {}, 0
 
 		for i = 1, size * 8, 8 do
@@ -364,6 +366,8 @@ do
 			return string_char( table_unpack( bytes, 1, length ) )
 		end
 	end
+
+	binary.pack = pack
 
 end
 
@@ -449,8 +453,7 @@ do
 	local c1 = 2 ^ 52
 	local c2 = 2 ^ 10
 	local c3 = 1 - 52 - c2
-	local c4 = 2 ^ 51
-	local c5 = 2 ^ 53
+	local c4 = 2 ^ 53
 	local bias = c2 - 1
 
 	--- [SHARED AND MENU]
@@ -459,14 +462,31 @@ do
 	---@param big_endian? boolean The endianness of the binary string.
 	---@return number: The double.
 	function binary.readDouble( str, big_endian )
-		local bits = readBits( str, 8, big_endian )
+		if str == "\0\0\0\0\0\0\0\0" then
+			return 0
+		elseif str == "\128\0\0\0\0\0\0\0" or str == "\0\0\0\0\0\0\0\128" then
+			return -0
+		elseif str == "\255\255\255\255\255\255\255\255" then
+			return math_nan
+		elseif str == "\0\0\0\0\0\0\240\127" or str == "\127\240\0\0\0\0\0\0" then
+			return math_huge
+		elseif str == "\0\0\0\0\0\0\240\255" or str == "\255\240\0\0\0\0\0\0" then
+			return math_tiny
+		end
+
+		local bits = unpack( str, 8, big_endian )
+
 		local mantissa = implode( bits, 52 )
 		local exponent = implode( bits, 11, 53 )
-		local sign = bits[ 64 ] and -1 or 1
+		local sign = bits[ 64 ]
 
 		if exponent == c0 then
-			if mantissa == 0 or sign == -1 then
-				return sign * math_huge
+			if mantissa == 0 then
+				if sign then
+					return math_tiny
+				else
+					return math_huge
+				end
 			else
 				return math_nan
 			end
@@ -478,7 +498,7 @@ do
 			exponent = 1
 		end
 
-		return sign * math_ldexp( mantissa, exponent + c3 )
+		return ( sign and -1 or 1 ) * math_ldexp( mantissa, exponent + c3 )
 	end
 
 	--- [SHARED AND MENU]
@@ -487,6 +507,30 @@ do
 	---@param big_endian? boolean The endianness of the binary string.
 	---@return string: The binary string.
 	function binary.writeDouble( value, big_endian )
+		if value == 0 then
+			if ( 1 / value ) == math_huge then
+				return "\0\0\0\0\0\0\0\0"
+			elseif big_endian then
+				return "\128\0\0\0\0\0\0\0"
+			else
+				return "\0\0\0\0\0\0\0\128"
+			end
+		elseif value ~= value then
+			return "\255\255\255\255\255\255\255\255"
+		elseif value == math_huge then
+			if big_endian then
+				return "\127\240\0\0\0\0\0\0"
+			else
+				return "\0\0\0\0\0\0\240\127"
+			end
+		elseif value == math_tiny then
+			if big_endian then
+				return "\255\240\0\0\0\0\0\0"
+			else
+				return "\0\0\0\0\0\0\240\255"
+			end
+		end
+
 		local sign
 		if value < 0 then
 			sign = true
@@ -495,22 +539,13 @@ do
 			sign = false
 		end
 
-		local mantissa, exponent
-		if value == math_huge then
-			mantissa, exponent = 0, c2
-		elseif value ~= value then
-			mantissa, exponent = c4, c2
-		elseif value == 0 then
-			mantissa, exponent = 0, -bias
-		else
-			mantissa, exponent = math_frexp( value )
+		local mantissa, exponent = math_frexp( value )
 
-			local ebs = exponent + bias
-			if ebs <= 1 then
-				mantissa, exponent = mantissa * ( 2 ^ ( 51 + ebs ) ), -bias
-			else
-				mantissa, exponent = ( mantissa - 0.5 ) * c5, exponent - 1
-			end
+		local ebs = exponent + bias
+		if ebs <= 1 then
+			mantissa, exponent = mantissa * ( 2 ^ ( 51 + ebs ) ), -bias
+		else
+			mantissa, exponent = ( mantissa - 0.5 ) * c4, exponent - 1
 		end
 
 		local bits = explode( mantissa )
@@ -522,7 +557,7 @@ do
 
 		bits[ 64 ] = sign
 
-		return writeBits( bits, 8, big_endian )
+		return pack( bits, 8, big_endian )
 	end
 
 end
