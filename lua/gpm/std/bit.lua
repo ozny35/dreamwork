@@ -10,6 +10,28 @@ local bit = std.bit or {}
 
 do
 
+    local debug_getmetatable = std.debug.getmetatable
+    local math_ceil = std.math.ceil
+
+    --- [SHARED AND MENU] Returns the bit count of the given value.
+    ---@param value any The value to get the bit count of.
+    ---@param in_bytes boolean? Whether to return the bit count in bytes.
+    ---@return number size The count of bits or bytes in the value.
+    function bit.size( value, in_bytes )
+        local metatable = debug_getmetatable( value )
+        if metatable == nil then return 0 end
+
+        if in_bytes then
+            return math_ceil( metatable.__bitcount( value ) * 0.125 )
+        else
+            return metatable.__bitcount( value )
+        end
+    end
+
+end
+
+do
+
     local string_format = std.string.format
 
     --- [SHARED AND MENU] Returns the hexadecimal representation of the number with the specified digits.

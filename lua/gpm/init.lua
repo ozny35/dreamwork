@@ -427,23 +427,6 @@ do
         end
     end
 
-    --- [SHARED AND MENU] Returns the bit count of the given value.
-    ---@param value any The value to get the bit count of.
-    ---@return number: The bit count of the value.
-    local function bitcount( value )
-        local metatable = debug_getmetatable( value )
-        return metatable and metatable.__bitcount( value ) or 0
-    end
-
-    std.bitcount = bitcount
-
-    --- [SHARED AND MENU] Returns the byte count of the given value.
-    ---@param value any The value to get the byte count of.
-    ---@return number: The byte count of the value.
-    function std.bytecount( value )
-        return math_ceil( bitcount( value ) * 0.125 )
-    end
-
 end
 
 --- [SHARED AND MENU]
