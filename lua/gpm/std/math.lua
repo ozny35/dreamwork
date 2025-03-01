@@ -203,7 +203,7 @@ end
 ---@param x number The number to check.
 ---@return boolean: `true` if the number is finite, otherwise `false`.
 function math.isfinite( x )
-    return x ~= huge and x ~= tiny and x ~= x
+    return x ~= huge and x ~= tiny and x == x
 end
 
 --- Checks if two numbers are equal with a given tolerance.
@@ -290,17 +290,25 @@ function math.snap( number, step )
     return math_floor( ( number / step ) + 0.5 ) * step
 end
 
---- Returns number without fractional part, ignoring the argument sign.
----@param number number The number to round.
----@param decimals? number: The number of decimal places to round to.
----@return number: The rounded number.
-function math.trunc( number, decimals )
-    if decimals then
-        local multiplier = 10 ^ decimals
-        return ( number < 0 and math_ceil or math_floor )( number * multiplier ) / multiplier
+do
+
+    --- Returns the integer part of the given number.
+    ---@param number number The number to truncate.
+    ---@return number: The integer part of the number.
+    local function math_trunc( number )
+        return ( number < 0 and math_ceil or math_floor )( number )
     end
 
-    return ( number < 0 and math_ceil or math_floor )( number )
+    math.trunc = math_trunc
+
+    --- Splits a number into its integer and fractional parts.
+    ---@param x number The number to split.
+    ---@return number: The integer part of the number.
+    ---@return number: The fractional part of the number.
+    function math.split( x )
+        return math_trunc( x ), x % 1
+    end
+
 end
 
 --- Returns the natural logarithm of the given number.
@@ -415,14 +423,6 @@ end
 function math.approach( current, target, change )
     local diff = target - current
     return current + sign( diff ) * math_min( math_abs( diff ), change )
-end
-
---- Splits a number into its integer and fractional parts.
----@param x number The number to split.
----@return number: The integer part of the number.
----@return number: The fractional part of the number.
-function math.split( x )
-    return math_floor( x ), x % 1
 end
 
 --- Clamps a number between a minimum and maximum value.
