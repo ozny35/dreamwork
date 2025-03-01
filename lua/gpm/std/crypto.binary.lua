@@ -1,5 +1,5 @@
 local std = _G.gpm.std
-local string, math, table = std.string, std.math, std.table
+local bit, string, math, table = std.bit, std.string, std.math, std.table
 
 local string_byte, string_char, string_len, string_sub, string_rep = string.byte, string.char, string.len, string.sub, string.rep
 local table_unpack = table.unpack
@@ -10,307 +10,547 @@ local math_floor = math.floor
 ---@class gpm.std.crypto.binary
 local binary = {}
 
---- Explodes a number into a table of booleans (bits).
----@param number integer The number to explode.
----@param max_size? integer The maximum size of the table.
----@return boolean[]: The table of bits.
----@return integer: The size of the bit table.
-local function explode( number, max_size )
-	if max_size == nil then max_size = 0 end
+local unsigned_implode, unsigned_explode, unsigned_readInteger, unsigned_writeInteger
+do
 
-	local bits, length = {}, 0
-	while number ~= 0 or length < max_size do
-		length = length + 1
-		bits[ length ] = number % 2 ~= 0
-		number = math_floor( number * 0.5 )
+	--- [SHARED AND MENU]
+	--- The unsigned binary library.
+	---@class gpm.std.crypto.binary.unsigned
+	local unsigned = {}
+	binary.unsigned = unsigned
+
+	--- Implodes a table of booleans (bits) into a number.
+	---@param bits boolean[] The table of bits.
+	---@param bit_count? integer The size of the table.
+	---@param start_position? integer The start position of the table.
+	---@return integer value
+	function unsigned_implode( bits, bit_count, start_position )
+		local value = 0
+
+		if start_position == nil then
+			for index = bit_count or #bits, 1, -1 do
+				value = value * 2 + ( bits[ index ] and 1 or 0 )
+			end
+		else
+			start_position = start_position - 1
+
+			for index = bit_count or #bits, 1, -1 do
+				value = value * 2 + ( bits[ index + start_position ] and 1 or 0 )
+			end
+		end
+
+		return value
 	end
 
-	return bits, length
-end
+	unsigned.implode = unsigned_implode
 
-binary.explode = explode
+	--- Explodes a integer into a table of booleans (bits).
+	---@param value integer The number to explode.
+	---@param max_size? integer The maximum size of the table.
+	---@return boolean[] bits The table of bits.
+	---@return integer bit_count The size of the bit table.
+	function unsigned_explode( value, max_size )
+		if max_size == nil then max_size = 0 end
 
---- Implodes a table of booleans (bits) into a number.
----@param bits boolean[] The table of bits.
----@param size? integer The size of the table.
----@param start_position? integer The start position of the table.
----@return integer: The number.
-local function implode( bits, size, start_position )
-	local number = 0
-
-	if start_position == nil then
-		for index = size or #bits, 1, -1 do
-			number = number * 2 + ( bits[ index ] and 1 or 0 )
+		local bits, bit_count = {}, 0
+		while value ~= 0 or bit_count < max_size do
+			bit_count = bit_count + 1
+			bits[ bit_count ] = value % 2 ~= 0
+			value = math_floor( value * 0.5 )
 		end
-	else
-		start_position = start_position - 1
 
-		for index = size or #bits, 1, -1 do
-			number = number * 2 + ( bits[ index + start_position ] and 1 or 0 )
-		end
+		return bits, bit_count
 	end
 
-	return number
-end
+	unsigned.explode = unsigned_explode
 
-binary.implode = implode
+	--- [SHARED AND MENU]
+	--- Reads an unsigned integer from a binary string.
+	---@param str string The binary string.
+	---@param byte_count? integer The number of bytes to read.
+	---@param big_endian? boolean The endianness of the binary string.
+	---@param start_position? integer The start position of the binary string.
+	---@return integer: The unsigned integer.
+	function unsigned_readInteger( str, byte_count, big_endian, start_position )
+		if start_position == nil then start_position = 1 end
 
---- [SHARED AND MENU]
---- Reads an unsigned byte from a binary string.
----@param str string The binary string.
----@param start_position? integer The start position of the binary string.
----@return integer: The unsigned byte.
-function binary.readUByte( str, start_position )
-	return string_byte( str, start_position )
-end
-
---- [SHARED AND MENU]
---- Writes an unsigned byte to a binary string.
----@param number integer The unsigned byte.
----@return string: The binary string.
-function binary.writeUByte( number )
-	return string_char( number )
-end
-
---- [SHARED AND MENU]
---- Reads a signed byte from a binary string.
----@param str string The binary string.
----@param start_position? integer The start position of the binary string.
----@return integer: The signed byte.
-function binary.readSByte( str, start_position )
-	return string_byte( str, start_position ) - 0x80
-end
-
---- [SHARED AND MENU]
---- Writes a signed byte to a binary string.
----@param number integer The signed byte.
----@return string: The binary string.
-function binary.writeSByte( number )
-	return string_char( number + 0x80 )
-end
-
---- [SHARED AND MENU]
---- Reads a boolean from a binary string.
----@param str string The binary string.
----@param start_position? integer The start position of the binary string.
----@return boolean: The boolean.
-function binary.readBool( str, start_position )
-	return string_byte( str, start_position ) ~= 0
-end
-
---- [SHARED AND MENU]
---- Writes a boolean to a binary string.
----@param bool boolean The boolean.
----@return string: The binary string.
-function binary.writeBool( bool )
-	return string_char( bool and 1 or 0 )
-end
-
---- [SHARED AND MENU]
---- Reads an `\0` characters length from a binary string.
----@param str string The binary string.
----@param start_position? integer The start position of the binary string.
----@return integer: The count of `\0` characters.
-function binary.readNull( str, start_position )
-	if start_position == nil then start_position = 1 end
-
-	local bytes = { string_byte( str, start_position, string_len( str ) ) }
-	local length = #bytes
-
-	for i = 1, length, 1 do
-		if bytes[ i ] ~= 0 then
-			length = i
-			break
+		if byte_count == nil then
+			byte_count = 4
+		elseif byte_count == 1 then
+			return string_byte( str, start_position )
 		end
+
+		local bytes = { string_byte( str, start_position, ( start_position - 1 ) + byte_count ) }
+
+		local value = 0
+		if big_endian then
+			for index = 1, byte_count, 1 do
+				value = value * 0x100 + bytes[ index ]
+			end
+
+			return value
+		end
+
+		for index = byte_count, 1, -1 do
+			value = value * 0x100 + bytes[ index ]
+		end
+
+		return value
 	end
 
-	return length
+	unsigned.readInteger = unsigned_readInteger
+
+	--- [SHARED AND MENU]
+	--- Writes an unsigned integer to a binary string.
+	---@param value integer The unsigned integer.
+	---@param byte_count? integer The number of bytes to write.
+	---@param big_endian? boolean The endianness of the binary string.
+	---@return string: The binary string.
+	function unsigned_writeInteger( value, byte_count, big_endian )
+		if byte_count == nil then
+			byte_count = 4
+		elseif byte_count == 1 then
+			return string_char( value )
+		end
+
+		local bytes = {}
+		for index = big_endian and byte_count or 1, big_endian and 1 or byte_count, big_endian and -1 or 1 do
+			bytes[ index ] = value % 0x100
+			value = math_floor( value * 0.00390625 )
+		end
+
+		return string_char( table_unpack( bytes, 1, byte_count ) )
+	end
+
+	unsigned.signed_writeInteger = unsigned_writeInteger
+
+	--- [SHARED AND MENU]
+	--- Reads an unsigned byte (1 byte/8 bits) from a binary string.
+	---
+	--- Allowable values from `0` to `255`.
+	---@param str string The binary string.
+	---@param start_position? integer The start position of the binary string.
+	---@return integer: The unsigned byte.
+	function unsigned.readByte( str, start_position )
+		return string_byte( str, start_position )
+	end
+
+	--- [SHARED AND MENU]
+	--- Writes an unsigned byte (1 byte/8 bits) to a binary string.
+	---
+	--- Allowable values from `0` to `255`.
+	---@param value integer The unsigned byte.
+	---@return string: The binary string.
+	function unsigned.writeByte( value )
+		return string_char( value )
+	end
+
+	--- [SHARED AND MENU]
+	--- Reads an unsigned short (2 bytes/16 bits) from a binary string.
+	---
+	--- Allowable values from `0` to `65535`.
+	---@param str string The binary string.
+	---@param start_position? integer The start position of the binary string.
+	---@param big_endian? boolean The endianness of the binary string.
+	---@return integer: The unsigned short.
+	function unsigned.readShort( str, start_position, big_endian )
+		return unsigned_readInteger( str, 2, big_endian, start_position )
+	end
+
+	--- [SHARED AND MENU]
+	--- Writes an unsigned short (2 bytes/16 bits) to a binary string.
+	---
+	--- Allowable values from `0` to `65535`.
+	---@param value integer The unsigned short.
+	---@param big_endian? boolean The endianness of the binary string.
+	---@return string: The binary string.
+	function unsigned.writeShort( value, big_endian )
+		return unsigned_writeInteger( value, 2, big_endian )
+	end
+
+	--- [SHARED AND MENU]
+	--- Reads an unsigned long (4 bytes/32 bits) from a binary string.
+	---
+	--- Allowable values from `0` to `4294967295`.
+	---@param str string The binary string.
+	---@param start_position? integer The start position of the binary string.
+	---@param big_endian? boolean The endianness of the binary string.
+	---@return integer: The unsigned long.
+	function unsigned.readLong( str, start_position, big_endian )
+		return unsigned_readInteger( str, 4, big_endian, start_position )
+	end
+
+	--- [SHARED AND MENU]
+	--- Writes an unsigned long (4 bytes/32 bits) to a binary string.
+	---
+	--- Allowable values from `0` to `4294967295`.
+	---@param value integer The unsigned long.
+	---@param big_endian? boolean The endianness of the binary string.
+	---@return string: The binary string.
+	function unsigned.writeLong( value, big_endian )
+		return unsigned_writeInteger( value, 4, big_endian )
+	end
+
+	--- [SHARED AND MENU]
+	--- Reads an unsigned long long (8 bytes/64 bits) from a binary string.
+	---
+	--- Allowable values from `0` to `18446744073709551615`.
+	---@param str string The binary string.
+	---@param start_position? integer The start position of the binary string.
+	---@param big_endian? boolean The endianness of the binary string.
+	---@return integer: The unsigned long long.
+	function unsigned.readLongLong( str, start_position, big_endian )
+		return unsigned_readInteger( str, 8, big_endian, start_position )
+	end
+
+	--- [SHARED AND MENU]
+	--- Writes an unsigned long long (8 bytes/64 bits) to a binary string.
+	---
+	--- Allowable values from `0` to `18446744073709551615`.
+	---@param value integer The unsigned long long.
+	---@param big_endian? boolean The endianness of the binary string.
+	---@return string: The binary string.
+	function unsigned.writeLongLong( value, big_endian )
+		return unsigned_writeInteger( value, 8, big_endian )
+	end
+
+	--- [SHARED AND MENU]
+	--- Reads an unsigned fixed-point number (**UQm.n**) from a binary string.
+	--- <br/>
+	---
+	--- **Commonly Used UQm.n Formats**
+	---| Format | Range | Precision (Step) |
+	---|:------|:------------------------|:-----------------|
+	---|UQ8.8  |`0 to 255.996`			  |0.00390625 (1/256)
+	---|UQ10.6 |`0 to 1023.984375`		  |0.015625 (1/64)
+	---|UQ12.4 |`0 to 4095.9375`		  |0.0625 (1/16)
+	---|UQ16.16|`0 to 65535.99998`        |0.0000152588 (1/65536)
+	---|UQ24.8 |`0 to 16,777,215.996`     |0.00390625 (1/256)
+	---|UQ32.16|`0 to 4,294,967,295.99998`|0.0000152588 (1/65536)
+	---@param str string The binary string.
+	---@param m integer Number of integer bits (including sign bit).
+	---@param n integer Number of fractional bits.
+	---@param start_position? integer The start position of the binary string.
+	---@param big_endian? boolean The endianness of the binary string.
+	---@return number value The unsigned fixed-point number.
+	function unsigned.readFixedPoint( str, m, n, start_position, big_endian )
+		local byte_count = ( m + n ) * 0.125
+		if byte_count % 1 ~= 0 then
+			std.error( "invalid byte count", 2 )
+		end
+
+		return unsigned_readInteger( str, byte_count, big_endian, start_position ) / ( 2 ^ n )
+	end
+
+	--- [SHARED AND MENU]
+	--- Writes an unsigned fixed-point number (**UQm.n**) to a binary string.
+	--- <br/>
+	---
+	--- **Commonly Used UQm.n Formats**
+	---| Format | Range | Precision (Step) |
+	---|:------|:------------------------|:-----------------|
+	---|UQ8.8  |`0 to 255.996`			  |0.00390625 (1/256)
+	---|UQ10.6 |`0 to 1023.984375`		  |0.015625 (1/64)
+	---|UQ12.4 |`0 to 4095.9375`		  |0.0625 (1/16)
+	---|UQ16.16|`0 to 65535.99998`        |0.0000152588 (1/65536)
+	---|UQ24.8 |`0 to 16,777,215.996`     |0.00390625 (1/256)
+	---|UQ32.16|`0 to 4,294,967,295.99998`|0.0000152588 (1/65536)
+	---@param value number The unsigned fixed-point number.
+	---@param m integer Number of integer bits (including sign bit).
+	---@param n integer Number of fractional bits.
+	---@param big_endian? boolean The endianness of the binary string.
+	---@return string binary The binary string.
+	function unsigned.writeFixedPoint( value, m, n, big_endian )
+		local byte_count = ( m + n ) * 0.125
+		if byte_count % 1 ~= 0 then
+			std.error( "invalid byte count", 2 )
+		end
+
+		return unsigned_writeInteger( value * ( 2 ^ n ), byte_count, big_endian )
+	end
+
 end
 
---- [SHARED AND MENU]
---- Writes an `\0` character as a binary string.
----@param length? integer The length of the empty string.
----@return string: The empty string.
-function binary.writeNull( length )
-	return string_rep( "\0", length or 1 )
+do
+
+	--- [SHARED AND MENU]
+	--- The signed binary module.
+	---@class gpm.std.crypto.binary.signed
+	local signed = {}
+	binary.signed = signed
+
+	--- [SHARED AND MENU]
+	--- Reads a signed integer from a binary string.
+	---@param str string The binary string.
+	---@param byte_count? integer The number of bytes to read.
+	---@param big_endian? boolean The endianness of the binary string.
+	---@param start_position? integer The start position of the binary string.
+	---@return integer: The signed integer.
+	local function signed_readInteger( str, byte_count, big_endian, start_position )
+		local value, bit_count = unsigned_readInteger( str, byte_count, big_endian, start_position ), byte_count * 8
+		return ( value < 2 ^ ( bit_count - 1 ) ) and value or ( value - ( 2 ^ bit_count ) )
+	end
+
+	signed.readInteger = signed_readInteger
+
+	--- [SHARED AND MENU]
+	--- Writes a signed integer to a binary string.
+	---@param value integer The signed integer.
+	---@param byte_count? integer The number of bytes to write.
+	---@param big_endian? boolean The endianness of the binary string.
+	---@return string str The binary string.
+	local function signed_writeInteger( value, byte_count, big_endian )
+		return unsigned_writeInteger( ( value < 0 ) and ( value + ( 2 ^ ( byte_count * 8 ) ) ) or value, byte_count, big_endian )
+	end
+
+	signed.writeInteger = signed_writeInteger
+
+	--- [SHARED AND MENU]
+	--- Reads a signed byte (1 byte/8 bits) from a binary string.
+	---
+	--- Allowable values from `-128` to `127`.
+	---@param str string The binary string.
+	---@param start_position? integer The start position of the binary string.
+	---@return integer: The signed byte.
+	function signed.readByte( str, start_position )
+		return string_byte( str, start_position ) - 0x80
+	end
+
+	--- [SHARED AND MENU]
+	--- Writes a signed byte (1 byte/8 bits) to a binary string.
+	---
+	--- Allowable values from `-128` to `127`.
+	---@param value integer The signed byte.
+	---@return string: The binary string.
+	function signed.writeByte( value )
+		return string_char( value + 0x80 )
+	end
+
+	--- [SHARED AND MENU]
+	--- Reads a signed short (2 bytes/16 bits) from a binary string.
+	---
+	--- Allowable values from `-32768` to `32767`.
+	---@param str string The binary string.
+	---@param start_position? integer The start position of the binary string.
+	---@param big_endian? boolean The endianness of the binary string.
+	---@return integer: The signed short.
+	function signed.readShort( str, start_position, big_endian )
+		return signed_readInteger( str, 2, big_endian, start_position )
+	end
+
+	--- [SHARED AND MENU]
+	--- Writes a signed short (2 bytes/16 bits) to a binary string.
+	---
+	--- Allowable values from `-32768` to `32767`.
+	---@param value integer The signed short.
+	---@param big_endian? boolean The endianness of the binary string.
+	---@return string: The binary string.
+	function signed.writeShort( value, big_endian )
+		return signed_writeInteger( value, 2, big_endian )
+	end
+
+	--- [SHARED AND MENU]
+	--- Reads a signed long (4 bytes/32 bits) from a binary string.
+	---
+	--- Allowable values from `-2147483648` to `2147483647`.
+	---@param str string The binary string.
+	---@param start_position? integer The start position of the binary string.
+	---@param big_endian? boolean The endianness of the binary string.
+	---@return integer: The signed long.
+	function signed.readLong( str, start_position, big_endian )
+		return signed_readInteger( str, 4, big_endian, start_position )
+	end
+
+	--- [SHARED AND MENU]
+	--- Writes a signed long (4 bytes/32 bits) to a binary string.
+	---
+	--- Allowable values from `-2147483648` to `2147483647`.
+	---@param value integer The signed long.
+	---@param big_endian? boolean The endianness of the binary string.
+	---@return string: The binary string.
+	function signed.writeLong( value, big_endian )
+		return signed_writeInteger( value, 4, big_endian )
+	end
+
+	--- [SHARED AND MENU]
+	--- Reads a signed long long (8 bytes/64 bits) from a binary string.
+	---
+	--- Allowable values from `-9223372036854775808` to `9223372036854775807`.
+	---@param str string The binary string.
+	---@param start_position? integer The start position of the binary string.
+	---@param big_endian? boolean The endianness of the binary string.
+	---@return integer: The signed long long.
+	function signed.readLongLong( str, start_position, big_endian )
+		return signed_readInteger( str, 8, big_endian, start_position )
+	end
+
+	--- [SHARED AND MENU]
+	--- Writes a signed long long (8 bytes/64 bits) to a binary string.
+	---
+	--- Allowable values from `-9223372036854775808` to `9223372036854775807`.
+	---@param value integer The signed long long.
+	---@param big_endian? boolean The endianness of the binary string.
+	---@return string: The binary string.
+	function signed.writeLongLong( value, big_endian )
+		return signed_writeInteger( value, 8, big_endian )
+	end
+
+	--- [SHARED AND MENU]
+	--- Reads an signed fixed-point number (**Qm.n**) from a binary string.
+	--- <br/>
+	---
+	--- **Commonly Used Qm.n Formats**
+	---| Format | Range | Precision (Step) |
+	---|:------|:------------------------|:-----------------|
+	---|Q1.7  |`-1.0 to 0.9921875`			  |0.0078125 (1/128)
+	---|Q2.6  |`-2.0 to 1.984375`			  |0.015625 (1/64)
+	---|Q4.4  |`-8.0 to 7.9375`				  |0.0625 (1/16)
+	---|Q8.8  |`-128.0 to 127.996`			  |0.00390625 (1/256)
+	---|Q10.6 |`-512.0 to 511.984375`		  |0.015625 (1/64)
+	---|Q12.4 |`-2048.0 to 2047.9375`		  |0.0625 (1/16)
+	---|Q16.16|`-32768.0 to 32767.99998`	  |0.0000152588 (1/65536)
+	---|Q24.8 |`-8,388,608.0 to 8,388,607.996`|0.00390625 (1/256)
+	---|Q32.16|`-2.1 billion to ~2.1 billion` |0.0000152588 (1/65536)
+	---@param str string The binary string.
+	---@param m integer Number of integer bits (including sign bit).
+	---@param n integer Number of fractional bits.
+	---@param big_endian? boolean The endianness of the binary string.
+	---@param start_position? integer The start position of the binary string.
+	---@return number value: The signed fixed-point number.
+	function signed.readFixedPoint( str, m, n, big_endian, start_position )
+		local byte_count = ( m + n ) * 0.125
+		if byte_count % 1 ~= 0 then
+			std.error( "invalid byte count", 2 )
+		end
+
+		return signed_readInteger( str, byte_count, big_endian, start_position ) / ( 2 ^ n )
+	end
+
+	--- [SHARED AND MENU]
+	--- Writes an signed fixed-point number (**Qm.n**) to a binary string.
+	--- <br/>
+	---
+	--- **Commonly Used Qm.n Formats**
+	---| Format | Range | Precision (Step) |
+	---|:------|:------------------------|:-----------------|
+	---|Q1.7  |`-1.0 to 0.9921875`			  |0.0078125 (1/128)
+	---|Q2.6  |`-2.0 to 1.984375`			  |0.015625 (1/64)
+	---|Q4.4  |`-8.0 to 7.9375`				  |0.0625 (1/16)
+	---|Q8.8  |`-128.0 to 127.996`			  |0.00390625 (1/256)
+	---|Q10.6 |`-512.0 to 511.984375`		  |0.015625 (1/64)
+	---|Q12.4 |`-2048.0 to 2047.9375`		  |0.0625 (1/16)
+	---|Q16.16|`-32768.0 to 32767.99998`	  |0.0000152588 (1/65536)
+	---|Q24.8 |`-8,388,608.0 to 8,388,607.996`|0.00390625 (1/256)
+	---|Q32.16|`-2.1 billion to ~2.1 billion` |0.0000152588 (1/65536)
+	---@param value number The signed fixed-point number.
+	---@param m integer Number of integer bits (including sign bit).
+	---@param n integer Number of fractional bits.
+	---@param big_endian? boolean The endianness of the binary string.
+	---@return string binary
+	function signed.writeFixedPoint( value, m, n, big_endian )
+		local byte_count = ( m + n ) * 0.125
+		if byte_count % 1 ~= 0 then
+			std.error( "invalid byte count", 2 )
+		end
+
+		return signed_writeInteger( value * ( 2 ^ n ), byte_count, big_endian )
+	end
+
 end
 
-local findNull
 do
 
 	local string_find = string.find
 
 	--- [SHARED AND MENU]
-	--- Finds the first `\0` character in a binary string.
+	--- The data binary module.
+	---@class gpm.std.crypto.binary.data
+	local data = {}
+	binary.data = data
+
+	--- [SHARED AND MENU]
+	--- Reads a fixed-length string from a binary string.
+	---@param str string The binary string.
+	---@param length? integer The size of the string.
+	---@param start_position? integer The start position of the binary string.
+	---@return string str The fixed-length string.
+	function data.readFixed( str, length, start_position )
+		if start_position == nil then start_position = 1 end
+		return string_sub( str, start_position, ( start_position - 1 ) + length )
+	end
+
+	--- [SHARED AND MENU]
+	--- Reads a fixed-length string from a binary string.
+	---@param str string The binary string.
+	---@param max_length? integer The size of the string. ( 255 by default )
+	---@return string str The fixed-length string.
+	function data.writeFixed( str, max_length )
+		if max_length == nil then max_length = 255 end
+		local length = string_len( str )
+
+		if max_length == length then
+			return str
+		elseif max_length > length then
+			return str .. string_rep( "\0", max_length - length )
+		else
+			return string_sub( str, 1, max_length )
+		end
+	end
+
+	--- [SHARED AND MENU]
+	--- Reads a counted string from a binary string.
+	---@param str string The binary string.
+	---@param byte_count? integer The number of bytes to read.
+	---@param start_position? integer The start position of the binary string.
+	---@param big_endian? boolean The endianness of the binary string.
+	---@return string: The counted string.
+	function data.readCounted( str, byte_count, start_position, big_endian )
+		if start_position == nil then start_position = 1 end
+		if byte_count == nil then byte_count = 1 end
+
+		local length = unsigned_readInteger( str, byte_count, big_endian, start_position )
+		if length == 0 then return "" end
+
+		start_position = byte_count + ( start_position - 1 )
+		return string_sub( str, start_position + 1, start_position + length )
+	end
+
+	--- [SHARED AND MENU]
+	--- Writes a counted string to a binary string.
+	---@param str string The counted string.
+	---@param byte_count? integer The number of bytes to read.
+	---@param big_endian? boolean The endianness of the binary string.
+	---@return string: The binary string.
+	function data.writeCounted( str, byte_count, big_endian )
+		return unsigned_writeInteger( string_len( str ), byte_count or 1, big_endian ) .. str
+	end
+
+	--- [SHARED AND MENU]
+	--- Reads a null-terminated string from a binary string.
 	---@param str string The binary string.
 	---@param start_position? integer The start position of the binary string.
-	---@return number | nil: The position of the `\0` character.
-	function findNull( str, start_position )
-		return string_find( str, "\0", start_position, true )
-	end
+	---@return string: The null-terminated string.
+	function data.readNullTerminated( str, start_position )
+		if start_position == nil then start_position = 1 end
 
-	binary.findNull = findNull
-
-end
-
---- [SHARED AND MENU]
---- Reads an unsigned integer from a binary string.
----@param str string The binary string.
----@param length? integer The number of bytes to read.
----@param start_position? integer The start position of the binary string.
----@param big_endian? boolean The endianness of the binary string.
----@return integer: The unsigned integer.
-local function readUInt( str, length, big_endian, start_position )
-	if start_position == nil then start_position = 1 end
-	if length == nil then length = 4 end
-
-	local bytes = { string_byte( str, start_position, ( start_position - 1 ) + length ) }
-
-	local number = 0
-	if big_endian then
-		for index = 1, length, 1 do
-			number = number * 0x100 + bytes[ index ]
+		local end_position = string_find( str, "\0", start_position, true )
+		if end_position == nil then
+			end_position = string_len( str )
+		else
+			end_position = end_position - 1
 		end
 
-		return number
+		return string_sub( str, start_position, end_position )
 	end
 
-	for index = length, 1, -1 do
-		number = number * 0x100 + bytes[ index ]
+	--- [SHARED AND MENU]
+	--- Writes a null-terminated string to a binary string.
+	---@param str string The null-terminated string.
+	---@return string: The binary string.
+	function data.writeNullTerminated( str )
+		return str .. "\0"
 	end
 
-	return number
-end
-
-binary.readUInt = readUInt
-
---- [SHARED AND MENU]
---- Writes an unsigned integer to a binary string.
----@param number integer The unsigned integer.
----@param length? integer The number of bytes to write.
----@param big_endian? boolean The endianness of the binary string.
----@return string: The binary string.
-local function writeUInt( number, length, big_endian )
-	if length == nil then length = 4 end
-
-	local bytes = {}
-	for index = big_endian and length or 1, big_endian and 1 or length, big_endian and -1 or 1 do
-		bytes[ index ] = number % 0x100
-		number = math_floor( number * 0.00390625 )
-	end
-
-	return string_char( table_unpack( bytes, 1, length ) )
-end
-
-binary.writeUInt = writeUInt
-
---- [SHARED AND MENU]
---- Reads a signed integer from a binary string.
----@param str string The binary string.
----@param length? integer The number of bytes to read.
----@param start_position? integer The start position of the binary string.
----@param big_endian? boolean The endianness of the binary string.
----@return integer: The signed integer.
-local function readInt( str, length, big_endian, start_position )
-	local number, bit_count = readUInt( str, length, big_endian, start_position ), length * 8
-	return ( number < 2 ^ ( bit_count - 1 ) ) and number or ( number - ( 2 ^ bit_count ) )
-end
-
-binary.readInt = readInt
-
---- [SHARED AND MENU]
---- Writes a signed integer to a binary string.
----@param number integer The signed integer.
----@param length? integer The number of bytes to write.
----@param big_endian? boolean The endianness of the binary string.
----@return string str The binary string.
-local function writeInt( number, length, big_endian )
-	return writeUInt( ( number < 0 ) and ( number + ( 2 ^ ( length * 8 ) ) ) or number, length, big_endian )
-end
-
-binary.writeInt = writeInt
-
---- [SHARED AND MENU]
---- Reads a fixed-length string from a binary string.
----@param str string The binary string.
----@param size? integer The size of the string.
----@param start_position? integer The start position of the binary string.
----@return string: The fixed-length string.
-function binary.readFixedString( str, size, start_position )
-	if start_position == nil then start_position = 1 end
-	return string_sub( str, start_position, ( start_position - 1 ) + size )
-end
-
---- [SHARED AND MENU]
---- Reads a fixed-length string from a binary string.
----@param str string The binary string.
----@param size integer The size of the string.
----@return string: The fixed-length string.
-function binary.writeFixedString( str, size )
-	local length = string_len( str )
-	if size == nil then size = length end
-
-	if size == length then
-		return str
-	elseif size > length then
-		return str .. string_rep( "\0", size - length )
-	else
-		return string_sub( str, 1, size )
-	end
-end
-
---- [SHARED AND MENU]
---- Reads a counted string from a binary string.
----@param str string The binary string.
----@param uint_bytes? integer The number of bytes to read.
----@param start_position? integer The start position of the binary string.
----@param big_endian? boolean The endianness of the binary string.
----@return string: The counted string.
-function binary.readCountedString( str, uint_bytes, start_position, big_endian )
-	if start_position == nil then start_position = 1 end
-	if uint_bytes == nil then uint_bytes = 4 end
-
-	local length = readUInt( str, uint_bytes, big_endian, start_position )
-	if length == 0 then return "" end
-
-	start_position = ( start_position - 1 ) + uint_bytes
-	return string_sub( str, start_position + 1, start_position + length )
-end
-
---- [SHARED AND MENU]
---- Writes a counted string to a binary string.
----@param str string The counted string.
----@param uint_bytes? integer The number of bytes to write.
----@param big_endian? boolean The endianness of the binary string.
----@return string: The binary string.
-function binary.writeCountedString( str, uint_bytes, big_endian )
-	return writeUInt( string_len( str ), uint_bytes or 4, big_endian ) .. str
-end
-
---- [SHARED AND MENU]
---- Reads a null-terminated string from a binary string.
----@param str string The binary string.
----@param start_position? integer The start position of the binary string.
----@return string: The null-terminated string.
-function binary.readString( str, start_position )
-	if start_position == nil then start_position = 1 end
-
-	local end_position = findNull( str, start_position )
-	if end_position == nil then
-		end_position = string_len( str )
-	else
-		end_position = end_position - 1
-	end
-
-	return string_sub( str, start_position, end_position )
-end
-
---- [SHARED AND MENU]
---- Writes a null-terminated string to a binary string.
----@param str string The null-terminated string.
----@return string: The binary string.
-function binary.writeString( str )
-	return str .. "\0"
 end
 
 --- [SHARED AND MENU]
@@ -349,15 +589,15 @@ do
 	--- [SHARED AND MENU]
 	--- Writes a sequence of bits to a binary string.
 	---@param bits boolean[] The sequence of bits.
-	---@param size integer The size of the sequence of bits.
+	---@param bit_count integer The size of the sequence of bits.
 	---@param big_endian? boolean The endianness of the binary string.
 	---@return string: The binary string.
-	function pack( bits, size, big_endian )
+	function pack( bits, bit_count, big_endian )
 		local bytes, length = {}, 0
 
-		for i = 1, size * 8, 8 do
+		for i = 1, ( bit_count or #bits ) * 8, 8 do
 			length = length + 1
-			bytes[ length ] = implode( bits, 8, i )
+			bytes[ length ] = unsigned_implode( bits, 8, i )
 		end
 
 		if big_endian then
@@ -371,37 +611,38 @@ do
 
 end
 
-local bit_band, bit_bor, bit_lshift, bit_rshift = bit.band, bit.bor, bit.lshift, bit.rshift
 local math_huge, math_tiny, math_nan = math.huge, math.tiny, math.nan
 local math_frexp, math_ldexp = math.frexp, math.ldexp
 
---- [SHARED AND MENU]
---- Reads a float from a binary string.
----@param str string The binary string.
----@return number: The float.
-function binary.readFloat( str, big_endian )
-	local b1, b2, b3, b4
-
-	if big_endian then
-		b1, b2, b3, b4 = string_byte( str, 1, 4 )
-	else
-		b4, b3, b2, b1 = string_byte( str, 1, 4 )
-	end
-
-	local sign = bit_band( b1, 0x80 ) ~= 0
-	local exponent = bit_bor( bit_lshift( bit_band( b1, 0x7F ), 1 ), bit_rshift( b2, 7 ) )
-	local mantissa = bit_bor( bit_lshift( bit_band( b2, 0x7F ), 16 ), bit_lshift( b3, 8 ), b4 )
-
-	if exponent == 0 then
-		return ( sign and -1 or 1 ) * ( mantissa / 8388608 ) * 2 ^ -126
-	elseif exponent == 255 then
-		return mantissa == 0 and ( sign and math_tiny or math_huge ) or math_nan
-	end
-
-	return ( sign and -1 or 1 ) * ( 1 + ( mantissa / 8388608 ) ) * 2 ^ ( exponent - 127 )
-end
-
 do
+
+	local bit_band, bit_bor, bit_lshift, bit_rshift = bit.band, bit.bor, bit.lshift, bit.rshift
+
+	--- [SHARED AND MENU]
+	--- Reads a float from a binary string.
+	---@param str string The binary string.
+	---@return number: The float.
+	function binary.readFloat( str, big_endian )
+		local b1, b2, b3, b4
+
+		if big_endian then
+			b1, b2, b3, b4 = string_byte( str, 1, 4 )
+		else
+			b4, b3, b2, b1 = string_byte( str, 1, 4 )
+		end
+
+		local sign = bit_band( b1, 0x80 ) ~= 0
+		local exponent = bit_bor( bit_lshift( bit_band( b1, 0x7F ), 1 ), bit_rshift( b2, 7 ) )
+		local mantissa = bit_bor( bit_lshift( bit_band( b2, 0x7F ), 16 ), bit_lshift( b3, 8 ), b4 )
+
+		if exponent == 0 then
+			return ( sign and -1 or 1 ) * ( mantissa / 8388608 ) * 2 ^ -126
+		elseif exponent == 255 then
+			return mantissa == 0 and ( sign and math_tiny or math_huge ) or math_nan
+		end
+
+		return ( sign and -1 or 1 ) * ( 1 + ( mantissa / 8388608 ) ) * 2 ^ ( exponent - 127 )
+	end
 
 	local string_reverse = string.reverse
 
@@ -476,8 +717,8 @@ do
 
 		local bits = unpack( str, 8, big_endian )
 
-		local mantissa = implode( bits, 52 )
-		local exponent = implode( bits, 11, 53 )
+		local mantissa = unsigned_implode( bits, 52 )
+		local exponent = unsigned_implode( bits, 11, 53 )
 		local sign = bits[ 64 ]
 
 		if exponent == c0 then
@@ -548,8 +789,8 @@ do
 			mantissa, exponent = ( mantissa - 0.5 ) * c4, exponent - 1
 		end
 
-		local bits = explode( mantissa )
-		local exponentBits = explode( exponent + bias )
+		local bits = unsigned_explode( mantissa )
+		local exponentBits = unsigned_explode( exponent + bias )
 
 		for i = 1, 11 do
 			bits[ 52 + i ] = exponentBits[ i ]
@@ -560,6 +801,63 @@ do
 		return pack( bits, 8, big_endian )
 	end
 
+end
+
+--- [SHARED AND MENU]
+--- Reads a binary string as a stream of bits.
+---
+--- Can be used as iterator in for loops.
+---
+---@param str string The binary string.
+---@param big_endian? boolean The endianness of the binary string.
+---@return fun(): integer?, boolean? reader A reader function that returns the bit position and the bit (boolean) value or `nil` if there are no more bits.
+function binary.reader( str, big_endian )
+	local bytes = { string_byte( str, 1, string_len( str ) ) }
+	local i, j = big_endian and 1 or #bytes, 8
+	local byte = bytes[ i ]
+
+	return function()
+		if j == 0 then
+			i, j = big_endian and ( i + 1 ) or ( i - 1 ), 8
+			byte = bytes[ i ]
+			if byte == nil then return nil end
+		end
+
+		j = j - 1
+		return ( i - 1 ) * 8 + j + 1, math_floor( byte / ( 2 ^ j ) ) % 2 == 1
+	end
+end
+
+--- [SHARED AND MENU]
+--- Writes a stream of bits to a binary string.
+---
+---@param bytes integer[] The stream of bits.
+---@param byte_count integer The number of bytes to write.
+---@param big_endian? boolean The endianness of the binary string.
+---@return fun( bit: boolean ): integer? writer A write function that writes a bit to a binary string and returns the position of the written bit or `nil` if the binary string is full.
+function binary.writer( bytes, byte_count, big_endian )
+	for i = 1, byte_count, 1 do
+		bytes[ i ] = 0
+	end
+
+	local i = big_endian and 1 or byte_count
+	local j = 7
+
+	return function( value )
+		if i > byte_count or i == 0 then return nil end
+
+		if value then
+			bytes[ i ] = bytes[ i ] + ( 2 ^ j )
+		end
+
+		j = ( j - 1 ) % 8
+
+		if j == 7 then
+			i = big_endian and ( i + 1 ) or ( i - 1 )
+		end
+
+		return i * 8 - ( 6 - j )
+	end
 end
 
 return binary

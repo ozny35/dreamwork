@@ -1,16 +1,20 @@
 local _G = _G
-local gpm = _G.gpm
+local gpm, util = _G.gpm, _G.util
+
+---@class gpm.std
 local std = gpm.std
-local util = _G.util
 
 --- [SHARED AND MENU]
 --- crypto library
 ---@class gpm.std.crypto
 local crypto = {
-    deflate = gpm.dofile( "crypto.deflate.lua" ),
-    binary = gpm.dofile( "crypto.binary.lua" ),
-    struct = gpm.dofile( "crypto.struct.lua" )
+    binary = gpm.dofile( "crypto.binary.lua" )
 }
+
+std.crypto = crypto
+
+crypto.struct = gpm.dofile( "crypto.struct.lua" )
+crypto.deflate = gpm.dofile( "crypto.deflate.lua" )
 
 ---@class gpm.std.crypto.lzma
 ---@field PROPS_SIZE number The size of the lzma properties.

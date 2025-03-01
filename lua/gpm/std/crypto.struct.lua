@@ -1,3 +1,8 @@
+do
+	return
+end
+
+
 local _G = _G
 
 ---@class gpm.std
