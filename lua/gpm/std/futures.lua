@@ -7,7 +7,6 @@ local tostring, pcall, xpcall, isfunction = std.tostring, std.pcall, std.xpcall,
 
 ---@type coroutinelib
 local coroutine = std.coroutine
-local Timer_wait = std.Timer.wait
 
 --- [SHARED AND MENU]
 --- futures library
@@ -101,7 +100,7 @@ end
 --- ```lua
 --- ---@async
 --- local function asyncFunction( a, b )
----     futures.sleep( 1 )
+---     sleep( 1 )
 ---     return
 --- end
 ---
@@ -192,7 +191,7 @@ end
 --- local function work()
 ---     while true do
 ---        print( "working" )
----        futures.sleep( 1 )
+---        sleep( 1 )
 ---     end
 --- end
 ---
@@ -216,24 +215,6 @@ function futures.cancel( co )
     elseif status == "running" then
         error( "Operation was cancelled" ) -- TODO: use error
     end
-end
-
-
---- Puts current coroutine to sleep for given amount of seconds
---- uses internally `Timer.wait`.
----
----@see gpm.std.futures.pending
----@see gpm.std.futures.wakeup
----@async
----@param seconds number
-function futures.sleep( seconds )
-    local co = futures.running()
-
-    Timer_wait( function()
-        futures.wakeup( co )
-    end, seconds )
-
-    return futures.pending()
 end
 
 

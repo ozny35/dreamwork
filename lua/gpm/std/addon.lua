@@ -11,14 +11,14 @@ local Timer_wait = std.Timer.wait
 local isstring = std.isstring
 
 
----@alias gpm.std.CONTENT_TYPE
+---@alias gpm.std.Addon.ContentType
 ---| string # The type of the content.
 ---| `"addon"`
 ---| `"save"`
 ---| `"dupe"`
 ---| `"demo"`
 
----@alias gpm.std.ADDON_TYPE
+---@alias gpm.std.Addon.Type
 ---| string # The type of the addon.
 ---| `"gamemode"`
 ---| `"map"`
@@ -31,7 +31,7 @@ local isstring = std.isstring
 ---| `"model"`
 ---| `"servercontent"`
 
----@alias gpm.std.ADDON_TAG
+---@alias gpm.std.gpm.std.Addon.Tag
 ---| string # The tag of the addon.
 ---| `"fun"`
 ---| `"roleplay"`
@@ -43,7 +43,7 @@ local isstring = std.isstring
 ---| `"comic"`
 ---| `"build"`
 
----@alias gpm.std.DUPE_TAG
+---@alias gpm.std.Addon.DupeTag
 ---| string # The tag of the dupe.
 ---| `"buildings"`
 ---| `"machines"`
@@ -52,7 +52,7 @@ local isstring = std.isstring
 ---| `"vehicles"`
 ---| `"other"`
 
----@alias gpm.std.SAVE_TAG
+---@alias gpm.std.Addon.SaveTag
 ---| string # The tag of the save.
 ---| `"buildings"`
 ---| `"courses"`
@@ -60,7 +60,7 @@ local isstring = std.isstring
 ---| `"scenes"`
 ---| `"other"`
 
----@alias gpm.std.WORKSHOP_SEARCH
+---@alias gpm.std.Addon.Workshop
 ---| string # The workshop search types.
 ---| `"friendfavorite"` # The client friends favorite addons.
 ---| `"subscribed"` # The addons to which the client is subscribed.
@@ -313,7 +313,7 @@ do
 
         --- [SHARED AND MENU] Returns the type of the addon.
         ---@param wsid string The workshop ID of the addon.
-        ---@return gpm.std.ADDON_TYPE?: The type of the addon.
+        ---@return gpm.std.Addon.Type?: The type of the addon.
         local function getType( wsid )
             local data = findAddon( wsid )
             if data == nil then return nil end
@@ -329,7 +329,7 @@ do
         end
 
         --- [SHARED AND MENU] Returns the type of the addon.
-        ---@return gpm.std.ADDON_TYPE?: The type of the addon.
+        ---@return gpm.std.Addon.Type?: The type of the addon.
         function Addon:getType()
             return getType( self.wsid )
         end
@@ -354,7 +354,7 @@ do
 
         --- [SHARED AND MENU] Returns the tags of the addon.
         ---@param wsid string The workshop ID of the addon.
-        ---@return gpm.std.ADDON_TAG[]?: The tags of the addon.
+        ---@return gpm.std.gpm.std.Addon.Tag[]?: The tags of the addon.
         ---@return integer?: The number of tags.
         local function getTags( wsid )
             local data = findAddon( wsid )
@@ -760,7 +760,7 @@ do
     end
 
     --- [SHARED AND MENU] Performs a quick search for addons.
-    ---@param wtype gpm.std.WORKSHOP_SEARCH: The type of the search.
+    ---@param wtype gpm.std.Addon.Workshop: The type of the search.
     ---@param wtags string[]?: The tags of the search.
     ---@param woffset integer?: The offset of the search.
     ---@param timeout number?: The timeout in seconds of the search.
@@ -794,7 +794,7 @@ do
     end
 
     --- [SHARED AND MENU] Returns a list of addons published by the client.
-    ---@param wtype gpm.std.WORKSHOP_SEARCH: The type of the search.
+    ---@param wtype gpm.std.Addon.Workshop: The type of the search.
     ---@param wtags string[]?: The tags of the search.
     ---@param woffset integer?: The offset of the search.
     ---@param timeout number?: The timeout in seconds of the search.

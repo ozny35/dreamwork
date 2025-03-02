@@ -195,7 +195,7 @@ std.tobool = std.toboolean
 ---@return boolean: Returns `true` if the value is valid, otherwise `false`.
 function std.isvalid( value )
     local metatable = debug_getmetatable( value )
-    return ( metatable ~= nil and metatable.__isvalid and metatable.__isvalid( value ) ) == true
+    return ( metatable and metatable.__isvalid and metatable.__isvalid( value ) ) == true
 end
 
 local isstring, STRING, NUMBER
@@ -624,7 +624,8 @@ std.File = File
 local Color = include( "std/color.lua" )
 std.Color = Color
 
---- [SHARED AND MENU] The white color object (255, 255, 255, 255).
+--- [SHARED AND MENU]
+--- The white color object (255, 255, 255, 255).
 std.color_white = Color( 255, 255, 255, 255 )
 
 -- error
@@ -1118,9 +1119,36 @@ end
 local futures = include( "std/futures.lua" )
 std.futures = futures
 
+do
+
+    local futures_running = futures.running
+    local Timer_wait = std.Timer.wait
+
+    --- Puts current thread to sleep for given amount of seconds.
+    ---
+    ---@see gpm.std.futures.pending
+    ---@see gpm.std.futures.wakeup
+    ---@async
+    ---@param seconds number
+    ---@return nil
+    function std.sleep( seconds )
+        local co = futures_running()
+        if co == nil then
+            local end_time = getTime() + seconds
+            while getTime() < end_time do end
+        else
+            Timer_wait( function()
+                futures.wakeup( co )
+            end, seconds )
+
+            return futures.pending()
+        end
+    end
+
+end
+
 std.apairs = futures.apairs
 std.yield = futures.yield
-std.sleep = futures.sleep
 
 std.Future = futures.Future
 std.Task = futures.Task
@@ -1244,6 +1272,8 @@ do
                 end
             end
 
+            ---@cast fn function?
+
             if fn == nil then
                 return nil, "wrong load mode"
             end
@@ -1341,7 +1371,8 @@ do
     local head = "lua/bin/gm" .. ( ( CLIENT and not MENU ) and "cl" or "sv" ) .. "_"
     local tail = "_" .. ( { "osx64", "osx", "linux64", "linux", "win64", "win32" } )[ ( os_name == "Windows" and 4 or 0 ) + ( os_name == "Linux" and 2 or 0 ) + ( is32 and 1 or 0 ) + 1 ] .. ".dll"
 
-    --- [SHARED AND MENU] Checks if a binary module is installed and returns its path.
+    --- [SHARED AND MENU]
+    --- Checks if a binary module is installed and returns its path.
     ---@param name string The binary module name.
     ---@return boolean: `true` if the binary module is installed, `false` otherwise.
     ---@return string: The absolute path to the binary module.
@@ -1367,7 +1398,8 @@ do
 
     local sv_allowcslua = SERVER and console.Variable.get( "sv_allowcslua", "boolean" )
 
-    --- [SHARED AND MENU] Loads a binary module
+    --- [SHARED AND MENU]
+    --- Loads a binary module
     ---@param name string The binary module name, for example: "chttp"
     ---@return boolean success: true if the binary module is installed
     ---@return table? module: the binary module table
