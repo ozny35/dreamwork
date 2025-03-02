@@ -190,9 +190,8 @@ do
             end
         end
 
-        index = index + 1
-        table_inject( self, { identifier, fn, hook_type }, index, 1, 3 )
-        self[ 0 ] = index + 2
+        table_inject( self, { identifier, fn, hook_type }, index + 1, 1, 3 )
+        self[ 0 ] = self[ 0 ] + 3
     end
 
 end
@@ -260,13 +259,14 @@ do
             end
         end
 
+        hook_stop( self )
+
         for index = 3, self[ 0 ], 3 do
             if self[ index ] == 2 then -- post hook
                 self[ index - 1 ]( value, ... )
             end
         end
 
-        hook_stop( self )
         return value
     end
 
@@ -286,13 +286,14 @@ do
             end
         end
 
+        hook_stop( self )
+
         for index = 3, self[ 0 ], 3 do
             if self[ index ] == 2 then -- post hook
                 self[ index - 1 ]( { a, b, c, d, e, f }, ... )
             end
         end
 
-        hook_stop( self )
         return a, b, c, d, e, f
     end
 
@@ -305,16 +306,15 @@ do
             local hook_type = self[ index ]
             if hook_type == -2 then -- pre hook
                 self[ index - 1 ]( ... )
-            elseif hook_type ~= 2 then
-                if hook_type == 1 then -- post hook return
-                    old, new = new, self[ index - 1 ]( new, ... )
-                else -- pre hook return and normal hook
-                    old, new = new, self[ index - 1 ]( ... )
-                end
-
+            elseif hook_type == 1 then -- post hook return
+                old, new = new, self[ index - 1 ]( new, ... )
+            elseif hook_type ~= 2 then -- pre hook return and normal hook
+                old, new = new, self[ index - 1 ]( ... )
                 new = mixer_fn( old, new ) or new
             end
         end
+
+        hook_stop( self )
 
         for index = 3, self[ 0 ], 3 do
             if self[ index ] == 2 then -- post hook
@@ -322,39 +322,36 @@ do
             end
         end
 
-        hook_stop( self )
         return new
     end
 
     --- hook call with mixer and vararg
     local function call_with_mixer_and_vararg( self, mixer_fn, ... )
-        local old1, old2, old3, old4, old5, old6, new1, new2, new3, new4, new5, new6
+        local o1, o2, o3, o4, o5, o6, n1, n2, n3, n4, n5, n6
         for index = 3, self[ 0 ], 3 do
             if not self[ -1 ] then break end
 
             local hook_type = self[ index ]
             if hook_type == -2 then -- pre hook
                 self[ index - 1 ]( ... )
-            elseif hook_type ~= 2 then
-                if hook_type == 1 then -- post hook return
-                    old1, old2, old3, old4, old5, old6, new1, new2, new3, new4, new5, new6 = new1, new2, new3, new4, new5, new6, self[ index - 1 ]( { new1, new2, new3, new4, new5, new6 }, ... )
-                else -- pre hook return and normal hook
-                    old1, old2, old3, old4, old5, old6, new1, new2, new3, new4, new5, new6 = new1, new2, new3, new4, new5, new6, self[ index - 1 ]( ... )
-                end
-
-                local mixed1, mixed2, mixed3, mixed4, mixed5, mixed6 = mixer_fn( { old1, old2, old3, old4, old5, old6 }, { new1, new2, new3, new4, new5, new6 } )
-                if mixed1 ~= nil then new1, new2, new3, new4, new5, new6 = mixed1, mixed2, mixed3, mixed4, mixed5, mixed6 end
-            end
-        end
-
-        for index = 3, self[ 0 ], 3 do
-            if self[ index ] == 2 then -- post hook
-                self[ index - 1 ]( { new1, new2, new3, new4, new5, new6 }, ... )
+            elseif hook_type == 1 then -- post hook return
+                o1, o2, o3, o4, o5, o6, n1, n2, n3, n4, n5, n6 = n1, n2, n3, n4, n5, n6, self[ index - 1 ]( { n1, n2, n3, n4, n5, n6 }, ... )
+            elseif hook_type ~= 2 then -- pre hook return and normal hook
+                o1, o2, o3, o4, o5, o6, n1, n2, n3, n4, n5, n6 = n1, n2, n3, n4, n5, n6, self[ index - 1 ]( ... )
+                local mixed1, mixed2, mixed3, mixed4, mixed5, mixed6 = mixer_fn( { o1, o2, o3, o4, o5, o6 }, { n1, n2, n3, n4, n5, n6 } )
+                if mixed1 ~= nil then n1, n2, n3, n4, n5, n6 = mixed1, mixed2, mixed3, mixed4, mixed5, mixed6 end
             end
         end
 
         hook_stop( self )
-        return new1, new2, new3, new4, new5, new6
+
+        for index = 3, self[ 0 ], 3 do
+            if self[ index ] == 2 then -- post hook
+                self[ index - 1 ]( { n1, n2, n3, n4, n5, n6 }, ... )
+            end
+        end
+
+        return n1, n2, n3, n4, n5, n6
     end
 
     --- [SHARED AND MENU]
@@ -362,6 +359,7 @@ do
     ---@param ... any: The arguments to pass to the hook.
     ---@return any ...: The return values from the hook.
     function Hook:call( ... )
+        if self[ -1 ] then return end
         self[ -1 ] = true
 
         local mixer_fn = self[ -4 ]
