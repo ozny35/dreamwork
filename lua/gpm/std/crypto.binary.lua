@@ -540,7 +540,7 @@ do
 			end_position = end_position - 1
 		end
 
-		return string_sub( str, start_position, end_position )
+		return string_sub( str, start_position, end_position ) -- TODO: add str length in return 
 	end
 
 	--- [SHARED AND MENU]
@@ -613,6 +613,8 @@ end
 
 local math_huge, math_tiny, math_nan = math.huge, math.tiny, math.nan
 local math_frexp, math_ldexp = math.frexp, math.ldexp
+
+-- TODO: improve float and double descriptions
 
 do
 
