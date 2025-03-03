@@ -150,10 +150,10 @@ do
 	---
 	--- Allowable values from `0` to `65535`.
 	---@param str string The binary string.
-	---@param start_position? integer The start position of the binary string.
 	---@param big_endian? boolean The endianness of the binary string.
+	---@param start_position? integer The start position of the binary string.
 	---@return integer: The unsigned short.
-	function unsigned.readShort( str, start_position, big_endian )
+	function unsigned.readShort( str, big_endian, start_position )
 		return unsigned_readInteger( str, 2, big_endian, start_position )
 	end
 
@@ -173,10 +173,10 @@ do
 	---
 	--- Allowable values from `0` to `4294967295`.
 	---@param str string The binary string.
-	---@param start_position? integer The start position of the binary string.
 	---@param big_endian? boolean The endianness of the binary string.
+	---@param start_position? integer The start position of the binary string.
 	---@return integer: The unsigned long.
-	function unsigned.readLong( str, start_position, big_endian )
+	function unsigned.readLong( str, big_endian, start_position )
 		return unsigned_readInteger( str, 4, big_endian, start_position )
 	end
 
@@ -196,10 +196,10 @@ do
 	---
 	--- Allowable values from `0` to `18446744073709551615`.
 	---@param str string The binary string.
-	---@param start_position? integer The start position of the binary string.
 	---@param big_endian? boolean The endianness of the binary string.
+	---@param start_position? integer The start position of the binary string.
 	---@return integer: The unsigned long long.
-	function unsigned.readLongLong( str, start_position, big_endian )
+	function unsigned.readLongLong( str, big_endian, start_position )
 		return unsigned_readInteger( str, 8, big_endian, start_position )
 	end
 
@@ -230,10 +230,10 @@ do
 	---@param str string The binary string.
 	---@param m integer Number of integer bits (including sign bit).
 	---@param n integer Number of fractional bits.
-	---@param start_position? integer The start position of the binary string.
 	---@param big_endian? boolean The endianness of the binary string.
+	---@param start_position? integer The start position of the binary string.
 	---@return number value The unsigned fixed-point number.
-	function unsigned.readFixedPoint( str, m, n, start_position, big_endian )
+	function unsigned.readFixedPoint( str, m, n, big_endian, start_position )
 		local byte_count = ( m + n ) * 0.125
 		if byte_count % 1 ~= 0 then
 			std.error( "invalid byte count", 2 )
@@ -331,10 +331,10 @@ do
 	---
 	--- Allowable values from `-32768` to `32767`.
 	---@param str string The binary string.
-	---@param start_position? integer The start position of the binary string.
 	---@param big_endian? boolean The endianness of the binary string.
+	---@param start_position? integer The start position of the binary string.
 	---@return integer: The signed short.
-	function signed.readShort( str, start_position, big_endian )
+	function signed.readShort( str, big_endian, start_position )
 		return signed_readInteger( str, 2, big_endian, start_position )
 	end
 
@@ -354,10 +354,10 @@ do
 	---
 	--- Allowable values from `-2147483648` to `2147483647`.
 	---@param str string The binary string.
-	---@param start_position? integer The start position of the binary string.
 	---@param big_endian? boolean The endianness of the binary string.
+	---@param start_position? integer The start position of the binary string.
 	---@return integer: The signed long.
-	function signed.readLong( str, start_position, big_endian )
+	function signed.readLong( str, big_endian, start_position )
 		return signed_readInteger( str, 4, big_endian, start_position )
 	end
 
@@ -377,10 +377,10 @@ do
 	---
 	--- Allowable values from `-9223372036854775808` to `9223372036854775807`.
 	---@param str string The binary string.
-	---@param start_position? integer The start position of the binary string.
 	---@param big_endian? boolean The endianness of the binary string.
+	---@param start_position? integer The start position of the binary string.
 	---@return integer: The signed long long.
-	function signed.readLongLong( str, start_position, big_endian )
+	function signed.readLongLong( str, big_endian, start_position )
 		return signed_readInteger( str, 8, big_endian, start_position )
 	end
 
@@ -501,10 +501,10 @@ do
 	--- Reads a counted string from a binary string.
 	---@param str string The binary string.
 	---@param byte_count? integer The number of bytes to read.
-	---@param start_position? integer The start position of the binary string.
 	---@param big_endian? boolean The endianness of the binary string.
+	---@param start_position? integer The start position of the binary string.
 	---@return string: The counted string.
-	function data.readCounted( str, byte_count, start_position, big_endian )
+	function data.readCounted( str, byte_count, big_endian, start_position )
 		if start_position == nil then start_position = 1 end
 		if byte_count == nil then byte_count = 1 end
 
@@ -530,6 +530,7 @@ do
 	---@param str string The binary string.
 	---@param start_position? integer The start position of the binary string.
 	---@return string: The null-terminated string.
+	---@return integer: The length of the null-terminated string.
 	function data.readNullTerminated( str, start_position )
 		if start_position == nil then start_position = 1 end
 
@@ -540,7 +541,7 @@ do
 			end_position = end_position - 1
 		end
 
-		return string_sub( str, start_position, end_position ) -- TODO: add str length in return 
+		return string_sub( str, start_position, end_position ), end_position - start_position + 1
 	end
 
 	--- [SHARED AND MENU]
@@ -614,14 +615,17 @@ end
 local math_huge, math_tiny, math_nan = math.huge, math.tiny, math.nan
 local math_frexp, math_ldexp = math.frexp, math.ldexp
 
--- TODO: improve float and double descriptions
-
 do
 
 	local bit_band, bit_bor, bit_lshift, bit_rshift = bit.band, bit.bor, bit.lshift, bit.rshift
 
+	local c0 = 1 / 8388608
+	local c1 = 2 ^ -126
+
 	--- [SHARED AND MENU]
-	--- Reads a float from a binary string.
+	--- Reads a float (4 bytes/32 bits) from a binary string.
+	---
+	--- Allowable values from `1.175494351e-38` to `3.402823466e+38`.
 	---@param str string The binary string.
 	---@return number: The float.
 	function binary.readFloat( str, big_endian )
@@ -638,18 +642,20 @@ do
 		local mantissa = bit_bor( bit_lshift( bit_band( b2, 0x7F ), 16 ), bit_lshift( b3, 8 ), b4 )
 
 		if exponent == 0 then
-			return ( sign and -1 or 1 ) * ( mantissa / 8388608 ) * 2 ^ -126
+			return ( sign and -1 or 1 ) * ( mantissa * c0 ) * c1
 		elseif exponent == 255 then
 			return mantissa == 0 and ( sign and math_tiny or math_huge ) or math_nan
 		end
 
-		return ( sign and -1 or 1 ) * ( 1 + ( mantissa / 8388608 ) ) * 2 ^ ( exponent - 127 )
+		return ( sign and -1 or 1 ) * math_ldexp( 1 + ( mantissa * c0 ), exponent - 127 )
 	end
 
 	local string_reverse = string.reverse
 
 	--- [SHARED AND MENU]
-	--- Writes a float to a binary string.
+	--- Writes a float (4 bytes/32 bits) to a binary string.
+	---
+	--- Allowable values from `1.175494351e-38` to `3.402823466e+38`.
 	---@param value number The float value.
 	---@return string: The binary string.
 	function binary.writeFloat( value, big_endian )
@@ -701,6 +707,8 @@ do
 
 	--- [SHARED AND MENU]
 	--- Reads a double from a binary string.
+	---
+	--- Allowable values from `2.2250738585072014e-308` to `1.7976931348623158e+308`.
 	---@param str string The binary string.
 	---@param big_endian? boolean The endianness of the binary string.
 	---@return number: The double.
@@ -746,6 +754,8 @@ do
 
 	--- [SHARED AND MENU]
 	--- Writes a double to a binary string.
+	---
+	--- Allowable values from `2.2250738585072014e-308` to `1.7976931348623158e+308`.
 	---@param value number The double.
 	---@param big_endian? boolean The endianness of the binary string.
 	---@return string: The binary string.
