@@ -1,22 +1,22 @@
 local _G = _G
-local std, glua_os, glua_system = _G.gpm.std, _G.os, _G.system
+local std, olib, slib = _G.gpm.std, _G.os, _G.system
 
 ---@class gpm.std.os
 local os = {
     name = std.jit.os,
     arch = std.jit.arch,
-    clock = glua_os.clock,
-    difftime = glua_os.difftime,
-    uptime = glua_system.UpTime,
-    appTime = glua_system.AppTime,
-    country = glua_system.GetCountry,
-    steamTime = glua_system.SteamTime,
+    clock = olib.clock,
+    difftime = olib.difftime,
+    uptime = slib.UpTime,
+    appTime = slib.AppTime,
+    country = slib.GetCountry,
+    steamTime = slib.SteamTime,
     setClipboardText = _G.SetClipboardText
 }
 
 do
 
-    local glua_system_BatteryPower = glua_system.BatteryPower
+    local glua_system_BatteryPower = slib.BatteryPower
     local math_min = std.math.min
 
     --- Returns the current battery level.
@@ -44,7 +44,7 @@ local bit = std.bit
 do
 
     local bit_band, bit_rshift = bit.band, bit.rshift
-    local glua_os_time = glua_os.time
+    local glua_os_time = olib.time
 
     ---Converts a DOS date and time to a Unix timestamp.
     ---@param time number The time to convert.
@@ -76,7 +76,7 @@ do
 
     local bit_bor, bit_lshift = bit.bor, bit.lshift
     local math_fdiv = _G.gpm.std.math.fdiv
-    local glua_os_date = glua_os.date
+    local glua_os_date = olib.date
 
     ---Converts a Unix timestamp to a DOS date and time.
     ---@param seconds number The Unix timestamp to convert.

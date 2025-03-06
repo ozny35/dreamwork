@@ -957,42 +957,6 @@ do
 
 end
 
--- Extensions for string library.
-include( "std/string.extensions.lua" )
-
-std.Version = include( "std/version.lua" )
-
--- URL and URLSearchParams classes
-include( "std/url.lua" )
-
--- Additional `File.path` function
-do
-
-    local string_byteSplit, string_lower = string.byteSplit, string.lower
-    local table_flip = table.flip
-    local is_url = std.isurl
-    local URL = std.URL
-
-    ---@class gpm.std.File.path
-    local path = File.path
-
-    --- [SHARED AND MENU]
-    --- Converts a URL to a file path.
-    ---@param url string | URL: The URL to convert.
-    ---@return string: The file path.
-    function path.fromURL( url )
-        if not is_url( url ) then
-            ---@cast url string
-            url = URL( url )
-        end
-
-        ---@cast url URL
-
-        return url.scheme .. "/" .. ( ( url.hostname and url.hostname ~= "" ) and table_concat( table_flip( string_byteSplit( string_lower( url.hostname ), 0x2E --[[ . ]] ) ), "/" ) or "" ) .. string_lower( url.pathname )
-    end
-
-end
-
 -- Queue class
 do
 
@@ -1154,10 +1118,46 @@ std.Future = futures.Future
 std.Task = futures.Task
 
 std.crypto = include( "std/crypto.lua" )
-std.BigInt = include( "std/bigint.lua" )
 
 std.ByteStream = include( "std/byte_stream.lua" )
 std.BitStream = include( "std/bit_stream.lua" )
+std.BigInt = include( "std/bigint.lua" )
+
+-- Extensions for string library.
+include( "std/string.extensions.lua" )
+
+std.Version = include( "std/version.lua" )
+
+-- URL and URLSearchParams classes
+include( "std/url.lua" )
+
+-- Additional `File.path` function
+do
+
+    local string_byteSplit, string_lower = string.byteSplit, string.lower
+    local table_flip = table.flip
+    local is_url = std.isurl
+    local URL = std.URL
+
+    ---@class gpm.std.File.path
+    local path = File.path
+
+    --- [SHARED AND MENU]
+    --- Converts a URL to a file path.
+    ---@param url string | URL: The URL to convert.
+    ---@return string: The file path.
+    function path.fromURL( url )
+        if not is_url( url ) then
+            ---@cast url string
+            url = URL( url )
+        end
+
+        ---@cast url URL
+
+        return url.scheme .. "/" .. ( ( url.hostname and url.hostname ~= "" ) and table_concat( table_flip( string_byteSplit( string_lower( url.hostname ), 0x2E --[[ . ]] ) ), "/" ) or "" ) .. string_lower( url.pathname )
+    end
+
+end
 
 local console = include( "std/console.lua" )
 std.console = console

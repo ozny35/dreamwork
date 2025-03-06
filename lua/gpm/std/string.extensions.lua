@@ -1,6 +1,6 @@
 local std = _G.gpm.std
 
-local error, tonumber = std.error, std.tonumber
+local tonumber = std.tonumber
 
 ---@class gpm.std.math
 local math = std.math
@@ -14,83 +14,6 @@ local string_byte, string_sub, string_find, string_rep, string_len, string_match
 local table = std.table
 local table_concat = table.concat
 
-
---- Pads the string.
----@param str string The string to pad.
----@param length integer The desired length of the string.
----@param char string The padding compensation symbol.
----@param direction integer The compensation direction, `1` for left, `-1` for right, `0` for both.
----@return string: The padded string.
-function string.pad( str, length, char, direction )
-    local missing_length = math_max( 0, length - string_len( str ) )
-    if missing_length == 0 then return str end
-
-    if char == nil then
-        char = " "
-    elseif string_len( char ) ~= 1 then
-        error( "char must be a single character", 2 )
-    end
-
-    if direction == 1 then
-        return string_rep( char, missing_length ) .. str
-    elseif direction == -1 then
-        return str .. string_rep( char, missing_length )
-    end
-
-    missing_length = missing_length * 0.5
-
-    if missing_length % 1 == 0 then
-        return string_rep( char, missing_length ) .. str .. string_rep( char, missing_length )
-    else
-        return string_rep( char, missing_length ) .. str .. string_rep( char, missing_length + 1 )
-    end
-end
-
-do
-
-    local isnumber, isboolean = std.isnumber, std.isboolean
-    local pairs = std.pairs
-
-    --- Trims a string by bytes.
-    ---@param str string The string.
-    ---@param bytes table The bytes to trim by.
-    ---@param direction? number The direction to trim. `1` for left, `-1` for right, `0` for both.
-    ---@return string str The trimmed string.
-    ---@return number length The length of the trimmed string.
-    function string.byteTrim( str, bytes, direction )
-        local startPos, endPos = 1, string_len( str )
-
-        for key, value in pairs( bytes ) do
-            if isnumber( value ) then
-                bytes[ value ] = true
-                bytes[ key ] = nil
-            elseif isboolean( value ) then
-                if not isnumber( key ) then
-                    error( "invalid bytes to trim", 2 )
-                end
-            else
-                error( "invalid bytes to trim", 2 )
-            end
-        end
-
-        if direction ~= -1 then
-            while bytes[ string_byte( str, startPos ) ] do
-                startPos = startPos + 1
-                if startPos == endPos then return "", 0 end
-            end
-        end
-
-        if direction ~= 1 then
-            while bytes[ string_byte( str, endPos ) ] do
-                endPos = endPos - 1
-                if endPos == 0 then return "", 0 end
-            end
-        end
-
-        return string_sub( str, startPos, endPos ), endPos - startPos + 1
-    end
-
-end
 
 --- Converts a binary string to a decimal number.
 ---@param str string The binary string.
@@ -194,129 +117,108 @@ function string.bin2hex( str )
     return dec2hex( bin2dec( str ) )
 end
 
-local unsafe_pattern_bytes = {
-    -- ()
-    [ 0x28 ] = "%(",
-    [ 0x29 ] = "%)",
-
-    -- []
-    [ 0x5B ] = "%[",
-    [ 0x5D ] = "%]",
-
-    -- .
-    [ 0x2E ] = "%.",
-
-    -- %
-    [ 0x25 ] = "%%",
-
-    -- +-
-    [ 0x2B ] = "%+",
-    [ 0x2D ] = "%-",
-
-    -- *
-    [ 0x2A ] = "%*",
-
-    -- ?
-    [ 0x3F ] = "%?",
-
-    -- ^
-    [ 0x5E ] = "%^",
-
-    -- $
-    [ 0x24 ] = "%$"
-}
-
---- Removes leading and trailing matches of a string.
----@param str string The string.
----@param pattern? string The pattern to match, `%s` for whitespace.
----@param direction? number The direction to trim. `1` for left, `-1` for right, `0` for both.
----@return string str The trimmed string.
-function string.trim( str, pattern, direction )
-    if pattern == nil then
-        pattern = "%s"
-    else
-        if pattern == "" then
-            pattern = "%s"
-        else
-            local length = string_len( pattern )
-            if length == 1 then
-                pattern = unsafe_pattern_bytes[ string_byte( pattern, 1 ) ] or pattern
-            elseif length ~= 2 or string_byte( pattern, 1 ) ~= 0x25 then
-                pattern = "[" .. pattern .. "]"
-            end
-        end
-    end
-
-    if direction == 1 then -- left
-        return string_match( str, "^(.-)" .. pattern .. "*$" ) or str
-    elseif direction == -1 then -- right
-        return string_match( str, "^" .. pattern .. "*(.+)$" ) or str
-    else -- both
-        return string_match( str, "^" .. pattern .. "*(.-)" .. pattern .. "*$" ) or str
-    end
-end
-
-
---- Returns a pattern-safe string.
----@param str string The string.
----@return string
-function string.patternSafe( str )
-    local startPos, strLength = 1, string_len( str )
-    local result, length = {}, 0
-
-    for index = 1, strLength do
-        local byte = string_byte( str, index )
-        if byte == 0 then
-            length = length + 1
-            result[ length ] = string_sub( str, startPos, index - 1 ) .. "%z"
-            startPos = index + 1
-        else
-            local pattern = unsafe_pattern_bytes[ byte ]
-            if pattern then
-                length = length + 1
-
-                if startPos == index then
-                    result[ length ] = pattern
-                else
-                    result[ length ] = string_sub( str, startPos, index - 1 ) .. pattern
-                end
-
-                startPos = index + 1
-            end
-        end
-    end
-
-    length = length + 1
-    result[ length ] = string_sub( str, startPos, strLength )
-
-    if length == 0 then
-        return str
-    elseif length == 1 then
-        return result[ 1 ]
-    end
-
-    return table_concat( result, "", 1, length )
-end
-
 do
 
-    local string_replace = string.replace
+    local unsafe_pattern_bytes = {
+        -- ()
+        [ 0x28 ] = "%(",
+        [ 0x29 ] = "%)",
 
-    --- Returns a SQL-safe string.
+        -- []
+        [ 0x5B ] = "%[",
+        [ 0x5D ] = "%]",
+
+        -- .
+        [ 0x2E ] = "%.",
+
+        -- %
+        [ 0x25 ] = "%%",
+
+        -- +-
+        [ 0x2B ] = "%+",
+        [ 0x2D ] = "%-",
+
+        -- *
+        [ 0x2A ] = "%*",
+
+        -- ?
+        [ 0x3F ] = "%?",
+
+        -- ^
+        [ 0x5E ] = "%^",
+
+        -- $
+        [ 0x24 ] = "%$"
+    }
+
+    --- Returns a pattern-safe string.
     ---@param str string The string.
     ---@return string
-    function string.sqlSafe( str, noQuotes )
-        str = string_replace( str, "'", "''", false )
+    function string.makePatternSafe( str )
+        local startPos, strLength = 1, string_len( str )
+        local result, length = {}, 0
 
-        local null_chr = string_find( str, "\0", 1, false )
-        if null_chr then
-            str = string_sub( str, 1, null_chr - 1 )
+        for index = 1, strLength do
+            local byte = string_byte( str, index )
+            if byte == 0 then
+                length = length + 1
+                result[ length ] = string_sub( str, startPos, index - 1 ) .. "%z"
+                startPos = index + 1
+            else
+                local pattern = unsafe_pattern_bytes[ byte ]
+                if pattern then
+                    length = length + 1
+
+                    if startPos == index then
+                        result[ length ] = pattern
+                    else
+                        result[ length ] = string_sub( str, startPos, index - 1 ) .. pattern
+                    end
+
+                    startPos = index + 1
+                end
+            end
         end
 
-        if noQuotes then
+        length = length + 1
+        result[ length ] = string_sub( str, startPos, strLength )
+
+        if length == 0 then
             return str
+        elseif length == 1 then
+            return result[ 1 ]
+        end
+
+        return table_concat( result, "", 1, length )
+    end
+
+    --- Removes leading and trailing matches of a string.
+    ---@param str string The string.
+    ---@param pattern? string The pattern to match, `%s` for whitespace.
+    ---@param direction? number The direction to trim. `1` for left, `-1` for right, `0` for both.
+    ---@return string str The trimmed string.
+    function string.trim( str, pattern, direction )
+        if pattern == nil then
+            pattern = "%s"
         else
-            return "'" .. str .. "'"
+            if pattern == "" then
+                pattern = "%s"
+            else
+                local length = string_len( pattern )
+                if length == 1 then
+                    pattern = unsafe_pattern_bytes[ string_byte( pattern, 1 ) ] or pattern
+                elseif length ~= 2 or string_byte( pattern, 1 ) ~= 0x25 then
+                    pattern = "[" .. pattern .. "]"
+                end
+            end
+        end
+
+        if direction == 1 then -- left
+            return string_match( str, "^(.-)" .. pattern .. "*$" ) or str
+        elseif direction == -1 then -- right
+            return string_match( str, "^" .. pattern .. "*(.+)$" ) or str
+        else -- both
+            return string_match( str, "^" .. pattern .. "*(.-)" .. pattern .. "*$" ) or str
         end
     end
 
@@ -391,16 +293,16 @@ function string.isEmail( str )
         return false, "empty string"
     end
 
-    local lastAt = string_find( str, "[^%@]+$" )
-    if lastAt == nil then
+    local last_at = string_find( str, "[^%@]+$" )
+    if last_at == nil then
         return false, "@ symbol is missing"
     end
 
-    if lastAt >= 65 then
+    if last_at >= 65 then
         return false, "username is too long"
     end
 
-    local username = string_sub( str, 1, lastAt - 2 )
+    local username = string_sub( str, 1, last_at - 2 )
     if username == nil or username == "" then
         return false, "username is missing"
     end
@@ -417,5 +319,5 @@ function string.isEmail( str )
         return false, "invalid usage of quotes"
     end
 
-    return isDomain( string_sub( str, lastAt, string_len( str ) ) )
+    return isDomain( string_sub( str, last_at, string_len( str ) ) )
 end

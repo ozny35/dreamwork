@@ -245,7 +245,7 @@ do
 
     --- hook call without mixer and vararg
     local function call_without_mixer_and_vararg( self, ... )
-        local value
+        local result
         for index = 3, self[ 0 ], 3 do
             if not self[ -1 ] then break end
 
@@ -253,9 +253,11 @@ do
             if hook_type == -2 then -- pre hook
                 self[ index - 1 ]( ... )
             elseif hook_type == 1 then -- post hook return
-                value = self[ index - 1 ]( value, ... )
+                local value = self[ index - 1 ]( result, ... )
+                if value ~= nil then result = value end
             elseif hook_type ~= 2 then -- pre hook return and normal hook
-                value = self[ index - 1 ]( ... )
+                local value = self[ index - 1 ]( ... )
+                if value ~= nil then result = value end
             end
         end
 
@@ -263,16 +265,16 @@ do
 
         for index = 3, self[ 0 ], 3 do
             if self[ index ] == 2 then -- post hook
-                self[ index - 1 ]( value, ... )
+                self[ index - 1 ]( result, ... )
             end
         end
 
-        return value
+        return result
     end
 
     --- hook call without mixer but with vararg
     local function call_without_mixer( self, ... )
-        local a, b, c, d, e, f
+        local r1, r2, r3, r4, r5, r6
         for index = 3, self[ 0 ], 3 do
             if not self[ -1 ] then break end
 
@@ -280,9 +282,11 @@ do
             if hook_type == -2 then -- pre hook
                 self[ index - 1 ]( ... )
             elseif hook_type == 1 then -- post hook return
-                a, b, c, d, e, f = self[ index - 1 ]( { a, b, c, d, e, f }, ... )
+                local v1, v2, v3, v4, v5, v6 = self[ index - 1 ]( { r1, r2, r3, r4, r5, r6 }, ... )
+                if v1 ~= nil then r1, r2, r3, r4, r5, r6 = v1, v2, v3, v4, v5, v6 end
             elseif hook_type ~= 2 then -- pre hook return and normal hook
-                a, b, c, d, e, f = self[ index - 1 ]( ... )
+                local v1, v2, v3, v4, v5, v6 = self[ index - 1 ]( ... )
+                if v1 ~= nil then r1, r2, r3, r4, r5, r6 = v1, v2, v3, v4, v5, v6 end
             end
         end
 
@@ -290,16 +294,16 @@ do
 
         for index = 3, self[ 0 ], 3 do
             if self[ index ] == 2 then -- post hook
-                self[ index - 1 ]( { a, b, c, d, e, f }, ... )
+                self[ index - 1 ]( { r1, r2, r3, r4, r5, r6 }, ... )
             end
         end
 
-        return a, b, c, d, e, f
+        return r1, r2, r3, r4, r5, r6
     end
 
     --- hook call with mixer and without vararg
     local function call_with_mixer( self, mixer_fn, ... )
-        local old, new
+        local result
         for index = 3, self[ 0 ], 3 do
             if not self[ -1 ] then break end
 
@@ -307,10 +311,18 @@ do
             if hook_type == -2 then -- pre hook
                 self[ index - 1 ]( ... )
             elseif hook_type == 1 then -- post hook return
-                old, new = new, self[ index - 1 ]( new, ... )
+                local value = self[ index - 1 ]( result, ... )
+                if value ~= nil then result = value end
             elseif hook_type ~= 2 then -- pre hook return and normal hook
-                old, new = new, self[ index - 1 ]( ... )
-                new = mixer_fn( old, new ) or new
+                local value = self[ index - 1 ]( ... )
+                if value ~= nil then
+                    local mixed = mixer_fn( result, value )
+                    if mixed == nil then
+                        result = value
+                    else
+                        result = mixed
+                    end
+                end
             end
         end
 
@@ -318,16 +330,16 @@ do
 
         for index = 3, self[ 0 ], 3 do
             if self[ index ] == 2 then -- post hook
-                self[ index - 1 ]( new, ... )
+                self[ index - 1 ]( result, ... )
             end
         end
 
-        return new
+        return result
     end
 
     --- hook call with mixer and vararg
     local function call_with_mixer_and_vararg( self, mixer_fn, ... )
-        local o1, o2, o3, o4, o5, o6, n1, n2, n3, n4, n5, n6
+        local r1, r2, r3, r4, r5, r6
         for index = 3, self[ 0 ], 3 do
             if not self[ -1 ] then break end
 
@@ -335,11 +347,18 @@ do
             if hook_type == -2 then -- pre hook
                 self[ index - 1 ]( ... )
             elseif hook_type == 1 then -- post hook return
-                o1, o2, o3, o4, o5, o6, n1, n2, n3, n4, n5, n6 = n1, n2, n3, n4, n5, n6, self[ index - 1 ]( { n1, n2, n3, n4, n5, n6 }, ... )
+                local v1, v2, v3, v4, v5, v6 = self[ index - 1 ]( { r1, r2, r3, r4, r5, r6 }, ... )
+                if v1 ~= nil then r1, r2, r3, r4, r5, r6 = v1, v2, v3, v4, v5, v6 end
             elseif hook_type ~= 2 then -- pre hook return and normal hook
-                o1, o2, o3, o4, o5, o6, n1, n2, n3, n4, n5, n6 = n1, n2, n3, n4, n5, n6, self[ index - 1 ]( ... )
-                local mixed1, mixed2, mixed3, mixed4, mixed5, mixed6 = mixer_fn( { o1, o2, o3, o4, o5, o6 }, { n1, n2, n3, n4, n5, n6 } )
-                if mixed1 ~= nil then n1, n2, n3, n4, n5, n6 = mixed1, mixed2, mixed3, mixed4, mixed5, mixed6 end
+                local v1, v2, v3, v4, v5, v6 = self[ index - 1 ]( ... )
+                if v1 ~= nil then
+                    local m1, m2, m3, m4, m5, m6 = mixer_fn( { r1, r2, r3, r4, r5, r6 }, { v1, v2, v3, v4, v5, v6 } )
+                    if m1 == nil then
+                        r1, r2, r3, r4, r5, r6 = v1, v2, v3, v4, v5, v6
+                    else
+                        r1, r2, r3, r4, r5, r6 = m1, m2, m3, m4, m5, m6
+                    end
+                end
             end
         end
 
@@ -347,11 +366,11 @@ do
 
         for index = 3, self[ 0 ], 3 do
             if self[ index ] == 2 then -- post hook
-                self[ index - 1 ]( { n1, n2, n3, n4, n5, n6 }, ... )
+                self[ index - 1 ]( { r1, r2, r3, r4, r5, r6 }, ... )
             end
         end
 
-        return n1, n2, n3, n4, n5, n6
+        return r1, r2, r3, r4, r5, r6
     end
 
     --- [SHARED AND MENU]

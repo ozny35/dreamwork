@@ -1,10 +1,10 @@
 local _G = _G
-local std, glua_table = _G.gpm.std, _G.table
+local std, tlib = _G.gpm.std, _G.table
 local math = std.math
 
 local select, pairs, setmetatable, rawget, rawset, next = std.select, std.pairs, std.setmetatable, std.rawget, std.rawset, std.next
 local debug_getmetatable = std.debug.getmetatable
-local table_remove = glua_table.remove
+local table_remove = tlib.remove
 
 local string_sub, string_find, string_len, string_lower
 do
@@ -17,18 +17,21 @@ local istable = std.istable
 ---@class gpm.std.table
 local table = {
     -- Lua 5.1
-    concat = glua_table.concat,
-    insert = glua_table.insert,
-    maxn = glua_table.maxn, -- removed in Lua 5.2
+    concat = tlib.concat,
+    insert = tlib.insert,
+    maxn = tlib.maxn, -- removed in Lua 5.2
     remove = table_remove,
-    sort = glua_table.sort,
+    sort = tlib.sort,
 
     -- Lua 5.2
-    pack = glua_table.pack or function( ... ) return { n = select( "#", ... ), ... } end,
-    unpack = glua_table.unpack or _G.unpack,
+    pack = tlib.pack or function( ... ) return { n = select( "#", ... ), ... } end,
+    unpack = tlib.unpack or _G.unpack,
+
+    ---@diagnostic disable-next-line: undefined-field
+    len = tlib.len,
 
     -- Lua 5.3
-    move = glua_table.move or function( source, first, last, offset, destination )
+    move = tlib.move or function( source, first, last, offset, destination )
         if destination == nil then destination = source end
 
         for index = 0, last - first, 1 do
@@ -799,27 +802,6 @@ do
         end
 
         return reversed
-    end
-
-end
-
-do
-
-    local getmetatable = std.getmetatable
-    local isfunction = std.isfunction
-
-    --- [SHARED AND MENU] Returns the length of the given table.
-    ---@param tbl table The table.
-    ---@return integer: The length of the table.
-    ---@diagnostic disable-next-line: undefined-field
-    table.len = glua_table.len or function( tbl )
-        local metatable = getmetatable( tbl )
-        if metatable == nil then
-            return #tbl
-        end
-
-        local fn = rawget( metatable, "__len" )
-        return isfunction( fn ) and fn( tbl ) or #tbl
     end
 
 end

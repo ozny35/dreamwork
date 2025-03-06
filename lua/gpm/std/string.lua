@@ -1,28 +1,27 @@
 local _G = _G
-local std, glua_string = _G.gpm.std, _G.string
+local std, slib = _G.gpm.std, _G.string
 
 local math = std.math
-local math_max = math.max
 
-local string_byte, string_sub, string_len, string_find, string_match, string_gsub = glua_string.byte, glua_string.sub, glua_string.len, glua_string.find, glua_string.match, glua_string.gsub
+local string_byte, string_sub, string_len, string_find, string_match, string_gsub, string_rep = slib.byte, slib.sub, slib.len, slib.find, slib.match, slib.gsub, slib.rep
 
 ---@class gpm.std.string
 local string = {
     -- Lua 5.1
-    byte = glua_string.byte,
-    char = glua_string.char,
-    dump = glua_string.dump,
+    byte = slib.byte,
+    char = slib.char,
+    dump = slib.dump,
     find = string_find,
-    format = glua_string.format,
-    gmatch = glua_string.gmatch,
+    format = slib.format,
+    gmatch = slib.gmatch,
     gsub = string_gsub,
     len = string_len,
-    lower = glua_string.lower,
+    lower = slib.lower,
     match = string_match,
-    rep = glua_string.rep,
-    reverse = glua_string.reverse,
+    rep = slib.rep,
+    reverse = slib.reverse,
     sub = string_sub,
-    upper = glua_string.upper,
+    upper = slib.upper,
     slice = string_sub
 }
 
@@ -79,25 +78,62 @@ function string.endsWith( str, endStr )
     end
 end
 
---- Checks if the string contains the searchable string.
----@param str string The input string.
----@param searchable string The searchable string.
----@param position? number: The position to start from.
----@param withPattern? boolean: If the pattern is used.
----@return number: The index of the searchable string, otherwise `-1`.
-function string.indexOf( str, searchable, position, withPattern )
-    if searchable == nil then
-        return 0
-    elseif searchable == "" then
-        return 1
-    else
-        position = math_max( position or 1, 1 )
-        if position > string_len( str ) then
-            return -1
+do
+
+    local math_max = math.max
+
+    --- Checks if the string contains the searchable string.
+    ---@param str string The input string.
+    ---@param searchable string The searchable string.
+    ---@param position? number: The position to start from.
+    ---@param withPattern? boolean: If the pattern is used.
+    ---@return number: The index of the searchable string, otherwise `-1`.
+    function string.indexOf( str, searchable, position, withPattern )
+        if searchable == nil then
+            return 0
+        elseif searchable == "" then
+            return 1
+        else
+            position = math_max( position or 1, 1 )
+            if position > string_len( str ) then
+                return -1
+            end
+
+            return string_find( str, searchable, position, withPattern ~= true ) or -1
+        end
+    end
+
+    --- Pads the string.
+    ---@param str string The string to pad.
+    ---@param length integer The desired length of the string.
+    ---@param char? string The padding compensation symbol. Space by default.
+    ---@param direction? integer The compensation direction, `1` for left, `-1` for right, `0` for both.
+    ---@return string: The padded string.
+    function string.pad( str, length, char, direction )
+        local missing_length = math_max( 0, length - string_len( str ) )
+        if missing_length == 0 then return str end
+
+        if char == nil then
+            char = " "
+        elseif string_len( char ) ~= 1 then
+            std.error( "char must be a single character", 2 )
         end
 
-        return string_find( str, searchable, position, withPattern ~= true ) or -1
+        if direction == 1 then
+            return string_rep( char, missing_length ) .. str
+        elseif direction == -1 then
+            return str .. string_rep( char, missing_length )
+        end
+
+        missing_length = missing_length * 0.5
+
+        if missing_length % 1 == 0 then
+            return string_rep( char, missing_length ) .. str .. string_rep( char, missing_length )
+        else
+            return string_rep( char, missing_length ) .. str .. string_rep( char, missing_length + 1 )
+        end
     end
+
 end
 
 --- Splits the string.
@@ -333,22 +369,22 @@ end
 
 do
 
-    --- Unpacks a string.
+    --- Unpacks a string into characters.
     ---@param str string The input string.
-    ---@param from? number: The start position.
-    ---@param to? number: The end position.
-    ---@return ... string
-    local function unpack( str, from, to )
+    ---@param from? number The start position.
+    ---@param to? number The end position.
+    ---@return string ...
+    local function explode( str, from, to )
         if from == nil then from = 1 end
         if to == nil then to = string_len( str ) end
         if from == to then
             return string_sub( str, to, to )
         else
-            return string_sub( str, from, from ), unpack( str, from + 1, to )
+            return string_sub( str, from, from ), explode( str, from + 1, to )
         end
     end
 
-    string.unpack = unpack
+    string.explode = explode
 
 end
 

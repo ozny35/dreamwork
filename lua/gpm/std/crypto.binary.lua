@@ -122,7 +122,7 @@ do
 		return string_char( table_unpack( bytes, 1, byte_count ) )
 	end
 
-	unsigned.signed_writeInteger = unsigned_writeInteger
+	unsigned.writeInteger = unsigned_writeInteger
 
 	--- [SHARED AND MENU]
 	--- Reads an unsigned byte (1 byte/8 bits) from a binary string.

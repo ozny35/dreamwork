@@ -893,7 +893,7 @@ if std.CLIENT then
 
     --- [CLIENT] Creates a color object from `resource/ClientScheme.res`.
     ---@param name string The color name in `resource/ClientScheme.res`.
-    ---@return Color?: The color object.
+    ---@return Color?: The color object or `nil` if not found.
     function ColorClass.fromScheme( name )
         local tbl = NamedColor( name )
         if tbl == nil then return end
