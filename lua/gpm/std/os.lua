@@ -1,30 +1,45 @@
 local _G = _G
-local std, olib, slib = _G.gpm.std, _G.os, _G.system
+local std, glua_os, glua_system = _G.gpm.std, _G.os, _G.system
 
 ---@class gpm.std.os
 local os = {
     name = std.jit.os,
     arch = std.jit.arch,
-    clock = olib.clock,
-    difftime = olib.difftime,
-    uptime = slib.UpTime,
-    appTime = slib.AppTime,
-    country = slib.GetCountry,
-    steamTime = slib.SteamTime,
+    clock = glua_os.clock,
+    difftime = glua_os.difftime,
+    uptime = glua_system.UpTime,
+    appTime = glua_system.AppTime,
+    country = glua_system.GetCountry,
+    steamTime = glua_system.SteamTime,
     setClipboardText = _G.SetClipboardText
 }
 
 do
 
-    local glua_system_BatteryPower = slib.BatteryPower
+    local is_host_big_endian = std.string.byte( std.string.dump( std.debug.fempty ), 7 ) == 0x00
+
+    --- [SHARED AND MENU]
+    --- Returns the endianness of the current machine.
+    ---@return string: The endianness of the current machine.
+    function os.endianness()
+        return is_host_big_endian and "big" or "little"
+    end
+
+end
+
+do
+
+    local glua_system_BatteryPower = glua_system.BatteryPower
     local math_min = std.math.min
 
+    --- [SHARED AND MENU]
     --- Returns the current battery level.
     ---@return number: The battery level, between 0 and 100.
     function os.getBatteryLevel()
         return math_min( 100, glua_system_BatteryPower() )
     end
 
+    --- [SHARED AND MENU]
     --- Checks if the system has a battery.
     ---@return boolean: `true` if the system has a battery, `false` if not.
     function os.hasBattery()
@@ -44,9 +59,10 @@ local bit = std.bit
 do
 
     local bit_band, bit_rshift = bit.band, bit.rshift
-    local glua_os_time = olib.time
+    local glua_os_time = glua_os.time
 
-    ---Converts a DOS date and time to a Unix timestamp.
+    --- [SHARED AND MENU]
+    --- Converts a DOS date and time to a Unix timestamp.
     ---@param time number The time to convert.
     ---@param date number The date to convert.
     ---@return number seconds The Unix timestamp.
@@ -76,9 +92,10 @@ do
 
     local bit_bor, bit_lshift = bit.bor, bit.lshift
     local math_fdiv = _G.gpm.std.math.fdiv
-    local glua_os_date = olib.date
+    local glua_os_date = glua_os.date
 
-    ---Converts a Unix timestamp to a DOS date and time.
+    --- [SHARED AND MENU]
+    --- Converts a Unix timestamp to a DOS date and time.
     ---@param seconds number The Unix timestamp to convert.
     ---@return number time The DOS time.
     ---@return number date The DOS date.
