@@ -43,7 +43,7 @@ do
 	--- [SHARED AND MENU]
 	--- Flushes the writer.
 	---@return string data The bynary data.
-	---@return number size The size of the data.
+	---@return integer size The size of the data.
 	function ByteWriter:flush()
 		local buffer_size = self.buffer_size
 		self.buffer_size = 0
@@ -145,7 +145,7 @@ do
 
 		--- [SHARED AND MENU]
 		--- Writes a counted string to the writer.
-		---@param byte_count number The size of the string.
+		---@param byte_count integer The size of the string.
 		---@param big_endian? boolean The endianness of the binary string.
 		function ByteWriter:writeCountedString( byte_count, big_endian )
 			---@diagnostic disable-next-line: redundant-parameter
@@ -180,9 +180,10 @@ do
 		local write = signed.writeByte
 
 		--- [SHARED AND MENU]
-		--- Writes a signed byte to the writer.
+		--- Writes a signed byte (1 byte/8 bits) to the writer.
+		---
 		--- Allowable values from `-128` to `127`.
-		---@param value number The signed byte.
+		---@param value integer The signed byte.
 		function ByteWriter:writeSByte( value )
 			return self:write( write( value ) )
 		end
@@ -194,9 +195,10 @@ do
 		local write = signed.writeShort
 
 		--- [SHARED AND MENU]
-		--- Writes a signed short to the writer.
+		--- Writes a signed short (2 bytes/16 bits) to the writer.
+		---
 		--- Allowable values from `-32768` to `32767`.
-		---@param value number The signed short.
+		---@param value integer The signed short.
 		---@param big_endian? boolean The endianness of the binary string.
 		function ByteWriter:writeShort( value, big_endian )
 			return self:write( write( value, big_endian ) )
@@ -209,9 +211,10 @@ do
 		local write = signed.writeInteger
 
 		--- [SHARED AND MENU]
-		--- Writes a signed integer to the writer.
+		--- Writes a signed integer (4 bytes/32 bits) to the writer.
+		---
 		--- Allowable values from `-2147483648` to `2147483647`.
-		---@param value number The signed integer.
+		---@param value integer The signed integer.
 		---@param byte_count? integer The number of bytes to write.
 		---@param big_endian? boolean The endianness of the binary string.
 		function ByteWriter:writeInt( value, byte_count, big_endian )
@@ -225,9 +228,10 @@ do
 		local write = signed.writeLong
 
 		--- [SHARED AND MENU]
-		--- Writes a signed long to the writer.
+		--- Writes a signed long (4 bytes/32 bits) to the writer.
+		---
 		--- Allowable values from `-2147483648` to `2147483647`.
-		---@param value number The signed long.
+		---@param value integer The signed long.
 		---@param big_endian? boolean The endianness of the binary string.
 		function ByteWriter:writeLong( value, big_endian )
 			return self:write( write( value, big_endian ) )
@@ -241,8 +245,9 @@ do
 
 		--- [SHARED AND MENU]
 		--- Writes a signed long long (8 bytes/64 bits) to the writer.
+		---
 		--- Allowable values from `-9223372036854775808` to `9223372036854775807`.
-		---@param value number The signed long long.
+		---@param value integer The signed long long.
 		---@param big_endian? boolean The endianness of the binary string.
 		function ByteWriter:writeLongLong( value, big_endian )
 			return self:write( write( value, big_endian ) )
@@ -256,6 +261,7 @@ do
 
 		--- [SHARED AND MENU]
 		--- Writes a signed fixed-point number to the writer.
+		---
 		--- Allowable values from `-2.1 billion to ~2.1 billion`.
 		---@param value number The signed fixed-point number.
 		---@param m integer Number of integer bits (including sign bit).
@@ -279,9 +285,10 @@ do
 		local write = unsigned.writeByte
 
 		--- [SHARED AND MENU]
-		--- Writes an unsigned byte to the writer.
+		--- Writes an unsigned byte (1 byte/8 bits) to the writer.
+		---
 		--- Allowable values from `0` to `255`.
-		---@param value number The unsigned byte.
+		---@param value integer The unsigned byte.
 		function ByteWriter:writeByte( value )
 			return self:write( write( value ) )
 		end
@@ -294,8 +301,9 @@ do
 
 		--- [SHARED AND MENU]
 		--- Writes an unsigned short (2 bytes/16 bits) to the writer.
+		---
 		--- Allowable values from `0` to `65535`.
-		---@param value number The unsigned short.
+		---@param value integer The unsigned short.
 		---@param big_endian? boolean The endianness of the binary string.
 		function ByteWriter:writeUShort( value, big_endian )
 			return self:write( write( value, big_endian ) )
@@ -309,8 +317,9 @@ do
 
 		--- [SHARED AND MENU]
 		--- Writes an unsigned integer to the writer.
+		---
 		--- Allowable values from `0` to `4294967295`.
-		---@param value number The unsigned integer.
+		---@param value integer The unsigned integer.
 		---@param byte_count? integer The number of bytes to write.
 		---@param big_endian? boolean The endianness of the binary string.
 		function ByteWriter:writeUInt( value, byte_count, big_endian )
@@ -324,9 +333,10 @@ do
 		local write = unsigned.writeLong
 
 		--- [SHARED AND MENU]
-		--- Writes an unsigned long to the writer.
+		--- Writes an unsigned long (4 bytes/32 bits) to the writer.
+		---
 		--- Allowable values from `0` to `4294967295`.
-		---@param value number The unsigned long.
+		---@param value integer The unsigned long.
 		---@param big_endian? boolean The endianness of the binary string.
 		function ByteWriter:writeULong( value, big_endian )
 			return self:write( write( value, big_endian ) )
@@ -340,8 +350,9 @@ do
 
 		--- [SHARED AND MENU]
 		--- Writes an unsigned long long (8 bytes/64 bits) to the writer.
+		---
 		--- Allowable values from `0` to `18446744073709551615`.
-		---@param value number The unsigned long long.
+		---@param value integer The unsigned long long.
 		---@param big_endian? boolean The endianness of the binary string.
 		function ByteWriter:writeULongLong( value, big_endian )
 			return self:write( write( value, big_endian ) )
@@ -354,8 +365,18 @@ do
 		local write = unsigned.writeFixedPoint
 
 		--- [SHARED AND MENU]
-		--- Writes an unsigned fixed-point number to the writer.
-		--- Allowable values from `0` to `4,294,967,295.99998`.
+		--- Writes an unsigned fixed-point number (**UQm.n**) from the reader.
+		--- <br/>
+		---
+		--- **Commonly Used UQm.n Formats**
+		---| Format | Range | Precision (Step) |
+		---|:------|:------------------------|:-----------------|
+		---|UQ8.8  |`0 to 255.996`			  |0.00390625 (1/256)
+		---|UQ10.6 |`0 to 1023.984375`		  |0.015625 (1/64)
+		---|UQ12.4 |`0 to 4095.9375`		  |0.0625 (1/16)
+		---|UQ16.16|`0 to 65535.99998`        |0.0000152588 (1/65536)
+		---|UQ24.8 |`0 to 16,777,215.996`     |0.00390625 (1/256)
+		---|UQ32.16|`0 to 4,294,967,295.99998`|0.0000152588 (1/65536)
 		---@param value number The unsigned fixed-point number.
 		---@param m integer Number of integer bits (including sign bit).
 		---@param n integer Number of fractional bits.
