@@ -60,11 +60,10 @@ local _dist256_to_deflate_extra_bitlen = {}
 
 -- Convert a literal/LZ77_length deflate code to LZ77 base length
 -- The key of the table is (code - 256), 257<=code<=285
-local _literal_deflate_code_to_base_len =
-    {
+local _literal_deflate_code_to_base_len = {
     3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 17, 19, 23, 27, 31, 35, 43, 51, 59, 67,
     83, 99, 115, 131, 163, 195, 227, 258
-    }
+}
 
 -- Convert a literal/LZ77_length deflate code to base LZ77 length extra bits
 -- The key of the table is (code - 256), 257<=code<=285
@@ -3283,20 +3282,20 @@ function deflate.DecodeForPrint( str )
     return table_concat( buffer )
 end
 
-local function InternalClearCache()
-    _chat_channel_codec = nil
-    _addon_channel_codec = nil
-end
+-- local function InternalClearCache()
+--     _chat_channel_codec = nil
+--     _addon_channel_codec = nil
+-- end
 
--- For test. Don't use the functions in this table for real application.
--- Stuffs in this table is subject to change.
-deflate.internals = {
-    ["LoadStringToTable"] = LoadStringToTable,
-    ["IsValidDictionary"] = IsValidDictionary,
-    ["IsEqualAdler32"] = IsEqualAdler32,
-    ["_byte_to_6bit_char"] = _byte_to_6bit_char,
-    ["_6bit_to_byte"] = _6bit_to_byte,
-    ["InternalClearCache"] = InternalClearCache
-}
+-- -- For test. Don't use the functions in this table for real application.
+-- -- Stuffs in this table is subject to change.
+-- deflate.internals = {
+--     ["LoadStringToTable"] = LoadStringToTable,
+--     ["IsValidDictionary"] = IsValidDictionary,
+--     ["IsEqualAdler32"] = IsEqualAdler32,
+--     ["_byte_to_6bit_char"] = _byte_to_6bit_char,
+--     ["_6bit_to_byte"] = _6bit_to_byte,
+--     ["InternalClearCache"] = InternalClearCache
+-- }
 
 return deflate

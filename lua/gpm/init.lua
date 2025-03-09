@@ -1117,10 +1117,19 @@ std.yield = futures.yield
 std.Future = futures.Future
 std.Task = futures.Task
 
-std.crypto = include( "std/crypto.lua" )
+do
 
-std.ByteStream = include( "std/byte_stream.lua" )
-std.BitStream = include( "std/bit_stream.lua" )
+    ---@class gpm.std.crypto
+    local crypto = include( "std/crypto.lua" )
+    std.crypto = crypto
+
+    crypto.binary = include( "std/crypto.binary.lua" )
+    crypto.ByteReader = include( "std/crypto.byte_reader.lua" )
+    crypto.ByteWriter = include( "std/crypto.byte_writer.lua" )
+    crypto.deflate = include( "std/crypto.deflate.lua" )
+
+end
+
 std.BigInt = include( "std/bigint.lua" )
 
 -- Extensions for string library.
