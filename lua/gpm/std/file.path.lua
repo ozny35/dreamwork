@@ -233,7 +233,7 @@ local function getCurrentFile( fn )
 
     local fenv = getfenv( fn )
     if fenv then
-        local filePath = rawget(fenv, "__filename")
+        local filePath = rawget( fenv, "__filename" )
         if filePath then
             return filePath
         end

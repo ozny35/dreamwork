@@ -233,13 +233,14 @@ do
 	---@param big_endian? boolean The endianness of the binary string.
 	---@param start_position? integer The start position of the binary string.
 	---@return number value The unsigned fixed-point number.
+	---@return integer byte_count The number of readed bytes.
 	function unsigned.readFixedPoint( str, m, n, big_endian, start_position )
 		local byte_count = ( m + n ) * 0.125
 		if byte_count % 1 ~= 0 then
 			std.error( "invalid byte count", 2 )
 		end
 
-		return unsigned_readInteger( str, byte_count, big_endian, start_position ) / ( 2 ^ n )
+		return unsigned_readInteger( str, byte_count, big_endian, start_position ) / ( 2 ^ n ), byte_count
 	end
 
 	--- [SHARED AND MENU]
@@ -260,13 +261,14 @@ do
 	---@param n integer Number of fractional bits.
 	---@param big_endian? boolean The endianness of the binary string.
 	---@return string binary The binary string.
+	---@return integer byte_count The number of written bytes.
 	function unsigned.writeFixedPoint( value, m, n, big_endian )
 		local byte_count = ( m + n ) * 0.125
 		if byte_count % 1 ~= 0 then
 			std.error( "invalid byte count", 2 )
 		end
 
-		return unsigned_writeInteger( value * ( 2 ^ n ), byte_count, big_endian )
+		return unsigned_writeInteger( value * ( 2 ^ n ), byte_count, big_endian ), byte_count
 	end
 
 end
@@ -417,13 +419,14 @@ do
 	---@param big_endian? boolean The endianness of the binary string.
 	---@param start_position? integer The start position of the binary string.
 	---@return number value: The signed fixed-point number.
+	---@return integer byte_count: The number of readed bytes.
 	function signed.readFixedPoint( str, m, n, big_endian, start_position )
 		local byte_count = ( m + n ) * 0.125
 		if byte_count % 1 ~= 0 then
 			std.error( "invalid byte count", 2 )
 		end
 
-		return signed_readInteger( str, byte_count, big_endian, start_position ) / ( 2 ^ n )
+		return signed_readInteger( str, byte_count, big_endian, start_position ) / ( 2 ^ n ), byte_count
 	end
 
 	--- [SHARED AND MENU]
@@ -446,21 +449,20 @@ do
 	---@param m integer Number of integer bits (including sign bit).
 	---@param n integer Number of fractional bits.
 	---@param big_endian? boolean The endianness of the binary string.
-	---@return string binary
+	---@return string binary The binary string.
+	---@return integer byte_count The number of written bytes.
 	function signed.writeFixedPoint( value, m, n, big_endian )
 		local byte_count = ( m + n ) * 0.125
 		if byte_count % 1 ~= 0 then
 			std.error( "invalid byte count", 2 )
 		end
 
-		return signed_writeInteger( value * ( 2 ^ n ), byte_count, big_endian )
+		return signed_writeInteger( value * ( 2 ^ n ), byte_count, big_endian ), byte_count
 	end
 
 end
 
 do
-
-	local string_find = string.find
 
 	--- [SHARED AND MENU]
 	--- The data binary module.
@@ -504,15 +506,16 @@ do
 	---@param big_endian? boolean The endianness of the binary string.
 	---@param start_position? integer The start position of the binary string.
 	---@return string: The counted string.
+	---@return integer: The length of the counted string.
 	function data.readCounted( str, byte_count, big_endian, start_position )
 		if start_position == nil then start_position = 1 end
 		if byte_count == nil then byte_count = 1 end
 
 		local length = unsigned_readInteger( str, byte_count, big_endian, start_position )
-		if length == 0 then return "" end
+		if length == 0 then return "", 0 end
 
 		start_position = byte_count + ( start_position - 1 )
-		return string_sub( str, start_position + 1, start_position + length )
+		return string_sub( str, start_position + 1, start_position + length ), length
 	end
 
 	--- [SHARED AND MENU]
@@ -521,8 +524,12 @@ do
 	---@param byte_count? integer The number of bytes to read.
 	---@param big_endian? boolean The endianness of the binary string.
 	---@return string: The binary string.
+	---@return integer: The length of the binary string.
 	function data.writeCounted( str, byte_count, big_endian )
-		return unsigned_writeInteger( string_len( str ), byte_count or 1, big_endian ) .. str
+		if byte_count == nil then byte_count = 1 end
+
+		local length = string_len( str )
+		return unsigned_writeInteger( length, byte_count, big_endian ) .. str, length + byte_count
 	end
 
 	--- [SHARED AND MENU]
@@ -534,14 +541,16 @@ do
 	function data.readNullTerminated( str, start_position )
 		if start_position == nil then start_position = 1 end
 
-		local end_position = string_find( str, "\0", start_position, true )
-		if end_position == nil then
-			end_position = string_len( str )
-		else
-			end_position = end_position - 1
+		local end_position = start_position
+		while string_byte( str, end_position ) ~= 0 do
+			end_position = end_position + 1
 		end
 
-		return string_sub( str, start_position, end_position ), end_position - start_position + 1
+		if end_position == start_position then
+			return "", 0
+		else
+			return string_sub( str, start_position, end_position - 1 ), end_position - start_position
+		end
 	end
 
 	--- [SHARED AND MENU]
@@ -627,8 +636,39 @@ do
 	---
 	--- Allowable values from `1.175494351e-38` to `3.402823466e+38`.
 	---@param str string The binary string.
+	---@param big_endian? boolean The endianness of the binary string.
+	---@param start_position? integer The start position of the binary string.
 	---@return number: The float.
-	function binary.readFloat( str, big_endian )
+	function binary.readFloat( str, big_endian, start_position )
+		if start_position == nil then start_position = 1 end
+
+		local length = string_len( str )
+		if length < start_position + 7 then
+			str = str .. string_rep( "\0", start_position + 7 - length )
+		end
+
+		str = string_sub( str, start_position, start_position + 7 )
+
+		if str == "\0\0\0\0" then
+			return 0
+		elseif str == "\255\255\255\255" then
+			return math_nan
+		elseif big_endian then
+			if str == "\128\0\0\0" then
+				return -0
+			elseif str == "\127\128\0\0" then
+				return math_huge
+			elseif str == "\255\128\0\0" then
+				return math_tiny
+			end
+		elseif str == "\0\0\0\128" then
+			return -0
+		elseif str == "\0\0\128\127" then
+			return math_huge
+		elseif str == "\0\0\128\255" then
+			return math_tiny
+		end
+
 		local b1, b2, b3, b4
 
 		if big_endian then
@@ -664,22 +704,32 @@ do
 		end
 
 		if value == 0 then
-			return "\0\0\0\0"
+			if ( 1 / value ) == math_huge then
+				return "\0\0\0\0"
+			elseif big_endian then
+				return "\128\0\0\0"
+			else
+				return "\0\0\0\128"
+			end
 		elseif value ~= value then
 			return "\255\255\255\255"
+		elseif value == math_huge then
+			if big_endian then
+				return "\127\128\0\0"
+			else
+				return "\0\0\128\127"
+			end
+		elseif value == math_tiny then
+			if big_endian then
+				return "\255\128\0\0"
+			else
+				return "\0\0\128\255"
+			end
 		end
 
 		local sign = value < 0
 		if sign then
 			value = -value
-		end
-
-		if value == math.huge then
-			if sign then
-				return "\0\0\128\255"
-			else
-				return "\0\0\128\127"
-			end
 		end
 
 		local mantissa, exponent = math_frexp( value )
@@ -711,17 +761,35 @@ do
 	--- Allowable values from `2.2250738585072014e-308` to `1.7976931348623158e+308`.
 	---@param str string The binary string.
 	---@param big_endian? boolean The endianness of the binary string.
+	---@param start_position? integer The start position of the binary string.
 	---@return number: The double.
-	function binary.readDouble( str, big_endian )
+	function binary.readDouble( str, big_endian, start_position )
+		if start_position == nil then start_position = 1 end
+
+		local length = string_len( str )
+		if length < start_position + 7 then
+			str = str .. string_rep( "\0", start_position + 7 - length )
+		end
+
+		str = string_sub( str, start_position, start_position + 7 )
+
 		if str == "\0\0\0\0\0\0\0\0" then
 			return 0
-		elseif str == "\128\0\0\0\0\0\0\0" or str == "\0\0\0\0\0\0\0\128" then
-			return -0
 		elseif str == "\255\255\255\255\255\255\255\255" then
 			return math_nan
-		elseif str == "\0\0\0\0\0\0\240\127" or str == "\127\240\0\0\0\0\0\0" then
+		elseif big_endian then
+			if str == "\128\0\0\0\0\0\0\0" then
+				return -0
+			elseif str == "\127\240\0\0\0\0\0\0" then
+				return math_huge
+			elseif str == "\255\240\0\0\0\0\0\0" then
+				return math_tiny
+			end
+		elseif str == "\0\0\0\0\0\0\0\128" then
+			return -0
+		elseif str == "\0\0\0\0\0\0\240\127" then
 			return math_huge
-		elseif str == "\0\0\0\0\0\0\240\255" or str == "\255\240\0\0\0\0\0\0" then
+		elseif str == "\0\0\0\0\0\0\240\255" then
 			return math_tiny
 		end
 

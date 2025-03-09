@@ -31,7 +31,7 @@ local getmetatable = std.getmetatable
 
 ]]
 
----@alias gpm.std.HOOK_TYPE
+---@alias gpm.std.Hook.Type
 ---| number # The type of the hook.
 ---| `-2` # PRE_HOOK - This hook is guaranteed to be called under all circumstances, and cannot be interrupted by a return statement. You can rely on its consistent execution.
 ---| `-1` # PRE_HOOK_RETURN - Consider a scenario where you have an admin mod that checks for "!menu". In this case, your hook might not be called before it.
@@ -110,8 +110,8 @@ do
     --- [SHARED AND MENU]
     --- Attaches a callback function to the hook.
     ---@param identifier string | Hook | any: The unique name of the callback, Hook or object with `__isvalid` function in metatable.
-    ---@param fn function | gpm.std.HOOK_TYPE?: The callback function or the type of the hook if `identifier` is a Hook.
-    ---@param hook_type gpm.std.HOOK_TYPE?: The type of the hook, default is `0`.
+    ---@param fn function | gpm.std.Hook.Type?: The callback function or the type of the hook if `identifier` is a Hook.
+    ---@param hook_type gpm.std.Hook.Type?: The type of the hook, default is `0`.
     function Hook:attach( identifier, fn, hook_type )
         if identifier == nil then
             std.error( "callback identifier cannot be nil", 2 )
@@ -128,7 +128,7 @@ do
             if metatable == Hook then
                 fn, hook_type = identifier, fn
                 ---@cast fn function
-                ---@cast hook_type gpm.std.HOOK_TYPE?
+                ---@cast hook_type gpm.std.Hook.Type?
             else
                 ---@cast identifier any
                 ---@cast fn function
