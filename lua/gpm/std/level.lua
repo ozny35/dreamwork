@@ -137,15 +137,6 @@ if std.SERVER then
         console_Variable.set( "sv_gravity", value )
     end
 
-    do
-
-        --- [SERVER] A hook that is called when map I/O event occurs.
-        local AcceptInputHook = std.Hook( "level.AcceptInput" )
-        gpm.engine.hookCatch( "AcceptInput", AcceptInputHook, 1 )
-        level.AcceptInputHook = AcceptInputHook
-
-    end
-
 end
 
 --- Returns the gravity of the current level.

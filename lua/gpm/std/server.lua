@@ -3,15 +3,17 @@ local gpm = _G.gpm
 
 ---@class gpm.std
 local std = gpm.std
-local console_Variable, Hook = std.console.Variable, std.Hook
+local console_Variable = std.console.Variable
 
 ---@class gpm.std.server
 local server = std.server or {}
 
-if std.CLIENT then
+if std.CLIENT and server.Tick == nil then
 
     --- [CLIENT] Called once every processed server frame during lag.
-    server.TickHook = server.TickHook or Hook( "Think" )
+    local Tick = std.Hook( "server.Tick" )
+    gpm.engine.hookCatch( "Think", Tick, 1 )
+    server.Tick = Tick
 
 end
 

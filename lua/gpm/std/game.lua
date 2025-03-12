@@ -7,8 +7,11 @@ local console_Variable = std.console.Variable
 
 local glua_engine, glua_game, glua_util, system_IsWindowed = _G.engine, _G.game, _G.util, _G.system.IsWindowed
 
+--- [SHARED AND MENU]
+---
+--- The game library.
 ---@class gpm.std.game
-local game = {
+local game = std.game or {
     getSystemTime = _G.SysTime,
     addDebugInfo = _G.DebugInfo,
     getFrameTime = _G.FrameTime,
@@ -216,7 +219,7 @@ if std.SERVER then
     --- [SERVER] Enables Half-Life 2 aux suit power stuff.
     ---@param bool boolean `true` to enable Half-Life 2 aux suit power stuff, `false` to disable it.
     function game.setHL2Suit( bool )
-        console_Variable.setBool( "gmod_suit", bool )
+        console_Variable.set( "gmod_suit", bool == true )
     end
 
     game.exit = glua_engine.CloseServer
@@ -249,12 +252,12 @@ if std.MENU then
 
 end
 
-do
+if game.Tick == nil then
 
     --- [SHARED AND MENU] A hook that is called every tick.
-    local obj = std.Hook( "game.Tick" )
-    gpm.engine.hookCatch( "Tick", obj, 1 )
-    game.TickHook = obj
+    local Tick = std.Hook( "game.Tick" )
+    gpm.engine.hookCatch( "Tick", Tick, 1 )
+    game.Tick = Tick
 
 end
 

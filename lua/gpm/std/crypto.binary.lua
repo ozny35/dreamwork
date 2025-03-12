@@ -601,11 +601,12 @@ do
 	---@param bits boolean[] The sequence of bits.
 	---@param bit_count integer The size of the sequence of bits.
 	---@param big_endian? boolean The endianness of the binary string.
+	---@param start_position? integer The start position of the binary string.
 	---@return string: The binary string.
-	function pack( bits, bit_count, big_endian )
+	function pack( bits, bit_count, big_endian, start_position )
 		local bytes, length = {}, 0
 
-		for i = 1, ( bit_count or #bits ) * 8, 8 do
+		for i = start_position or 1, ( bit_count or #bits ) * 8, 8 do
 			length = length + 1
 			bytes[ length ] = unsigned_implode( bits, 8, i )
 		end

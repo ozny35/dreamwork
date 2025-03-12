@@ -33,12 +33,12 @@ do
 
 end
 
----@alias gpm.std.TIMER_STATUS
+---@alias gpm.std.Timer.Status
 ---| number # The timer status code.
----| `0` # Hook removed.
----| `1` # Hook stopped.
----| `2` # Hook paused.
----| `3` # Hook running.
+---| `0` # Timer removed.
+---| `1` # Timer stopped.
+---| `2` # Timer paused.
+---| `3` # Timer running.
 
 do
 
