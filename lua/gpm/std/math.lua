@@ -247,11 +247,9 @@ end
 --- Checks if a number is positive.
 ---@param x number The number to check.
 ---@return boolean: `true` if the number is positive, otherwise `false`.
-local function ispositive( x )
+function math.ispositive( x )
     return x > 0 or ( 1 / x ) == huge
 end
-
-math.ispositive = ispositive
 
 --- Checks if a number is negative.
 ---@param x number The number to check.
@@ -264,7 +262,7 @@ end
 ---@param x number The number to check.
 ---@return number: `1` if the number is positive, `-1` if the number is negative.
 local function sign( x )
-    return ispositive( x ) and 1 or -1
+    return x > 0 and 1 or -1
 end
 
 math.sign = sign
@@ -452,6 +450,15 @@ function math.ilerp( result, from, to )
     return ( result - from ) / ( to - from )
 end
 
+--- Performs a smooth interpolation from the start number to the end number.
+---@param previous number The previous value.
+---@param next number The next value.
+---@param alpha number The amount of smoothing.
+---@return number value The interpolated value.
+function math.smooth( previous, next, alpha )
+    return alpha * next + ( 1 - alpha ) * previous
+end
+
 --- Remaps a number from one range to another.
 ---@param number number The number to remap.
 ---@param inMin number The minimum value of the input range.
@@ -569,6 +576,14 @@ function math.isNear( a, b, tolerance )
     return math_abs( a - ( b or 0 ) ) <= ( tolerance or 0 )
 end
 
+--- Returns x with the same sign as y.
+---@param x number The number to copy the sign of.
+---@param y number The number to get the sign from.
+---@return number: The number with the sign of y.
+function math.copysign( x, y )
+    return ( ( x > 0 and y > 0 ) or ( x < 0 and y < 0 ) ) and x or -x
+end
+
 --- Converts a bits number to a byte number.
 ---@param x number The bits number.
 ---@return number bytes: The byte number.
@@ -581,6 +596,19 @@ end
 ---@return number bits: The bits number.
 function math.byte2bit( x )
     return math_ceil( x ) * 8
+end
+
+--- Returns the variance of a list.
+---@param lst number[] The list.
+---@param mean number The mean of the list.
+---@return number result The variance of the list.
+function math.variance( lst, mean )
+    local summary, length = 0, #lst
+    for i = 1, length, 1 do
+        summary = summary + ( lst[ i ] - mean ) ^ 2
+    end
+
+    return summary / length
 end
 
 return math
