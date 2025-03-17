@@ -294,7 +294,4 @@ if std.MENU then
 
 end
 
-std.http = http
-
-http.steam = gpm.dofile( "http.steam.lua" )
-http.github = gpm.dofile( "http.github.lua" )
+return http

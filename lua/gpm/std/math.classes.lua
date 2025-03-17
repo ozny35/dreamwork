@@ -215,6 +215,7 @@ do
         if VMATRIX == nil then
             gpm.Logger:error( "VMatrix: Matrix metatable is missing!" )
         else
+
             ---@cast VMATRIX VMatrix
             local Unpack = VMATRIX.Unpack
 

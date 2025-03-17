@@ -3,16 +3,29 @@ local gpm = _G.gpm
 
 ---@class gpm.std
 local std = gpm.std
-local console_Variable = std.console.Variable
 
+local console_Variable = std.console.Variable
+local engine_hookCatch = gpm.engine.hookCatch
+local Hook = std.Hook
+
+--- [SHARED AND MENU]
+--- The game's server library.
 ---@class gpm.std.server
 local server = std.server or {}
+
+do
+
+    local glua_engine = _G.engine
+    server.getGamemodes = server.getGamemodes or glua_engine.GetGamemodes
+    server.getGamemode = server.getGamemode or glua_engine.ActiveGamemode
+
+end
 
 if std.CLIENT and server.Tick == nil then
 
     --- [CLIENT] Called once every processed server frame during lag.
-    local Tick = std.Hook( "server.Tick" )
-    gpm.engine.hookCatch( "Think", Tick )
+    local Tick = Hook( "server.Tick" )
+    engine_hookCatch( "Think", Tick )
     server.Tick = Tick
 
 end
@@ -251,6 +264,32 @@ if std.SERVER then
         https://developer.valvesoftware.com/wiki/Console_Command_List
 
     --]]
+
+    if server.getGamemodeTitle == nil then
+
+        --- [SERVER] Returns the title of the gamemode in the server browser.
+        ---@return string: The title of the gamemode.
+        function server.getGamemodeTitle()
+            return _G.hook.Call( "GetGameDescription" ) or "unknown"
+        end
+
+    end
+
+    if server.setGamemodeTitile == nil then
+
+        local title = nil
+
+        engine_hookCatch( "GetGameDescription", function()
+            return title
+        end )
+
+        --- [SERVER] Sets the title of the gamemode in the server browser.
+        ---@param str string The title to set.
+        function server.setGamemodeTitile( str )
+            title = str
+        end
+
+    end
 
 end
 

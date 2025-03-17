@@ -484,7 +484,7 @@ std.os = os
 -- TODO: remove me later or rewrite
 do
 
-    local iter = 100000
+    local iter = 1000
     local warmup = math.min( iter / 100, 100 )
 
     function gpm.bench( name, fn )
@@ -1059,8 +1059,26 @@ end
 -- https://github.com/willox/gmbc
 loadbinary( "gmbc" )
 
-include( "std/http.lua" )
-include( "std/addon.lua" )
+do
+
+    ---@class gpm.std.http
+    local http = include( "std/http.lua" )
+    std.http = http
+
+    http.github = include( "http.github.lua" )
+
+end
+
+do
+
+    ---@class gpm.std.steam
+    local steam = include( "std/steam.lua" )
+    std.steam = steam
+
+    -- steam.ID = steam.ID or include( "steam.id.lua" )
+    steam.WorkshopItem = steam.WorkshopItem or include( "steam.workshop_item.lua" )
+
+end
 
 if std.CLIENT_MENU then
     std.menu = include( "std/menu.lua" )

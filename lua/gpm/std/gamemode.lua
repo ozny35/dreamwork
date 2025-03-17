@@ -1,15 +1,22 @@
 local _G = _G
-local glua_engine = _G.engine
 
+---@class gpm.std
 local std = _G.gpm.std
 
----@class gpm.std.gamemode
-local gamemode = {
-    getName = glua_engine.ActiveGamemode,
-    getAll = glua_engine.GetGamemodes,
-    derive = _G.DeriveGamemode
-}
+---@alias Gamemode gpm.std.Gamemode
+---@class gpm.std.Gamemode: gpm.std.Object
+---@field __class gpm.std.GamemodeClass
+local Gamemode = std.class.base( "Gamemode" )
+
+---@protected
+function Gamemode:__init()
+
+end
+
+---@class gpm.std.GamemodeClass: gpm.std.Gamemode
+---@field __base gpm.std.Gamemode
+---@overload fun(): Gamemode
+local GamemodeClass = std.class.create( Gamemode )
+std.Gamemode = GamemodeClass
 
 -- TODO: make gamemode class and gamemode handler
-
-return gamemode

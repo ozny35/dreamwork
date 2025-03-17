@@ -2,7 +2,6 @@ local _G = _G
 local gpm = _G.gpm
 local steamworks = _G.steamworks
 
---- [SHARED AND MENU] The addon library.
 ---@class gpm.std
 local std = gpm.std
 local Future = std.Future
@@ -11,15 +10,15 @@ local Timer_wait = std.Timer.wait
 local isstring = std.isstring
 
 
----@alias gpm.std.Addon.ContentType
+---@alias gpm.std.steam.WorkshopItem.ContentType
 ---| string # The type of the content.
 ---| `"addon"`
 ---| `"save"`
 ---| `"dupe"`
 ---| `"demo"`
 
----@alias gpm.std.Addon.Type
----| string # The type of the addon.
+---@alias gpm.std.steam.WorkshopItem.Type
+---| string # The type of the publication.
 ---| `"gamemode"`
 ---| `"map"`
 ---| `"weapon"`
@@ -31,7 +30,7 @@ local isstring = std.isstring
 ---| `"model"`
 ---| `"servercontent"`
 
----@alias gpm.std.gpm.std.Addon.Tag
+---@alias gpm.std.steam.WorkshopItem.AddonTag
 ---| string # The tag of the addon.
 ---| `"fun"`
 ---| `"roleplay"`
@@ -43,7 +42,7 @@ local isstring = std.isstring
 ---| `"comic"`
 ---| `"build"`
 
----@alias gpm.std.Addon.DupeTag
+---@alias gpm.std.steam.WorkshopItem.DupeTag
 ---| string # The tag of the dupe.
 ---| `"buildings"`
 ---| `"machines"`
@@ -52,7 +51,7 @@ local isstring = std.isstring
 ---| `"vehicles"`
 ---| `"other"`
 
----@alias gpm.std.Addon.SaveTag
+---@alias gpm.std.steam.WorkshopItem.SaveTag
 ---| string # The tag of the save.
 ---| `"buildings"`
 ---| `"courses"`
@@ -60,65 +59,58 @@ local isstring = std.isstring
 ---| `"scenes"`
 ---| `"other"`
 
----@alias gpm.std.Addon.Workshop
+---@alias gpm.std.steam.WorkshopItem.Workshop
 ---| string # The workshop search types.
----| `"friendfavorite"` # The client friends favorite addons.
+---| `"friendfavorite"` # A favorite publication of the client's friends.
 ---| `"subscribed"` # The addons to which the client is subscribed.
----| `"friends"` # The addons created by client friends.
----| `"favorite"` # The client's favorite addons.
----| `"trending"` # The addons sorted by popularity.
----| `"popular"` # The addons are actively gaining popularity right now.
----| `"latest"` # The most recently published addons.
----| `"mine"` # The addons published by the client.
+---| `"friends"` # The publish to which the client is subscribed.
+---| `"favorite"` # The client's favorite publications.
+---| `"trending"` # The publications sorted by popularity.
+---| `"popular"` # The publications are actively gaining popularity right now.
+---| `"latest"` # The most recently published publications.
+---| `"mine"` # The publications produced by the client.
 
-local AddonClass, Addon = std.Addon, nil
+---@alias WorkshopItem gpm.std.steam.WorkshopItem
+---@class gpm.std.steam.WorkshopItem: gpm.std.Object
+---@field __class gpm.std.steam.WorkshopItemClass
+---@field wsid string The workshop ID of the addon.
+local WorkshopItem = std.class.base( "WorkshopItem" )
 
-if AddonClass == nil then
-    ---@alias Addon gpm.std.Addon
-    ---@class gpm.std.Addon: gpm.std.Object
-    ---@field __class gpm.std.AddonClass
-    ---@field wsid string The workshop ID of the addon.
-    Addon = std.class.base( "Addon" )
+---@class gpm.std.steam.WorkshopItemClass: gpm.std.steam.WorkshopItem
+---@field __base gpm.std.steam.WorkshopItem
+---@overload fun( wsid: string ): WorkshopItem
+local WorkshopItemClass = std.class.create( WorkshopItem )
 
-    ---@class gpm.std.AddonClass: gpm.std.Addon
-    ---@field __base gpm.std.Addon
-    ---@overload fun( wsid: string ): Addon
-    AddonClass = std.class.create( Addon )
-    std.Addon = AddonClass
-else
-    Addon = AddonClass.__base
-end
-
-local findAddon
+local findWorkshopItem
 do
 
     local engine_GetAddons = _G.engine.GetAddons
     local ipairs = _G.ipairs
 
-    function findAddon( wsid )
+    function findWorkshopItem( wsid )
         for _, addon in ipairs( engine_GetAddons() ) do
             if addon.wsid == wsid then return addon end
         end
     end
 
-    --- Returns all subscribed addons.
-    ---@return Addon[]: The subscribed addons.
+    --- Returns all subscribed publications.
+    ---@return WorkshopItem[]: The subscribed addons.
     ---@return integer: The length of the addons found array (`#addons`).
-    function AddonClass.getDownloaded()
+    function WorkshopItemClass.getDownloaded()
         local addons = engine_GetAddons()
 
         local count = #addons
         for i = 1, count, 1 do
-            addons[ i ] = AddonClass( addons[ i ].wsid )
+            addons[ i ] = WorkshopItemClass( addons[ i ].wsid )
         end
 
         return addons, count
     end
 
     --- Returns all mounted addons.
-    ---@return Addon[]: The mounted addons.
+    ---@return WorkshopItem[]: The mounted addons.
     ---@return integer: The length of the addons found array (`#addons`).
-    function AddonClass.getMounted()
+    function WorkshopItemClass.getMounted()
         local addons = engine_GetAddons()
 
         local result, length = {}, 0
@@ -127,7 +119,7 @@ do
 
             if data.mounted then
                 length = length + 1
-                result[ length ] = AddonClass( data.wsid )
+                result[ length ] = WorkshopItemClass( data.wsid )
             end
         end
 
@@ -141,16 +133,16 @@ do
     local string_format = std.string.format
 
     ---@protected
-    function Addon:__tostring()
+    function WorkshopItem:__tostring()
         local title = self:getTitle()
         if title == nil then
-            return string_format( "Addon [%s]", self:getWorkshopID() )
+            return string_format( "WorkshopItem [%s]", self:getWorkshopID() )
         else
             local size = self:getSize()
             if size == nil then
-                return string_format( "Addon [%s][%s]", self:getWorkshopID(), title )
+                return string_format( "WorkshopItem [%s][%s]", self:getWorkshopID(), title )
             else
-                return string_format( "Addon [%s][%s][%.1fMB]", self:getWorkshopID(), title, size / 1024 / 1024 )
+                return string_format( "WorkshopItem [%s][%s][%.1fMB]", self:getWorkshopID(), title, size / 1024 / 1024 )
             end
         end
     end
@@ -163,21 +155,21 @@ do
 
     ---@param wsid string The workshop ID of the addon.
     ---@protected
-    function Addon:__init( wsid )
+    function WorkshopItem:__init( wsid )
         self.wsid = wsid
         cache[ wsid ] = self
     end
 
     ---@protected
-    function Addon:__new( wsid )
+    function WorkshopItem:__new( wsid )
         return cache[ wsid ]
     end
 
 end
 
---- [SHARED AND MENU] Returns the workshop ID of the addon.
----@return string: The workshop ID of the addon.
-function Addon:getWorkshopID()
+--- [SHARED AND MENU] Returns the workshop ID of the publication.
+---@return string: The workshop ID of the publication.
+function WorkshopItem:getWorkshopID()
     return self.wsid
 end
 
@@ -185,13 +177,13 @@ do
 
     local wsid2title = {}
 
-    --- [SHARED AND MENU] Returns the title of the addon.
-    ---@param wsid string The workshop ID of the addon.
-    ---@return string?: The title of the addon.
+    --- [SHARED AND MENU] Returns the title of the publication.
+    ---@param wsid string The workshop ID of the publication.
+    ---@return string?: The title of the publication.
     local function getTitle( wsid )
         local title = wsid2title[ wsid ]
         if title == nil then
-            local data = findAddon( wsid )
+            local data = findWorkshopItem( wsid )
             if data == nil then
                 return nil
             end
@@ -203,23 +195,23 @@ do
         return title
     end
 
-    --- [SHARED AND MENU] Returns the title of the addon.
-    ---@return string?: The title of the addon.
-    function Addon:getTitle()
+    --- [SHARED AND MENU] Returns the title of the publication.
+    ---@return string?: The title of the publication.
+    function WorkshopItem:getTitle()
         return getTitle( self.wsid )
     end
 
-    AddonClass.getTitle = getTitle
+    WorkshopItemClass.getTitle = getTitle
 
 end
 
 do
 
     --- [SHARED AND MENU] Returns the absolute file path of the addon `.gma`.
-    ---@param wsid string The workshop ID of the addon.
-    ---@return string?: The absolute file path of the addon `.gma`.
+    ---@param wsid string The workshop ID of the publication.
+    ---@return string?: The absolute file path of the publication `.gma`.
     local function getFilePath( wsid )
-        local data = findAddon( wsid )
+        local data = findWorkshopItem( wsid )
         if data == nil then return nil end
 
         local filePath = data.file
@@ -229,12 +221,12 @@ do
     end
 
     --- [SHARED AND MENU] Returns the absolute file path of the addon `.gma`.
-    ---@return string?: The absolute file path of the addon `.gma`.
-    function Addon:getFilePath()
+    ---@return string?: The absolute file path of the publication `.gma`.
+    function WorkshopItem:getFilePath()
         return getFilePath( self.wsid )
     end
 
-    AddonClass.getFilePath = getFilePath
+    WorkshopItemClass.getFilePath = getFilePath
 
 end
 
@@ -246,24 +238,18 @@ do
     ---@param wsid string The workshop ID of the addon.
     ---@return boolean: `true` if the addon is mounted, `false` otherwise.
     local function isMounted( wsid )
-        local value = mounted[ wsid ]
-        if value == nil then
-            local data = findAddon( wsid )
-            if data == nil then return false end
-            value = data.mounted == true
-            mounted[ wsid ] = value
-        end
-
-        return value
+        local data = findWorkshopItem( wsid )
+        if data == nil then return false end
+        return data.mounted == true
     end
 
     --- [SHARED AND MENU] Checks if the addon is mounted.
     ---@return boolean: `true` if the addon is mounted, `false` otherwise.
-    function Addon:isMounted()
+    function WorkshopItem:isMounted()
         return isMounted( self.wsid )
     end
 
-    AddonClass.isMounted = isMounted
+    WorkshopItemClass.isMounted = isMounted
 
 end
 
@@ -271,13 +257,13 @@ do
 
     local downloaded = {}
 
-    --- [SHARED AND MENU] Checks if the addon is downloaded.
-    ---@param wsid string The workshop ID of the addon.
-    ---@return boolean: `true` if the addon is downloaded, `false` otherwise.
+    --- [SHARED AND MENU] Checks if the publication is downloaded.
+    ---@param wsid string The workshop ID of the publication.
+    ---@return boolean: `true` if the publication is downloaded, `false` otherwise.
     local function isDownloaded( wsid )
         local value = downloaded[ wsid ]
         if value == nil then
-            local data = findAddon( wsid )
+            local data = findWorkshopItem( wsid )
             if data == nil then return false end
             value = data.downloaded == true
             downloaded[ wsid ] = value
@@ -288,11 +274,11 @@ do
 
     --- [SHARED AND MENU] Checks if the addon is downloaded.
     ---@return boolean: `true` if the addon is downloaded, `false` otherwise.
-    function Addon:isDownloaded()
+    function WorkshopItem:isDownloaded()
         return isDownloaded( self.wsid )
     end
 
-    AddonClass.isDownloaded = isDownloaded
+    WorkshopItemClass.isDownloaded = isDownloaded
 
 end
 
@@ -318,11 +304,11 @@ do
             servercontent = true
         }
 
-        --- [SHARED AND MENU] Returns the type of the addon.
-        ---@param wsid string The workshop ID of the addon.
-        ---@return gpm.std.Addon.Type?: The type of the addon.
+        --- [SHARED AND MENU] Returns the type of the publication.
+        ---@param wsid string The workshop ID of the publication.
+        ---@return gpm.std.steam.WorkshopItem.Type?: The type of the publication.
         local function getType( wsid )
-            local data = findAddon( wsid )
+            local data = findWorkshopItem( wsid )
             if data == nil then return nil end
 
             local tags, length = string_byteSplit( data.tags, 0x2C --[[ , ]] )
@@ -335,13 +321,13 @@ do
             return nil
         end
 
-        --- [SHARED AND MENU] Returns the type of the addon.
-        ---@return gpm.std.Addon.Type?: The type of the addon.
-        function Addon:getType()
+        --- [SHARED AND MENU] Returns the type of the publication.
+        ---@return gpm.std.steam.WorkshopItem.Type?: The type of the publication.
+        function WorkshopItem:getType()
             return getType( self.wsid )
         end
 
-        AddonClass.getType = getType
+        WorkshopItemClass.getType = getType
 
     end
 
@@ -361,10 +347,10 @@ do
 
         --- [SHARED AND MENU] Returns the tags of the addon.
         ---@param wsid string The workshop ID of the addon.
-        ---@return gpm.std.gpm.std.Addon.Tag[]?: The tags of the addon.
+        ---@return gpm.std.steam.WorkshopItem.AddonTag[]?: The tags of the addon.
         ---@return integer?: The number of tags.
         local function getTags( wsid )
-            local data = findAddon( wsid )
+            local data = findWorkshopItem( wsid )
             if data == nil then return nil end
 
             local tags, length = string_byteSplit( data.tags, 0x2C --[[ , ]] )
@@ -384,11 +370,11 @@ do
 
         --- [SHARED AND MENU] Returns the tags of the addon.
         ---@return string[]?: The tags of the addon.
-        function Addon:getTags()
+        function WorkshopItem:getTags()
             return getTags( self.wsid )
         end
 
-        AddonClass.getTags = getTags
+        WorkshopItemClass.getTags = getTags
 
     end
 
@@ -397,63 +383,63 @@ end
 do
 
     --- [SHARED AND MENU] Returns the last time the addon was updated.
-    ---@param wsid string The workshop ID of the addon.
-    ---@return integer?: The last time the addon was updated in UNIX time.
+    ---@param wsid string The workshop ID of the publication.
+    ---@return integer?: The last time the publication was updated in UNIX time.
     local function getUpdateTime( wsid )
-        local data = findAddon( wsid )
+        local data = findWorkshopItem( wsid )
         if data == nil then return nil end
         return data.timeupdated
     end
 
-    --- [SHARED AND MENU] Returns the last time the addon was updated.
-    ---@return integer?: The last time the addon was updated in UNIX time.
-    function Addon:getUpdateTime()
+    --- [SHARED AND MENU] Returns the last time the publication was updated.
+    ---@return integer?: The last time the publication was updated in UNIX time.
+    function WorkshopItem:getUpdateTime()
         return getUpdateTime( self.wsid )
     end
 
-    AddonClass.getUpdateTime = getUpdateTime
+    WorkshopItemClass.getUpdateTime = getUpdateTime
 
 end
 
 do
 
-    --- [SHARED AND MENU] Returns the creation time of the addon.
-    ---@param wsid string The workshop ID of the addon.
-    ---@return integer?: The creation time of the addon in UNIX time.
+    --- [SHARED AND MENU] Returns the creation time of the publication.
+    ---@param wsid string The workshop ID of the publication.
+    ---@return integer?: The creation time of the publication in UNIX time.
     local function getCreationTime( wsid )
-        local data = findAddon( wsid )
+        local data = findWorkshopItem( wsid )
         if data == nil then return nil end
         return data.timecreated
     end
 
-    --- [SHARED AND MENU] Returns the creation time of the addon.
-    ---@return integer?: The creation time of the addon in UNIX time.
-    function Addon:getCreationTime()
+    --- [SHARED AND MENU] Returns the creation time of the publication.
+    ---@return integer?: The creation time of the publication in UNIX time.
+    function WorkshopItem:getCreationTime()
         return getCreationTime( self.wsid )
     end
 
-    AddonClass.getCreationTime = getCreationTime
+    WorkshopItemClass.getCreationTime = getCreationTime
 
 end
 
 do
 
-    --- [SHARED AND MENU] Returns the size of the addon.
-    ---@param wsid string The workshop ID of the addon.
-    ---@return integer?: The size of the addon in bytes.
+    --- [SHARED AND MENU] Returns the size of the publication.
+    ---@param wsid string The workshop ID of the publication.
+    ---@return integer?: The size of the publication in bytes.
     local function getSize( wsid )
-        local data = findAddon( wsid )
+        local data = findWorkshopItem( wsid )
         if data == nil then return nil end
         return data.size
     end
 
-    --- [SHARED AND MENU] Returns the size of the addon.
-    ---@return integer?: The size of the addon in bytes.
-    function Addon:getSize()
+    --- [SHARED AND MENU] Returns the size of the publication.
+    ---@return integer?: The size of the publication in bytes.
+    function WorkshopItem:getSize()
         return getSize( self.wsid )
     end
 
-    AddonClass.getSize = getSize
+    WorkshopItemClass.getSize = getSize
 
 end
 
@@ -463,11 +449,11 @@ do
 
     --- [SHARED AND MENU] Returns whether the addon should be mounted.
     ---@return boolean?: Whether the addon should be mounted.
-    function Addon:isShouldMount()
+    function WorkshopItem:isShouldMount()
         return steamworks_ShouldMountAddon( self.wsid )
     end
 
-    AddonClass.isShouldMount = steamworks_ShouldMountAddon
+    WorkshopItemClass.isShouldMount = steamworks_ShouldMountAddon
 
 end
 
@@ -477,11 +463,11 @@ do
 
     --- [SHARED AND MENU] Sets whether the addon should be mounted.
     ---@param shouldMount boolean Whether the addon should be mounted.
-    function Addon:setShouldMount( shouldMount )
+    function WorkshopItem:setShouldMount( shouldMount )
         steamworks_SetShouldMountAddon( self.wsid, shouldMount )
     end
 
-    AddonClass.setShouldMount = steamworks_SetShouldMountAddon
+    WorkshopItemClass.setShouldMount = steamworks_SetShouldMountAddon
 
 end
 
@@ -489,12 +475,12 @@ do
 
     local steamworks_SetFilePlayed = steamworks.SetFilePlayed
 
-    --- [SHARED AND MENU] Marks the addon as played.
-    function Addon:markAsPlayed()
+    --- [SHARED AND MENU] Marks the publication as played.
+    function WorkshopItem:markAsPlayed()
         steamworks_SetFilePlayed( self.wsid )
     end
 
-    AddonClass.markAsPlayed = steamworks_SetFilePlayed
+    WorkshopItemClass.markAsPlayed = steamworks_SetFilePlayed
 
 end
 
@@ -502,12 +488,12 @@ do
 
     local steamworks_SetFileCompleted = steamworks.SetFileCompleted
 
-    --- [SHARED AND MENU] Marks the addon as completed.
-    function Addon:markAsCompleted()
+    --- [SHARED AND MENU] Marks the publication as completed.
+    function WorkshopItem:markAsCompleted()
         steamworks_SetFileCompleted( self.wsid )
     end
 
-    AddonClass.markAsCompleted = steamworks_SetFileCompleted
+    WorkshopItemClass.markAsCompleted = steamworks_SetFileCompleted
 
 end
 
@@ -515,13 +501,13 @@ do
 
     local steamworks_IsSubscribed = steamworks.IsSubscribed
 
-    --- [SHARED AND MENU] Checks if the addon is subscribed.
-    ---@return boolean: `true` if the addon is subscribed, `false` otherwise.
-    function Addon:isSubscribed()
+    --- [SHARED AND MENU] Checks if the publication is subscribed.
+    ---@return boolean: `true` if the publication is subscribed, `false` otherwise.
+    function WorkshopItem:isSubscribed()
         return steamworks_IsSubscribed( self.wsid )
     end
 
-    AddonClass.isSubscribed = steamworks_IsSubscribed
+    WorkshopItemClass.isSubscribed = steamworks_IsSubscribed
 
 end
 
@@ -529,8 +515,8 @@ do
 
     local steamworks_Subscribem, steamworks_Unsubscribe = steamworks.Subscribe, steamworks.Unsubscribe
 
-    --- [SHARED AND MENU] Subscribes or unsubscribes the addon.
-    ---@param wsid string The workshop ID of the addon.
+    --- [SHARED AND MENU] Subscribes or unsubscribes the publication.
+    ---@param wsid string The workshop ID of the publication.
     ---@param subscribed boolean `true` to subscribe, `false` to unsubscribe.
     local function setSubscribed( wsid, subscribed )
         if subscribed then
@@ -540,13 +526,13 @@ do
         end
     end
 
-    --- [SHARED AND MENU] Subscribes or unsubscribes the addon.
+    --- [SHARED AND MENU] Subscribes or unsubscribes the publication.
     ---@param subscribed boolean `true` to subscribe, `false` to unsubscribe.
-    function Addon:setSubscribed( subscribed )
+    function WorkshopItem:setSubscribed( subscribed )
         setSubscribed( self.wsid, subscribed )
     end
 
-    AddonClass.setSubscribed = setSubscribed
+    WorkshopItemClass.setSubscribed = setSubscribed
 
 end
 
@@ -554,13 +540,13 @@ do
 
     local steamworks_Vote = steamworks.Vote
 
-    --- [SHARED AND MENU] Votes for or against the addon.
+    --- [SHARED AND MENU] Votes for or against the publication.
     ---@param upOrDown boolean `true` to vote for, `false` to vote against.
-    function Addon:vote( upOrDown )
+    function WorkshopItem:vote( upOrDown )
         steamworks_Vote( self.wsid, upOrDown )
     end
 
-    AddonClass.vote = steamworks_Vote
+    WorkshopItemClass.vote = steamworks_Vote
 
 end
 
@@ -568,12 +554,12 @@ do
 
     local steamworks_ViewFile = steamworks.ViewFile
 
-    --- [SHARED AND MENU] Opens the workshop page of the addon.
-    function Addon:openWorkshopPage()
+    --- [SHARED AND MENU] Opens the workshop page of the publication.
+    function WorkshopItem:openWorkshopPage()
         steamworks_ViewFile( self.wsid )
     end
 
-    Addon.openWorkshopPage = steamworks_ViewFile
+    WorkshopItem.openWorkshopPage = steamworks_ViewFile
 
 end
 
@@ -581,8 +567,8 @@ do
 
     local steamworks_Download = steamworks.Download
 
-    --- [SHARED AND MENU] Downloads the icon of the addon.
-    ---@param wsid string The workshop ID of the addon.
+    --- [SHARED AND MENU] Downloads the icon of the publication.
+    ---@param wsid string The workshop ID of the publication.
     ---@param uncompress boolean?: Whether the icon should be uncompressed. Default is `true`.
     ---@return string: The absolute path to the icon file.
     ---@async
@@ -608,15 +594,15 @@ do
         return f:await()
     end
 
-    --- [SHARED AND MENU] Downloads the icon of the addon.
+    --- [SHARED AND MENU] Downloads the icon of the publication.
     ---@param uncompress boolean?: Whether the icon should be uncompressed. Default is `true`.
     ---@return string: The absolute path to the icon file.
     ---@async
-    function Addon:downloadIcon( uncompress )
+    function WorkshopItem:downloadIcon( uncompress )
         return downloadIcon( self.wsid, uncompress )
     end
 
-    AddonClass.downloadIcon = downloadIcon
+    WorkshopItemClass.downloadIcon = downloadIcon
 
 end
 
@@ -661,11 +647,11 @@ do
     ---@param timeout number | nil | false: The timeout in seconds. Set to `false` to disable the timeout.
     ---@return string: The absolute path to the `.gma` file.
     ---@async
-    function Addon:download( timeout )
+    function WorkshopItem:download( timeout )
         return download( self.wsid, timeout )
     end
 
-    AddonClass.download = download
+    WorkshopItemClass.download = download
 
 end
 
@@ -674,10 +660,10 @@ do
     local steamworks_FileInfo = steamworks.FileInfo
     local istable = std.istable
 
-    --- [SHARED AND MENU] Fetches the info of the addon from Steam Workshop.
-    ---@param wsid string The workshop ID of the addon.
+    --- [SHARED AND MENU] Fetches the info of the publication from Steam Workshop.
+    ---@param wsid string The workshop ID of the publication.
     ---@param timeout number | nil | false: The timeout in seconds. Set to `false` to disable the timeout.
-    ---@return UGCFileInfo: The info of the addon.
+    ---@return UGCFileInfo: The info of the publication.
     ---@async
     local function fetchInfo( wsid, timeout )
         local f = Future()
@@ -702,30 +688,30 @@ do
         return f:await()
     end
 
-    --- [SHARED AND MENU] Fetches the info of the addon from Steam Workshop.
+    --- [SHARED AND MENU] Fetches the info of the publication from Steam Workshop.
     ---@param timeout number | nil | false: The timeout in seconds. Set to `false` to disable the timeout.
-    ---@return UGCFileInfo: The info of the addon.
+    ---@return UGCFileInfo: The info of the publication.
     ---@async
-    function Addon:fetchInfo( timeout )
+    function WorkshopItem:fetchInfo( timeout )
         return fetchInfo( self.wsid, timeout )
     end
 
-    AddonClass.fetchInfo = fetchInfo
+    WorkshopItemClass.fetchInfo = fetchInfo
 
 end
 
--- Addon presets stuff, I think an additional library/package will be needed in the future..
-if std.MENU and AddonClass.PresetsLoaded == nil then
+-- WorkshopItem presets stuff, I think an additional library/package will be needed in the future..
+if std.MENU and WorkshopItemClass.PresetsLoaded == nil then
 
-    --- [MENU] A hook that is called when addon presets are loaded.
-    local PresetsLoaded = std.Hook( "Addon.PresetsLoaded" )
+    --- [MENU] A hook that is called when publication presets are loaded.
+    local PresetsLoaded = std.Hook( "WorkshopItem.PresetsLoaded" )
     gpm.engine.hookCatch( "AddonPresetsLoaded", PresetsLoaded )
-    AddonClass.PresetsLoaded = PresetsLoaded
+    WorkshopItemClass.PresetsLoaded = PresetsLoaded
 
 end
 
-AddonClass.getPresets = AddonClass.getPresets or _G.LoadAddonPresets
-AddonClass.setPresets = AddonClass.setPresets or _G.SaveAddonPresets
+WorkshopItemClass.loadPresets = WorkshopItemClass.loadPresets or _G.LoadAddonPresets
+WorkshopItemClass.savePresets = WorkshopItemClass.savePresets or _G.SaveAddonPresets
 
 do
 
@@ -739,10 +725,10 @@ do
 
     setmetatable( type2type, { __index = function( _, key ) return key end } )
 
-    --- [SHARED AND MENU] Performs a search for addons.
+    --- [SHARED AND MENU] Performs a search for publications.
     ---@param params WorkshopSearchParams The search parameters.
     ---@async
-    function AddonClass.search( params )
+    function WorkshopItemClass.search( params )
         local f = Future()
 
         steamworks_GetList( type2type[ params.type or "latest" ], params.tags, math_max( 0, params.offset or 0 ), math_clamp( params.count or 50, 1, 50 ), math_clamp( params.days or 365, 1, 365 ), params.owned and "1" or ( params.steamid64 or "0" ), function( data )
@@ -760,22 +746,22 @@ do
 
         local addons = {}
         for i = 0, count - 1, 1 do
-            addons[ i + 1 ] = AddonClass( results[ i ] )
+            addons[ i + 1 ] = WorkshopItemClass( results[ i ] )
         end
 
         return addons, count, data.totalresults
     end
 
-    --- [SHARED AND MENU] Performs a quick search for addons.
-    ---@param wtype gpm.std.Addon.Workshop: The type of the search.
+    --- [SHARED AND MENU] Performs a quick search for publications.
+    ---@param wtype gpm.std.steam.WorkshopItem.Workshop: The type of the search.
     ---@param wtags string[]?: The tags of the search.
     ---@param woffset integer?: The offset of the search.
     ---@param timeout number?: The timeout in seconds of the search.
-    ---@return Addon[]: The found addons.
-    ---@return integer: The length of the addons found array (`#addons`).
-    ---@return integer: The total number of addons found.
+    ---@return WorkshopItem[]: The found publications.
+    ---@return integer: The length of the publications found array (`#publications`).
+    ---@return integer: The total number of publications found.
     ---@async
-    function AddonClass.qickSearch( wtype, wtags, woffset, timeout )
+    function WorkshopItemClass.qickSearch( wtype, wtags, woffset, timeout )
         local f = Future()
 
         ---@diagnostic disable-next-line: param-type-mismatch
@@ -792,24 +778,24 @@ do
         local data = f:await()
         local results, count = data.results, data.numresults
 
-        local addons = {}
+        local publications = {}
         for i = 0, count - 1, 1 do
-            addons[ i + 1 ] = AddonClass( results[ i ] )
+            publications[ i + 1 ] = WorkshopItemClass( results[ i ] )
         end
 
-        return addons, count, data.totalresults
+        return publications, count, data.totalresults
     end
 
-    --- [SHARED AND MENU] Returns a list of addons published by the client.
-    ---@param wtype gpm.std.Addon.Workshop: The type of the search.
+    --- [SHARED AND MENU] Returns a list of publications published by the client.
+    ---@param wtype gpm.std.steam.WorkshopItem.Workshop: The type of the search.
     ---@param wtags string[]?: The tags of the search.
     ---@param woffset integer?: The offset of the search.
     ---@param timeout number?: The timeout in seconds of the search.
-    ---@return Addon[]: The found addons.
-    ---@return integer: The length of the addons found array (`#addons`).
-    ---@return integer: The total number of addons found.
+    ---@return WorkshopItem[]: The found publications.
+    ---@return integer: The length of the publications found array (`#publications`).
+    ---@return integer: The total number of publications found.
     ---@async
-    function AddonClass.getPublished( wtype, wtags, woffset, timeout )
+    function WorkshopItemClass.getPublished( wtype, wtags, woffset, timeout )
         local f = Future()
 
         ---@diagnostic disable-next-line: param-type-mismatch
@@ -826,12 +812,14 @@ do
         local data = f:await()
         local results, count = data.results, data.numresults
 
-        local addons = {}
+        local publications = {}
         for i = 0, count - 1, 1 do
-            addons[ i + 1 ] = AddonClass( results[ i ] )
+            publications[ i + 1 ] = WorkshopItemClass( results[ i ] )
         end
 
-        return addons, count, data.totalresults
+        return publications, count, data.totalresults
     end
 
 end
+
+return WorkshopItemClass

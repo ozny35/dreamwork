@@ -1,5 +1,10 @@
 local _G = _G
-local std, steamworks = _G.gpm.std, _G.steamworks
+local gpm = _G.gpm
+
+---@class gpm.std
+local std = gpm.std
+
+local steamworks = _G.steamworks
 local Future, isstring, tonumber, Timer_wait = std.Future, std.isstring, std.tonumber, std.Timer.wait
 
 local string_byte, string_sub
@@ -8,8 +13,11 @@ do
     string_byte, string_sub = string.byte, string.sub
 end
 
----@class gpm.std.http.steam
+--- [SHARED AND MENU]
+--- Steam library.
+---@class gpm.std.steam
 local steam = {}
+std.steam = steam
 
 
 if steamworks ~= nil then
@@ -131,7 +139,13 @@ if steamworks ~= nil then
 
 end
 
--- TODO: https://github.com/Pika-Software/steam-api
--- ...
+do
 
-return steam
+    -- TODO: https://github.com/Pika-Software/steam-api
+    -- ...
+
+end
+
+local include = gpm.dofile
+-- steam.ID = steam.ID or include( "steam.id.lua" )
+steam.WorkshopItem = steam.WorkshopItem or include( "steam.workshop_item.lua" )
