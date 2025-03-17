@@ -698,12 +698,12 @@ do
 
     ---@return number length
     function Channel:len()
-        return self._queue:GetLength()
+        return self._queue:getLength()
     end
 
     ---@return boolean isEmpty
     function Channel:empty()
-        return self._queue:IsEmpty()
+        return self._queue:isEmpty()
     end
 
     ---@return boolean isFull
@@ -719,12 +719,12 @@ do
         self._closed = true
 
         -- wake up all getters and setters
-        while not self._getters:IsEmpty() do
-            futures.wakeup( self._getters:Pop() )
+        while not self._getters:isEmpty() do
+            futures.wakeup( self._getters:dequeue() )
         end
 
-        while not self._setters:IsEmpty() do
-            futures.wakeup( self._setters:Pop() )
+        while not self._setters:isEmpty() do
+            futures.wakeup( self._setters:dequeue() )
         end
     end
 
@@ -740,9 +740,9 @@ do
             return false
         end
 
-        self._queue:Append( value )
+        self._queue:enqueue( value )
 
-        local getter = self._getters:Pop()
+        local getter = self._getters:dequeue()
         if getter then
             futures.wakeup( getter )
         end
@@ -756,7 +756,7 @@ do
     ---@return boolean success
     function Channel:put( value, wait )
         while wait ~= false and ( self:full() and not self:closed() ) do
-            self._setters:Append( futures.running() )
+            self._setters:enqueue( futures.running() )
             futures.pending()
         end
 
@@ -768,9 +768,9 @@ do
             return nil
         end
 
-        local value = self._queue:Pop()
+        local value = self._queue:dequeue()
 
-        local setter = self._setters:Pop()
+        local setter = self._setters:dequeue()
         if setter then
             futures.wakeup( setter )
         end
@@ -782,7 +782,7 @@ do
     ---@param wait boolean?
     function Channel:get( wait )
         while wait ~= false and self:empty() and not self:closed() do
-            self._getters:Append( futures.running() )
+            self._getters:enqueue( futures.running() )
             futures.pending()
         end
 
