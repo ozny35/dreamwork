@@ -14,6 +14,8 @@ end
 
 local istable = std.istable
 
+--- [SHARED AND MENU]
+--- A collection of functions for working with tables.
 ---@class gpm.std.table
 local table = {
     -- Lua 5.1
@@ -491,17 +493,20 @@ function table.removeByValue( tbl, value )
     end
 end
 
---- [SHARED AND MENU] Removes a range of values from the given table.
+--- [SHARED AND MENU]
+--- Removes a range of values from the given table.
 ---@param tbl table The table to remove from.
 ---@param from? integer: The start position.
 ---@param to? integer: The end position.
----@return table: The same table.
+---@return table: The removed values.
+---@return integer: The length of the removed values table.
 function table.eject( tbl, from, to )
+    local ejected, ejected_length = {}, 0
     local length = #tbl
 
     if from == nil then
         if to == nil then
-            return tbl
+            return ejected, ejected_length
         end
 
         from = 1
@@ -510,10 +515,12 @@ function table.eject( tbl, from, to )
     end
 
     if from > to then
-        return tbl
+        return ejected, ejected_length
     end
 
     for index = from, to, 1 do
+        ejected_length = ejected_length + 1
+        ejected[ ejected_length ] = tbl[ index ]
         tbl[ index ] = nil
     end
 
@@ -522,10 +529,11 @@ function table.eject( tbl, from, to )
         tbl[ index - distance ], tbl[ index ] = tbl[ index ], nil
     end
 
-    return tbl
+    return ejected, ejected_length
 end
 
---- [SHARED AND MENU] Returns true if the given list (table) contains the given value.
+--- [SHARED AND MENU]
+--- Returns true if the given list (table) contains the given value.
 ---@param tbl table The table to check.
 ---@param value any The value to check.
 ---@return boolean: `true` if the table contains the value, `false` otherwise.
@@ -710,6 +718,24 @@ function table.isEmpty( tbl )
     return next( tbl ) == nil
 end
 
+--- [SHARED AND MENU] Empties the given table.
+---@param tbl table The table to empty.
+---@param isSequential? boolean: If the table is sequential.
+---@return table: The empty table.
+function table.empty( tbl, isSequential )
+    if isSequential then
+        for index = 1, #tbl, 1 do
+            tbl[ index ] = nil
+        end
+    else
+        for key in pairs( tbl ) do
+            tbl[ key ] = nil
+        end
+    end
+
+    return tbl
+end
+
 --- [SHARED AND MENU] Fills the given table with the given value.
 ---@param tbl table The table to fill.
 ---@param value any The value to fill the table with.
@@ -808,7 +834,8 @@ end
 
 do
 
-    --- [SHARED AND MENU] Creates a new table, filled with the given value and size.
+    --- [SHARED AND MENU]
+    --- Creates a new table, filled with the given value and size.
     ---@param value any The value to fill the table with.
     ---@param ... integer: The sizes of the table.
     ---@return table: The created table.
@@ -827,6 +854,39 @@ do
 
     table.create = create_table
 
+end
+
+--- [SHARED AND MENU]
+--- Extracts selected range of values from the table.
+---@param tbl table The table.
+---@param from integer: The start position.
+---@param to integer: The end position.
+---@return table: Extracted values.
+---@return integer: The length of the extracted values.
+function table.extract( tbl, from, to )
+    local extracted, extracted_length = {}, 0
+    local length = #tbl
+
+    if from == nil then
+        if to == nil then
+            return extracted, extracted_length
+        end
+
+        from = 1
+    elseif to == nil then
+        to = length
+    end
+
+    if from > to then
+        return extracted, extracted_length
+    end
+
+    for index = from, to, 1 do
+        extracted_length = extracted_length + 1
+        extracted[ extracted_length ] = tbl[ index ]
+    end
+
+    return extracted, extracted_length
 end
 
 --- [SHARED AND MENU] Removes values from the table.
