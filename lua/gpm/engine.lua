@@ -16,31 +16,20 @@ local engine = gpm.engine or {}
 
 -- TODO: ENGINE HOOKS AND OTHER THINGS
 
-local engine_hookCall
-
 if engine.hookCatch == nil then
 
     local engine_hooks = {}
 
-    do
+    local custom_calls = {
+        AcceptInput = function( self, entity, input, activator, caller, value )
+            entity, activator, caller = transducers[ entity ], transducers[ activator ], transducers[ caller ]
 
-        local AcceptInput = {}
-
-        setmetatable( AcceptInput, {
-            __call = function( self, entity, input, activator, caller, value )
-                entity, activator, caller = transducers[ entity ], transducers[ activator ], transducers[ caller ]
-
-                for i = 1, #self, 1 do
-                    local allow = self[ i ]( entity, input, activator, caller, value )
-                    if allow ~= nil then return not allow end
-                end
-            end,
-            __mode = "v"
-        } )
-
-        engine_hooks.AcceptInput = AcceptInput
-
-    end
+            for i = 1, #self, 1 do
+                local allow = self[ i ]( entity, input, activator, caller, value )
+                if allow ~= nil then return not allow end
+            end
+        end
+    }
 
     do
 
@@ -58,17 +47,28 @@ if engine.hookCatch == nil then
             local lst = engine_hooks[ event_name ]
             if lst == nil then
                 lst = {}
-                setmetatable( lst, metatable )
+
+                if custom_calls[ event_name ] == nil then
+                    setmetatable( lst, metatable )
+                else
+                    setmetatable( lst, {
+                        __call = custom_calls[ event_name ],
+                        __mode = "v"
+                    } )
+                end
+
                 engine_hooks[ event_name ] = lst
             end
 
-            table_insert( lst, math_clamp( priority, 1, #lst + 1 ), fn )
+            table_insert( lst, priority == nil and ( #lst + 1 ) or math_clamp( priority, 1, #lst + 1 ), fn )
         end
 
     end
 
-    function engine_hookCall( event_name, ... )
-        return engine_hooks[ event_name ]( ... )
+    local function engine_hookCall( event_name, ... )
+        local lst = engine_hooks[ event_name ]
+        if lst == nil then return end
+        return lst( ... )
     end
 
     engine.hookCall = engine_hookCall
@@ -160,6 +160,8 @@ if engine.hookCatch == nil then
 
 end
 
+local engine_hookCall = engine.hookCall
+
 if engine.consoleCommandCatch == nil then
 
     local lst = {}
@@ -175,7 +177,7 @@ if engine.consoleCommandCatch == nil then
     } )
 
     function engine.consoleCommandCatch( fn, priority )
-        table_insert( lst, math_clamp( priority, 1, #lst + 1 ), fn )
+        table_insert( lst, priority == nil and ( #lst + 1 ) or math_clamp( priority, 1, #lst + 1 ), fn )
     end
 
     local concommand = _G.concommand
@@ -216,7 +218,7 @@ if engine.consoleVariableCatch == nil then
     } )
 
     function engine.consoleVariableCatch( fn, priority )
-        table_insert( lst, math_clamp( priority, 1, #lst + 1 ), fn )
+        table_insert( lst, priority == nil and ( #lst + 1 ) or math_clamp( priority, 1, #lst + 1 ), fn )
     end
 
     local cvars = _G.cvars
@@ -254,7 +256,7 @@ if engine.entityCreationCatch == nil then
     } )
 
     function engine.entityCreationCatch( fn, priority )
-        table_insert( lst, math_clamp( priority, 1, #lst + 1 ), fn )
+        table_insert( lst, priority == nil and ( #lst + 1 ) or math_clamp( priority, 1, #lst + 1 ), fn )
     end
 
     local scripted_ents = _G.scripted_ents
@@ -277,6 +279,138 @@ if engine.entityCreationCatch == nil then
                 return tbl
             end
         end )
+    end
+
+    local OnLoaded = scripted_ents.OnLoaded
+    if OnLoaded == nil then
+        function scripted_ents.OnLoaded( name )
+            engine_hookCall( "EntityLoaded", name )
+        end
+    else
+        scripted_ents.OnLoaded = detour_attach( OnLoaded, function( fn, name )
+            engine_hookCall( "EntityLoaded", name )
+            return fn( name )
+        end )
+    end
+
+end
+
+if engine.weaponCreationCatch == nil then
+
+    local lst = {}
+
+    setmetatable( lst, {
+        __call = function( self, name )
+            for i = 1, #self, 1 do
+                local tbl = self[ i ]( name )
+                if tbl ~= nil then return tbl end
+            end
+        end,
+        __mode = "v"
+    } )
+
+    function engine.weaponCreationCatch( fn, priority )
+        table_insert( lst, priority == nil and ( #lst + 1 ) or math_clamp( priority, 1, #lst + 1 ), fn )
+    end
+
+    local weapons = _G.weapons
+    if weapons == nil then
+        ---@diagnostic disable-next-line: inject-field
+        weapons = {}; _G.weapons = weapons
+    end
+
+    local Get = weapons.Get
+    if Get == nil then
+        function weapons.Get( name )
+            return lst( name )
+        end
+    else
+        weapons.Get = detour_attach( Get, function( fn, name )
+            local tbl = lst( name )
+            if tbl == nil then
+                return fn( name )
+            else
+                return tbl
+            end
+        end )
+    end
+
+    local OnLoaded = weapons.OnLoaded
+    if OnLoaded == nil then
+        function weapons.OnLoaded( name )
+            engine_hookCall( "WeaponLoaded", name )
+        end
+    else
+        weapons.OnLoaded = detour_attach( OnLoaded, function( fn, name )
+            engine_hookCall( "WeaponLoaded", name )
+            return fn( name )
+        end )
+    end
+
+end
+
+if engine.effectCreationCatch == nil then
+
+    local lst = {}
+
+    setmetatable( lst, {
+        __call = function( self, name )
+            for i = 1, #self, 1 do
+                local tbl = self[ i ]( name )
+                if tbl ~= nil then return tbl end
+            end
+        end,
+        __mode = "v"
+    } )
+
+    function engine.effectCreationCatch( fn, priority )
+        table_insert( lst, priority == nil and ( #lst + 1 ) or math_clamp( priority, 1, #lst + 1 ), fn )
+    end
+
+    local effects = _G.effects
+    if effects == nil then
+        ---@diagnostic disable-next-line: inject-field
+        effects = {}; _G.effects = effects
+    end
+
+    local Create = effects.Create
+    if Create == nil then
+        function effects.Create( name )
+            return lst( name )
+        end
+    else
+        effects.Create = detour_attach( Create, function( fn, name )
+            local tbl = lst( name )
+            if tbl == nil then
+                return fn( name )
+            else
+                return tbl
+            end
+        end )
+    end
+
+end
+
+if _G.gamemode == nil then
+
+    local gamemode = {}
+
+    ---@diagnostic disable-next-line: inject-field
+    _G.gamemode = gamemode
+
+    local gamemodes = {}
+
+    function gamemode.Get( name )
+        return gamemodes[ name ]
+    end
+
+    function gamemode.Register( gm, name, base_name )
+        gamemodes[ name ] = {
+            FolderName = gm.FolderName,
+            Name = gm.Name or name,
+            Folder = gm.Folder,
+            Base = base_name
+        }
     end
 
 end

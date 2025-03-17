@@ -14,7 +14,7 @@ if gpm == nil then
 end
 
 ---@diagnostic disable-next-line: undefined-field
-local include = _G.include or _G.dofile
+local include = gpm.dofile or _G.include or _G.dofile
 gpm.dofile = include
 
 ---@diagnostic disable-next-line: undefined-field

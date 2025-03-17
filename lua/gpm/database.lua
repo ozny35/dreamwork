@@ -265,7 +265,7 @@ if _G.sql.__patched == nil then
 end
 
 -- truncate WAL journal on shutdown
-_G.hook.Add( "ShutDown", gpm.PREFIX .. "::SQLite", function()
+gpm.engine.hookCatch( "ShutDown", function()
     if sqlite.query( "pragma wal_checkpoint(TRUNCATE)" ) == false then
         gpm.Logger:error( "Failed to truncate WAL journal: %s", sqlite.getLastError() )
     end

@@ -1,6 +1,7 @@
--- launch as a gmod addon
-if SERVER then
-    AddCSLuaFile( "gpm/init.lua" )
-end
+if gpm == nil then
+    if SERVER then
+        AddCSLuaFile( "gpm/init.lua" )
+    end
 
-include( "gpm/init.lua" )
+    include( "gpm/init.lua" )
+end
