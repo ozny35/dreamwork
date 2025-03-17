@@ -12,7 +12,7 @@ if std.CLIENT and server.Tick == nil then
 
     --- [CLIENT] Called once every processed server frame during lag.
     local Tick = std.Hook( "server.Tick" )
-    gpm.engine.hookCatch( "Think", Tick, 1 )
+    gpm.engine.hookCatch( "Think", Tick )
     server.Tick = Tick
 
 end

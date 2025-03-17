@@ -198,6 +198,22 @@ function std.isvalid( value )
     return ( metatable and metatable.__isvalid and metatable.__isvalid( value ) ) == true
 end
 
+local rawtype = std.rawtype or _G.type
+std.rawtype = rawtype
+
+local istable = _G.istable
+if istable == nil then
+
+    --- [SHARED AND MENU]
+    --- Checks if the value type is a `table`.
+    ---@param value any The value to check.
+    ---@return boolean: Returns `true` if the value is a table, otherwise `false`.
+    function istable( value )
+        return rawtype( value ) == "table"
+    end
+
+end
+
 local isstring, STRING, NUMBER
 do
 
@@ -331,7 +347,7 @@ do
     end
 
     -- table ( 5 )
-    std.istable = _G.istable
+    std.istable = istable
 
     -- function ( 6 )
     do
@@ -442,21 +458,17 @@ function STRING.__bitcount( value )
     return string_len( value ) * 8
 end
 
-do
+local print = std.print or _G.print
+std.print = print
 
-    local print = _G.print
-    std.print = print
-
-    --- [SHARED AND MENU]
-    --- Prints a formatted string to the console.
-    ---
-    --- Basically the same as `print( string.format( str, ... ) )`
-    ---@param str any
-    ---@param ... any
-    function std.printf( str, ... )
-        return print( string_format( str, ... ) )
-    end
-
+--- [SHARED AND MENU]
+--- Prints a formatted string to the console.
+---
+--- Basically the same as `print( string.format( str, ... ) )`
+---@param str any
+---@param ... any
+function std.printf( str, ... )
+    return print( string_format( str, ... ) )
 end
 
 --- [SHARED AND MENU]
@@ -495,8 +507,6 @@ do
 
 end
 
---- [SHARED AND MENU]
---- table library
 ---@class gpm.std.table
 local table = include( "std/table.lua" )
 std.table = table
@@ -505,20 +515,78 @@ local table_concat = table.concat
 
 do
 
+    local coroutine_running = coroutine.running
     local debug_getinfo = debug.getinfo
-    local glua_type = _G.type
+    local string_rep = string.rep
 
-    --- [SHARED AND MENU] Returns a string representing the name of the type of the passed object.
+    ---@diagnostic disable-next-line: undefined-field
+    local ErrorNoHalt = _G.ErrorNoHalt or print
+
+    ---@diagnostic disable-next-line: undefined-field
+    local ErrorNoHaltWithStack = _G.ErrorNoHaltWithStack
+
+    if ErrorNoHaltWithStack == nil then
+
+        function ErrorNoHaltWithStack( message )
+            if message == nil then message = "unknown" end
+
+            local stack, size = { "\n[ERROR] " .. message }, 1
+
+            while true do
+                local info = debug_getinfo( size + 1, "Sln" )
+                if info == nil then break end
+
+                size = size + 1
+                stack[ size ] = table_concat( { string_rep( " ", size ), ( size - 1 ), ". ", info.name or "unknown", " - ", info.short_src or "unknown", ":", info.currentline or -1 } )
+            end
+
+            size = size + 1
+            stack[ size ] = "\n"
+
+            return ErrorNoHalt( table_concat( stack, "\n", 1, size ) )
+        end
+
+    end
+
+    --- [SHARED AND MENU]
+    --- Throws a Lua error.
+    ---@param message string | Error: The error message to throw.
+    ---@param level gpm.std.ErrorType?: The error level to throw.
+    function std.error( message, level )
+        -- async functions support
+        if not coroutine_running() then
+            message = tostring( message )
+        end
+
+        -- custom gmod errors: -1, -2
+        if level == -1 then
+            return ErrorNoHalt( message )
+        elseif level == -2 then
+            return ErrorNoHaltWithStack( message )
+        else
+            return error( message, level )
+        end
+    end
+
+end
+
+local type
+do
+
+    local debug_getinfo = debug.getinfo
+
+    --- [SHARED AND MENU]
+    --- Returns a string representing the name of the type of the passed object.
     ---@param value any The value to get the type of.
     ---@return string: The type name of the given value.
-    local function type( value )
+    function type( value )
         local metatable = debug_getmetatable( value )
         if metatable ~= nil then
             local name = rawget( metatable, "__type" )
             if isstring( name ) then return name end
         end
 
-        return glua_type( value )
+        return rawtype( value )
     end
 
     std.type = type
@@ -916,7 +984,6 @@ do
     end
 
     -- Built-in error classes.
-
     std.NotImplementedError = ErrorClass.make( "NotImplementedError" )
     std.FutureCancelError = ErrorClass.make( "FutureCancelError" )
     std.InvalidStateError = ErrorClass.make( "InvalidStateError" )
@@ -957,8 +1024,7 @@ do
     function std.sleep( seconds )
         local co = futures_running()
         if co == nil then
-            local end_time = getTime() + seconds
-            while getTime() < end_time do end
+            std.error( "sleep cannot be called from main thread" )
         else
             Timer_wait( function()
                 futures.wakeup( co )
@@ -1081,7 +1147,8 @@ do
         "That's me!",
         "I see you.",
         "Light Up ♪",
-        "Majesty ♪"
+        "Majesty ♪",
+        "Eat Me ♪"
     }
 
     local count = #splashes + 1
@@ -1105,7 +1172,6 @@ do
     ---@diagnostic disable-next-line: undefined-field
     local CompileString, gmbc_load_bytecode = _G.CompileString, _G.gmbc_load_bytecode
     local string_byte = string.byte
-    local istable = std.istable
 
     --- [SHARED AND MENU]
     --- Loads a chunk
@@ -1118,9 +1184,9 @@ do
     local function load( chunk, chunkName, mode, env )
         if env == nil then env = getfenv( 2 ) end
 
-        local chunk_type = type( chunk )
-        if chunk_type == "string" then
+        if isstring( chunk ) then
             if mode == nil then mode = "bt" end
+            ---@cast chunk string
 
             local fn
             if ( mode == "bt" or mode == "tb" or mode == "b" ) and string_byte( chunk, 1 ) == 0x1B then
@@ -1153,7 +1219,9 @@ do
             end
 
             return fn
-        elseif chunk_type == "function" then
+        elseif isfunction( chunk ) then
+            ---@cast chunk function
+
             local segment = chunk()
             if segment == nil then return nil, "first segment is nil" end
 
@@ -1167,23 +1235,22 @@ do
             return load( table_concat( result, "", 1, length ), chunkName, mode, env )
         end
 
-        return nil, "bad argument #1 to \'load\' ('string/function' expected, got '" .. chunk_type .. "')"
+        return nil, "bad argument #1 to \'load\' ('string/function' expected, got '" .. type( chunk ) .. "')"
     end
 
     std.load = load
 
 end
 
-std.game = include( "std/game.lua" )
-std.level = include( "std/level.lua" )
+include( "std/game.lua" )
+include( "std/level.lua" )
 
-std.Vector2 = include( "std/vector2.lua" )
-std.Vector3 = include( "std/vector3.lua" )
+include( "std/math.classes.lua" )
 
 if std.CLIENT_SERVER then
-    std.physics = include( "std/physics.lua" )
-    std.entity = include( "std/entity.lua" )
-    std.player = include( "std/player.lua" )
+    include( "std/physics.lua" )
+    include( "std/entity.lua" )
+    include( "std/player.lua" )
     -- std.net = include( "std/net.lua" )
 end
 
@@ -1299,8 +1366,7 @@ end
 loadbinary( "gmbc" )
 
 include( "std/http.lua" )
-
-std.Addon = include( "std/addon.lua" )
+include( "std/addon.lua" )
 
 if std.CLIENT_MENU then
     std.menu = include( "std/menu.lua" )

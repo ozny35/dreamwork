@@ -1,7 +1,10 @@
 local _G = _G
 
 local gpm = _G.gpm
+
+---@class gpm.std
 local std = gpm.std
+
 local debug = std.debug
 local console_Variable = std.console.Variable
 
@@ -18,6 +21,8 @@ local game = std.game or {
     getTickCount = glua_engine.TickCount,
     getTickInterval = glua_engine.TickInterval
 }
+
+std.game = game
 
 do
 
@@ -252,13 +257,27 @@ if std.MENU then
 
 end
 
-if game.Tick == nil then
+do
 
-    --- [SHARED AND MENU] A hook that is called every tick.
-    local Tick = std.Hook( "game.Tick" )
-    gpm.engine.hookCatch( "Tick", Tick, 1 )
-    game.Tick = Tick
+    local engine_hookCatch = gpm.engine.hookCatch
+    local Hook = std.Hook
+
+    if game.Tick == nil then
+
+        --- [SHARED AND MENU] A hook that is called every tick.
+        local Tick = Hook( "game.Tick" )
+        engine_hookCatch( "Tick", Tick )
+        game.Tick = Tick
+
+    end
+
+    if game.ShutDown == nil then
+
+        --- [SHARED AND MENU] A hook that is called when the game is shutting down.
+        local ShutDown = Hook( "game.ShutDown" )
+        engine_hookCatch( "ShutDown", ShutDown )
+        game.ShutDown = ShutDown
+
+    end
 
 end
-
-return game

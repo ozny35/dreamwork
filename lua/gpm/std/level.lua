@@ -15,6 +15,8 @@ local level = std.level or {
     getName = glua_game.GetMap
 }
 
+std.level = level
+
 if std.CLIENT then
     level.getSunInfo = glua_util.GetSunInfo
     level.redownloadLightmaps = _G.render.RedownloadAllLightmaps
@@ -158,5 +160,3 @@ do
     level.save = save
 
 end
-
-return level

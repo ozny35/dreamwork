@@ -43,14 +43,37 @@ local gpm = _G.gpm
 ---@class gpm.std
 local std = gpm.std
 
-local setmetatable = std.setmetatable
+local class = std.class
+
 local isnumber = std.isnumber
+local setmetatable = std.setmetatable
 
 local math = std.math
+
+local math_huge = math.huge
 local math_abs = math.abs
+local math_atan2, math_deg = math.atan2, math.deg
+local math_sqrt = math.sqrt
 local math_cos, math_sin, math_rad = math.cos, math.sin, math.rad
 local math_lerp = math.lerp
 local math_min, math_max = math.min, math.max
+
+
+---@alias Vector2 gpm.std.Vector2
+---@class gpm.std.Vector2: gpm.std.Object
+---@field __class gpm.std.Vector2Class
+---@operator add: Vector2
+---@operator sub: Vector2
+---@operator mul: Vector2
+---@operator div: Vector2
+---@operator unm: Vector2
+local Vector2 = class.base( "Vector2" )
+
+---@class gpm.std.Vector2Class: gpm.std.Vector2
+---@field __base gpm.std.Vector2
+---@overload fun( x: number, y: number ): Vector2
+local Vector2Class = class.create( Vector2 )
+std.Vector2 = Vector2Class
 
 ---@alias Vector3 gpm.std.Vector3
 ---@class gpm.std.Vector3: gpm.std.Object
@@ -60,12 +83,16 @@ local math_min, math_max = math.min, math.max
 ---@operator mul: Vector3
 ---@operator div: Vector3
 ---@operator unm: Vector3
-local Vector3 = std.class.base( "Vector3" )
+---@field x number
+---@field y number
+---@field z number
+local Vector3 = class.base( "Vector3" )
 
 ---@class gpm.std.Vector3Class: gpm.std.Vector3
 ---@field __base gpm.std.Vector3
 ---@overload fun( x: number, y: number, z: number ): Vector3
-local Vector3Class = std.class.create( Vector3 )
+local Vector3Class = class.create( Vector3 )
+Vector3Class.origin = setmetatable( { 0, 0, 0 }, Vector3 )
 std.Vector3 = Vector3Class
 
 ---@alias Angle3 gpm.std.Angle3
@@ -76,7 +103,25 @@ std.Vector3 = Vector3Class
 ---@operator mul: Angle3
 ---@operator div: Angle3
 ---@operator unm: Angle3
-local Angle3 = std.class.base( "Angle3" )
+local Angle3 = class.base( "Angle3" )
+
+---@class gpm.std.Angle3Class: gpm.std.Angle3
+---@field __base gpm.std.Angle3
+---@overload fun( pitch: number?, yaw: number?, roll: number? ): Angle3
+local Angle3Class = class.create( Angle3 )
+Angle3Class.zero = setmetatable( { 0, 0, 0 }, Angle3 )
+std.Angle = Angle3Class
+
+---@alias VMatrix gpm.std.VMatrix
+---@class gpm.std.VMatrix: gpm.std.Object
+---@field __class gpm.std.VMatrixClass
+local VMatrix = class.base( "VMatrix" )
+
+---@class gpm.std.VMatrixClass: gpm.std.VMatrix
+---@field __base gpm.std.VMatrix
+---@overload fun( ...: number? ): VMatrix
+local VMatrixClass = class.create( VMatrix )
+std.VMatrix = VMatrixClass
 
 do
 
@@ -144,6 +189,43 @@ do
 
     end
 
+    debug.registermetatable( "VMatrix", VMatrix )
+
+    do
+
+        local Matrix = _G.Matrix
+        if Matrix == nil then
+            gpm.Logger:error( "VMatrix: Matrix function is missing!" )
+        else
+            gpm.transducers[ VMatrix ] = function( matrix )
+                return Matrix( {
+                    { matrix[ 1 ], matrix[ 2 ], matrix[ 3 ], matrix[ 4 ] },
+                    { matrix[ 5 ], matrix[ 6 ], matrix[ 7 ], matrix[ 8 ] },
+                    { matrix[ 9 ], matrix[ 10 ], matrix[ 11 ], matrix[ 12 ] },
+                    { matrix[ 13 ], matrix[ 14 ], matrix[ 15 ], matrix[ 16 ] }
+                } )
+            end
+        end
+
+    end
+
+    do
+
+        local VMATRIX = debug.findmetatable( "VMatrix" )
+        if VMATRIX == nil then
+            gpm.Logger:error( "VMatrix: Matrix metatable is missing!" )
+        else
+            ---@cast VMATRIX VMatrix
+            local Unpack = VMATRIX.Unpack
+
+            gpm.transducers[ VMATRIX ] = function( matrix )
+                return VMatrixClass( Unpack( matrix ) )
+            end
+
+        end
+
+    end
+
     do
 
         local debug_getmetatable = debug.getmetatable
@@ -166,11 +248,234 @@ do
 
 end
 
----@class gpm.std.Angle3Class: gpm.std.Angle3
----@field __base gpm.std.Angle3
----@overload fun( pitch: number?, yaw: number?, roll: number? ): Angle3
-local Angle3Class = std.class.create( Angle3 )
-Vector3Class.Angle = Angle3Class
+---@protected
+function Vector2:__new( x, y )
+    return setmetatable( { x or 0, y or 0 }, Vector2 )
+end
+
+--- Returns the x and y coordinates of the vector.
+---@return number x: The x coordinate of the vector.
+---@return number y: The y coordinate of the vector.
+function Vector2:unpack()
+    return self[ 1 ], self[ 2 ]
+end
+
+--- Sets the x and y coordinates of the vector.
+---@param x number The x coordinate of the vector.
+---@param y number The y coordinate of the vector.
+function Vector2:setUnpacked( x, y )
+    self[ 1 ] = x
+    self[ 2 ] = y
+end
+
+--- Creates a copy of the vector.
+---@return Vector2: The copy of the vector.
+function Vector2:copy()
+    return setmetatable( { self[ 1 ], self[ 2 ] }, Vector2 )
+end
+
+--- Scales the vector.
+---@param scale number The scale factor.
+---@return Vector2: The scaled vector.
+function Vector2:scale( scale )
+    if scale == 0 or scale ~= scale then
+        self[ 1 ] = 0
+        self[ 2 ] = 0
+    elseif scale == math_huge then
+        self[ 1 ] = math_huge
+        self[ 2 ] = math_huge
+    else
+        self[ 1 ] = self[ 1 ] * scale
+        self[ 2 ] = self[ 2 ] * scale
+    end
+
+    return self
+end
+
+--- Returns a scaled copy of the vector.
+---@param scale number The scale factor.
+---@return Vector2: The scaled copy of the vector.
+function Vector2:getScaled( scale )
+    return self:copy():scale( scale )
+end
+
+--- Adds the vector to another vector.
+---@param vector Vector2 The other vector.
+---@return Vector2: The sum of the two vectors.
+function Vector2:add( vector )
+    self[ 1 ] = self[ 1 ] + vector[ 1 ]
+    self[ 2 ] = self[ 2 ] + vector[ 2 ]
+    return self
+end
+
+--- Subtracts the vector from another vector.
+---@param other Vector2 The other vector.
+---@return Vector2: The difference of the two vectors.
+function Vector2:sub( other )
+    self[ 1 ] = self[ 1 ] - other[ 1 ]
+    self[ 2 ] = self[ 2 ] - other[ 2 ]
+    return self
+end
+
+--- Multiplies the vector by another vector or a number.
+---@param other Vector2 | number: The other vector or a number.
+---@return Vector2: The product of the two vectors or the vector multiplied by a number.
+function Vector2:mul( other )
+    if isnumber( other ) then
+        ---@cast other number
+        return self:scale( other )
+    else
+        ---@cast other Vector2
+        self[ 1 ] = self[ 1 ] * other[ 1 ]
+        self[ 2 ] = self[ 2 ] * other[ 2 ]
+    end
+
+    return self
+end
+
+--- Divides the vector by another vector or a number.
+---@param other Vector2 | number: The other vector or a number.
+---@return Vector2: The quotient of the two vectors or the vector divided by a number.
+function Vector2:div( other )
+    if isnumber( other ) then
+        ---@cast other number
+        return self:scale( 1 / other )
+    else
+        ---@cast other Vector2
+        self[ 1 ] = self[ 1 ] / other[ 1 ]
+        self[ 2 ] = self[ 2 ] / other[ 2 ]
+    end
+
+    return self
+end
+
+--- Negates the vector.
+---@return Vector2
+function Vector2:negate()
+    self[ 1 ] = -self[ 1 ]
+    self[ 2 ] = -self[ 2 ]
+    return self
+end
+
+---@param other Vector2 The other vector.
+---@return Vector2: The sum of the two vectors.
+function Vector2:__add( other )
+    return self:copy():add( other )
+end
+
+---@param other Vector2 The other vector.
+---@return Vector2: The difference of the two vectors.
+function Vector2:__sub( other )
+    return self:copy():sub( other )
+end
+
+---@param other Vector2 | number: The other vector or a number.
+---@return Vector2: The product of the two vectors or the vector multiplied by a number.
+function Vector2:__mul( other )
+    if isnumber( other ) then
+        ---@cast other number
+        return setmetatable( { self[ 1 ] * other, self[ 2 ] * other }, Vector2 )
+    else
+        ---@cast other Vector2
+        return setmetatable( { self[ 1 ] * other[ 1 ], self[ 2 ] * other[ 2 ] }, Vector2 )
+    end
+end
+
+---@param other Vector2 | number: The other vector or a number.
+---@return Vector2: The quotient of the two vectors or the vector divided by a number.
+function Vector2:__div( other )
+    if isnumber( other ) then
+        ---@cast other number
+        local multiplier = 1 / other
+        return setmetatable( { self[ 1 ] * multiplier, self[ 2 ] * multiplier }, Vector2 )
+    else
+        ---@cast other Vector2
+        return setmetatable( { self[ 1 ] / other[ 1 ], self[ 2 ] / other[ 2 ] }, Vector2 )
+    end
+end
+
+---@return Vector3
+function Vector2:__unm()
+    return setmetatable( { -self[ 1 ], -self[ 2 ] }, Vector2 )
+end
+
+---@param vector Vector2 The other vector.
+---@return boolean: `true` if the two vectors are equal, `false` otherwise.
+function Vector2:__eq( vector )
+    return self[ 1 ] == vector[ 1 ] and self[ 2 ] == vector[ 2 ]
+end
+
+--- Calculates the squared length of the vector.
+---@return number: The squared length of the vector.
+function Vector2:getLengthSqr()
+    return self[ 1 ] ^ 2 + self[ 2 ] ^ 2
+end
+
+--- Calculates the length of the vector.
+---@return number: The length of the vector.
+function Vector2:getLength()
+    return math_sqrt( self:getLengthSqr() )
+end
+
+--- Calculates the distance between two vectors.
+---@param vector Vector2 The other vector.
+---@return number: The distance between the two vectors.
+function Vector2:getDistance( vector )
+    return math_sqrt( ( vector[ 1 ] - self[ 1 ] ) ^ 2 + ( vector[ 2 ] - self[ 2 ] ) ^ 2 )
+end
+
+--- Normalizes the vector.
+---@return Vector2: The normalized vector.
+function Vector2:normalize()
+    local length = self:getLength()
+    return length == 0 and self or self:scale( 1 / length )
+end
+
+--- Returns a normalized copy of the vector.
+---@return Vector2: The normalized copy of the vector.
+function Vector2:getNormalized()
+    return self:copy():normalize()
+end
+
+--- Checks if the vector is zero.
+---@return boolean: `true` if the vector is zero, `false` otherwise.
+function Vector2:isZero()
+    return self[ 1 ] == 0 and
+           self[ 2 ] == 0
+end
+
+--- Sets the vector to zero.
+---@return Vector2: The zero vector.
+function Vector2:zero()
+    self[ 1 ] = 0
+    self[ 2 ] = 0
+    return self
+end
+
+--- Calculates the dot product of two vectors.
+---@param vector Vector2 The other vector.
+---@return number: The dot product of two vectors.
+function Vector2:dot( vector )
+    return self[ 1 ] * vector[ 1 ] + self[ 2 ] * vector[ 2 ]
+end
+
+--- Calculates the cross product of two vectors.
+---@param vector Vector2 The other vector.
+---@return number: The cross product of two vectors.
+function Vector2:cross( vector )
+    return self[ 1 ] * vector[ 2 ] - self[ 2 ] * vector[ 1 ]
+end
+
+--- Returns the angle of the vector.
+---@param up? Vector2: The direction of the angle.
+---@return number: The angle of the vector.
+function Vector2:getAngle( up )
+    if up then
+        return up:getAngle() + self:getAngle()
+    else
+        return 360 - math_deg( math_atan2( self[ 1 ], self[ 2 ] ) )
+    end
+end
 
 ---@protected
 ---@param x number?
@@ -488,7 +793,7 @@ do
     --- Returns the angle of the vector.
     ---@param up Vector3?: The direction of the angle.
     ---@return Angle3: The angle of the vector.
-    function Vector3:getAngle( up )
+    function Vector3:toAngle( up )
         if self:isZero() then
             return setmetatable( { 0, 0, 0 }, Angle3 )
         end
@@ -510,6 +815,15 @@ do
             math_deg( math_atan2( forward[ 2 ], forward[ 1 ] ) ),
             0
         }, Angle3 )
+    end
+
+    local math_acos = math.acos
+
+    --- Calculates the angle between two vectors.
+    ---@param vector Vector3 The other vector.
+    ---@return number degrees The angle between two vectors.
+    function Vector3:getAngle( vector )
+        return math_deg( math_acos( self:dot( vector ) / ( self:getLength() * vector:getLength() ) ) )
     end
 
 end
@@ -886,8 +1200,9 @@ end
 ---@param rotation number The degrees to rotate around the specified axis.
 function Angle3:rotate( axis, rotation )
 
-    -- TODO: implement this function
 
+
+    return self
 end
 
 --- Returns a new vector from world position and world angle.
@@ -898,8 +1213,6 @@ end
 ---@return Vector3: The new vector.
 ---@return Angle3: The new angle.
 function Vector3Class.translateToLocal( position, angle, world_position, world_angle )
-
-
     -- TODO: implement this function
 
 
@@ -947,4 +1260,288 @@ do
 
 end
 
-return Vector3Class
+-- for i = 0, 100, 25 do
+--     local vx = i / 100
+--     for j = 0, 100, 25 do
+--         local vy = j / 100
+--         for k = 0, 100, 25 do
+--             local vz = k / 100
+--             for rotation = 0, 360, 45 do
+--                 local ap, ay, ar = 0, 0, 0
+
+--                 print( Angle3Class( ap, ay, ar ):rotate( Vector3Class( vx, vy, vz ), rotation ) ) -- 0 -0 -90
+
+--                 local a = _G.Angle( ap, ay, ar )
+--                 a:RotateAroundAxis( _G.Vector( vx, vy, vz ), rotation )
+--                 print( a )
+--             end
+--         end
+--     end
+-- end
+
+-- do
+
+--     local m = Matrix(
+--         {
+--             {1, 1, 1, 1},
+--             {1, 1, 1, 1},
+--             {1, 1, 1, 1},
+--             {1, 1, 1, 1}
+--         }
+--     )
+
+--     m:Identity()
+
+--     m:Mul( Matrix(
+--         {
+--             {2, 0, 0, 0},
+--             {0, 0, 0, 0},
+--             {0, 0, 0, 0},
+--             {0, 0, 0, 0}
+--         }
+--     ) )
+
+--     m:Translate( Vector( 1, 2, 1 ) )
+
+--     print( m )
+
+
+-- end
+
+--[[
+
+    VMatrix structrue:
+
+    {
+
+        [  1 ] [  2 ] [  3 ] [  4 ] : number[] - row1
+        [  5 ] [  6 ] [  7 ] [  8 ] : number[] - row2
+        [  9 ] [ 10 ] [ 11 ] [ 12 ] : number[] - row3
+        [ 13 ] [ 14 ] [ 15 ] [ 16 ] : number[] - row4
+
+    }
+
+--]]
+
+---@protected
+function VMatrix:__new( r1c1, r1c2, r1c3, r1c4, r2c1, r2c2, r2c3, r2c4, r3c1, r3c2, r3c3, r3c4, r4c1, r4c2, r4c3, r4c4 )
+    return setmetatable( {
+        r1c1 or 0, r1c2 or 0, r1c3 or 0, r1c4 or 0,
+        r2c1 or 0, r2c2 or 0, r2c3 or 0, r2c4 or 0,
+        r3c1 or 0, r3c2 or 0, r3c3 or 0, r3c4 or 0,
+        r4c1 or 0, r4c2 or 0, r4c3 or 0, r4c4 or 0
+    }, VMatrix )
+end
+
+---@protected
+function VMatrix:__tostring()
+    return string.format( "VMatrix: %p\n[\n%.2f %.2f %.2f %.2f,\n%.2f %.2f %.2f %.2f,\n%.2f %.2f %.2f %.2f,\n%.2f %.2f %.2f %.2f\n]", self, self[ 1 ], self[ 2 ], self[ 3 ], self[ 4 ], self[ 5 ], self[ 6 ], self[ 7 ], self[ 8 ], self[ 9 ], self[ 10 ], self[ 11 ], self[ 12 ], self[ 13 ], self[ 14 ], self[ 15 ], self[ 16 ] )
+end
+
+---@return VMatrix
+function VMatrix:identity()
+    self[  1 ], self[  2 ], self[  3 ], self[  4 ] = 1, 0, 0, 0
+    self[  5 ], self[  6 ], self[  7 ], self[  8 ] = 0, 1, 0, 0
+    self[  9 ], self[ 10 ], self[ 11 ], self[ 12 ] = 0, 0, 1, 0
+    self[ 13 ], self[ 14 ], self[ 15 ], self[ 16 ] = 0, 0, 0, 1
+    return self
+end
+
+function VMatrix:isIdentity()
+    return
+        self[  1 ] == 1 and self[  2 ] == 0 and self[  3 ] == 0 and self[  4 ] == 0 and
+        self[  5 ] == 0 and self[  6 ] == 1 and self[  7 ] == 0 and self[  8 ] == 0 and
+        self[  9 ] == 0 and self[ 10 ] == 0 and self[ 11 ] == 1 and self[ 12 ] == 0 and
+        self[ 13 ] == 0 and self[ 14 ] == 0 and self[ 15 ] == 0 and self[ 16 ] == 1
+end
+
+---@return VMatrix
+function VMatrix:copy()
+    return VMatrixClass( self[ 1 ], self[ 2 ], self[ 3 ], self[ 4 ], self[ 5 ], self[ 6 ], self[ 7 ], self[ 8 ], self[ 9 ], self[ 10 ], self[ 11 ], self[ 12 ], self[ 13 ], self[ 14 ], self[ 15 ], self[ 16 ] )
+end
+
+---@param matrix VMatrix
+---@return VMatrix
+function VMatrix:multiply( matrix )
+    self[ 1 ] = self[ 1 ] * matrix[ 1 ] + self[ 2 ] * matrix[ 5 ] + self[ 3 ] * matrix[ 9 ] + self[ 4 ] * matrix[ 13 ]
+	self[ 2 ] = self[ 1 ] * matrix[ 2 ] + self[ 2 ] * matrix[ 6 ] + self[ 3 ] * matrix[ 10 ] + self[ 4 ] * matrix[ 14 ]
+	self[ 3 ] = self[ 1 ] * matrix[ 3 ] + self[ 2 ] * matrix[ 7 ] + self[ 3 ] * matrix[ 11 ] + self[ 4 ] * matrix[ 15 ]
+	self[ 4 ] = self[ 1 ] * matrix[ 4 ] + self[ 2 ] * matrix[ 8 ] + self[ 3 ] * matrix[ 12 ] + self[ 4 ] * matrix[ 16 ]
+
+	self[ 5 ] = self[ 5 ] * matrix[ 1 ] + self[ 6 ] * matrix[ 5 ] + self[ 7 ] * matrix[ 9 ] + self[ 8 ] * matrix[ 13 ]
+	self[ 6 ] = self[ 5 ] * matrix[ 2 ] + self[ 6 ] * matrix[ 6 ] + self[ 7 ] * matrix[ 10 ] + self[ 8 ] * matrix[ 14 ]
+	self[ 7 ] = self[ 5 ] * matrix[ 3 ] + self[ 6 ] * matrix[ 7 ] + self[ 7 ] * matrix[ 11 ] + self[ 8 ] * matrix[ 15 ]
+	self[ 8 ] = self[ 5 ] * matrix[ 4 ] + self[ 6 ] * matrix[ 8 ] + self[ 7 ] * matrix[ 12 ] + self[ 8 ] * matrix[ 16 ]
+
+	self[ 9 ] = self[ 9 ] * matrix[ 1 ] + self[ 10 ] * matrix[ 5 ] + self[ 11 ] * matrix[ 9 ] + self[ 12 ] * matrix[ 13 ]
+	self[ 10 ] = self[ 9 ] * matrix[ 2 ] + self[ 10 ] * matrix[ 6 ] + self[ 11 ] * matrix[ 10 ] + self[ 12 ] * matrix[ 14 ]
+	self[ 11 ] = self[ 9 ] * matrix[ 3 ] + self[ 10 ] * matrix[ 7 ] + self[ 11 ] * matrix[ 11 ] + self[ 12 ] * matrix[ 15 ]
+	self[ 12 ] = self[ 9 ] * matrix[ 4 ] + self[ 10 ] * matrix[ 8 ] + self[ 11 ] * matrix[ 12 ] + self[ 12 ] * matrix[ 16 ]
+
+	self[ 13 ] = self[ 13 ] * matrix[ 1 ] + self[ 14 ] * matrix[ 5 ] + self[ 15 ] * matrix[ 9 ] + self[ 16 ] * matrix[ 13 ]
+	self[ 14 ] = self[ 13 ] * matrix[ 2 ] + self[ 14 ] * matrix[ 6 ] + self[ 15 ] * matrix[ 10 ] + self[ 16 ] * matrix[ 14 ]
+	self[ 15 ] = self[ 13 ] * matrix[ 3 ] + self[ 14 ] * matrix[ 7 ] + self[ 15 ] * matrix[ 11 ] + self[ 16 ] * matrix[ 15 ]
+	self[ 16 ] = self[ 13 ] * matrix[ 4 ] + self[ 14 ] * matrix[ 8 ] + self[ 15 ] * matrix[ 12 ] + self[ 16 ] * matrix[ 16 ]
+
+    return self
+end
+
+---@return Vector3
+function VMatrix:getForward()
+    return std.Vector3( self[ 1 ], self[ 5 ], self[ 9 ] )
+end
+
+---@param vector Vector3
+---@return VMatrix
+function VMatrix:setForward( vector )
+    self[ 1 ], self[ 5 ], self[ 9 ] = vector[ 1 ], vector[ 2 ], vector[ 3 ]
+    return self
+end
+
+---@return Vector3
+function VMatrix:getLeft()
+    return std.Vector3( self[ 2 ], self[ 6 ], self[ 10 ] )
+end
+
+---@param vector Vector3
+---@return VMatrix
+function VMatrix:setLeft( vector )
+    self[ 2 ], self[ 6 ], self[ 10 ] = vector[ 1 ], vector[ 2 ], vector[ 3 ]
+    return self
+end
+
+---@return Vector3
+function VMatrix:getUp()
+    return std.Vector3( self[ 3 ], self[ 7 ], self[ 11 ] )
+end
+
+---@param vector Vector3
+---@return VMatrix
+function VMatrix:setUp( vector )
+    self[ 3 ], self[ 7 ], self[ 11 ] = vector[ 1 ], vector[ 2 ], vector[ 3 ]
+    return self
+end
+
+---@return Vector3
+function VMatrix:getTranslation()
+    return std.Vector3( self[ 4 ], self[ 8 ], self[ 12 ] )
+end
+
+---@param vector Vector3
+---@return VMatrix
+function VMatrix:setTranslation( vector )
+    self[ 4 ], self[ 8 ], self[ 12 ] = vector[ 1 ], vector[ 2 ], vector[ 3 ]
+    return self
+end
+
+---@param vector Vector3
+---@return VMatrix
+function VMatrix:translate( vector )
+    return self:multiply( VMatrixClass():identity():setTranslation( vector ) )
+end
+
+---@param row integer
+---@param column integer
+---@return number
+function VMatrix:getField( row, column )
+    return self[ ( math.clamp( row, 1, 4 ) - 1 ) * 4 + math.clamp( column, 1, 4 ) ]
+end
+
+---@param row integer
+---@param column integer
+---@param value number
+---@return VMatrix
+function VMatrix:setField( row, column, value )
+    self[ ( math.clamp( row, 1, 4 ) - 1 ) * 4 + math.clamp( column, 1, 4 ) ] = value
+    return self
+end
+
+function VMatrix:inverse()
+    local mat = {
+        [ 1 ] = {
+            self[ 1 ], self[ 2 ], self[ 3 ], self[ 4 ], 1, 0, 0, 0
+        },
+        [ 2 ] = {
+            self[ 5 ], self[ 6 ], self[ 7 ], self[ 8 ], 0, 1, 0, 0
+        },
+        [ 3 ] = {
+            self[ 9 ], self[ 10 ], self[ 11 ], self[ 12 ], 0, 0, 1, 0
+        },
+        [ 4 ] = {
+            self[ 13 ], self[ 14 ], self[ 15 ], self[ 16 ], 0, 0, 0, 1
+        }
+    }
+
+    local rowMap = { 1, 2, 3, 4 }
+
+    -- Row reduction
+    for iRow = 1, 4 do
+        local fLargest = 0.00001
+        local iLargest = -1
+
+        for iTest = iRow, 4 do
+            local fTest = math.abs( mat[ rowMap[ iTest ] ][ iRow ] )
+            if fTest > fLargest then
+                iLargest = iTest
+                fLargest = fTest
+            end
+        end
+
+        if iLargest == -1 then
+            return false, nil
+        end
+
+        -- Swap rows
+        rowMap[iLargest], rowMap[iRow] = rowMap[iRow], rowMap[iLargest]
+        local pRow = mat[rowMap[iRow]]
+
+        -- Normalize row
+        local mul = 1.0 / pRow[ iRow ]
+        for j = 1, 8, 1 do
+            pRow[ j ] = pRow[ j ] * mul
+        end
+
+        pRow[ iRow ] = 1.0
+
+        -- Eliminate column
+        for i = 1, 4 do
+            if i ~= iRow then
+                local pScaleRow = mat[rowMap[i]]
+                local mul = -pScaleRow[iRow]
+                for j = 1, 8 do
+                    pScaleRow[j] = pScaleRow[j] + pRow[j] * mul
+                end
+
+                pScaleRow[iRow] = 0.0
+            end
+        end
+    end
+
+
+    -- Extract inverse matrix
+    local dst = {}
+
+    for i = 1, 4 do
+        dst[ i ] = {}
+        local pIn = mat[ rowMap[ i ] ]
+        for j = 1, 4 do
+            dst[ i ][ j ] = pIn[ j + 4 ]
+        end
+    end
+
+    return true, dst
+end
+
+--- Does a fast inverse, assuming the matrix only contains translation and rotation.
+function VMatrix:inverseTranslation()
+
+    local dst = VMatrixClass(
+        self[ 1 ], self[ 2 ], self[ 3 ], 0,
+        self[ 5 ], self[ 6 ], self[ 7 ], 0,
+        self[ 9 ], self[ 10 ], self[ 11 ], 0,
+        0, 0, 0, 0
+    )
+end
+
+
+-- print( VMatrixClass():identity():copy():multiply( VMatrixClass( 2 ) ):translate( std.Vector3( 1, 2, 1 )) )

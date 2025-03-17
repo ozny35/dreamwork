@@ -71,16 +71,23 @@ local isstring = std.isstring
 ---| `"latest"` # The most recently published addons.
 ---| `"mine"` # The addons published by the client.
 
----@alias Addon gpm.std.Addon
----@class gpm.std.Addon: gpm.std.Object
----@field __class gpm.std.AddonClass
----@field wsid string The workshop ID of the addon.
-local Addon = std.class.base( "Addon" )
+local AddonClass, Addon = std.Addon, nil
 
----@class gpm.std.AddonClass: gpm.std.Addon
----@field __base gpm.std.Addon
----@overload fun( wsid: string ): Addon
-local AddonClass = std.class.create( Addon )
+if AddonClass == nil then
+    ---@alias Addon gpm.std.Addon
+    ---@class gpm.std.Addon: gpm.std.Object
+    ---@field __class gpm.std.AddonClass
+    ---@field wsid string The workshop ID of the addon.
+    Addon = std.class.base( "Addon" )
+
+    ---@class gpm.std.AddonClass: gpm.std.Addon
+    ---@field __base gpm.std.Addon
+    ---@overload fun( wsid: string ): Addon
+    AddonClass = std.class.create( Addon )
+    std.Addon = AddonClass
+else
+    Addon = AddonClass.__base
+end
 
 local findAddon
 do
@@ -708,17 +715,17 @@ do
 end
 
 -- Addon presets stuff, I think an additional library/package will be needed in the future..
-if std.MENU then
+if std.MENU and AddonClass.PresetsLoaded == nil then
 
     --- [MENU] A hook that is called when addon presets are loaded.
-    local PresetsLoadedHook = std.Hook( "Addon.PresetsLoaded" )
-    gpm.engine.hookCatch( "AddonPresetsLoaded", PresetsLoadedHook, 1 )
-    AddonClass.PresetsLoadedHook = PresetsLoadedHook
-
-    AddonClass.getPresets = _G.LoadAddonPresets
-    AddonClass.setPresets = _G.SaveAddonPresets
+    local PresetsLoaded = std.Hook( "Addon.PresetsLoaded" )
+    gpm.engine.hookCatch( "AddonPresetsLoaded", PresetsLoaded )
+    AddonClass.PresetsLoaded = PresetsLoaded
 
 end
+
+AddonClass.getPresets = AddonClass.getPresets or _G.LoadAddonPresets
+AddonClass.setPresets = AddonClass.setPresets or _G.SaveAddonPresets
 
 do
 
@@ -828,5 +835,3 @@ do
     end
 
 end
-
-return AddonClass
