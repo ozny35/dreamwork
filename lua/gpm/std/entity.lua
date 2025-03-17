@@ -1,6 +1,9 @@
 local _G = _G
 local gpm = _G.gpm
+
+---@class gpm.std
 local std = gpm.std
+
 local class = std.class
 local debug = std.debug
 
@@ -151,31 +154,43 @@ local debug = std.debug
 
 local glua_ents = _G.ents
 
----@alias Entity gpm.std.Entity
----@class gpm.std.Entity: gpm.std.Object
----@field __class gpm.std.EntityClass
----@field Type gpm.std.EntityType: The type of the entity.
-local Entity = class.base( "Entity" )
+local EntityClass, Entity = std.Entity, nil
+if EntityClass == nil then
 
----@class gpm.std.EntityClass: gpm.std.Entity
----@field __base gpm.std.Entity
----@overload fun(): Entity
-local EntityClass = class.create( Entity )
+    ---@alias Entity gpm.std.Entity
+    ---@class gpm.std.Entity: gpm.std.Object
+    ---@field __class gpm.std.EntityClass
+    ---@field Type gpm.std.EntityType: The type of the entity.
+    Entity = class.base( "Entity" )
+
+    ---@class gpm.std.EntityClass: gpm.std.Entity
+    ---@field __base gpm.std.Entity
+    ---@overload fun(): Entity
+    EntityClass = class.create( Entity )
+    std.Entity = EntityClass
+else
+    Entity = EntityClass.__base
+end
 
 do
 
     local engine_hookCatch = gpm.engine.hookCatch
     local Hook = std.Hook
 
-    local Created = Hook( "Entity.Created" )
-    engine_hookCatch( "OnEntityCreated", Created, 1 )
-    EntityClass.Created = Created
+    if EntityClass.Created == nil then
 
-    if std.SERVER then
+        --- [SHARED] A hook that is called when an entity is created.
+        local Created = Hook( "Entity.Created" )
+        engine_hookCatch( "OnEntityCreated", Created )
+        EntityClass.Created = Created
+
+    end
+
+    if std.SERVER and EntityClass.MapEvent == nil then
 
         --- [SERVER] A hook that is called when map I/O event occurs.
         local MapEvent = Hook( "Entity.MapEvent" )
-        engine_hookCatch( "AcceptInput", MapEvent, 1 )
+        engine_hookCatch( "AcceptInput", MapEvent )
         EntityClass.MapEvent = MapEvent
 
     end
@@ -298,5 +313,3 @@ if SERVER then
     -- PrintTable( e.__userdata:GetTable() )
 
 end
-
-return EntityClass

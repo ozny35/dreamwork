@@ -4,7 +4,7 @@ local glua_net = _G.net
 local std = _G.gpm.std
 local string, math, debug = std.string, std.math, std.debug
 
-local bitcount, getmetatable, table_len, debug_findmetatable = std.bitcount, std.getmetatable, std.table.len, debug.findmetatable
+local bit_size, getmetatable, debug_findmetatable = std.bit.size, std.getmetatable, debug.findmetatable
 local isfunction = std.isfunction
 
 ---@class Entity
@@ -96,7 +96,7 @@ end
 local readNumber, writeNumber
 do
 
-    local math_inf, math_ninf, math_nan = math.inf, math.ninf, math.nan
+    -- local math_inf, math_ninf = math.inf, math.ninf
 
     local BigInt_FromBytes, BigInt_ToBytes, BigInt_new
     do
@@ -131,7 +131,7 @@ do
         elseif type == 12 then
             return readDouble()
         elseif type == 13 then
-            return math_nan
+            return math.nan
         elseif type == 14 then
             return math_ninf
         elseif type == 15 then
@@ -148,7 +148,7 @@ do
             writeUInt( 2, 4 )
         elseif value == 2 then
             writeUInt( 3, 4 )
-        elseif value == math_nan then
+        elseif value ~= value then
             writeUInt( 13, 4 )
         elseif value == math_ninf then
             writeUInt( 14, 4 )
@@ -384,7 +384,7 @@ end
 
 local function writeList( tbl )
     local length = table_len( tbl )
-    writeUInt( length, bitcount( length ) )
+    writeUInt( length, bit_size( length ) )
 
     for index = 1, length, 1 do
         writeType( tbl[ index ] )
@@ -473,7 +473,7 @@ net.writeEntity = writeEntity
 -- Player ( 9 )
 do
 
-    local maxplayers_bits = bitcount( std.player.getLimit() )
+    local maxplayers_bits = bit_size( std.player.getLimit() )
 
     PLAYER.__bitcount = function()
         return maxplayers_bits

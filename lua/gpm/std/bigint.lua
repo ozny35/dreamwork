@@ -5,6 +5,8 @@
 ]]
 
 local _G = _G
+
+---@class gpm.std
 local std = _G.gpm.std
 
 local bigint_digits = {
@@ -26,11 +28,10 @@ local bigint_digits = {
 local bigint_comparatorMap
 
 local bigint_maxnumber
-local bigint_negone
+local negative_one
 local bigint_zero
 local bigint_one
 
-local bigint_new
 local bigint_fromstring
 local bigint_fromnumber
 local bigint_fromarray
@@ -39,25 +40,18 @@ local bigint_rstrip
 local bigint_ensureBigInt
 local bigint_ensureInt
 local bigint_ensureString
-local bigint_ensureBool
 local bigint_ensureArray
 
-local table_reverse
 local table_copy
 
 local tonumber, getmetatable, setmetatable = std.tonumber, std.getmetatable, std.setmetatable
+local isstring, isnumber, istable = std.isstring, std.isnumber, std.istable
 local math_floor = std.math.floor
 
-local table_concat, unpack
+local table_concat, table_reverse, table_unpack
 do
     local table = std.table
-    table_concat, unpack = table.concat, table.unpack
-end
-
-local is_string, is_number, is_bool, is_table
-do
-    local is = std.is
-    is_string, is_number, is_bool, is_table = is.string, is.number, is.bool, is.table
+    table_concat, table_reverse, table_unpack = table.concat, table.reverse, table.unpack
 end
 
 local string_sub, string_len, string_rep, string_byte, string_char, string_format
@@ -75,39 +69,15 @@ local BigInt = std.class.base( "BigInt" )
 ---@overload fun( value: string | number | BigInt | table, base: number? ): BigInt
 local BigIntClass = std.class.create( BigInt )
 
-function bigint_new()
+local function bigint_new()
     return setmetatable( { sign = 0, bytes = {}, mutable = false }, BigInt )
 end
 
-function bigint_constructor( self, value, base )
-    if is_string( value ) then
-        return bigint_fromstring( self, value, base )
-    end
-
-    if is_number( value ) then
-        return bigint_fromnumber( self, value )
-    end
-
-    if getmetatable( value ) == BigInt then
-        return value
-    end
-
-    if is_table( value ) then
-        return bigint_fromarray( self, value, true )
-    end
-
-    error( "cannot construct bigint from type: " .. std.type( value ) )
-end
-
----@protected
-function BigInt:__init( value, base )
-    self.sign = 0
-    self.bytes = {}
-    self.mutable = false
-    bigint_constructor( self, value, base )
-end
-
--- parse integer from a string
+--- parse integer from a string
+---@param self BigInt
+---@param value string
+---@param base integer | nil
+---@return BigInt
 function bigint_fromstring( self, value, base )
     value = bigint_ensureString( value )
 
@@ -188,6 +158,10 @@ function bigint_fromstring( self, value, base )
     return self
 end
 
+--- parse integer from a number
+---@param self BigInt
+---@param value number
+---@return BigInt
 function bigint_fromnumber( self, value )
     value = bigint_ensureInt( value )
     if value < 0 then
@@ -208,14 +182,18 @@ function bigint_fromnumber( self, value )
     return self
 end
 
+--- parse integer from an array
+---@param self BigInt
+---@param array integer[]: an array of bytes
+---@param littleEndian boolean | nil
+---@return BigInt
 function bigint_fromarray( self, array, littleEndian )
     array = bigint_ensureArray( array )
-    littleEndian = bigint_ensureBool( littleEndian, false )
 
-    self.bytes = table_copy( array )
-
-    if not littleEndian then
-        table_reverse( self.bytes )
+    if littleEndian == true then
+        self.bytes = table_copy( array )
+    else
+        self.bytes = table_reverse( array )
     end
 
     self.sign = 1
@@ -223,16 +201,59 @@ function bigint_fromarray( self, array, littleEndian )
     return self
 end
 
-function BigIntClass.FromBytes( binary, littleEndian )
-    binary = bigint_ensureString( binary )
-    littleEndian = bigint_ensureBool( littleEndian, false )
-
-    local bytes = { string_byte( binary, 1, string_len( binary ) ) }
-    if not littleEndian then
-        table_reverse( bytes )
+---@param self BigInt
+---@param value string | integer | BigInt | integer[]
+---@param base integer | nil
+---@return gpm.std.BigInt
+function bigint_constructor( self, value, base )
+    if isstring( value ) then
+        ---@cast value string
+        return bigint_fromstring( self, value, base )
     end
 
-    local obj = setmetatable( { sign = 1, bytes = bytes, mutable = false }, BigInt )
+    if isnumber( value ) then
+        ---@cast value number
+        return bigint_fromnumber( self, value )
+    end
+
+    if getmetatable( value ) == BigInt then
+        ---@cast value gpm.std.BigInt
+        return value
+    end
+
+    if istable( value ) then
+        ---@cast value integer[]
+        return bigint_fromarray( self, value, true )
+    end
+
+    error( "cannot construct bigint from type: " .. std.type( value ) )
+end
+
+---@protected
+function BigInt:__init( value, base )
+    self.sign = 0
+    self.bytes = {}
+    self.mutable = false
+    bigint_constructor( self, value, base )
+end
+
+function BigIntClass.fromBytes( binary, littleEndian )
+    binary = bigint_ensureString( binary )
+
+    local bytes = { string_byte( binary, 1, string_len( binary ) ) }
+
+    local obj = {
+        mutable = false,
+        sign = 1
+    }
+
+    if littleEndian == true then
+        obj.bytes = bytes
+    else
+        obj.bytes = table_reverse( bytes )
+    end
+
+    setmetatable( obj, BigInt )
     bigint_rstrip( obj )
     return obj
 end
@@ -249,7 +270,7 @@ function BigInt:Unm()
     return this
 end
 
-function BigInt:Abs()
+function BigInt:abs()
     if self.sign >= 0 then
         return self
     end
@@ -453,8 +474,8 @@ function BigInt:Mul( other )
 end
 
 function BigInt:DivWithRemainder( other, ignoreRemainder )
+    ignoreRemainder = ignoreRemainder == true
     other = bigint_ensureBigInt( other )
-    ignoreRemainder = bigint_ensureBool( ignoreRemainder, false )
 
     -- division of/by 0
     if self.sign == 0 then
@@ -489,7 +510,7 @@ function BigInt:DivWithRemainder( other, ignoreRemainder )
             return bigint_one, bigint_zero
         end
 
-        return bigint_negone, bigint_zero
+        return negative_one, bigint_zero
     end
 
     -- general division
@@ -565,9 +586,7 @@ function BigInt:DivWithRemainder( other, ignoreRemainder )
         this = this:Add( another )
     end
 
-    table_reverse( result )
-
-    table_copy( another.bytes, result )
+    table_copy( another.bytes, table_reverse( result ) )
     another.sign = divSign
 
     bigint_rstrip( another )
@@ -616,14 +635,14 @@ function BigInt:Pow( other )
     local this = self:Copy()
     this.mutable = true
 
-    local another = other:CopyIfImmutable():Abs():Add( bigint_negone )
+    local another = other:CopyIfImmutable():Abs():Add( negative_one )
 
     local otherMutable = another.mutable
     another.mutable = true
 
     while another.sign ~= 0 do
         this = this:Mul( self )
-        another = another:Add( bigint_negone )
+        another = another:Add( negative_one )
     end
 
     this.mutable = false
@@ -1247,7 +1266,7 @@ end
 
 -- convert to string of bytes
 function BigInt:ToBytes( size, littleEndian )
-    littleEndian = bigint_ensureBool( littleEndian, false )
+    littleEndian = littleEndian == true
 
     -- avoid copying array
     local bytes = self.bytes
@@ -1262,17 +1281,11 @@ function BigInt:ToBytes( size, littleEndian )
 
     local byteStr
     if littleEndian then
-        byteStr = string_char( unpack( bytes, 1, size ) )
+        byteStr = string_char( table_unpack( bytes, 1, size ) )
+    elseif byteCount <= size then
+        byteStr = string_char( table_unpack( table_reverse( bytes ) ) )
     else
-        table_reverse( bytes )
-
-        if byteCount <= size then
-            byteStr = string_char( unpack( bytes ) )
-        else
-            byteStr = string_char( unpack( bytes, byteCount - size + 1, byteCount ) )
-        end
-
-        table_reverse( bytes )
+        byteStr = string_char( table_unpack( table_reverse( bytes ), byteCount - size + 1, byteCount ) )
     end
 
     -- restore original state
@@ -1302,7 +1315,7 @@ end
 
 -- fast hex base conversion
 function BigInt:ToHex( noPrefix )
-    noPrefix = bigint_ensureBool( noPrefix, false )
+    noPrefix = noPrefix == true
 
     if self.sign == 0 then
         if noPrefix then
@@ -1312,10 +1325,9 @@ function BigInt:ToHex( noPrefix )
         return "0x0"
     end
 
-    local bytes = table_copy( self.bytes )
-    table_reverse( bytes )
+    local bytes = table_reverse( table_copy( self.bytes ) )
 
-    local result = string_format( "%x" .. string_rep( "%02x", #bytes - 1 ), unpack( bytes ) )
+    local result = string_format( "%x" .. string_rep( "%02x", #bytes - 1 ), table_unpack( bytes ) )
     if not noPrefix then
         result = "0x" .. result
     end
@@ -1329,7 +1341,7 @@ end
 
 -- fast bin base conversion
 function BigInt:ToBin( noPrefix )
-    noPrefix = bigint_ensureBool( noPrefix, false )
+    noPrefix = noPrefix == true
 
     if self.sign == 0 then
         if noPrefix then
@@ -1359,9 +1371,7 @@ function BigInt:ToBin( noPrefix )
         end
     end
 
-    table_reverse( t )
-
-    local result = table_concat( t )
+    local result = table_concat( table_reverse( t ) )
     if not noPrefix then
         result = "0b" .. result
     end
@@ -1412,7 +1422,7 @@ function BigInt:ToBase( base )
         end
     end
 
-    table_reverse( result )
+    result = table_reverse( result )
 
     for i = #result, 1, -1 do
         result[ i ] = bigint_digits[ result[ i ] + 1 ]
@@ -1508,7 +1518,7 @@ function bigint_ensureInt( obj, minValue, maxValue, default )
         obj = obj:ToNumber()
     end
 
-    if is_number( obj ) then
+    if isnumber( obj ) then
         if obj % 1 ~= 0 then
             if obj < 0 then
                 obj = obj + ( obj % 1 )
@@ -1530,7 +1540,7 @@ function bigint_ensureArray( obj, default )
         return default
     end
 
-    if is_table( obj ) and getmetatable( obj ) ~= BigInt then
+    if istable( obj ) and getmetatable( obj ) ~= BigInt then
         return obj
     end
 
@@ -1542,41 +1552,18 @@ function bigint_ensureString( obj, default )
         return default
     end
 
-    if is_string( obj ) then
+    if isstring( obj ) then
         return obj
     end
 
     error( "invalid argument; expected string" )
 end
 
-function bigint_ensureBool( obj, default )
-    if obj == nil and default ~= nil then
-        return default
-    end
-
-    if is_bool( obj ) then
-        return obj
-    end
-
-    error( "invalid argument; expected boolean" )
-end
-
-function table_reverse( t )
-    local size = #t
-    local mid = size / 2
-    for i = 1, mid, 1 do
-        local j = size - i + 1
-        t[ i ], t[ j ] = t[ j ], t[ i ]
-    end
-
-    return t
-end
-
 -- copy t2 into t1
 -- or return copy of t1 if t2 is nil
 function table_copy( t1, t2 )
     if t2 == nil then
-        return { unpack( t1 ) }
+        return { table_unpack( t1 ) }
     end
 
     local size, t2Size = #t1, #t2
@@ -1600,16 +1587,16 @@ bigint_comparatorMap = {
     [">="] = BigInt.Ge
 }
 
+negative_one = bigint_fromnumber( bigint_new(), -1 )
+BigIntClass.NegativeOne = negative_one
+
 bigint_zero = bigint_new()
 BigIntClass.Zero = bigint_zero
 
 bigint_one = bigint_fromnumber( bigint_new(), 1 )
 BigIntClass.One = bigint_one
-
-bigint_negone = bigint_fromnumber( bigint_new(), -1 )
-BigIntClass.NegOne = bigint_negone
-
 BigIntClass.Two = bigint_fromnumber( bigint_new(), 2 )
+
 
 -- determine the max accurate integer supported by this build of Lua
 if 0x1000000 == 0x1000001 then
@@ -1622,19 +1609,17 @@ end
 
 BigIntClass.MaxNumber = bigint_maxnumber
 
-function BigInt.__bitcount()
-    return 64
-end
+function BigInt.__bitcount() return 64 end
 
-function BigIntClass.FromString( value, base )
+function BigIntClass.fromString( value, base )
     return bigint_fromstring( bigint_new(), value, base )
 end
 
-function BigIntClass.FromNumber( value )
+function BigIntClass.fromNumber( value )
     return bigint_fromnumber( bigint_new(), value )
 end
 
-function BigIntClass.FromArray( array, littleEndian )
+function BigIntClass.fromArray( array, littleEndian )
     return bigint_fromarray( bigint_new(), array, littleEndian )
 end
 
