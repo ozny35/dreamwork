@@ -130,7 +130,4 @@ do
 
 end
 
----@class gpm.std.client.window
-client.window = include( "client.window.lua" )
-
 return client

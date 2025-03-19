@@ -1,5 +1,8 @@
 local _G = _G
-local std = _G.gpm.std
+
+local gpm = _G.gpm
+
+local std = gpm.std
 local console = std.console
 local string_format = std.string.format
 local command_run = console.Command.run
@@ -15,7 +18,7 @@ local width, height = _G.ScrW(), _G.ScrH()
 ---@field height number The height of the game's window (in pixels).
 local window = {
     width = width,
-    height = height,
+    height = height
 }
 
 do
@@ -26,18 +29,18 @@ do
 
 end
 
--- TODO: replace with new hook system
--- do
+do
 
---     local hook = std.hook
+    local SizeChanged = std.Hook( "client.window.SizeChanged" )
+    window.SizeChanged = SizeChanged
 
---     hook.add( "OnScreenSizeChanged", gpm.PREFIX .. "::ScreenSize", function( old_width, old_height, new_width, new_height )
---         width, height = new_width, new_height
---         window.width, window.height = new_width, new_height
---         hook.run( "ScreenSizeChanged", new_width, new_height, old_width, old_height )
---     end, hook.PRE )
+    gpm.engine.hookCatch( "OnScreenSizeChanged", function( old_width, old_height, new_width, new_height )
+        width, height = new_width, new_height
+        window.width, window.height = new_width, new_height
+        SizeChanged( new_width, new_height, old_width, old_height )
+    end )
 
--- end
+end
 
 --- [CLIENT AND MENU]
 --- Returns the width and height of the game's window (in pixels).
@@ -55,12 +58,12 @@ function window.setSize( new_width, new_height )
     command_run( string_format( "mat_setvideomode %d %d %d", new_width, new_height, system_IsWindowed() and 1 or 0 ) )
 end
 
-window.isWindowed = system_IsWindowed
+window.isInWindow = system_IsWindowed
 
 --- [CLIENT AND MENU]
 --- Returns whether the game window is fullscreen.
 ---@return boolean: `true` if the game window is fullscreen, `false` if not.
-function window.getFullscreen()
+function window.isInFullscreen()
     return system_IsWindowed() == false
 end
 
