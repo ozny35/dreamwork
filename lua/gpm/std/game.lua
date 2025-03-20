@@ -1,6 +1,7 @@
 local _G = _G
 
 local gpm = _G.gpm
+local engine = gpm.engine
 
 ---@class gpm.std
 local std = gpm.std
@@ -26,35 +27,43 @@ std.game = game
 
 do
 
-    local getAll = glua_engine.GetGames
 
-    --- [SHARED AND MENU] Returns an array of tables corresponding to all games from which Garry's Mod supports mounting content.
+    --- [SHARED AND MENU]
+    --- Returns an array of tables corresponding to all games from which Garry's Mod supports mounting content.
     ---@return table: Array of tables with the following fields: `appid`, `title`, `folder`, `owned`, `installed`, `mounted`.
+    ---@return integer: The length of the list.
     function game.getAll()
-        local games = getAll()
+        local games = engine.games
+        local lst, length = {}, 0
 
-        for i = 1, #games do
+        for i = 1, engine.game_count, 1 do
             local data = games[ i ]
-            data.appid = data.depot
-            data.depot = nil
+            length = length + 1
+            lst[ length ] = {
+                appid = data.depot,
+                folder = data.folder,
+                installed = data.installed,
+                mounted = data.mounted,
+                owned = data.owned,
+                title = data.title
+            }
         end
 
-        return games
+        return lst, length
     end
 
-    --- [SHARED AND MENU] Checks whether or not a game is currently mounted.
-    ---@param appID number Steam AppID of the game.
-    ---@return boolean: Returns `true` if the game is mounted, `false` otherwise.
-    function game.isMounted( appID )
-        local games = getAll()
+    local mounted_games = engine.mounted_games
 
-        for i = 1, #games do
-            if games[ i ].depot == appID then
-                return games[ i ].mounted == true
-            end
+    --- [SHARED AND MENU]
+    --- Checks whether or not a game is currently mounted.
+    ---@param folder_name string The folder name of the game.
+    ---@return boolean: Returns `true` if the game is mounted, `false` otherwise.
+    function game.isMounted( folder_name )
+        if folder_name == "episodic" or folder_name == "ep2" or folder_name == "lostcoast" then
+            folder_name = "hl2"
         end
 
-        return false
+        return mounted_games[ folder_name ] == true
     end
 
 end
@@ -259,7 +268,7 @@ end
 
 do
 
-    local engine_hookCatch = gpm.engine.hookCatch
+    local engine_hookCatch = engine.hookCatch
     local Hook = std.Hook
 
     if game.Tick == nil then

@@ -84,12 +84,15 @@ local WorkshopItemClass = std.class.create( WorkshopItem )
 local findWorkshopItem
 do
 
-    local engine_GetAddons = _G.engine.GetAddons
-    local ipairs = _G.ipairs
+    local engine = gpm.engine
 
     function findWorkshopItem( wsid )
-        for _, addon in ipairs( engine_GetAddons() ) do
-            if addon.wsid == wsid then return addon end
+        local addons = engine.addons
+        for i = 1, engine.addon_count, 1 do
+            local data = addons[ i ]
+            if data.wsid == wsid then
+                return data
+            end
         end
     end
 
@@ -97,9 +100,8 @@ do
     ---@return WorkshopItem[]: The subscribed addons.
     ---@return integer: The length of the addons found array (`#addons`).
     function WorkshopItemClass.getDownloaded()
-        local addons = engine_GetAddons()
+        local addons, count = engine.addons, engine.addon_count
 
-        local count = #addons
         for i = 1, count, 1 do
             addons[ i ] = WorkshopItemClass( addons[ i ].wsid )
         end
@@ -111,12 +113,11 @@ do
     ---@return WorkshopItem[]: The mounted addons.
     ---@return integer: The length of the addons found array (`#addons`).
     function WorkshopItemClass.getMounted()
-        local addons = engine_GetAddons()
+        local addons = engine.addons
 
         local result, length = {}, 0
-        for i = 1, #addons, 1 do
+        for i = 1, engine.addon_count, 1 do
             local data = addons[ i ]
-
             if data.mounted then
                 length = length + 1
                 result[ length ] = WorkshopItemClass( data.wsid )
@@ -232,8 +233,6 @@ end
 
 do
 
-    local mounted = {}
-
     --- [SHARED AND MENU] Checks if the addon is mounted.
     ---@param wsid string The workshop ID of the addon.
     ---@return boolean: `true` if the addon is mounted, `false` otherwise.
@@ -255,21 +254,13 @@ end
 
 do
 
-    local downloaded = {}
-
     --- [SHARED AND MENU] Checks if the publication is downloaded.
     ---@param wsid string The workshop ID of the publication.
     ---@return boolean: `true` if the publication is downloaded, `false` otherwise.
     local function isDownloaded( wsid )
-        local value = downloaded[ wsid ]
-        if value == nil then
-            local data = findWorkshopItem( wsid )
-            if data == nil then return false end
-            value = data.downloaded == true
-            downloaded[ wsid ] = value
-        end
-
-        return value
+        local data = findWorkshopItem( wsid )
+        if data == nil then return false end
+        return data.downloaded == true
     end
 
     --- [SHARED AND MENU] Checks if the addon is downloaded.

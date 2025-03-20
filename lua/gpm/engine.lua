@@ -447,4 +447,94 @@ if _G.gamemode == nil then
 
 end
 
+do
+
+
+    local engine_GetGames, engine_GetAddons
+    do
+        local glua_engine = _G.engine
+        engine_GetGames, engine_GetAddons = glua_engine.GetGames, glua_engine.GetAddons
+    end
+
+    local games, addons, game_count, addon_count
+
+    --- [SHARED AND MENU]
+    --- Returns all mounted addons.
+    ---@return table, integer
+    function engine.getAddons()
+        local lst, length = {}, 0
+
+        for i = 1, addon_count, 1 do
+            local data = addons[ i ]
+            length = length + 1
+            lst[ length ] = {
+                downloaded = data.downloaded,
+                timeadded = data.timeadded,
+                updated = data.updated,
+                mounted = data.mounted,
+                models = data.models,
+                title = data.title,
+                file = data.file,
+                size = data.size,
+                tags = data.tags,
+                wsid = data.wsid
+            }
+        end
+
+        return lst, length
+    end
+
+    -- TODO: make somewhere Addon is mounted function by addon titile
+
+    local mounted_addons = {}
+    engine.mounted_addons = mounted_addons
+
+    local mounted_games = {}
+    engine.mounted_games = mounted_games
+
+    local function update_mounted()
+        games, addons = engine_GetGames(), engine_GetAddons()
+        game_count, addon_count = #games, #addons
+
+        engine.games, engine.game_count = games, game_count
+        engine.addons, engine.addon_count = addons, addon_count
+
+        local mounted, mounted_count = {}, 0
+
+        for key in pairs( mounted_games ) do
+            mounted_games[ key ] = nil
+        end
+
+        for i = 1, game_count, 1 do
+            local data = games[ i ]
+            if data.mounted then
+                local name = data.folder
+                mounted_games[ name ] = true
+                mounted_count = mounted_count + 1
+                mounted[ mounted_count ] = name
+            end
+        end
+
+        for key in pairs( mounted_addons ) do
+            mounted_addons[ key ] = nil
+        end
+
+        for i = 1, addon_count, 1 do
+            local data = addons[ i ]
+            if data.mounted then
+                local name = data.title
+                mounted_addons[ name ] = true
+                mounted_count = mounted_count + 1
+                mounted[ mounted_count ] = name
+            end
+        end
+
+        engine.mounted, engine.mounted_count = mounted, mounted_count
+    end
+
+    engine.hookCatch( "GameContentChanged", update_mounted )
+    update_mounted()
+
+end
+
 return engine
