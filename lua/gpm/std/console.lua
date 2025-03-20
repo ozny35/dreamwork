@@ -14,6 +14,7 @@ local table_insert, table_remove = std.table.insert, std.table.remove
 --- [SHARED AND MENU]
 --- The console library.
 ---@class gpm.std.console
+---@field visible boolean `true` if the console is visible, `false` otherwise.
 local console = {}
 
 if std.MENU then
@@ -34,6 +35,26 @@ if std.MENU then
     --- Toggles the console.
     function console.toggle()
         RunConsoleCommand( "toggleconsole" )
+    end
+
+end
+
+if std.CLIENT_MENU then
+
+    local gui = _G.gui
+    if gui == nil then
+        console.visible = false
+    else
+        local gui_IsConsoleVisible = gui.IsConsoleVisible
+        if gui_IsConsoleVisible == nil then
+            console.visible = false
+        else
+            console.visible = gui_IsConsoleVisible()
+
+            _G.timer.Create( gpm.PREFIX .. " - gui.IsConsoleVisible", 0.25, 0, function()
+                console.visible = gui_IsConsoleVisible()
+            end )
+        end
     end
 
 end
@@ -208,7 +229,8 @@ do
     local isstring, isnumber = std.isstring, std.isnumber
     local type = std.type
 
-    ---@alias ConsoleVariableType string
+    ---@alias gpm.std.console.Variable.Type
+    ---| string # The type of value of the console variable.
     ---| "boolean"
     ---| "number"
     ---| "string"
@@ -227,13 +249,13 @@ do
     ---@class gpm.std.console.Variable: gpm.std.Object
     ---@field __class gpm.std.console.Variable
     ---@field protected object ConVar: The `ConVar` object.
-    ---@field protected type ConsoleVariableType: The type of the console variable.
+    ---@field protected type gpm.std.console.Variable.Type: The type of the console variable.
     ---@field name string The name of the console variable.
     local Variable = class.base( "Variable" )
 
     local variables = {}
 
-    ---@param data ConsoleVariableData The data of the console variable.
+    ---@param data gpm.std.console.Variable.Data The data of the console variable.
     ---@protected
     function Variable:__init( data )
         local cvar_type = data.type
@@ -314,7 +336,7 @@ do
     --- The console variable class.
     ---@class gpm.std.console.VariableClass: gpm.std.console.Variable
     ---@field __base gpm.std.console.Variable
-    ---@overload fun( data: ConsoleVariableData ): ConsoleVariable
+    ---@overload fun( data: gpm.std.console.Variable.Data ): ConsoleVariable
     local VariableClass = class.create( Variable )
     console.Variable = VariableClass
 
@@ -340,7 +362,7 @@ do
     --- [SHARED AND MENU]
     --- Gets a `ConsoleVariable` object by its name.
     ---@param name string The name of the console variable.
-    ---@param cvar_type ConsoleVariableType?: The type of the console variable.
+    ---@param cvar_type gpm.std.console.Variable.Type?: The type of the console variable.
     ---@return gpm.std.console.Variable?
     function VariableClass.get( name, cvar_type )
         local value = variables[ name ]
@@ -724,7 +746,7 @@ do
                 end
             end
         end
-    end, 1 )
+    end )
 
 end
 
