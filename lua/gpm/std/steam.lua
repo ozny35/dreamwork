@@ -17,8 +17,8 @@ end
 --- Steam library.
 ---@class gpm.std.steam
 local steam = {}
-std.steam = steam
 
+steam.getTime = _G.system and _G.system.SteamTime
 
 if steamworks ~= nil then
 
@@ -146,6 +146,4 @@ do
 
 end
 
-local include = gpm.dofile
--- steam.ID = steam.ID or include( "steam.id.lua" )
-steam.WorkshopItem = steam.WorkshopItem or include( "steam.workshop_item.lua" )
+return steam

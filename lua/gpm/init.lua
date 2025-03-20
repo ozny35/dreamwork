@@ -35,14 +35,20 @@ gpm.transducers = transducers
 
 --- gpm standard environment
 ---@class gpm.std
----@field MENU boolean `true` if gpm is running on the menu, `false` otherwise.
----@field CLIENT boolean `true` if gpm is running on the client, `false` otherwise.
----@field SERVER boolean `true` if gpm is running on the server, `false` otherwise.
----@field SHARED boolean `true` if gpm is running on the client or server, `false` otherwise.
----@field CLIENT_MENU boolean `true` if gpm is running on the client or menu, `false` otherwise.
----@field CLIENT_SERVER boolean `true` if gpm is running on the client or server, `false` otherwise.
----@field DEDICATED_SERVER boolean `true` if gpm is running on a dedicated server, `false` otherwise.
----@field DEVELOPER boolean cached value of `developer` console variable.
+---@field MENU boolean `true` if code is running on the menu, `false` otherwise.
+---@field CLIENT boolean `true` if code is running on the client, `false` otherwise.
+---@field SERVER boolean `true` if code is running on the server, `false` otherwise.
+---@field SHARED boolean `true` if code is running on the client or server, `false` otherwise.
+---@field CLIENT_MENU boolean `true` if code is running on the client or menu, `false` otherwise.
+---@field CLIENT_SERVER boolean `true` if code is running on the client or server, `false` otherwise.
+---@field DEVELOPER integer A cached value of `developer` console variable.
+---@field OSX boolean `true` if the game is running on OSX.
+---@field LINUX boolean `true` if the game is running on Linux.
+---@field WINDOWS boolean `true` if the game is running on Windows.
+---@field BRANCH string A variable containing a string indicating which (Beta) Branch of the game you are using.
+---@field SINGLEPLAYER boolean `true` if code is running on a single player game, `false` otherwise.
+---@field DEDICATED boolean `true` if code is running on a dedicated server, `false` otherwise.
+---@field GAMEMODE string A variable containing the name of the active gamemode.
 local std = gpm.std
 if std == nil then
     std = include( "std/constants.lua" )
@@ -406,22 +412,6 @@ do
 
 end
 
-do
-
-    local game = _G.game
-    if game == nil then
-        std.DEDICATED_SERVER = false
-    else
-        local game_isDedicatedServer = game.IsDedicated
-        if std.isfunction( game_isDedicatedServer ) then
-            std.DEDICATED_SERVER = game_isDedicatedServer()
-        else
-            std.DEDICATED_SERVER = false
-        end
-    end
-
-end
-
 local math = include( "std/math.lua" )
 std.math = math
 
@@ -651,7 +641,7 @@ do
 
 end
 
-gpm.engine = include( "gpm/engine.lua" )
+gpm.engine = include( "engine.lua" )
 
 local class = include( "std/class.lua" )
 std.class = class
@@ -955,7 +945,7 @@ do
     local getDeveloper
     if developer == nil then
         getDeveloper = function() return 1 end
-    elseif std.DEDICATED_SERVER then
+    elseif std.DEDICATED then
         local value = developer:get()
         developer:addChangeCallback( "gpm::init", function( _, __, new ) value = new end )
         getDeveloper = function() return value end
@@ -963,7 +953,9 @@ do
         getDeveloper = function() return developer:get() end
     end
 
-    local key2call = { DEVELOPER = getDeveloper }
+    local key2call = {
+        DEVELOPER = getDeveloper
+    }
 
     std.setmetatable( std, {
         __index = function( _, key )
@@ -1065,7 +1057,7 @@ do
     local http = include( "std/http.lua" )
     std.http = http
 
-    http.github = include( "http.github.lua" )
+    http.github = include( "std/http.github.lua" )
 
 end
 
@@ -1075,15 +1067,26 @@ do
     local steam = include( "std/steam.lua" )
     std.steam = steam
 
-    -- steam.ID = steam.ID or include( "steam.id.lua" )
-    steam.WorkshopItem = steam.WorkshopItem or include( "steam.workshop_item.lua" )
+    -- steam.ID = steam.ID or include( "std/steam.id.lua" )
+    steam.WorkshopItem = steam.WorkshopItem or include( "std/steam.workshop_item.lua" )
 
 end
 
 if std.CLIENT_MENU then
-    std.menu = include( "std/menu.lua" )
-    std.client = include( "std/client.lua" )
+
     std.input = include( "std/input.lua" )
+    std.menu = include( "std/menu.lua" )
+
+    do
+
+        ---@class gpm.std.client
+        local client = include( "std/client.lua" )
+        std.client = client
+
+        client.window = include( "std/client.window.lua" )
+
+    end
+
 end
 
 std.server = include( "std/server.lua" )

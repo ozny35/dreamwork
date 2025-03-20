@@ -11,15 +11,14 @@ local console = std.console
 local console_Variable = console.Variable
 
 ---@class gpm.std.level
-local level = std.level or {
-    getName = glua_game.GetMap
-}
-
+local level = std.level or {}
 std.level = level
 
+level.getName = level.getName or glua_game.GetMap
+
 if std.CLIENT then
-    level.getSunInfo = glua_util.GetSunInfo
-    level.redownloadLightmaps = _G.render.RedownloadAllLightmaps
+    level.getSunInfo = level.getSunInfo or glua_util.GetSunInfo
+    level.redownloadLightmaps = level.redownloadLightmaps or _G.render.RedownloadAllLightmaps
 end
 
 --- Checks if a map/level exists.
@@ -34,31 +33,31 @@ level.exists = exists
 
 if std.SHARED then
 
-    level.getEntity = glua_game.GetWorld
+    level.getEntity = level.getEntity or glua_game.GetWorld
 
-    level.cleanup = glua_game.CleanUpMap
-    level.cleanupRagdolls = glua_game.RemoveRagdolls -- idk what to do with this
+    level.cleanup = level.cleanup or glua_game.CleanUpMap
+    level.cleanupRagdolls = level.cleanupRagdolls or glua_game.RemoveRagdolls -- idk what to do with this
 
-    level.traceLine = glua_util.TraceLine
-    level.traceHull = glua_util.TraceHull
-    level.traceEntity = glua_util.TraceEntityHull
+    level.traceLine = level.traceLine or glua_util.TraceLine
+    level.traceHull = level.traceHull or glua_util.TraceHull
+    level.traceEntity = level.traceEntity or glua_util.TraceEntityHull
 
-    level.getStartSpot = glua_game.StartSpot
-    level.getContents = glua_util.PointContents
+    level.getStartSpot = level.getStartSpot or glua_game.StartSpot
+    level.getContents = level.getContents or glua_util.PointContents
 
 end
 
 if std.SERVER then
 
-    level.getCounter = glua_game.GetGlobalCounter
-    level.setCounter = glua_game.SetGlobalCounter
-    level.setLightStyle = glua_engine.LightStyle
-    level.getVersion = glua_game.GetMapVersion
-    level.getLoadType = glua_game.MapLoadType
-    level.getState = glua_game.GetGlobalState
-    level.setState = glua_game.SetGlobalState
-    level.sendCommand = _G.hammer.SendCommand
-    level.getNextMap = glua_game.GetMapNext
+    level.changeLightStyle = level.changeLightStyle or glua_engine.LightStyle
+    level.getCounter = level.getCounter or glua_game.GetGlobalCounter
+    level.setCounter = level.setCounter or glua_game.SetGlobalCounter
+    level.getVersion = level.getVersion or glua_game.GetMapVersion
+    level.getLoadType = level.getLoadType or glua_game.MapLoadType
+    level.getState = level.getState or glua_game.GetGlobalState
+    level.setState = level.setState or glua_game.SetGlobalState
+    level.sendCommand = level.sendCommand or _G.hammer.SendCommand
+    level.getNext = level.getNext or glua_game.GetMapNext
 
     do
 

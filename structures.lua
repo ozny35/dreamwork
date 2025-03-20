@@ -194,7 +194,7 @@ ServerQueryData.query_failed = nil
 ServerQueryData.finished = nil
 
 --- Table used by `console.Variable` class constructor.
----@class ConsoleVariableData
+---@class gpm.std.console.Variable.Data
 local ConsoleVariableData = {}
 
 --- The name of the console variable.
@@ -202,7 +202,7 @@ local ConsoleVariableData = {}
 ConsoleVariableData.name = nil
 
 --- The type of the console variable.
----@type ConsoleVariableType?
+---@type gpm.std.console.Variable.Type?
 ConsoleVariableData.type = nil
 
 --- The flags of the console variable.

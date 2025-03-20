@@ -572,7 +572,7 @@ end
 ---@param b number?: The second number.
 ---@param tolerance number?: The maximum difference between the numbers.
 ---@return boolean: `true` if the numbers are near, otherwise `false`.
-function math.isNear( a, b, tolerance )
+function math.isnear( a, b, tolerance )
     return math_abs( a - ( b or 0 ) ) <= ( tolerance or 0 )
 end
 

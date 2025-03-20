@@ -1,8 +1,9 @@
-local timer, std
-do
-    local _G = _G
-    timer, std = _G.timer, _G.gpm.std
+local timer = _G.timer
+if timer == nil then
+    _G.gpm.Logger:error( "gpm.std.Timer: timer library not found" )
 end
+
+local std = _G.gpm.std
 
 --- [SHARED AND MENU]
 --- Timer object.
@@ -44,6 +45,34 @@ do
 
     local timer_Create = timer.Create
 
+    local function call( self )
+        self[ -5 ] = true
+
+        for i = 2, self[ 0 ], 2 do
+            if not self[ -5 ] then break end
+            self[ i ]( self )
+        end
+
+        self[ -5 ] = false
+
+        local queue = self[ -6 ]
+
+        if queue == nil then
+            return
+        end
+
+        self[ -6 ] = nil
+
+        for i = 1, #queue, 1 do
+            local args = queue[ i ]
+            if args[ 1 ] then
+                self:attach( args[ 3 ], args[ 2 ] )
+            else
+                self:detach( args[ 2 ] )
+            end
+        end
+    end
+
     ---@protected
     function Timer:__init( name, delay, repetitions )
         if repetitions == nil then repetitions = 1 end
@@ -57,28 +86,7 @@ do
         self[ -5 ] = false
 
         timer_Create( name, delay, repetitions, function()
-            self[ -5 ] = true
-
-            for i = 2, self[ 0 ], 2 do
-                if not self[ -5 ] then break end
-                self[ i ]( self )
-            end
-
-            self[ -5 ] = false
-
-            local queue = self[ -6 ]
-            if queue ~= nil then
-                self[ -6 ] = nil
-
-                for i = 1, #queue, 1 do
-                    local args = queue[ i ]
-                    if args[ 1 ] then
-                        self:attach( args[ 3 ], args[ 2 ] )
-                    else
-                        self:detach( args[ 2 ] )
-                    end
-                end
-            end
+            return call( self )
         end )
     end
 

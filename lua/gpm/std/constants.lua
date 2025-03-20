@@ -1655,7 +1655,6 @@ end
 ---| `524288` `[LUA_SERVER]` Set automatically on all cvars and console commands created by the `server` Lua state.
 
 ---@class gpm.std
----@field BRANCH string A variable containing a string indicating which (Beta) Branch of the game you are using.
 local constants = {
     --- Garry's Mod default environment
     gmod = _G,
@@ -1964,6 +1963,31 @@ local constants = {
     }
 
 }
+
+do
+
+    local jit_os = jit.os
+
+    constants.OSX = jit_os == "OSX"
+    constants.LINUX = jit_os == "Linux"
+    constants.WINDOWS = jit_os == "Windows"
+
+end
+
+do
+
+    local engine = _G.engine
+    if engine == nil then
+        constants.GAMEMODE = "base"
+        constants.SINGLEPLAYER = false
+        constants.DEDICATED = false
+    else
+        constants.GAMEMODE = engine.ActiveGamemode()
+        constants.SINGLEPLAYER = game.SinglePlayer()
+        constants.DEDICATED = game.IsDedicated()
+    end
+
+end
 
 constants._G = constants
 
