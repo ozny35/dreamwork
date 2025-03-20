@@ -14,7 +14,27 @@ local console_Variable = console.Variable
 local level = std.level or {}
 std.level = level
 
-level.getName = level.getName or glua_game.GetMap
+do
+
+    local game_GetMap = level.getName or glua_game.GetMap
+    level.getName = game_GetMap
+
+    setmetatable( level, {
+        __index = function( _, key )
+            if key ~= "name" then return end
+
+            local map = game_GetMap()
+            if map == nil or map == "" then
+                return "unknown"
+            end
+
+            level.name = map
+            return map
+        end
+    } )
+
+end
+
 
 if std.CLIENT then
     level.getSunInfo = level.getSunInfo or glua_util.GetSunInfo
