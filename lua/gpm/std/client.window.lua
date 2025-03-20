@@ -16,16 +16,31 @@ local width, height = _G.ScrW(), _G.ScrH()
 ---@class gpm.std.client.window
 ---@field width number The width of the game's window (in pixels).
 ---@field height number The height of the game's window (in pixels).
+---@field focus boolean `true` if the game's window has focus, `false` otherwise.
 local window = {
+    flash = _G.system.FlashWindow,
+    focus = true,
     width = width,
     height = height
 }
 
 do
 
-    local glua_system = _G.system
-    window.flash = glua_system.FlashWindow
-    window.hasFocus = glua_system.HasFocus
+    local system = _G.system
+    if system ~= nil and system.HasFocus ~= nil then
+
+        local system_HasFocus = system.HasFocus
+
+        local has_focus = system_HasFocus()
+        window.focus = has_focus
+
+        _G.timer.Create( gpm.PREFIX .. " - system.HasFocus", 0.05, 0, function()
+            if system_HasFocus() == has_focus then return end
+            has_focus = not has_focus
+            window.focus = has_focus
+        end )
+
+    end
 
 end
 
