@@ -6,17 +6,17 @@ local table_unpack = table.unpack
 local math_floor = math.floor
 
 --- [SHARED AND MENU]
---- The binary library.
+--- A binary library.
 ---@class gpm.std.crypto.binary
 local binary = {}
 
-local unsigned_implode, unsigned_explode, unsigned_readInteger, unsigned_writeInteger
+local unsigned, unsigned_implode, unsigned_explode, unsigned_readInteger, unsigned_writeInteger
 do
 
 	--- [SHARED AND MENU]
 	--- The unsigned binary library.
 	---@class gpm.std.crypto.binary.unsigned
-	local unsigned = {}
+	unsigned = {}
 	binary.unsigned = unsigned
 
 	--- Implodes a table of booleans (bits) into a number.
@@ -154,7 +154,16 @@ do
 	---@param start_position? integer The start position of the binary string.
 	---@return integer: The unsigned short.
 	function unsigned.readShort( str, big_endian, start_position )
-		return unsigned_readInteger( str, 2, big_endian, start_position )
+		if start_position == nil then start_position = 1 end
+		local b1, b2
+
+		if big_endian then
+			b1, b2 = string_byte( str, start_position, start_position + 1 )
+		else
+			b2, b1 = string_byte( str, start_position, start_position + 1 )
+		end
+
+		return b1 * 0x100 + b2
 	end
 
 	--- [SHARED AND MENU]
@@ -165,7 +174,10 @@ do
 	---@param big_endian? boolean The endianness of the binary string.
 	---@return string: The binary string.
 	function unsigned.writeShort( value, big_endian )
-		return unsigned_writeInteger( value, 2, big_endian )
+		return string_char(
+			big_endian and math_floor( value / 0x100 ) or ( value % 0x100 ),
+			big_endian and ( value % 0x100 ) or math_floor( value / 0x100 )
+		)
 	end
 
 	--- [SHARED AND MENU]
@@ -177,7 +189,16 @@ do
 	---@param start_position? integer The start position of the binary string.
 	---@return integer: The unsigned long.
 	function unsigned.readLong( str, big_endian, start_position )
-		return unsigned_readInteger( str, 4, big_endian, start_position )
+		if start_position == nil then start_position = 1 end
+		local b1, b2, b3, b4
+
+		if big_endian then
+			b1, b2, b3, b4 = string_byte( str, start_position, start_position + 3 )
+		else
+			b4, b3, b2, b1 = string_byte( str, start_position, start_position + 3 )
+		end
+
+		return ( ( b1 * 0x100 + b2 ) * 0x100 + b3 ) * 0x100 + b4
 	end
 
 	--- [SHARED AND MENU]
@@ -188,30 +209,53 @@ do
 	---@param big_endian? boolean The endianness of the binary string.
 	---@return string: The binary string.
 	function unsigned.writeLong( value, big_endian )
-		return unsigned_writeInteger( value, 4, big_endian )
+		return string_char(
+			big_endian and math_floor( value / 0x1000000 ) or ( value % 0x100 ),
+			( big_endian and math_floor( value / 0x10000 ) or math_floor( value / 0x100 ) ) % 0x100,
+			( big_endian and math_floor( value / 0x100 ) or math_floor( value / 0x10000 ) ) % 0x100,
+			big_endian and ( value % 0x100 ) or math_floor( value / 0x1000000 )
+		)
 	end
 
 	--- [SHARED AND MENU]
-	--- Reads an unsigned long long (8 bytes/64 bits) from a binary string.
+	--- Reads an unsigned long long (8 bytes/53 bits) from a binary string.
 	---
-	--- Allowable values from `0` to `18446744073709551615`.
+	--- Allowable values from `0` to `9007199254740991`.
 	---@param str string The binary string.
 	---@param big_endian? boolean The endianness of the binary string.
 	---@param start_position? integer The start position of the binary string.
 	---@return integer: The unsigned long long.
 	function unsigned.readLongLong( str, big_endian, start_position )
-		return unsigned_readInteger( str, 8, big_endian, start_position )
+		if start_position == nil then start_position = 1 end
+		local b1, b2, b3, b4, b5, b6, b7, b8
+
+		if big_endian then
+			b1, b2, b3, b4, b5, b6, b7, b8 = string_byte( str, start_position, start_position + 7 )
+		else
+			b8, b7, b6, b5, b4, b3, b2, b1 = string_byte( str, start_position, start_position + 7 )
+		end
+
+		return ( ( ( ( ( ( b1 * 0x100 + b2 ) * 0x100 + b3 ) * 0x100 + b4 ) * 0x100 + b5 ) * 0x100 + b6 ) * 0x100 + b7 ) * 0x100 + b8
 	end
 
 	--- [SHARED AND MENU]
-	--- Writes an unsigned long long (8 bytes/64 bits) to a binary string.
+	--- Writes an unsigned long long (8 bytes/53 bits) to a binary string.
 	---
-	--- Allowable values from `0` to `18446744073709551615`.
+	--- Allowable values from `0` to `9007199254740991`.
 	---@param value integer The unsigned long long.
 	---@param big_endian? boolean The endianness of the binary string.
 	---@return string: The binary string.
 	function unsigned.writeLongLong( value, big_endian )
-		return unsigned_writeInteger( value, 8, big_endian )
+		return string_char(
+			big_endian and 0 or ( value % 0x100 ),
+			( big_endian and math_floor( value / 0x1000000000000 ) or math_floor( value / 0x100 ) ) % 0x100,
+			( big_endian and math_floor( value / 0x10000000000 ) or math_floor( value / 0x10000 ) ) % 0x100,
+			( big_endian and math_floor( value / 0x100000000 ) or math_floor( value / 0x1000000 ) ) % 0x100,
+			( big_endian and math_floor( value / 0x1000000 ) or math_floor( value / 0x100000000 ) ) % 0x100,
+			( big_endian and math_floor( value / 0x10000 ) or math_floor( value / 0x10000000000 ) ) % 0x100,
+			( big_endian and math_floor( value / 0x100 ) or math_floor( value / 0x1000000000000 ) ) % 0x100,
+			big_endian and ( value % 0x100 ) or 0
+		)
 	end
 
 	--- [SHARED AND MENU]
@@ -328,73 +372,124 @@ do
 		return string_char( value + 0x80 )
 	end
 
-	--- [SHARED AND MENU]
-	--- Reads a signed short (2 bytes/16 bits) from a binary string.
-	---
-	--- Allowable values from `-32768` to `32767`.
-	---@param str string The binary string.
-	---@param big_endian? boolean The endianness of the binary string.
-	---@param start_position? integer The start position of the binary string.
-	---@return integer: The signed short.
-	function signed.readShort( str, big_endian, start_position )
-		return signed_readInteger( str, 2, big_endian, start_position )
+	do
+
+		local unsigned_readShort = unsigned.readShort
+
+		--- [SHARED AND MENU]
+		--- Reads a signed short (2 bytes/16 bits) from a binary string.
+		---
+		--- Allowable values from `-32768` to `32767`.
+		---@param str string The binary string.
+		---@param big_endian? boolean The endianness of the binary string.
+		---@param start_position? integer The start position of the binary string.
+		---@return integer: The signed short.
+		function signed.readShort( str, big_endian, start_position )
+			return unsigned_readShort( str, big_endian, start_position ) - 0x8000
+		end
+
+	end
+
+	do
+
+		local unsigned_writeShort = unsigned.writeShort
+
+		--- [SHARED AND MENU]
+		--- Writes a signed short (2 bytes/16 bits) to a binary string.
+		---
+		--- Allowable values from `-32768` to `32767`.
+		---@param value integer The signed short.
+		---@param big_endian? boolean The endianness of the binary string.
+		---@return string: The binary string.
+		function signed.writeShort( value, big_endian )
+			return unsigned_writeShort( value + 0x8000, big_endian )
+		end
+
+	end
+
+	do
+
+		local unsigned_readLong = unsigned.readLong
+
+		--- [SHARED AND MENU]
+		--- Reads a signed long (4 bytes/32 bits) from a binary string.
+		---
+		--- Allowable values from `-2147483648` to `2147483647`.
+		---@param str string The binary string.
+		---@param big_endian? boolean The endianness of the binary string.
+		---@param start_position? integer The start position of the binary string.
+		---@return integer: The signed long.
+		function signed.readLong( str, big_endian, start_position )
+			return unsigned_readLong( str, big_endian, start_position ) - 0x80000000
+		end
+
+	end
+
+	do
+
+		local unsigned_writeLong = unsigned.writeLong
+
+		--- [SHARED AND MENU]
+		--- Writes a signed long (4 bytes/32 bits) to a binary string.
+		---
+		--- Allowable values from `-2147483648` to `2147483647`.
+		---@param value integer The signed long.
+		---@param big_endian? boolean The endianness of the binary string.
+		---@return string: The binary string.
+		function signed.writeLong( value, big_endian )
+			return unsigned_writeLong( value + 0x80000000, big_endian )
+		end
+
 	end
 
 	--- [SHARED AND MENU]
-	--- Writes a signed short (2 bytes/16 bits) to a binary string.
+	--- Reads a signed long long (8 bytes/53 bits) from a binary string.
 	---
-	--- Allowable values from `-32768` to `32767`.
-	---@param value integer The signed short.
-	---@param big_endian? boolean The endianness of the binary string.
-	---@return string: The binary string.
-	function signed.writeShort( value, big_endian )
-		return signed_writeInteger( value, 2, big_endian )
-	end
-
-	--- [SHARED AND MENU]
-	--- Reads a signed long (4 bytes/32 bits) from a binary string.
-	---
-	--- Allowable values from `-2147483648` to `2147483647`.
-	---@param str string The binary string.
-	---@param big_endian? boolean The endianness of the binary string.
-	---@param start_position? integer The start position of the binary string.
-	---@return integer: The signed long.
-	function signed.readLong( str, big_endian, start_position )
-		return signed_readInteger( str, 4, big_endian, start_position )
-	end
-
-	--- [SHARED AND MENU]
-	--- Writes a signed long (4 bytes/32 bits) to a binary string.
-	---
-	--- Allowable values from `-2147483648` to `2147483647`.
-	---@param value integer The signed long.
-	---@param big_endian? boolean The endianness of the binary string.
-	---@return string: The binary string.
-	function signed.writeLong( value, big_endian )
-		return signed_writeInteger( value, 4, big_endian )
-	end
-
-	--- [SHARED AND MENU]
-	--- Reads a signed long long (8 bytes/64 bits) from a binary string.
-	---
-	--- Allowable values from `-9223372036854775808` to `9223372036854775807`.
+	--- Allowable values from `-9007199254740991` to `9007199254740991`.
 	---@param str string The binary string.
 	---@param big_endian? boolean The endianness of the binary string.
 	---@param start_position? integer The start position of the binary string.
 	---@return integer: The signed long long.
 	function signed.readLongLong( str, big_endian, start_position )
-		return signed_readInteger( str, 8, big_endian, start_position )
+		local b1, b2, b3, b4, b5, b6, b7, b8
+
+		if big_endian then
+			b1, b2, b3, b4, b5, b6, b7, b8 = string_byte( str, start_position, start_position + 7 )
+		else
+			b8, b7, b6, b5, b4, b3, b2, b1 = string_byte( str, start_position, start_position + 7 )
+		end
+
+		if b1 < 0x80 then
+			return ( ( ( ( ( ( b1 * 0x100 + b2 ) * 0x100 + b3 ) * 0x100 + b4 ) * 0x100 + b5 ) * 0x100 + b6 ) * 0x100 + b7 ) * 0x100 + b8
+		else
+			return ( ( ( ( ( ( ( ( b1 - 0xFF ) * 0x100 + ( b2 - 0xFF ) ) * 0x100 + ( b3 - 0xFF ) ) * 0x100 + ( b4 - 0xFF ) ) * 0x100 + ( b5 - 0xFF ) ) * 0x100 + ( b6 - 0xFF ) ) * 0x100 + ( b7 - 0xFF ) ) * 0x100 + ( b8 - 0xFF ) ) - 1
+		end
 	end
 
-	--- [SHARED AND MENU]
-	--- Writes a signed long long (8 bytes/64 bits) to a binary string.
-	---
-	--- Allowable values from `-9223372036854775808` to `9223372036854775807`.
-	---@param value integer The signed long long.
-	---@param big_endian? boolean The endianness of the binary string.
-	---@return string: The binary string.
-	function signed.writeLongLong( value, big_endian )
-		return signed_writeInteger( value, 8, big_endian )
+	do
+
+		local math_ispositive = math.ispositive
+
+		--- [SHARED AND MENU]
+		--- Writes a signed long long (8 bytes/53 bits) to a binary string.
+		---
+		--- Allowable values from `-9007199254740991` to `9007199254740991`.
+		---@param value integer The signed long long.
+		---@param big_endian? boolean The endianness of the binary string.
+		---@return string: The binary string.
+		function signed.writeLongLong( value, big_endian )
+			return string_char(
+				big_endian and ( math_ispositive( value ) and 0 or 0xFF ) or ( value % 0x100 ),
+				( big_endian and math_floor( value / 0x1000000000000 ) or math_floor( value / 0x100 ) ) % 0x100,
+				( big_endian and math_floor( value / 0x10000000000 ) or math_floor( value / 0x10000 ) ) % 0x100,
+				( big_endian and math_floor( value / 0x100000000 ) or math_floor( value / 0x1000000 ) ) % 0x100,
+				( big_endian and math_floor( value / 0x1000000 ) or math_floor( value / 0x100000000 ) ) % 0x100,
+				( big_endian and math_floor( value / 0x10000 ) or math_floor( value / 0x10000000000 ) ) % 0x100,
+				( big_endian and math_floor( value / 0x100 ) or math_floor( value / 0x1000000000000 ) ) % 0x100,
+				big_endian and ( value % 0x100 ) or ( math_ispositive( value ) and 0 or 0xFF )
+			)
+		end
+
 	end
 
 	--- [SHARED AND MENU]
@@ -624,74 +719,52 @@ end
 
 local math_huge, math_tiny, math_nan = math.huge, math.tiny, math.nan
 local math_frexp, math_ldexp = math.frexp, math.ldexp
+local string_reverse = string.reverse
 
-do
+--- [SHARED AND MENU]
+--- Reads a float (4 bytes/32 bits) from a binary string.
+---
+--- Allowable values from `1.175494351e-38` to `3.402823466e+38`.
+---@param str string The binary string.
+---@param big_endian? boolean The endianness of the binary string.
+---@param start_position? integer The start position of the binary string.
+---@return number: The float.
+function binary.readFloat( str, big_endian, start_position )
+	if start_position == nil then start_position = 1 end
+	local b1, b2, b3, b4
 
-	local bit_band, bit_bor, bit_lshift, bit_rshift = bit.band, bit.bor, bit.lshift, bit.rshift
-
-	local c0 = 1 / 8388608
-	local c1 = 2 ^ -126
-
-	--- [SHARED AND MENU]
-	--- Reads a float (4 bytes/32 bits) from a binary string.
-	---
-	--- Allowable values from `1.175494351e-38` to `3.402823466e+38`.
-	---@param str string The binary string.
-	---@param big_endian? boolean The endianness of the binary string.
-	---@param start_position? integer The start position of the binary string.
-	---@return number: The float.
-	function binary.readFloat( str, big_endian, start_position )
-		if start_position == nil then start_position = 1 end
-
-		local length = string_len( str )
-		if length < start_position + 7 then
-			str = str .. string_rep( "\0", start_position + 7 - length )
-		end
-
-		str = string_sub( str, start_position, start_position + 7 )
-
-		if str == "\0\0\0\0" then
-			return 0
-		elseif str == "\255\255\255\255" then
-			return math_nan
-		elseif big_endian then
-			if str == "\128\0\0\0" then
-				return -0
-			elseif str == "\127\128\0\0" then
-				return math_huge
-			elseif str == "\255\128\0\0" then
-				return math_tiny
-			end
-		elseif str == "\0\0\0\128" then
-			return -0
-		elseif str == "\0\0\128\127" then
-			return math_huge
-		elseif str == "\0\0\128\255" then
-			return math_tiny
-		end
-
-		local b1, b2, b3, b4
-
-		if big_endian then
-			b1, b2, b3, b4 = string_byte( str, 1, 4 )
-		else
-			b4, b3, b2, b1 = string_byte( str, 1, 4 )
-		end
-
-		local sign = bit_band( b1, 0x80 ) ~= 0
-		local exponent = bit_bor( bit_lshift( bit_band( b1, 0x7F ), 1 ), bit_rshift( b2, 7 ) )
-		local mantissa = bit_bor( bit_lshift( bit_band( b2, 0x7F ), 16 ), bit_lshift( b3, 8 ), b4 )
-
-		if exponent == 0 then
-			return ( sign and -1 or 1 ) * ( mantissa * c0 ) * c1
-		elseif exponent == 255 then
-			return mantissa == 0 and ( sign and math_tiny or math_huge ) or math_nan
-		end
-
-		return ( sign and -1 or 1 ) * math_ldexp( 1 + ( mantissa * c0 ), exponent - 127 )
+	if big_endian then
+		b1, b2, b3, b4 = string_byte( str, start_position, start_position + 3 )
+	else
+		b4, b3, b2, b1 = string_byte( str, start_position, start_position + 3 )
 	end
 
-	local string_reverse = string.reverse
+	local sign = b1 > 0x7F
+	local expo = ( b1 % 0x80 ) * 0x2 + math_floor( b2 / 0x80 )
+	local mant = ( ( b2 % 0x80 ) * 0x100 + b3 ) * 0x100 + b4
+
+	if mant == 0 and expo == 0 then
+		if sign then
+			return -0.0
+		else
+			return 0.0
+		end
+	elseif expo == 0xFF then
+		if mant == 0 then
+			if sign then
+				return math_tiny
+			else
+				return math_huge
+			end
+		else
+			return math_nan
+		end
+	end
+
+	return ( sign and -1 or 1 ) * math_ldexp( 1.0 + mant / 0x800000, expo - 0x7F )
+end
+
+do
 
 	--- [SHARED AND MENU]
 	--- Writes a float (4 bytes/32 bits) to a binary string.
@@ -699,127 +772,85 @@ do
 	--- Allowable values from `1.175494351e-38` to `3.402823466e+38`.
 	---@param value number The float value.
 	---@return string: The binary string.
-	function binary.writeFloat( value, big_endian )
-		if big_endian then
-			return string_reverse( binary.writeFloat( value, false ) )
-		end
-
-		if value == 0 then
-			if ( 1 / value ) == math_huge then
-				return "\0\0\0\0"
-			elseif big_endian then
-				return "\128\0\0\0"
-			else
-				return "\0\0\0\128"
-			end
+	local function binary_writeFloat( value, big_endian )
+		if not big_endian then
+			return string_reverse( binary_writeFloat( value, true ) )
 		elseif value ~= value then
-			return "\255\255\255\255"
-		elseif value == math_huge then
-			if big_endian then
-				return "\127\128\0\0"
-			else
-				return "\0\0\128\127"
-			end
-		elseif value == math_tiny then
-			if big_endian then
-				return "\255\128\0\0"
-			else
-				return "\0\0\128\255"
-			end
+			return "\255\136\0\0"
 		end
 
-		local sign = value < 0
-		if sign then
+		local sign = false
+		if value < 0.0 then
 			value = -value
+			sign = true
 		end
 
-		local mantissa, exponent = math_frexp( value )
-		mantissa = bit_rshift( ( ( mantissa * 2 ) - 1 ) * 8388608, 0 )
-		exponent = exponent + 126
+		local mant, expo = math_frexp( value )
+		if mant == math_huge or expo > 0x80 then
+			return sign and "\255\128\0\0" or "\127\128\0\0"
+		elseif ( mant == 0.0 and expo == 0 ) or ( expo < -0x7E ) then
+			return sign and "\128\0\0\0" or "\0\0\0\0"
+		end
+
+		mant = math_floor( ( mant * 2.0 - 1.0 ) * math_ldexp( 0.5, 24 ) )
+		expo = expo + 0x7E
 
 		return string_char(
-			bit_band( mantissa, 0xFF ),
-			bit_band( bit_rshift( mantissa, 8 ), 0xFF ),
-			bit_bor( bit_lshift( bit_band( exponent, 1 ), 7 ), bit_rshift( mantissa, 16 ) ),
-			bit_bor( bit_lshift( sign and 1 or 0, 7 ), bit_rshift( exponent, 1 ) )
+			( sign and 0x80 or 0 ) + math_floor( expo / 0x2 ),
+			( expo % 0x2 ) * 0x80 + math_floor( mant / 0x10000 ),
+			math_floor( mant / 0x100 ) % 0x100,
+			mant % 0x100
 		)
 	end
 
+	binary.writeFloat = binary_writeFloat
+
+end
+
+--- [SHARED AND MENU]
+--- Reads a double from a binary string.
+---
+--- Allowable values from `2.2250738585072014e-308` to `1.7976931348623158e+308`.
+---@param str string The binary string.
+---@param big_endian? boolean The endianness of the binary string.
+---@param start_position? integer The start position of the binary string.
+---@return number: The double.
+function binary.readDouble( str, big_endian, start_position )
+	if start_position == nil then start_position = 1 end
+	local b1, b2, b3, b4, b5, b6, b7, b8
+
+	if big_endian then
+		b1, b2, b3, b4, b5, b6, b7, b8 = string_byte( str, start_position, start_position + 7 )
+	else
+		b8, b7, b6, b5, b4, b3, b2, b1 = string_byte( str, start_position, start_position + 7 )
+	end
+
+	local sign = b1 > 0x7F
+	local expo = ( b1 % 0x80 ) * 0x10 + math_floor( b2 / 0x10 )
+	local mant = ( ( ( ( ( ( b2 % 0x10 ) * 0x100 + b3 ) * 0x100 + b4 ) * 0x100 + b5 ) * 0x100 + b6 ) * 0x100 + b7 ) * 0x100 + b8
+
+	if mant == 0 and expo == 0 then
+		if sign then
+			return -0.0
+		else
+			return 0.0
+		end
+	elseif expo == 0x7FF then
+		if mant == 0 then
+			if sign then
+				return math_tiny
+			else
+				return math_huge
+			end
+		else
+			return math_nan
+		end
+	end
+
+	return ( sign and -1 or 1 ) * math_ldexp( 1.0 + mant / 4503599627370496.0, expo - 0x3FF )
 end
 
 do
-
-	local c0 = ( 2 ^ 11 ) - 1
-	local c1 = 2 ^ 52
-	local c2 = 2 ^ 10
-	local c3 = 1 - 52 - c2
-	local c4 = 2 ^ 53
-	local bias = c2 - 1
-
-	--- [SHARED AND MENU]
-	--- Reads a double from a binary string.
-	---
-	--- Allowable values from `2.2250738585072014e-308` to `1.7976931348623158e+308`.
-	---@param str string The binary string.
-	---@param big_endian? boolean The endianness of the binary string.
-	---@param start_position? integer The start position of the binary string.
-	---@return number: The double.
-	function binary.readDouble( str, big_endian, start_position )
-		if start_position == nil then start_position = 1 end
-
-		local length = string_len( str )
-		if length < start_position + 7 then
-			str = str .. string_rep( "\0", start_position + 7 - length )
-		end
-
-		str = string_sub( str, start_position, start_position + 7 )
-
-		if str == "\0\0\0\0\0\0\0\0" then
-			return 0
-		elseif str == "\255\255\255\255\255\255\255\255" then
-			return math_nan
-		elseif big_endian then
-			if str == "\128\0\0\0\0\0\0\0" then
-				return -0
-			elseif str == "\127\240\0\0\0\0\0\0" then
-				return math_huge
-			elseif str == "\255\240\0\0\0\0\0\0" then
-				return math_tiny
-			end
-		elseif str == "\0\0\0\0\0\0\0\128" then
-			return -0
-		elseif str == "\0\0\0\0\0\0\240\127" then
-			return math_huge
-		elseif str == "\0\0\0\0\0\0\240\255" then
-			return math_tiny
-		end
-
-		local bits = unpack( str, 8, big_endian )
-
-		local mantissa = unsigned_implode( bits, 52 )
-		local exponent = unsigned_implode( bits, 11, 53 )
-		local sign = bits[ 64 ]
-
-		if exponent == c0 then
-			if mantissa == 0 then
-				if sign then
-					return math_tiny
-				else
-					return math_huge
-				end
-			else
-				return math_nan
-			end
-		end
-
-		if exponent ~= 0 then
-			mantissa = mantissa + c1
-		else
-			exponent = 1
-		end
-
-		return ( sign and -1 or 1 ) * math_ldexp( mantissa, exponent + c3 )
-	end
 
 	--- [SHARED AND MENU]
 	--- Writes a double to a binary string.
@@ -828,59 +859,42 @@ do
 	---@param value number The double.
 	---@param big_endian? boolean The endianness of the binary string.
 	---@return string: The binary string.
-	function binary.writeDouble( value, big_endian )
-		if value == 0 then
-			if ( 1 / value ) == math_huge then
-				return "\0\0\0\0\0\0\0\0"
-			elseif big_endian then
-				return "\128\0\0\0\0\0\0\0"
-			else
-				return "\0\0\0\0\0\0\0\128"
-			end
-		elseif value ~= value then
-			return "\255\255\255\255\255\255\255\255"
-		elseif value == math_huge then
-			if big_endian then
-				return "\127\240\0\0\0\0\0\0"
-			else
-				return "\0\0\0\0\0\0\240\127"
-			end
-		elseif value == math_tiny then
-			if big_endian then
-				return "\255\240\0\0\0\0\0\0"
-			else
-				return "\0\0\0\0\0\0\240\255"
-			end
+	local function binary_writeDouble( value, big_endian )
+		if not big_endian then
+			return string_reverse( binary_writeDouble( value, true ) )
+		elseif value ~= value then -- NaN
+			return "\255\248\0\0\0\0\0\0"
 		end
 
-		local sign
-		if value < 0 then
-			sign = true
+		local sign = false
+		if value < 0.0 then
 			value = -value
-		else
-			sign = false
+			sign = true
 		end
 
-		local mantissa, exponent = math_frexp( value )
-
-		local ebs = exponent + bias
-		if ebs <= 1 then
-			mantissa, exponent = mantissa * ( 2 ^ ( 51 + ebs ) ), -bias
-		else
-			mantissa, exponent = ( mantissa - 0.5 ) * c4, exponent - 1
+		local mant, expo = math_frexp( value )
+		if mant == math_huge or expo > 0x400 then -- inf
+			return sign and "\255\240\0\0\0\0\0\0" or "\127\240\0\0\0\0\0\0"
+		elseif ( mant == 0.0 and expo == 0 ) or ( expo < -0x3FE ) then -- zero
+			return ( 1 / value ) == math_huge and "\0\0\0\0\0\0\0\0" or "\128\0\0\0\0\0\0\0"
 		end
 
-		local bits = unsigned_explode( mantissa )
-		local exponentBits = unsigned_explode( exponent + bias )
+		mant = math_floor( ( mant * 2.0 - 1.0 ) * math_ldexp( 0.5, 53 ) )
+		expo = expo + 0x3FE
 
-		for i = 1, 11 do
-			bits[ 52 + i ] = exponentBits[ i ]
-		end
-
-		bits[ 64 ] = sign
-
-		return pack( bits, 8, big_endian )
+		return string_char(
+			( sign and 0x80 or 0 ) + math_floor( expo / 0x10 ),
+			( expo % 0x10 ) * 0x10 + math_floor( mant / 0x1000000000000 ),
+			math_floor( mant / 0x10000000000 ) % 0x100,
+			math_floor( mant / 0x100000000 ) % 0x100,
+			math_floor( mant / 0x1000000 ) % 0x100,
+			math_floor( mant / 0x10000 ) % 0x100,
+			math_floor( mant / 0x100 ) % 0x100,
+			mant % 0x100
+		)
 	end
+
+	binary.writeDouble = binary_writeDouble
 
 end
 
