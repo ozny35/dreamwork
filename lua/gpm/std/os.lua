@@ -1,5 +1,5 @@
 local _G = _G
-local std, glua_os, glua_system = _G.gpm.std, _G.os, _G.system
+local std, glua_os = _G.gpm.std, _G.os
 
 ---@class gpm.std.os
 local os = {
@@ -7,10 +7,6 @@ local os = {
     arch = std.jit.arch,
     clock = glua_os.clock,
     difftime = glua_os.difftime,
-    uptime = glua_system.UpTime,
-    appTime = glua_system.AppTime,
-    country = glua_system.GetCountry,
-    steamTime = glua_system.SteamTime,
     setClipboardText = _G.SetClipboardText
 }
 
@@ -29,21 +25,48 @@ end
 
 do
 
-    local glua_system_BatteryPower = glua_system.BatteryPower
-    local math_min = std.math.min
+    local has_battery = false
+    local level = 100
 
     --- [SHARED AND MENU]
     --- Returns the current battery level.
     ---@return number: The battery level, between 0 and 100.
     function os.getBatteryLevel()
-        return math_min( 100, glua_system_BatteryPower() )
+        return level
     end
 
     --- [SHARED AND MENU]
     --- Checks if the system has a battery.
     ---@return boolean: `true` if the system has a battery, `false` if not.
     function os.hasBattery()
-        return glua_system_BatteryPower() ~= 255
+        return has_battery
+    end
+
+
+    if _G.system then
+
+        local system = _G.system
+
+        os.uptime = system.UpTime
+        os.apptime = system.AppTime
+        os.country = system.GetCountry
+
+        if system.BatteryPower ~= nil then
+
+            local system_BatteryPower = system.BatteryPower
+
+            local function update_battery()
+                local battery_power = system_BatteryPower()
+                has_battery = battery_power ~= 255
+                level = has_battery and battery_power or 100
+            end
+
+            update_battery()
+
+            _G.timer.Create( gpm.PREFIX .. " - system.BatteryPower", 1, 0, update_battery )
+
+        end
+
     end
 
 end
