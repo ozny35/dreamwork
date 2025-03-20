@@ -1,15 +1,45 @@
 local _G = _G
-local std = _G.gpm.std
-local glua_gui = _G.gui
+local gpm = _G.gpm
+local std = gpm.std
 
 ---@class gpm.std.menu
+---@field visible boolean `true` if the menu is visible, `false` otherwise.
 local menu = {
-    isVisible = glua_gui.IsGameUIVisible,
-    open = glua_gui.ActivateGameUI,
-    ---@diagnostic disable-next-line: deprecated
-    close = glua_gui.HideGameUI or std.debug.fempty,
-    openURL = glua_gui.OpenURL
+    visible = false
 }
+
+local debug_fempty = std.debug.fempty
+
+local gui = _G.gui
+if gui ~= nil then
+
+    menu.isVisible = gui.IsGameUIVisible or debug_fempty
+    menu.open = gui.ActivateGameUI or debug_fempty
+    menu.openURL = gui.OpenURL or debug_fempty
+
+    ---@diagnostic disable-next-line: deprecated
+    menu.close = gui.HideGameUI or debug_fempty
+
+    local gui_IsGameUIVisible = gui.IsGameUIVisible
+
+    if std.CLIENT_MENU and gui_IsGameUIVisible ~= nil then
+
+        menu.visible = gui_IsGameUIVisible()
+
+        _G.timer.Create( gpm.PREFIX .. " - gui.IsGameUIVisible", 0.1, 0, function()
+            menu.visible = gui_IsGameUIVisible()
+        end )
+
+    end
+
+else
+
+    menu.isVisible = debug_fempty
+    menu.open = debug_fempty
+    menu.openURL = debug_fempty
+    menu.close = debug_fempty
+
+end
 
 if std.MENU then
 
