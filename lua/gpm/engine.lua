@@ -239,6 +239,38 @@ if engine.consoleVariableCatch == nil then
         end )
     end
 
+    local CONVAR = std.debug.findmetatable( "ConVar" )
+
+    local gameevent = _G.gameevent
+    if gameevent ~= nil and gameevent.Listen ~= nil and CONVAR ~= nil then
+        ---@cast CONVAR ConVar
+
+        local GetConVar = _G.GetConVar_Internal or std.debug.fempty
+        local CONVAR_GetDefault = CONVAR.GetDefault
+
+        gameevent.Listen( "server_cvar" )
+
+        local values = {}
+
+        engine.hookCatch( "server_cvar", function( data )
+            local name, new = data.cvarname, data.cvarvalue
+
+            local old = values[ name ]
+            if old == nil then
+                local convar = GetConVar( name )
+                if not convar then return end
+
+                old = CONVAR_GetDefault( convar )
+                values[ name ] = old
+            else
+                values[ name ] = new
+            end
+
+            lst( name, old, new )
+        end, 1 )
+
+    end
+
 end
 
 if engine.entityCreationCatch == nil then
