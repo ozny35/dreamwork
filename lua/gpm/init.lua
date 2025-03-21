@@ -1087,6 +1087,8 @@ if std.CLIENT_MENU then
 
     end
 
+    std.render = include( "std/render.lua" )
+
 end
 
 std.server = include( "std/server.lua" )
