@@ -44,20 +44,26 @@ function ByteReader:tell()
 	return self.pointer
 end
 
---- [SHARED AND MENU]
---- Sets the current position of the reader.
----@param position? integer The position to set.
----@return integer: The new position.
-function ByteReader:shift( position )
-	if position == nil then
-		position = 0
-	else
-		position = math.clamp( 0, position, self.size )
+do
+
+	local math_clamp = math.clamp
+
+	--- [SHARED AND MENU]
+	--- Sets the current position of the reader.
+	---@param position? integer The position to set.
+	---@return integer: The new position.
+	function ByteReader:shift( position )
+		if position == nil then
+			position = 0
+		else
+			position = math_clamp( 0, position, self.size )
+		end
+
+		self.pointer = position
+
+		return position
 	end
 
-	self.pointer = position
-
-	return position
 end
 
 --- [SHARED AND MENU]
@@ -71,6 +77,7 @@ end
 do
 
 	local string_sub = string.sub
+	local math_min = math.min
 
 	--- [SHARED AND MENU]
 	--- Reads the specified number of bytes from the reader.
@@ -87,7 +94,7 @@ do
 
 		local position = self.pointer
 		if ( position + length ) >= size then return end
-		self.pointer = math.min( position + length, size )
+		self.pointer = math_min( position + length, size )
 		return string_sub( self.data, position + 1, position + length )
 	end
 
