@@ -24,29 +24,14 @@ local bigint_digits = {
     "x", "y", "z"
 }
 
---##### FORWARD DECLARATIONS #####--
-local bigint_comparatorMap
-
-local bigint_maxnumber
-local negative_one
-local bigint_zero
-local bigint_one
-
-local bigint_fromstring
-local bigint_fromnumber
-local bigint_fromarray
 local bigint_constructor
-local bigint_rstrip
 local bigint_ensureBigInt
-local bigint_ensureInt
-local bigint_ensureString
-local bigint_ensureArray
 
-local table_copy
-
-local tonumber, getmetatable, setmetatable = std.tonumber, std.getmetatable, std.setmetatable
+local getmetatable, setmetatable = std.getmetatable, std.setmetatable
 local isstring, isnumber, istable = std.isstring, std.isnumber, std.istable
-local math_floor = std.math.floor
+
+local math = std.math
+local math_floor, math_max, math_clamp = math.floor, math.max, math.clamp
 
 local table_concat, table_reverse, table_unpack
 do
@@ -63,143 +48,1487 @@ end
 ---@alias BigInt gpm.std.BigInt
 ---@class gpm.std.BigInt: gpm.std.Object
 ---@field __class gpm.std.BigIntClass
+---@field sign integer
 local BigInt = std.class.base( "BigInt" )
+
+function BigInt:__bitcount()
+    return #self * 8
+end
+
+function BigInt:__tobool()
+    return self[ 0 ] ~= 0
+end
 
 ---@class gpm.std.BigIntClass: gpm.std.BigInt
 ---@overload fun( value: string | number | BigInt | table, base: number? ): BigInt
 local BigIntClass = std.class.create( BigInt )
 
-local function bigint_new()
-    return setmetatable( { sign = 0, bytes = {}, mutable = false }, BigInt )
+---@class gpm.std.BigInt.bit
+local bit = {}
+BigIntClass.bit = bit
+
+--[[
+
+    big int:
+    [-1] - sign
+    [0] - length
+    [1-...] - bytes
+
+]]
+
+--- TODO
+---@param object BigInt
+---@return BigInt
+local function bigint_copy( object )
+    local copy = {}
+
+    for index, value in ipairs( object ) do
+        copy[ index ] = value
+    end
+
+    return setmetatable( copy, BigInt )
 end
 
---- parse integer from a string
----@param self BigInt
----@param value string
----@param base integer | nil
+BigInt.copy = bigint_copy
+
+--- TODO
 ---@return BigInt
-function bigint_fromstring( self, value, base )
-    value = bigint_ensureString( value )
+local function bigint_new()
+    return setmetatable( { [ 0 ] = 0 }, BigInt )
+end
 
-    self.sign = 1
+local bigint_one = setmetatable( { [ 0 ] = 1, 1 }, BigInt )
+local bigint_negaive_one = setmetatable( { [ 0 ] = -1, 1 }, BigInt )
 
-    local digitsStart = 1
-    local digitsEnd = string_len( value )
-    if string_byte( value, digitsStart ) == 0x2d then -- "-"
-        self.sign = -1
-        digitsStart = digitsStart + 1
+--- TODO
+---@param object BigInt
+---@return BigInt
+local function bigint_zero( object )
+    object[ 0 ] = 0
+
+    for i = 1, #object, 1 do
+        object[ i ] = nil
     end
 
-    if string_byte( value, digitsStart ) == 0x30 then -- "0"
-        digitsStart = digitsStart + 1
-        local prefix = string_byte( value, digitsStart )
-        if ( base == nil or base == 16 ) and prefix == 0x78 then      -- "x"
-            base = 16
-            digitsStart = digitsStart + 1
-        elseif ( base == nil or base == 2 ) and prefix == 0x62 then   -- "b"
-            base = 2
-            digitsStart = digitsStart + 1
+    return object
+end
+
+function BigInt:__index( key )
+    return key == "sign" and self[ 0 ] or BigInt[ key ]
+end
+
+function BigInt:__newindex( key, value )
+    if key == "sign" then
+        local sign = math_clamp( value, -1, 1 )
+
+        if self[ 0 ] == 0 or sign == self[ 0 ] then
+            return self
+        elseif sign == 0 then
+            bigint_zero( self )
+            return self
+        elseif sign == -1 or sign == 1 then
+            self[ 0 ] = sign
+            return self
+        end
+
+        std.error( "invalid sign", 2 )
+    end
+
+    std.rawset( self, key, value )
+end
+
+--- TODO
+---@param object BigInt
+---@param value BigInt
+---@return integer
+local function bigint_compare_unsigned( object, value )
+    local other = bigint_ensureBigInt( value )
+    local byte_count1, byte_count2 = #object, #other
+
+    if byte_count1 < byte_count2 then
+        return -1
+    elseif byte_count1 > byte_count2 then
+        return 1
+    end
+
+    for i = byte_count1, 1, -1 do
+        if object[ i ] < other[ i ] then
+            return -1
+        elseif object[ i ] > other[ i ] then
+            return 1
         end
     end
 
-    while string_byte( value, digitsStart ) == 0x30 do -- "0"
-        digitsStart = digitsStart + 1
+    return 0
+end
+
+--- TODO
+---@param object BigInt
+local function bigint_rstrip( object )
+    local i = #object
+    while i ~= 0 and object[ i ] == 0 do
+        object[ i ], i = nil, i - 1
     end
 
-    if digitsStart > digitsEnd then
-        self.sign = 0
-        return self
+    if i == 0 then
+        object[ 0 ] = 0
+    end
+end
+
+--- TODO
+---@param object BigInt
+---@param number integer
+---@return BigInt
+local function bigint_fromnumber( object, number )
+    if number < 0 then
+        number = -number
+        object[ 0 ] = -1
+    elseif number > 0 then
+        object[ 0 ] = 1
     end
 
-    base = bigint_ensureInt( base, 2, 36, 10 )
-    if base == 2 or base == 16 then
-        -- fast bin/hex parser
-        local width = 8
-        if base == 16 then
-            width = 2
+    local index = 0
+    while number > 0 do
+        index = index + 1
+        object[ index ] = number % 256
+        number = math_floor( number * 0.00390625 )
+    end
+
+    return object
+end
+
+BigInt.fromNumber = bigint_fromnumber
+
+local bigint_fromstring
+do
+
+    local string_len = string.len
+
+    do
+
+        local string_reverse = string.reverse
+
+        function BigIntClass.fromBytes( binary, little_endian )
+            local object = { [ 0 ] = 1, string_byte( little_endian and binary or string_reverse( binary ), 1, string_len( binary ) ) }
+            setmetatable( object, BigInt )
+            bigint_rstrip( object )
+            return object
         end
 
-        local i = 1
-        for j = digitsEnd, digitsStart, -width do
-            if j - width + 1 <= digitsStart then
-                self.bytes[ i ] = tonumber( string_sub( value, digitsStart, j ), base )
-            else
-                self.bytes[ i ] = tonumber( string_sub( value, j - width + 1, j ), base )
+    end
+
+
+    local tonumber = std.tonumber
+
+    --- TODO
+    ---@param object BigInt
+    ---@param str string
+    ---@param base? integer
+    ---@return BigInt
+    function bigint_fromstring( object, str, base )
+        local digits_start, digits_end = 1, string_len( str )
+
+        if string_byte( str, digits_start ) == 0x2d then -- "-"
+            digits_start = digits_start + 1
+            object[ 0 ] = -1
+        else
+            object[ 0 ] = 1
+        end
+
+        if string_byte( str, digits_start ) == 0x30 then -- "0"
+            digits_start = digits_start + 1
+
+            local prefix = string_byte( str, digits_start )
+            if ( base == nil or base == 16 ) and prefix == 0x78 then      -- "x"
+                base = 16
+                digits_start = digits_start + 1
+            elseif ( base == nil or base == 2 ) and prefix == 0x62 then   -- "b"
+                base = 2
+                digits_start = digits_start + 1
+            end
+        end
+
+        while string_byte( str, digits_start ) == 0x30 do -- "0"
+            digits_start = digits_start + 1
+        end
+
+        if digits_start > digits_end then
+            object[ 0 ] = 0
+            return object
+        end
+
+        base = math_clamp( base or 10, 2, 36 )
+        if base == 2 or base == 16 then
+            -- fast bin/hex parser
+            local width = base == 16 and 2 or 8
+
+            local i = 1
+            for j = digits_end, digits_start, -width do
+                if j - width + 1 <= digits_start then
+                    object[ i ] = tonumber( string_sub( str, digits_start, j ), base )
+                else
+                    object[ i ] = tonumber( string_sub( str, j - width + 1, j ), base )
+                end
+
+                i = i + 1
             end
 
-            i = i + 1
+            return object
+        end
+
+        -- general parser
+        local j, carry = 1, 0
+        for i = digits_start, digits_end, 1 do
+            -- multiply by base
+            j, carry = 1, 0
+            while object[ j ] ~= nil or carry ~= 0 do
+                local product = ( object[ j ] or 0 ) * base + carry
+                object[ j ] = product % 256
+                carry = math_floor( product * 0.00390625 )
+                j = j + 1
+            end
+
+            -- add digit
+            j, carry = 1, tonumber( string_sub( str, i, i ), base )
+            while carry ~= 0 do
+                local sum = ( object[ j ] or 0 ) + carry
+                object[ j ] = sum % 256
+                carry = math_floor( sum * 0.00390625 )
+                j = j + 1
+            end
+        end
+
+        return object
+    end
+
+    BigInt.fromString = bigint_fromstring
+
+    --- TODO
+    ---@param value string
+    ---@param base? integer
+    ---@return BigInt
+    function BigIntClass.fromString( value, base )
+        return bigint_fromstring( bigint_new(), value, base )
+    end
+
+end
+
+local bigint_maxnumber
+
+-- determine the max accurate integer supported by this build of Lua
+if 0x1000000 == 0x1000001 then
+    -- max integer that can be accurately represented by a float
+    bigint_maxnumber = bigint_fromstring( bigint_new(), "0xffffff" )
+else
+    -- double
+    bigint_maxnumber = bigint_fromstring( bigint_new(), "0x1FFFFFFFFFFFFF" )
+end
+
+BigIntClass.MaxNumber = bigint_maxnumber
+
+--- TODO
+---@param object BigInt
+---@return integer
+local function bigint_tonumber( object )
+    if bigint_compare_unsigned( object, bigint_maxnumber ) == 1 then
+        std.error( "big integer is too big to be converted to lua number", 2 )
+    end
+
+    local result = 0
+    for i = #object, 1, -1 do
+        result = ( result * 256 ) + object[ i ]
+    end
+
+    return result * object[ 0 ]
+end
+
+BigInt.tonumber = bigint_tonumber
+
+--- parse integer from an byte array
+---@param object BigInt
+---@param bytes integer[] an array of bytes
+---@param little_endian? boolean
+---@return BigInt
+local function bigint_from_bytes( object, bytes, little_endian )
+    object[ 0 ] = 1
+
+    for index, value in ipairs( little_endian and bytes or table_reverse( bytes ) ) do
+        object[ index ] = value
+    end
+
+    bigint_rstrip( object )
+    return object
+end
+
+--- TODO
+---@param array integer[]
+---@param little_endian? boolean
+---@return BigInt
+function BigIntClass.fromArray( array, little_endian )
+    local object
+
+    if little_endian then
+        object = {}
+        for index, value in ipairs( array ) do
+            object[ index ] = value
+        end
+    else
+        object = table_reverse( array )
+    end
+
+    object[ 0 ] = 1
+
+    setmetatable( object, BigInt )
+    bigint_rstrip( object )
+
+    return object
+end
+
+do
+
+    --- TODO
+    ---@param object BigInt
+    ---@return boolean
+    local function bigint_is_even( object )
+        return object[ 0 ] == 0 or object[ 1 ] % 2 == 0
+    end
+
+    BigInt.isEven = bigint_is_even
+
+    --- TODO
+    ---@param object BigInt
+    ---@return boolean
+    function BigInt:isOdd( object )
+        return not bigint_is_even( object )
+    end
+
+end
+
+--- TODO
+---@return boolean
+function BigInt:isZero()
+    return self[ 0 ] == 0
+end
+
+--- TODO
+---@return boolean
+local function bigint_is_one( object )
+    return object[ 2 ] == nil and object[ 1 ] == 1
+end
+
+BigInt.isOne = bigint_is_one
+
+--- TODO
+---@param object BigInt
+---@return BigInt
+local function bigint_unm( object )
+    local sign = object[ 0 ]
+    if sign ~= 0 then
+        object[ 0 ] = -object[ 0 ]
+    end
+
+    return object
+end
+
+BigInt.unm = bigint_unm
+
+--- TODO
+---@return BigInt
+function BigInt:__unm()
+    return bigint_unm( bigint_copy( self ) )
+end
+
+--- TODO
+---@param object BigInt
+---@return BigInt
+local function bigint_abs( object )
+    if object[ 0 ] < 0 then
+        object[ 0 ] = 1
+    end
+
+    return object
+end
+
+BigInt.abs = bigint_abs
+
+local bigint_bit_lshift
+do
+
+    local bigint_bit_rshift
+
+    --- TODO
+    ---@param object BigInt
+    ---@param shift integer
+    ---@return BigInt
+    function bigint_bit_lshift( object, shift )
+        if object[ 0 ] == 0 or shift == 0 then
+            return object
+        elseif shift < 0 then
+            return bigint_bit_rshift( object, -shift )
+        end
+
+        -- shift whole bytes
+        local shift_bytes, byte_count = math_floor( shift * 0.125 ), #object
+
+        for i = byte_count + 1, byte_count + shift_bytes, 1 do
+            object[ i ] = 0
+        end
+
+        for i = byte_count + shift_bytes, shift_bytes + 1, -1 do
+            object[ i ] = object[ i - shift_bytes ]
+        end
+
+        for i = shift_bytes, 1, -1 do
+            object[ i ] = 0
+        end
+
+        byte_count = byte_count + shift_bytes
+
+        -- shift bits
+        local shift_bits = shift % 8
+        if shift_bits == 0 then
+            return object
+        end
+
+        local shift_size, unshift_size = 2 ^ shift_bits, 2 ^ ( 8 - shift_bits )
+
+        for i = byte_count, shift_bytes + 1, -1 do
+            local overflow = math_floor( object[ i ] / unshift_size )
+            object[ i ] = ( object[ i ] * shift_size ) % 256
+
+            if overflow ~= 0 then
+                object[ i + 1 ] = ( object[ i + 1 ] or 0 ) + overflow
+            end
+        end
+
+        return object
+    end
+
+    BigInt.lshift = bigint_bit_lshift
+
+    --- TODO
+    ---@param object BigInt
+    ---@param shift integer
+    ---@return BigInt
+    function bit.lshift( object, shift )
+        return bigint_bit_lshift( bigint_copy( object ), shift )
+    end
+
+    --- TODO
+    ---@param object BigInt
+    ---@param shift integer
+    ---@return BigInt
+    function bigint_bit_rshift( object, shift )
+        if object[ 0 ] == 0 or shift == 0 then
+            return object
+        elseif shift < 0 then
+            return bigint_bit_lshift( object, -shift )
+        end
+
+        -- shift whole bytes
+        local shift_bytes, byte_count = math_floor( shift / 8 ), #object
+        if shift_bytes >= byte_count then
+            bigint_zero( object )
+            return object
+        end
+
+        for i = shift_bytes + 1, byte_count, 1 do
+            object[ i - shift_bytes ] = object[ i ]
+        end
+
+        for i = byte_count - shift_bytes + 1, byte_count, 1 do
+            object[ i ] = nil
+        end
+
+        byte_count = byte_count - shift_bytes
+
+        -- shift bits
+        local shift_bits = shift % 8
+        if shift_bits == 0 then
+            return object
+        end
+
+        local shift_size, unshift_size = 2 ^ shift_bits, 2 ^ ( 8 - shift_bits )
+
+        for i = 1, byte_count, 1 do
+            local overflow = object[ i ] % shift_size
+            object[ i ] = math_floor( object[ i ] / shift_size )
+
+            if i ~= 1 then
+                object[ i - 1 ] = object[ i - 1 ] + overflow * unshift_size
+            end
+        end
+
+        -- strip zero
+        if object[ byte_count ] == 0 then
+            object[ byte_count ] = nil
+
+            if byte_count == 1 then
+                object[ 0 ] = 0
+            end
+        end
+
+        return object
+    end
+
+    BigInt.rshift = bigint_bit_rshift
+
+    --- TODO
+    ---@param object BigInt
+    ---@param shift integer
+    ---@return BigInt
+    function bit.rshift( object, shift )
+        return bigint_bit_rshift( bigint_copy( object ), shift )
+    end
+
+end
+
+do
+
+    --- TODO
+    ---@param object BigInt
+    ---@param value BigInt
+    ---@return BigInt
+    local function bigint_bor( object, value )
+        local other = bigint_ensureBigInt( value )
+
+        if other[ 0 ] == 0 then
+            return object
+        elseif object[ 0 ] == 0 then
+            return bigint_abs( other )
+        elseif bigint_compare_unsigned( object, other ) == 0 then
+            return object
+        end
+
+        for i = 1, math_max( #object, #other ), 1 do
+            local bit_number = 1
+            local result = 0
+
+            local byte_value1 = object[ i ]
+            local byte_value1_copy = byte_value1
+
+            if byte_value1 == nil then
+                byte_value1 = 0
+            end
+
+            local byte_value2 = other[ i ] or 0
+
+            for _ = 1, 8, 1 do
+                if ( byte_value1 % 2 ) >= 1 or ( byte_value2 % 2 ) >= 1 then
+                    result = result + bit_number
+                end
+
+                byte_value1, byte_value2 = byte_value1 * 0.5, byte_value2 * 0.5
+                bit_number = bit_number * 2
+            end
+
+            if result ~= byte_value1_copy then
+                object[ i ] = result
+            end
+        end
+
+        return object
+    end
+
+    BigInt.bor = bigint_bor
+
+    --- TODO
+    ---@param object BigInt
+    ---@param value BigInt
+    ---@return BigInt
+    function bit.bor( object, value )
+        return bigint_bor( bigint_copy( object ), value )
+    end
+
+end
+
+do
+
+    --- TODO
+    ---@param object BigInt
+    ---@param value BigInt
+    ---@return BigInt
+    local function bigint_band( object, value )
+        local other = bigint_ensureBigInt( value )
+
+        if object[ 0 ] == 0 then
+            return object
+        elseif other[ 0 ] == 0 then
+            return bigint_abs( other )
+        elseif bigint_compare_unsigned( object, other ) == 0 then
+            return object
+        end
+
+        local changed = false
+
+        for i = 1, math_max( #object, #other ), 1 do
+            local bit_number = 1
+            local result = 0
+
+            local byte_value1 = object[ i ] or 0
+            local byte_value2 = other[ i ] or 0
+            local byte_value1_copy = byte_value1
+
+            for _ = 1, 8, 1 do
+                if ( byte_value1 % 2 ) >= 1 and ( byte_value2 % 2 ) >= 1 then
+                    result = result + bit_number
+                end
+
+                byte_value1, byte_value2 = byte_value1 * 0.5, byte_value2 * 0.5
+                bit_number = bit_number * 2
+            end
+
+            if result ~= byte_value1_copy then
+                object[ i ] = result
+                changed = true
+            end
+        end
+
+        if changed then
+            bigint_rstrip( object )
+        end
+
+        return object
+    end
+
+    BigInt.band = bigint_band
+
+    --- TODO
+    ---@param object BigInt
+    ---@param value BigInt
+    ---@return BigInt
+    function bit.band( object, value )
+        return bigint_band( bigint_copy( object ), value )
+    end
+
+end
+
+do
+
+    --- TODO
+    ---@param object BigInt
+    ---@param value BigInt
+    ---@return BigInt
+    local function bigint_bxor( object, value )
+        local other = bigint_ensureBigInt( value )
+
+        if other[ 0 ] == 0 then
+            return object
+        elseif object[ 0 ] == 0 then
+            bigint_abs( other )
+            return other
+        elseif bigint_compare_unsigned( object, other ) == 0 then
+            bigint_zero( object )
+            return object
+        end
+
+        for i = 1, math_max( #object, #other ), 1 do
+            local byte_value1, byte_value2 = object[ i ] or 0, other[ i ] or 0
+            local bit_number = 1
+            local result = 0
+
+            for _ = 1, 8, 1 do
+                if ( ( byte_value1 % 2 ) >= 1 ) ~= ( ( byte_value2 % 2 ) >= 1 ) then
+                    result = result + bit_number
+                end
+
+                byte_value1, byte_value2 = byte_value1 * 0.5, byte_value2 * 0.5
+                bit_number = bit_number * 2
+            end
+
+            object[ i ] = result
+        end
+
+        bigint_rstrip( object )
+        return object
+    end
+
+    BigInt.bxor = bigint_bxor
+
+    function bit.bxor( object, value )
+        return bigint_bxor( bigint_copy( object ), value )
+    end
+
+end
+
+local bigint_bnot
+do
+
+    --- TODO
+    ---@param object BigInt
+    ---@param value integer
+    ---@return BigInt
+    function bigint_bnot( object, value )
+        if object[ 0 ] == 0 then
+            object[ 0 ], object[ 1 ] = 1, 0xff
+            return object
+        end
+
+        local byte_count = #object
+
+        for i = 1, byte_count, 1 do
+            local bit_number = 1
+            local result = 0
+
+            local byte_value = object[ i ]
+            for _ = 1, 8, 1 do
+                if ( byte_value % 2 ) < 1 then
+                    result = result + bit_number
+                end
+
+                byte_value = byte_value * 0.5
+                bit_number = bit_number * 2
+            end
+
+            object[ i ] = result
+        end
+
+        for i = byte_count + 1, math_max( value or byte_count, 1 ), 1 do
+            object[ i ] = 0xff
+        end
+
+        bigint_rstrip( object )
+        return object
+    end
+
+    BigInt.bnot = bigint_bnot
+
+    --- TODO
+    ---@param object BigInt
+    ---@param size integer
+    ---@return BigInt
+    function bit.bnot( object, size )
+        return bigint_bnot( bigint_copy( object ), size )
+    end
+
+end
+
+--- TODO
+---@param index integer
+---@return boolean | nil
+function BigInt:getBit( index )
+    index = math_max( index, 1 )
+    if index < 1 then
+        return nil
+    elseif self[ 0 ] == 0 then
+        return false
+    end
+
+    index = index - 1
+
+    local byte_value = self[ math_floor( index / 8 ) + 1 ]
+    if byte_value == nil or byte_value == 0 then
+        return false
+    else
+        return math_floor( byte_value / ( 2 ^ ( index % 8 ) ) ) % 2 == 1
+    end
+end
+
+do
+
+    local select = std.select
+
+    --- TODO
+    ---@vararg integer
+    ---@return BigInt
+    function BigInt:setBits( ... )
+        local arg_count = select( "#", ... )
+        if arg_count == 0 then return self end
+
+        local args = { ... }
+        local changed = false
+        local byte_count = #self
+
+        for i = 1, arg_count, 1 do
+            local selected_bit = math_max( args[ i ], 1 ) - 1
+
+            local byte_number = math_floor( selected_bit / 8 ) + 1
+            if byte_number > byte_count then
+                for j = byte_count + 1, byte_number, 1 do
+                    self[ j ] = 0
+                end
+
+                changed = true
+                byte_count = byte_number
+            end
+
+            local bit_number = 2 ^ ( selected_bit % 8 )
+            local byte_value = self[ byte_number ]
+
+            if ( byte_value / bit_number ) % 2 < 1 then
+                self[ byte_number ] = byte_value + bit_number
+            end
+        end
+
+        if changed and self[ 0 ] == 0 then
+            self[ 0 ] = 1
         end
 
         return self
     end
 
-    -- general parser
-    local j, carry = 1, 0
-    for i = digitsStart, digitsEnd, 1 do
-        -- multiply by base
-        j, carry = 1, 0
-        while self.bytes[ j ] ~= nil or carry ~= 0 do
-            local product = ( self.bytes[ j ] or 0 ) * base + carry
-            self.bytes[ j ] = product % 256
-            carry = math_floor( product / 256 )
-            j = j + 1
+    --- TODO
+    ---@vararg integer
+    ---@return BigInt
+    function BigInt:unsetBits( ... )
+        if self[ 0 ] == 0 then return self end
+
+        local arg_count = select( "#", ... )
+        if arg_count == 0 then return self end
+
+        local changed = false
+        local args = { ... }
+
+        for i = 1, arg_count, 1 do
+            local selected_bit = math_max( args[ i ], 1 ) - 1
+            local byte_number = math_floor( selected_bit / 8 ) + 1
+
+            local byte_value = self[ byte_number ]
+            if byte_value ~= nil then
+                local bit_number = 2 ^ ( selected_bit % 8 )
+                if ( byte_value / bit_number ) % 2 >= 1 then
+                    self[ byte_number ] = byte_value - bit_number
+                    changed = true
+                end
+            end
         end
 
-        -- add digit
-        j, carry = 1, tonumber( string_sub( value, i, i ), base )
-        while carry ~= 0 do
-            local sum = ( self.bytes[ j ] or 0 ) + carry
-            self.bytes[ j ] = sum % 256
-            carry = math_floor( sum / 256 )
-            j = j + 1
+        if changed then
+            bigint_rstrip( self )
         end
+
+        return self
     end
 
-    return self
 end
 
---- parse integer from a number
----@param self BigInt
----@param value number
+--- TODO
+---@param object BigInt
+---@param value BigInt
 ---@return BigInt
-function bigint_fromnumber( self, value )
-    value = bigint_ensureInt( value )
-    if value < 0 then
-        value = -value
-        self.sign = -1
-    elseif value > 0 then
-        self.sign = 1
+local function bigint_add( object, value )
+    local other = bigint_ensureBigInt( value )
+
+    -- addition of 0
+    if other[ 0 ] == 0 then
+        return object
+    elseif object[ 0 ] == 0 then
+        return other
     end
 
-    local i = 1
-    while value > 0 do
-        self.bytes[ i ] = value % 256
-        i = i + 1
+    -- determine sign, operation, and order of operands
+    local subtract, swap_order, change_sign = false, false,false
 
-        value = math_floor( value / 256 )
-    end
-
-    return self
-end
-
---- parse integer from an array
----@param self BigInt
----@param array integer[]: an array of bytes
----@param littleEndian boolean | nil
----@return BigInt
-function bigint_fromarray( self, array, littleEndian )
-    array = bigint_ensureArray( array )
-
-    if littleEndian == true then
-        self.bytes = table_copy( array )
+    if object[ 0 ] == other[ 0 ] then
+        if #object < #other then
+            swap_order = true
+        end
     else
-        self.bytes = table_reverse( array )
+        local compare_result = bigint_compare_unsigned( object, other )
+        if compare_result == 0 then
+            bigint_zero( object )
+            return object
+        elseif compare_result == -1 then
+            swap_order, change_sign = true, true
+        end
+
+        subtract = true
     end
 
-    self.sign = 1
-    bigint_rstrip( self )
+    -- perform operation
+    local b1, b2
+
+    if swap_order then
+        b1, b2 = other, object
+    else
+        b1, b2 = object, other
+    end
+
+    local byte_count1, byte_count2 = #b1, #b2
+    local carry = 0
+
+    for i = 1, byte_count1, 1 do
+        local total
+
+        if subtract then
+            total = ( b1[ i ] or 0 ) - ( b2[ i ] or 0 ) + carry
+        else
+            total = ( b1[ i ] or 0 ) + ( b2[ i ] or 0 ) + carry
+        end
+
+        if not subtract and total >= 256 then
+            object[ i ], carry = total - 256, 1
+        elseif subtract and total < 0 then
+            object[ i ], carry = total + 256, -1
+        else
+            object[ i ], carry = total, 0
+        end
+
+        -- end loop as soon as possible
+        if i >= byte_count2 and carry == 0 then
+            if swap_order then
+                -- just need to copy remaining bytes
+                for j = i + 1, byte_count1, 1 do
+                    object[ j ] = b1[ j ]
+                end
+            end
+
+            break
+        end
+    end
+
+    if carry > 0 then
+        object[ byte_count1 + 1 ] = carry
+    end
+
+    if subtract then
+        bigint_rstrip( object )
+    end
+
+    if change_sign then
+        object[ 0 ] = -object[ 0 ]
+    end
+
+    return object
+end
+
+BigInt.add = bigint_add
+
+--- TODO
+---@param value BigInt
+---@return BigInt
+function BigInt:__add( value )
+    return bigint_add( bigint_copy( self ), value )
+end
+
+--- TODO
+---@param object BigInt
+---@param value BigInt
+---@return BigInt
+local function bigint_sub( object, value )
+    return bigint_add( object, bigint_unm( bigint_ensureBigInt( value ) ) )
+end
+
+BigInt.sub = bigint_sub
+
+--- TODO
+---@param value BigInt
+---@return BigInt
+function BigInt:__sub( value )
+    return bigint_sub( bigint_copy( self ), value )
+end
+
+--- TODO
+---@param object BigInt
+---@param value BigInt
+---@return BigInt
+local function bigint_mul( object, value )
+    local other = bigint_ensureBigInt( value )
+
+    -- multiplication by 0
+    if object[ 0 ] == 0 then
+        return object
+    elseif other[ 0 ] == 0 then
+        object[ 0 ] = 0
+
+        for i = 1, #object, 1 do
+            object[ i ] = nil
+        end
+
+        return object
+    end
+
+    -- multiplication by 1
+    if bigint_is_one( object ) then
+        if object[ 0 ] == -1 then
+            bigint_unm( other )
+        end
+
+        return other
+    end
+
+    if bigint_is_one( other ) then
+        if other[ 0 ] == -1 then
+            bigint_unm( object )
+        end
+
+        return object
+    end
+
+    -- general multiplication
+    local b1, b2 = object, other
+    local byte_count1, byte_count2 = #b1, #b2
+
+    if byte_count2 > byte_count1 then
+        -- swap order so that number with more b1 comes first
+        b1, b2, byte_count1, byte_count2 = other, object, byte_count2, byte_count1
+    end
+
+    local result = {}
+    local carry = 0
+
+    for i = 1, byte_count2, 1 do
+        if b2[ i ] == 0 then
+            if result[ i ] == nil then
+                result[ i ] = 0
+            end
+        else
+
+            -- multiply each byte
+            local j = 1
+            while j <= byte_count1 do
+                local ri = i + j - 1
+                local product = b1[ j ] * b2[ i ] + carry + ( result[ ri ] or 0 )
+
+                -- add product to result
+                result[ ri ] = product % 256
+                carry = math_floor( product * 0.00390625 )
+                j = j + 1
+            end
+
+            -- finish adding carry
+            while carry ~= 0 do
+                local ri = i + j - 1
+                local sum = ( result[ ri ] or 0 ) + carry
+
+                result[ ri ] = sum % 256
+                carry = math_floor( sum * 0.00390625 )
+                j = j + 1
+            end
+
+        end
+    end
+
+    object[ 0 ] = object[ 0 ] * other[ 0 ]
+
+    for i = 1, #result, 1 do
+        object[ i ] = result[ i ]
+    end
+
+    return object
+end
+
+BigInt.mul = bigint_mul
+
+--- TODO
+---@param value BigInt
+---@return BigInt
+function BigInt:__mul( value )
+    return bigint_mul( bigint_copy( self ), value )
+end
+
+do
+
+    --- TODO
+    ---@param object BigInt
+    ---@param value BigInt
+    ---@param ignore_remainder? boolean
+    ---@return BigInt
+    ---@return BigInt
+    local function bigint_full_div( object, value, ignore_remainder )
+        local other = bigint_ensureBigInt( value )
+
+        -- division of/by 0
+        if object[ 0 ] == 0 then
+            return object, object
+        elseif other[ 0 ] == 0 then
+            return other, other
+        end
+
+        -- division by 1
+        if bigint_is_one( other ) then
+            if other[ 0 ] == -1 then
+                bigint_unm( object )
+            end
+
+            return object, bigint_new()
+        end
+
+        -- division by bigger number or object
+        local compare_result = bigint_compare_unsigned( object, other )
+        if compare_result == -1 then
+            if object[ 0 ] == other[ 0 ] then
+                return bigint_new(), object
+            elseif ignore_remainder then
+                return bigint_new(), object
+            end
+
+            return bigint_new(), bigint_add( object, other )
+        elseif compare_result == 0 then
+            if object[ 0 ] == other[ 0 ] then
+                return setmetatable( { [ 0 ] = 1, 1 }, BigInt ), bigint_new()
+            end
+
+            return setmetatable( { [ 0 ] = -1, 1 }, BigInt ), bigint_new()
+        end
+
+        -- general division
+        local b1, b2 = object:copy(), other:copy()
+        local byte_count1, byte_count2 = #b1, #b2
+
+        local result = {}
+        local ri = 1
+
+        local di = byte_count1 - byte_count2 + 1
+        while di >= 1 do
+            local factor = 0
+            repeat
+
+                -- check if divisor is smaller
+                local found_factor = false
+
+                local size = byte_count2
+                if di + size <= byte_count1 and b1[ di + size ] ~= 0 then
+                    size = size + 1
+                end
+
+                for i = size, 1, -1 do
+                    local byte_value1 = b1[ di + i - 1 ] or 0
+                    local byte_value2 = b2[ i ] or 0
+                    if byte_value2 < byte_value1 then
+                        found_factor = false
+                        break
+                    elseif byte_value2 > byte_value1 then
+                        found_factor = true
+                        break
+                    end
+                end
+
+                -- subtract divisor
+                if not found_factor then
+                    factor = factor + 1
+                    local carry = 0
+                    local i = 1
+
+                    while i <= size or carry ~= 0 do
+                        local j = di + i - 1
+                        local diff = ( b1[ j ] or 0 ) - ( b2[ i ] or 0 ) + carry
+                        if diff < 0 then
+                            carry = -1
+                            diff = diff + 256
+                        else
+                            carry = 0
+                        end
+
+                        b1[ j ] = diff
+                        i = i + 1
+                    end
+                end
+            until found_factor
+
+            -- set digit
+            result[ ri ] = factor
+            ri = ri + 1
+
+            di = di - 1
+        end
+
+        local sign1, sign2 = b1[ 0 ], b2[ 0 ]
+        bigint_rstrip( b1 )
+
+        -- if remainder is negative, add divisor to make it positive
+        if not ignore_remainder and sign1 == -sign2 and b1[ 0 ] ~= 0 then
+            bigint_add( b1, b2 )
+        end
+
+        b2[ 0 ] = sign1 * sign2
+
+        local reversed_result = table_reverse( result )
+
+        for i = 1, #reversed_result, 1 do
+            b2[ i ] = reversed_result[ i ]
+        end
+
+        bigint_rstrip( b2 )
+
+        if b1[ 0 ] ~= 0 and sign2 == -1 then
+            b1[ 0 ] = -1
+        end
+
+        return b2, b1
+    end
+
+    --- TODO
+    ---@param object BigInt
+    ---@param value BigInt
+    ---@return BigInt
+    local function bigint_div( object, value )
+        local quotient, _ = bigint_full_div( object, value, true )
+        return quotient
+    end
+
+    BigInt.div = bigint_div
+
+    --- TODO
+    ---@param value BigInt
+    ---@return BigInt
+    function BigInt:__div( value )
+        return bigint_div( bigint_copy( self ), value )
+    end
+
+    --- TODO
+    ---@param object BigInt
+    ---@param value BigInt
+    ---@return BigInt
+    local function bigint_mod( object, value )
+        local _, remainder = bigint_full_div( object, value, false )
+        return remainder
+    end
+
+    BigInt.mod = bigint_mod
+
+    --- TODO
+    ---@param value BigInt
+    ---@return BigInt
+    function BigInt:__mod( value )
+        return bigint_mod( bigint_copy( self ), value )
+    end
+
+end
+
+do
+
+    --- calculate log2 by finding highest 1 bit
+    ---@return BigInt | nil
+    function BigInt:log2()
+        if self[ 0 ] == 0 then return nil end
+
+        local byte_count = #self
+        local byte_number = ( byte_count - 1 ) * 8
+
+        local byte = self[ byte_count ]
+
+        while byte >= 1 do
+            byte_number = byte_number + 1
+            byte = byte * 0.5
+        end
+
+        return bigint_fromnumber( bigint_new(), byte_number - 1 )
+    end
+
+end
+
+do
+
+    --- return log2 if it's an integer, else nil
+    ---@return integer | nil
+    local function bigint_log2( object )
+        if object[ 0 ] == 0 then return nil end
+
+        local index, power = 1, 0
+        local failed = false
+
+        while object[ index ] ~= nil do
+            local byte_value = object[ index ]
+            for _ = 1, 8, 1 do
+                if byte_value % 2 == 0 then
+                    if not failed then
+                        power = power + 1
+                    end
+                elseif failed then
+                    return nil
+                else
+                    failed = true
+                end
+
+                byte_value = byte_value * 0.5
+            end
+
+            index = index + 1
+        end
+
+        return power
+    end
+
+    --- TODO
+    ---@param object BigInt
+    ---@param value BigInt
+    ---@return BigInt
+    local function bigint_pow( object, value )
+        local other = bigint_ensureBigInt( value )
+
+        if other[ 0 ] == 0 then
+            return setmetatable( { [ 0 ] = 1, 1 }, BigInt )
+        elseif other[ 0 ] == -1 then
+            bigint_zero( object )
+            return object
+        elseif bigint_is_one( other ) then
+            return object
+        end
+
+        local sign = object[ 0 ]
+        if sign == -1 and other[ 1 ] % 2 == 0 then
+            sign = 1
+        end
+
+        -- fast exponent if self is a power of 2
+        local power = bigint_log2( object )
+        if power ~= nil then
+            -- assumes other isn't so big that precision becomes an issue
+            local object_copy = bigint_copy( object )
+            bigint_bit_lshift( object_copy, ( bigint_tonumber( object_copy ) - 1 ) * power )
+            object_copy.sign = sign
+            return object_copy
+        end
+
+        -- multiply by self repeatedly
+        local other_copy = bigint_copy( other )
+
+        bigint_abs( other_copy )
+        bigint_add( other_copy, bigint_negaive_one )
+
+        local object_copy = bigint_copy( object )
+
+        while other_copy[ 0 ] ~= 0 do
+            bigint_mul( object_copy, object )
+            bigint_add( other_copy, bigint_negaive_one )
+        end
+
+        object_copy[ 0 ] = sign
+        return object_copy
+    end
+
+    BigInt.pow = bigint_pow
+
+    --- TODO
+    ---@param value BigInt
+    ---@return BigInt
+    function BigInt:__pow( value )
+        return bigint_pow( bigint_copy( self ), value )
+    end
+
+end
+
+--- convert 2's complement unsigned number to signed
+---@param byte_amt integer
+---@return BigInt
+function BigInt:toSigned( byte_amt )
+    local byte_count = #self
+
+    local size = math_max( byte_amt or byte_count, 1 )
+    if byte_count > size then
+        std.error( "twos complement overflow", 2 )
+    end
+
+    if self[ 0 ] == 1 and ( self[ size ] or 0 ) > 0x7f then
+        bigint_bnot( self, size )
+        bigint_add( self, bigint_one )
+        self[ 0 ] = -1
+    end
+
     return self
 end
+
+--- convert 2's complement signed number to unsigned
+---@param byte_amt integer
+---@return BigInt
+function BigInt:toUnsigned( byte_amt )
+    local byte_count = #self
+
+    local size = math_max( byte_amt or byte_count, 1 )
+    if byte_count > size then
+        std.error( "twos complement overflow", 2 )
+    end
+
+    if self[ 0 ] == -1 then
+        self[ 0 ] = 1
+        bigint_bnot( self, size )
+        bigint_add( self, bigint_one )
+    end
+
+    return self
+end
+
+do
+
+    --- TODO
+    ---@param a BigInt
+    ---@param value BigInt
+    ---@return integer
+    local function compare( a, value )
+        local b = bigint_ensureBigInt( value )
+
+        if a[ 0 ] > b[ 0 ] then
+            return 1
+        elseif a[ 0 ] < b[ 0 ] then
+            return -1
+        end
+
+        local compare_result = bigint_compare_unsigned( a, b )
+        if compare_result == 0 then
+            return 0
+        elseif a[ 0 ] == 1 then
+            return compare_result
+        elseif a[ 0 ] == -1 then
+            return -compare_result
+        else
+            return 0
+        end
+    end
+
+    function BigInt:eq( other )
+        return compare( self, other ) == 0
+    end
+
+    function BigInt:ne( other )
+        return compare( self, other ) ~= 0
+    end
+
+    function BigInt:lt( other )
+        return compare( self, other ) == -1
+    end
+
+    function BigInt:le( other )
+        return compare( self, other ) <= 0
+    end
+
+    function BigInt:gt( other )
+        return compare( self, other ) == 1
+    end
+
+    function BigInt:ge( other )
+        return compare( self, other ) >= 0
+    end
+
+    BigInt.__eq = BigInt.eq
+    BigInt.__lt = BigInt.lt
+    BigInt.__le = BigInt.le
+
+end
+
+-- convert to string of bytes
+function BigInt:toBinary( size, little_endian )
+    -- avoid copying array
+    local byte_count = #self
+
+    size = math_max( size or byte_count, 1 )
+    if byte_count < size then
+        for i = byte_count + 1, size, 1 do
+            self[ i ] = 0
+        end
+    end
+
+    local byteStr
+    if little_endian then
+        byteStr = string_char( table_unpack( self, 1, size ) )
+    elseif byte_count <= size then
+        byteStr = string_char( table_unpack( table_reverse( self ), 1 ) )
+    else
+        byteStr = string_char( table_unpack( table_reverse( self ), byte_count - size + 1, byte_count ) )
+    end
+
+    -- restore original state
+    for i = size, byte_count + 1, -1 do
+        self[ i ] = nil
+    end
+
+    return byteStr
+end
+
+
+
+
+
 
 ---@param self BigInt
 ---@param value string | integer | BigInt | integer[]
@@ -223,7 +1552,7 @@ function bigint_constructor( self, value, base )
 
     if istable( value ) then
         ---@cast value integer[]
-        return bigint_fromarray( self, value, true )
+        return bigint_from_bytes( self, value, true )
     end
 
     error( "cannot construct bigint from type: " .. std.type( value ) )
@@ -231,1108 +1560,29 @@ end
 
 ---@protected
 function BigInt:__init( value, base )
-    self.sign = 0
-    self.bytes = {}
-    self.mutable = false
+    self[ 0 ] = 0
     bigint_constructor( self, value, base )
 end
 
-function BigIntClass.fromBytes( binary, littleEndian )
-    binary = bigint_ensureString( binary )
-
-    local bytes = { string_byte( binary, 1, string_len( binary ) ) }
-
-    local obj = {
-        mutable = false,
-        sign = 1
-    }
-
-    if littleEndian == true then
-        obj.bytes = bytes
-    else
-        obj.bytes = table_reverse( bytes )
-    end
-
-    setmetatable( obj, BigInt )
-    bigint_rstrip( obj )
-    return obj
-end
-
---##### ARITHMETIC OPERATORS #####--
-
-function BigInt:Unm()
-    if self.sign == 0 then
-        return self
-    end
-
-    local this = self:CopyIfImmutable()
-    this.sign = -this.sign
-    return this
-end
-
-function BigInt:abs()
-    if self.sign >= 0 then
-        return self
-    end
-
-    local this = self:CopyIfImmutable()
-    this.sign = 1
-    return this
-end
-
-function BigInt:SetSign( sign )
-    sign = bigint_ensureInt( sign, -1, 1 )
-
-    if self.sign == 0 or sign == self.sign then
-        return self
-    elseif sign == 0 then
-        return bigint_zero
-    elseif sign == -1 or sign == 1 then
-        local this = self:CopyIfImmutable()
-        this.sign = sign
-        return this
-    end
-
-    error( "invalid sign", 2 )
-end
-
-function BigInt:Add( other )
-    other = bigint_ensureBigInt( other )
-
-    -- addition of 0
-    if other.sign == 0 then
-        return self
-    elseif self.sign == 0 then
-        return other
-    end
-
-    -- determine sign, operation, and order of operands
-    local subtract = false
-    local swapOrder = false
-    local changeSign = false
-
-    if self.sign == other.sign then
-        if #self.bytes < #other.bytes then
-            swapOrder = true
-        end
-    else
-        local ucomp = self:CompareU( other )
-        if ucomp == 0 then
-            return bigint_zero
-        end
-
-        subtract = true
-
-        if ucomp == -1 then
-            swapOrder = true
-            changeSign = true
-        end
-    end
-
-    -- perform operation
-    local new = self:CopyIfImmutable()
-
-    local bytes, otherBytes
-    if swapOrder then
-        bytes, otherBytes = other.bytes, self.bytes
-    else
-        bytes, otherBytes = self.bytes, other.bytes
-    end
-
-    local byteCount, otherByteCount = #bytes, #otherBytes
-
-    local carry = 0
-    for i = 1, byteCount, 1 do
-        local byte = bytes[ i ]
-
-        local otherByte = otherBytes[ i ] or 0
-        if subtract then
-            otherByte = -otherByte
-        end
-
-        local sum = byte + otherByte + carry
-        if not subtract and sum >= 256 then
-            new.bytes[ i ] = sum - 256
-            carry = 1
-        elseif subtract and sum < 0 then
-            new.bytes[ i ] = sum + 256
-            carry = -1
-        else
-            new.bytes[ i ] = sum
-            carry = 0
-        end
-
-        -- end loop as soon as possible
-        if i >= otherByteCount and carry == 0 then
-            if swapOrder then
-                -- just need to copy remaining bytes
-                for j = i + 1, byteCount, 1 do
-                    new.bytes[ j ] = bytes[ j ]
-                end
-            end
-
-            break
-        end
-    end
-
-    if carry > 0 then
-        new.bytes[ byteCount + 1 ] = carry
-    end
-
-    if subtract then
-        bigint_rstrip( new )
-    end
-
-    if changeSign then
-        new.sign = -new.sign
-    end
-
-    return new
-end
-
-function BigInt:Sub( other )
-    other = bigint_ensureBigInt( other )
-    return self:Add( other:Unm() )
-end
-
-function BigInt:Mul( other )
-    other = bigint_ensureBigInt( other )
-
-    -- multiplication by 0
-    if self.sign == 0 or other.sign == 0 then
-        return bigint_zero
-    end
-
-    -- multiplication by 1
-    if self:IsOne() then
-        if self.sign == -1 then
-            return other:Unm()
-        end
-
-        return other
-    end
-
-    if other:IsOne() then
-        if other.sign == -1 then
-            return self:Unm()
-        end
-
-        return self
-    end
-
-    -- general multiplication
-    local this = self:CopyIfImmutable()
-    local bytes, otherBytes = this.bytes, other.bytes
-
-    local byteCount, otherByteCount = #bytes, #otherBytes
-
-    if otherByteCount > byteCount then
-        -- swap order so that number with more bytes comes first
-        bytes, otherBytes = other.bytes, this.bytes
-
-        local tmp = byteCount
-        byteCount = otherByteCount
-        otherByteCount = tmp
-    end
-
-    local result = {}
-    local carry = 0
-
-    for i = 1, otherByteCount, 1 do
-        if otherBytes[ i ] == 0 then
-            if result[ i ] == nil then
-                result[ i ] = 0
-            end
-        else
-            -- multiply each byte
-            local j = 1
-            while j <= byteCount do
-                local resultIdx = i + j - 1
-                local product = bytes[ j ] * otherBytes[ i ] + carry + ( result[ resultIdx ] or 0 )
-
-                -- add product to result
-                result[ resultIdx ] = product % 256
-                carry = math_floor( product / 256 )
-                j = j + 1
-            end
-
-            -- finish adding carry
-            while carry ~= 0 do
-                local resultIdx = i + j - 1
-                local sum = ( result[ resultIdx ] or 0 ) + carry
-                result[ resultIdx ] = sum % 256
-                carry = math_floor( sum / 256 )
-                j = j + 1
-            end
-        end
-    end
-
-    table_copy( this.bytes, result )
-
-    this.sign = this.sign * other.sign
-    return this
-end
-
-function BigInt:DivWithRemainder( other, ignoreRemainder )
-    ignoreRemainder = ignoreRemainder == true
-    other = bigint_ensureBigInt( other )
-
-    -- division of/by 0
-    if self.sign == 0 then
-        return self, self
-    elseif other.sign == 0 then
-        return other, other
-    end
-
-    -- division by 1
-    if other:IsOne() then
-        if other.sign == -1 then
-            return self:Unm(), bigint_zero
-        end
-
-        return self, bigint_zero
-    end
-
-    -- division by bigger number or self
-    local ucomp = self:CompareU( other )
-    if ucomp == -1 then
-        if self.sign == other.sign then
-            return bigint_zero, self
-        end
-
-        if ignoreRemainder then
-            return bigint_zero, self
-        end
-
-        return bigint_zero, self:Add( other )
-    elseif ucomp == 0 then
-        if self.sign == other.sign then
-            return bigint_one, bigint_zero
-        end
-
-        return negative_one, bigint_zero
-    end
-
-    -- general division
-    local this = self:CopyIfImmutable()
-    local another = other:CopyIfImmutable()
-
-    local resultIdx = 1
-    local result = {}
-
-    local byteCount, otherByteCount = #this.bytes, #another.bytes
-
-    local divIdx = byteCount - otherByteCount + 1
-    while divIdx >= 1 do
-        local factor = 0
-        repeat
-            -- check if divisor is smaller
-            local foundFactor = false
-
-            local sliceSize = otherByteCount
-            if divIdx + sliceSize <= byteCount and this.bytes[ divIdx + sliceSize ] ~= 0 then
-                sliceSize = sliceSize + 1
-            end
-
-            for i = sliceSize, 1, -1 do
-                local byte = this.bytes[ divIdx + i - 1 ] or 0
-                local otherByte = another.bytes[ i ] or 0
-                if otherByte < byte then
-                    foundFactor = false
-                    break
-                elseif otherByte > byte then
-                    foundFactor = true
-                    break
-                end
-            end
-
-            -- subtract divisor
-            if not foundFactor then
-                factor = factor + 1
-                local carry = 0
-                local i = 1
-
-                while i <= sliceSize or carry ~= 0 do
-                    local j = divIdx + i - 1
-                    local diff = ( this.bytes[ j ] or 0 ) - ( another.bytes[ i ] or 0 ) + carry
-                    if diff < 0 then
-                        carry = -1
-                        diff = diff + 256
-                    else
-                        carry = 0
-                    end
-
-                    this.bytes[ j ] = diff
-                    i = i + 1
-                end
-            end
-        until foundFactor
-
-        -- set digit
-        result[ resultIdx ] = factor
-        resultIdx = resultIdx + 1
-
-        divIdx = divIdx - 1
-    end
-
-    local sign = this.sign
-    local otherSign = another.sign
-    local divSign = sign * otherSign
-
-    bigint_rstrip( this )
-
-    -- if remainder is negative, add divisor to make it positive
-    if not ignoreRemainder and sign == -otherSign and this.sign ~= 0 then
-        this = this:Add( another )
-    end
-
-    table_copy( another.bytes, table_reverse( result ) )
-    another.sign = divSign
-
-    bigint_rstrip( another )
-
-    if this.sign ~= 0 and otherSign == -1 then
-        this.sign = -1
-    end
-
-    return another, this
-end
-
-function BigInt:Div( other )
-    local quotient, _ = self:DivWithRemainder( other, true )
-    return quotient
-end
-
-function BigInt:Mod( other )
-    local _, remainder = self:DivWithRemainder( other )
-    return remainder
-end
-
-function BigInt:Pow( other )
-    other = bigint_ensureBigInt( other )
-
-    if other.sign == 0 then
-        return bigint_one
-    elseif other.sign == -1 then
-        return bigint_zero
-    elseif other:IsOne() then
-        return self
-    end
-
-    local sign = self.sign
-    if sign == -1 and other:IsEven() then
-        sign = 1
-    end
-
-    -- fast exponent if self is a power of 2
-    local power = self:ExactLog2()
-    if power ~= nil then
-        -- assumes other isn't so big that precision becomes an issue
-        return self:Shl( ( other:ToNumber() - 1 ) * power ):SetSign( sign )
-    end
-
-    -- multiply by self repeatedly
-    local this = self:Copy()
-    this.mutable = true
-
-    local another = other:CopyIfImmutable():Abs():Add( negative_one )
-
-    local otherMutable = another.mutable
-    another.mutable = true
-
-    while another.sign ~= 0 do
-        this = this:Mul( self )
-        another = another:Add( negative_one )
-    end
-
-    this.mutable = false
-    another.mutable = otherMutable
-
-    this.sign = sign
-    return this
-end
-
--- calculate log2 by finding highest 1 bit
-function BigInt:Log2()
-    if self.sign == 0 then
-        return nil
-    end
-
-    local byteCount = #self.bytes
-    local byte = self.bytes[ byteCount ]
-    local bitNum = ( byteCount - 1 ) * 8
-
-    while byte >= 1 do
-        bitNum = bitNum + 1
-        byte = byte / 2
-    end
-
-    return bigint_fromnumber( bigint_new(), bitNum - 1 )
-end
-
--- return log2 if it's an integer, else nil
-function BigInt:ExactLog2()
-    if self.sign == 0 then
-        return nil
-    end
-
-    local i = 1
-    local power = 0
-    local foundOne = false
-
-    while self.bytes[ i ] ~= nil do
-        local byte = self.bytes[ i ]
-        for _ = 1, 8, 1 do
-            if byte % 2 < 1 then
-                if not foundOne then
-                    power = power + 1
-                end
-            else
-                if foundOne then
-                    return nil
-                end
-
-                foundOne = true
-            end
-
-            byte = byte / 2
-        end
-
-        i = i + 1
-    end
-
-    return power
-end
-
---##### BITWISE OPERATORS #####--
-
-function BigInt:Shr( n )
-    n = bigint_ensureInt( n )
-
-    if self.sign == 0 or n == 0 then
-        return self
-    end
-
-    if n < 0 then
-        return self:Shl( -n )
-    end
-
-    -- shift whole bytes
-    local shiftBytes = math_floor( n / 8 )
-    local byteCount = #self.bytes
-    if shiftBytes >= byteCount then
-        return bigint_zero
-    end
-
-    local this = self:CopyIfImmutable()
-    for i = shiftBytes + 1, byteCount, 1 do
-        this.bytes[ i - shiftBytes ] = this.bytes[ i ]
-    end
-
-    for i = byteCount - shiftBytes + 1, byteCount, 1 do
-        this.bytes[ i ] = nil
-    end
-
-    byteCount = byteCount - shiftBytes
-
-    -- shift bits
-    local shiftBits = n % 8
-    if shiftBits == 0 then
-        return this
-    end
-
-    local shiftNum = 2 ^ shiftBits
-    local unshiftNum = 2 ^ ( 8 - shiftBits )
-    for i = 1, byteCount, 1 do
-        local overflow = this.bytes[ i ] % shiftNum
-        this.bytes[ i ] = math_floor( this.bytes[ i ] / shiftNum )
-
-        if i ~= 1 then
-            this.bytes[ i - 1 ] = this.bytes[ i - 1 ] + overflow * unshiftNum
-        end
-    end
-
-    -- strip zero
-    if this.bytes[ byteCount ] == 0 then
-        this.bytes[ byteCount ] = nil
-        if byteCount == 1 then
-            this.sign = 0
-        end
-    end
-
-    return this
-end
-
-function BigInt:Shl( n )
-    n = bigint_ensureInt( n )
-
-    if self.sign == 0 or n == 0 then
-        return self
-    end
-
-    if n < 0 then
-        return self:Shr( -n )
-    end
-
-    -- shift whole bytes
-    local shiftBytes = math_floor( n / 8 )
-    local byteCount = #self.bytes
-
-    local this = self:CopyIfImmutable()
-
-    for i = byteCount + 1, byteCount + shiftBytes, 1 do
-        this.bytes[ i ] = 0
-    end
-
-    for i = byteCount + shiftBytes, shiftBytes + 1, -1 do
-        this.bytes[ i ] = this.bytes[ i - shiftBytes ]
-    end
-
-    for i = shiftBytes, 1, -1 do
-        this.bytes[ i ] = 0
-    end
-
-    byteCount = byteCount + shiftBytes
-
-    -- shift bits
-    local shiftBits = n % 8
-    if shiftBits == 0 then
-        return this
-    end
-
-    local shiftNum = 2 ^ shiftBits
-    local unshiftNum = 2 ^ ( 8 - shiftBits )
-    for i = byteCount, shiftBytes + 1, -1 do
-        local overflow = math_floor( this.bytes[ i ] / unshiftNum )
-        this.bytes[ i ] = ( this.bytes[ i ] * shiftNum ) % 256
-
-        if overflow ~= 0 then
-            this.bytes[ i + 1 ] = ( this.bytes[ i + 1 ] or 0 ) + overflow
-        end
-    end
-
-    return this
-end
-
-function BigInt:Bor( other )
-    other = bigint_ensureBigInt( other )
-
-    if other.sign == 0 then
-        return self
-    end
-
-    if self.sign == 0 then
-        return other:Abs()
-    end
-
-    if self:CompareU( other ) == 0 then
-        return self
-    end
-
-    local this
-    local count, otherCount = #self.bytes, #other.bytes
-    if otherCount > count then
-        count = otherCount
-    end
-
-    for i = 1, count, 1 do
-        local result = 0
-        local bit = 1
-
-        local byte = ( this or self ).bytes[ i ]
-        local origByte = byte
-        byte = byte or 0
-
-        local otherByte = other.bytes[ i ] or 0
-        for _ = 1, 8, 1 do
-            if ( byte % 2 ) >= 1 or ( otherByte % 2 ) >= 1 then
-                result = result + bit
-            end
-
-            byte = byte / 2
-            otherByte = otherByte / 2
-            bit = bit * 2
-        end
-
-        if result ~= origByte then
-            if this == nil then
-                -- lazy copy
-                this = self:CopyIfImmutable()
-            end
-
-            this.bytes[ i ] = result
-        end
-    end
-
-    return this or self
-end
-
-function BigInt:Band( other )
-    other = bigint_ensureBigInt( other )
-
-    if self.sign == 0 then
-        return self
-    end
-
-    if other.sign == 0 then
-        return other:Abs()
-    end
-
-    if self:CompareU( other ) == 0 then
-        return self
-    end
-
-    local this
-    local count, otherCount = #self.bytes, #other.bytes
-    if otherCount > count then
-        count = otherCount
-    end
-
-    for i = 1, count, 1 do
-        local result = 0
-        local bit = 1
-
-        local byte = ( this or self ).bytes[ i ]
-        byte = byte or 0
-
-        local origByte = byte
-        local otherByte = other.bytes[ i ] or 0
-        for _ = 1, 8, 1 do
-            if ( byte % 2 ) >= 1 and ( otherByte % 2 ) >= 1 then
-                result = result + bit
-            end
-
-            byte = byte / 2
-            otherByte = otherByte / 2
-            bit = bit * 2
-        end
-
-        if result ~= origByte then
-            if this == nil then
-                -- lazy copy
-                this = self:CopyIfImmutable()
-            end
-
-            this.bytes[ i ] = result
-        end
-    end
-
-    if this == nil then
-        this = self
-    else
-        bigint_rstrip( this )
-    end
-
-    return this
-end
-
-function BigInt:Bxor( other )
-    other = bigint_ensureBigInt( other )
-
-    if other.sign == 0 then
-        return self
-    end
-
-    if self.sign == 0 then
-        return other:Abs()
-    end
-
-    if self:CompareU( other ) == 0 then
-        return bigint_zero
-    end
-
-    local this = self:CopyIfImmutable()
-
-    local count, otherCount = #self.bytes, #other.bytes
-    if otherCount > count then
-        count = otherCount
-    end
-
-    for i = 1, count, 1 do
-        local result = 0
-        local bit = 1
-
-        local byte = this.bytes[ i ]
-        byte = byte or 0
-
-        local otherByte = other.bytes[ i ] or 0
-        for _ = 1, 8, 1 do
-            if ( ( byte % 2 ) >= 1 ) ~= ( ( otherByte % 2 ) >= 1 ) then
-                result = result + bit
-            end
-
-            byte = byte / 2
-            otherByte = otherByte / 2
-            bit = bit * 2
-        end
-
-        this.bytes[ i ] = result
-    end
-
-    bigint_rstrip( this )
-    return this
-end
-
-function BigInt:Bnot( size )
-    local this = self:CopyIfImmutable()
-    local byteCount = #self.bytes
-
-    size = bigint_ensureInt( size, 1, nil, byteCount )
-
-    if this.sign == 0 then
-        this.bytes[ 1 ] = 0xff
-        this.sign = 1
-        return this
-    end
-
-    for i = 1, byteCount, 1 do
-        local result = 0
-        local bit = 1
-
-        local byte = this.bytes[ i ]
-        for _ = 1, 8, 1 do
-            if ( byte % 2 ) < 1 then
-                result = result + bit
-            end
-
-            byte = byte / 2
-            bit = bit * 2
-        end
-
-        this.bytes[ i ] = result
-    end
-
-    for i = byteCount + 1, size, 1 do
-        this.bytes[ i ] = 0xff
-    end
-
-    bigint_rstrip( this )
-    return this
-end
-
-function BigInt:SetBits( ... )
-    local arg = {...}
-
-    local count = #arg
-    if count == 0 then
-        return self
-    end
-
-    local this
-    local byteCount = #self.bytes
-    for i = 1, count, 1 do
-        local bit = bigint_ensureInt( arg[ i ], 1 )
-        bit = bit - 1
-
-        local byteNum = math_floor( bit / 8 ) + 1
-        if byteNum > byteCount then
-            if this == nil then
-                -- lazy copy
-                this = self:CopyIfImmutable()
-                if this.sign == 0 then
-                    this.sign = 1
-                end
-            end
-
-            for j = byteCount + 1, byteNum, 1 do
-                this.bytes[ j ] = 0
-            end
-
-            byteCount = byteNum
-        end
-
-        local byte = ( this or self ).bytes[ byteNum ]
-        local bitNum = 2 ^ ( bit % 8 )
-        if ( byte / bitNum ) % 2 < 1 then
-            if this == nil then
-                -- lazy copy
-                this = self:CopyIfImmutable()
-                if this.sign == 0 then
-                    this.sign = 1
-                end
-            end
-
-            this.bytes[ byteNum ] = byte + bitNum
-        end
-    end
-
-    return this or self
-end
-
-function BigInt:UnsetBits( ... )
-    local arg = {...}
-    if self.sign == 0 then
-        return self
-    end
-
-    local count = #arg
-    if count == 0 then
-        return self
-    end
-
-    local this
-    for i = 1, count, 1 do
-        local bit = bigint_ensureInt( arg[ i ], 1 )
-        bit = bit - 1
-
-        local byteNum = math_floor( bit / 8 ) + 1
-        local byte = ( this or self ).bytes[ byteNum ]
-        if byte ~= nil then
-            local bitNum = 2 ^ ( bit % 8 )
-            if ( byte / bitNum ) % 2 >= 1 then
-                if this == nil then
-                    -- lazy copy
-                    this = self:CopyIfImmutable()
-                end
-
-                this.bytes[ byteNum ] = byte - bitNum
-            end
-        end
-    end
-
-    if this == nil then
-        this = self
-    else
-        bigint_rstrip( this )
-    end
-
-    return this
-end
-
-function BigInt:GetBit( i )
-    i = bigint_ensureInt( i, 1 )
-    if i < 1 then
-        return nil
-    end
-
-    if self.sign == 0 then
-        return 0
-    end
-
-    i = i - 1
-
-    local byteNum = math_floor( i / 8 ) + 1
-    local byte = self.bytes[ byteNum ]
-    if byte == nil or byte == 0 then
-        return 0
-    end
-
-    local bitNum = i % 8
-    return math_floor( byte / ( 2 ^ bitNum ) ) % 2
-end
-
--- convert 2's complement unsigned number to signed
-function BigInt:CastSigned( size )
-    local byteCount = #self.bytes
-    size = bigint_ensureInt( size, 1, nil, byteCount )
-
-    if self.sign == 0 then
-        return self
-    end
-
-    if byteCount > size then
-        error( "twos complement overflow", 2 )
-    end
-
-    if self.sign == 1 and ( self.bytes[ size ] or 0 ) > 0x7f then
-        local this = self:CopyIfImmutable()
-
-        local mutable = this.mutable
-        this.mutable = true
-
-        this = this:Bnot( size ):Add( bigint_one )
-
-        this.sign = -1
-        this.mutable = mutable
-        return this
-    end
-
-    return self
-end
-
--- convert 2's complement signed number to unsigned
-function BigInt:CastUnsigned( size )
-    local byteCount = #self.bytes
-    size = bigint_ensureInt( size, 1, nil, byteCount )
-
-    if self.sign == 0 then
-        return self
-    end
-
-    if byteCount > size then
-        error( "twos complement overflow", 2 )
-    end
-
-    if self.sign == 1 then
-        return self
-    end
-
-    local this = self:CopyIfImmutable()
-
-    local mutable = this.mutable
-    this.mutable = true
-    this.sign = 1
-
-    this = this:Bnot( size ):Add( bigint_one )
-    this.mutable = mutable
-    return this
-end
-
---##### EQUALITY OPERATORS #####--
-
--- compare unsigned
-function BigInt:CompareU( other )
-    other = bigint_ensureBigInt( other )
-
-    local byteCount = #self.bytes
-    local otherByteCount = #other.bytes
-
-    if byteCount < otherByteCount then
-        return -1
-    elseif byteCount > otherByteCount then
-        return 1
-    end
-
-    for i = byteCount, 1, -1 do
-        if self.bytes[ i ] < other.bytes[ i ] then
-            return -1
-        elseif self.bytes[ i ] > other.bytes[ i ] then
-            return 1
-        end
-    end
-
-    return 0
-end
-
-do
-
-    local function compare( a, b )
-        local other = bigint_ensureBigInt( b )
-
-        if a.sign > other.sign then
-            return 1
-        elseif a.sign < other.sign then
-            return -1
-        end
-
-        local ucomp = a:CompareU( other )
-        if ucomp == 0 then
-            return 0
-        elseif a.sign == 1 then
-            return ucomp
-        elseif a.sign == -1 then
-            return -ucomp
-        end
-
-        return 0
-    end
-
-    function BigInt:Eq( other )
-        return compare( self, other ) == 0
-    end
-
-    function BigInt:Ne( other )
-        return compare( self, other ) ~= 0
-    end
-
-    function BigInt:Lt( other )
-        return compare( self, other ) == -1
-    end
-
-    function BigInt:Le( other )
-        return compare( self, other ) <= 0
-    end
-
-    function BigInt:Gt( other )
-        return compare( self, other ) == 1
-    end
-
-    function BigInt:Ge( other )
-        return compare( self, other ) >= 0
-    end
-
-end
-
-function BigInt:CompareOp( other, op )
-    local comparator = bigint_comparatorMap[ op ]
-    if comparator == nil then
-        error( "invalid argument; expected comparison operator", 2 )
-    end
-
-    return comparator( self, other )
-end
-
---##### CONVERSION #####--
-
--- convert to string of bytes
-function BigInt:ToBytes( size, littleEndian )
-    littleEndian = littleEndian == true
-
-    -- avoid copying array
-    local bytes = self.bytes
-    local byteCount = #bytes
-
-    size = bigint_ensureInt( size, 1, nil, byteCount )
-    if byteCount < size then
-        for i = byteCount + 1, size, 1 do
-            bytes[ i ] = 0
-        end
-    end
-
-    local byteStr
-    if littleEndian then
-        byteStr = string_char( table_unpack( bytes, 1, size ) )
-    elseif byteCount <= size then
-        byteStr = string_char( table_unpack( table_reverse( bytes ) ) )
-    else
-        byteStr = string_char( table_unpack( table_reverse( bytes ), byteCount - size + 1, byteCount ) )
-    end
-
-    -- restore original state
-    for i = size, byteCount + 1, -1 do
-        bytes[ i ] = nil
-    end
-
-    return byteStr
-end
-
-function BigInt:ToNumber()
-    if self:CompareU( bigint_maxnumber ) == 1 then
-        error( "integer too big to convert to lua number", 2 )
-    end
-
-    local total = 0
-    for i = #self.bytes, 1, -1 do
-        total = ( total * 256 ) + self.bytes[ i ]
-    end
-
-    return total * self.sign
-end
-
-function BigInt:__tobool()
-    return self.sign ~= 0
-end
-
 -- fast hex base conversion
-function BigInt:ToHex( noPrefix )
-    noPrefix = noPrefix == true
-
-    if self.sign == 0 then
-        if noPrefix then
+function BigInt:ToHex( no_prefix )
+    if self[ 0 ] == 0 then
+        if no_prefix then
             return "0"
         end
 
         return "0x0"
     end
 
-    local bytes = table_reverse( table_copy( self.bytes ) )
+    local bytes = table_reverse( self )
+    local byte_count = #bytes
 
-    local result = string_format( "%x" .. string_rep( "%02x", #bytes - 1 ), table_unpack( bytes ) )
-    if not noPrefix then
+    local result = string_format( "%x" .. string_rep( "%02x", byte_count - 1 ), table_unpack( bytes, 1, byte_count ) )
+    if not no_prefix then
         result = "0x" .. result
     end
 
-    if self.sign == -1 then
+    if self[ 0 ] == -1 then
         result = "-" .. result
     end
 
@@ -1340,11 +1590,9 @@ function BigInt:ToHex( noPrefix )
 end
 
 -- fast bin base conversion
-function BigInt:ToBin( noPrefix )
-    noPrefix = noPrefix == true
-
-    if self.sign == 0 then
-        if noPrefix then
+function BigInt:ToBin( no_prefix )
+    if self[ 0 ] == 0 then
+        if no_prefix then
             return "0"
         end
 
@@ -1352,10 +1600,10 @@ function BigInt:ToBin( noPrefix )
     end
 
     local t = {}
-    local bytesCount = #self.bytes
+    local bytesCount = #self
 
     for i = 1, bytesCount, 1 do
-        local byte = self.bytes[ i ]
+        local byte = self[ i ]
         local start = ( i - 1 ) * 8 + 1
         for j = start, start + 7, 1 do
             if byte == 0 then
@@ -1372,24 +1620,20 @@ function BigInt:ToBin( noPrefix )
     end
 
     local result = table_concat( table_reverse( t ) )
-    if not noPrefix then
+    if not no_prefix then
         result = "0b" .. result
     end
 
-    if self.sign == -1 then
+    if self[ 0 ] == -1 then
         result = "-" .. result
     end
 
     return result
 end
 
-function BigInt:ToDec()
-    return self:ToBase( 10 )
-end
-
 -- general base conversion
 function BigInt:ToBase( base )
-    base = bigint_ensureInt( base, 1, 36 )
+    base = math_clamp( base, 1, 36 )
 
     if base == 2 then
         return self:ToBin( true )
@@ -1397,14 +1641,14 @@ function BigInt:ToBase( base )
         return self:ToHex( true )
     end
 
-    if self.sign == 0 then
+    if self[ 0 ] == 0 then
         return "0"
     end
 
     local result = {}
 
     local j, carry = 1, 0
-    for i = #self.bytes, 1, -1 do
+    for i = #self, 1, -1 do
         -- multiply by 256
         j, carry = 1, 0
         while result[ j ] ~= nil or carry ~= 0 do
@@ -1414,7 +1658,7 @@ function BigInt:ToBase( base )
         end
 
         -- add byte
-        j, carry = 1, self.bytes[ i ]
+        j, carry = 1, self[ i ]
         while carry ~= 0 do
             local sum = ( result[ j ] or 0 ) + carry
             result[ j ] = sum % base
@@ -1429,77 +1673,20 @@ function BigInt:ToBase( base )
     end
 
     local str = table_concat( result )
-    if self.sign == -1 then
+    if self[ 0 ] == -1 then
         str = "-" .. str
     end
 
     return str
 end
 
---##### METATABLE #####--
-
-local function ensureSelfIsBigInt( f )
-    return function( self, ... )
-        return f( bigint_ensureBigInt( self ), ... )
-    end
+function BigInt:toDecimal()
+    return self:ToBase( 10 )
 end
 
-BigInt.__unm = BigInt.Unm
-BigInt.__add = ensureSelfIsBigInt( BigInt.Add )
-BigInt.__sub = ensureSelfIsBigInt( BigInt.Sub )
-BigInt.__mul = ensureSelfIsBigInt( BigInt.Mul )
-BigInt.__div = ensureSelfIsBigInt( BigInt.Div )
-BigInt.__mod = ensureSelfIsBigInt( BigInt.Mod )
-BigInt.__pow = ensureSelfIsBigInt( BigInt.Pow )
-BigInt.__eq = ensureSelfIsBigInt( BigInt.Eq )
-BigInt.__lt = ensureSelfIsBigInt( BigInt.Lt )
-BigInt.__le = ensureSelfIsBigInt( BigInt.Le )
 
-BigInt.__idiv = ensureSelfIsBigInt( BigInt.Div )
-BigInt.__tostring = BigInt.ToDec
-
--- not supported in 5.1
-BigInt.__band = ensureSelfIsBigInt( BigInt.Band )
-BigInt.__bor = ensureSelfIsBigInt( BigInt.Bor )
-BigInt.__bxor = ensureSelfIsBigInt( BigInt.Bxor )
-BigInt.__bnot = function( self ) return self:Bnot() end
-BigInt.__shl = ensureSelfIsBigInt( BigInt.Shl )
-BigInt.__shr = ensureSelfIsBigInt( BigInt.Shr )
-
---##### HELPERS #####--
-
-function BigInt:Copy()
-    local copy = bigint_new()
-    table_copy( copy.bytes, self.bytes )
-    copy.sign = self.sign
-    return copy
-end
-
--- return a copy if immutable or self otherwise
--- if other is not nil, copy it instead
-function BigInt:CopyIfImmutable()
-    return self.mutable and self or self:Copy()
-end
-
-function BigInt:IsEven()
-    return self.sign == 0 or self.bytes[ 1 ] % 2 == 0
-end
-
-function BigInt:IsOne()
-    return self.bytes[ 2 ] == nil and self.bytes[ 1 ] == 1
-end
-
-function bigint_rstrip( self )
-    local i = #self.bytes
-    while self.bytes[ i ] == 0 do
-        self.bytes[ i ] = nil
-        i = i - 1
-    end
-
-    if i == 0 then
-        self.sign = 0
-    end
-end
+-- BigInt.__idiv = ensureSelfIsBigInt( BigInt.Div )
+BigInt.__tostring = BigInt.toDecimal
 
 function bigint_ensureBigInt( obj )
     if getmetatable( obj ) == BigInt then
@@ -1509,118 +1696,11 @@ function bigint_ensureBigInt( obj )
     return bigint_constructor( bigint_new(), obj )
 end
 
-function bigint_ensureInt( obj, minValue, maxValue, default )
-    if obj == nil and default ~= nil then
-        return default
-    end
-
-    if getmetatable( obj ) == BigInt then
-        obj = obj:ToNumber()
-    end
-
-    if isnumber( obj ) then
-        if obj % 1 ~= 0 then
-            if obj < 0 then
-                obj = obj + ( obj % 1 )
-            else
-                obj = obj - ( obj % 1 )
-            end
-        end
-
-        if ( minValue == nil or obj >= minValue ) and ( maxValue == nil or obj <= maxValue ) then
-            return obj
-        end
-    end
-
-    error( "invalid argument; expected integer in range [" .. ( minValue or "" ) .. ", " .. ( maxValue or "" ) .. "]" )
-end
-
-function bigint_ensureArray( obj, default )
-    if obj == nil and default ~= nil then
-        return default
-    end
-
-    if istable( obj ) and getmetatable( obj ) ~= BigInt then
-        return obj
-    end
-
-    error( "invalid argument; expected array" )
-end
-
-function bigint_ensureString( obj, default )
-    if obj == nil and default ~= nil then
-        return default
-    end
-
-    if isstring( obj ) then
-        return obj
-    end
-
-    error( "invalid argument; expected string" )
-end
-
--- copy t2 into t1
--- or return copy of t1 if t2 is nil
-function table_copy( t1, t2 )
-    if t2 == nil then
-        return { table_unpack( t1 ) }
-    end
-
-    local size, t2Size = #t1, #t2
-    if t2Size > size then
-        size = t2Size
-    end
-
-    for i = 1, size, 1 do
-        t1[ i ] = t2[ i ]
-    end
-
-    return t1
-end
-
-bigint_comparatorMap = {
-    ["=="] = BigInt.Eq,
-    ["~="] = BigInt.Ne,
-    ["<"] = BigInt.Lt,
-    [">"] = BigInt.Gt,
-    ["<="] = BigInt.Le,
-    [">="] = BigInt.Ge
-}
-
-negative_one = bigint_fromnumber( bigint_new(), -1 )
-BigIntClass.NegativeOne = negative_one
-
-bigint_zero = bigint_new()
-BigIntClass.Zero = bigint_zero
-
-bigint_one = bigint_fromnumber( bigint_new(), 1 )
-BigIntClass.One = bigint_one
-BigIntClass.Two = bigint_fromnumber( bigint_new(), 2 )
-
-
--- determine the max accurate integer supported by this build of Lua
-if 0x1000000 == 0x1000001 then
-    -- max integer that can be accurately represented by a float
-    bigint_maxnumber = bigint_fromstring( bigint_new(), "0xffffff" )
-else
-    -- double
-    bigint_maxnumber = bigint_fromstring( bigint_new(), "0x1FFFFFFFFFFFFF" )
-end
-
-BigIntClass.MaxNumber = bigint_maxnumber
-
-function BigInt.__bitcount() return 64 end
-
-function BigIntClass.fromString( value, base )
-    return bigint_fromstring( bigint_new(), value, base )
-end
-
+--- TODO
+---@param value integer
+---@return BigInt
 function BigIntClass.fromNumber( value )
     return bigint_fromnumber( bigint_new(), value )
-end
-
-function BigIntClass.fromArray( array, littleEndian )
-    return bigint_fromarray( bigint_new(), array, littleEndian )
 end
 
 return BigIntClass
