@@ -1067,7 +1067,7 @@ do
     local steam = include( "std/steam.lua" )
     std.steam = steam
 
-    -- steam.ID = steam.ID or include( "std/steam.id.lua" )
+    steam.Identifier = steam.Identifier or include( "std/steam.identifier.lua" )
     steam.WorkshopItem = steam.WorkshopItem or include( "std/steam.workshop_item.lua" )
 
 end
