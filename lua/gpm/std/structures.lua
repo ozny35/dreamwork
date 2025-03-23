@@ -59,6 +59,13 @@ do
         self[ 0 ] = 0
     end
 
+    --- Returns an iterator for the stack.
+    ---@return function iterator The iterator function.
+    ---@return Stack stack The stack being iterated over.
+    function Stack:iterator()
+        return self.pop, self
+    end
+
     ---@class gpm.std.StackClass: gpm.std.Stack
     ---@field __base gpm.std.Stack
     ---@overload fun(): Stack
@@ -73,7 +80,6 @@ do
     ---@class gpm.std.Queue: gpm.std.Object
     ---@field __class gpm.std.QueueClass
     local Queue = std.class.base( "Queue" )
-
 
     ---@protected
     function Queue:__init()
@@ -113,7 +119,7 @@ do
     --- Appends a value to the end of the queue or the front if inverse is `true`.
     ---@param value any The value to append.
     ---@param inverse? boolean If `true`, appends the value to the front of the queue.
-    function Queue:enqueue( value, inverse )
+    function Queue:push( value, inverse )
         if inverse then
             local back = self.back
             self[ back ] = value
@@ -128,7 +134,7 @@ do
     --- Removes and returns the value at the back of the queue or the front if inverse is `true`.
     ---@param inverse? boolean If `true`, removes and returns the value at the front of the queue.
     ---@return any value The value at the back of the queue or the front if inverse is `true`.
-    function Queue:dequeue( inverse )
+    function Queue:pop( inverse )
         local back, front = self.back, self.front
         if back == front then return nil end
 
@@ -166,8 +172,8 @@ do
     ---@return function iterator The iterator function.
     ---@return Queue queue The queue being iterated over.
     ---@return boolean inverse If `true`, returns an iterator for the back of the queue.
-    function Queue:dequeueIterator( inverse )
-        return self.dequeue, self, inverse == true
+    function Queue:iterator( inverse )
+        return self.pop, self, inverse == true
     end
 
     ---@class gpm.std.QueueClass: gpm.std.Queue
