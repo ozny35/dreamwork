@@ -199,6 +199,13 @@ end
 
 BigInt.fromNumber = bigint_fromnumber
 
+--- TODO
+---@param value integer
+---@return BigInt
+function BigIntClass.fromNumber( value )
+    return bigint_fromnumber( bigint_new(), value )
+end
+
 local bigint_fromstring
 do
 
@@ -208,6 +215,8 @@ do
 
         local string_reverse = string.reverse
 
+
+        -- TODO: rewrite to 2 functions
         function BigIntClass.fromBytes( binary, little_endian )
             local object = { [ 0 ] = 1, string_byte( little_endian and binary or string_reverse( binary ), 1, string_len( binary ) ) }
             setmetatable( object, BigInt )
@@ -1694,13 +1703,6 @@ function bigint_ensureBigInt( obj )
     end
 
     return bigint_constructor( bigint_new(), obj )
-end
-
---- TODO
----@param value integer
----@return BigInt
-function BigIntClass.fromNumber( value )
-    return bigint_fromnumber( bigint_new(), value )
 end
 
 return BigIntClass
