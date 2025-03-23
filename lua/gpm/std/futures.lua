@@ -720,11 +720,11 @@ do
 
         -- wake up all getters and setters
         while not self._getters:isEmpty() do
-            futures.wakeup( self._getters:dequeue() )
+            futures.wakeup( self._getters:pop() )
         end
 
         while not self._setters:isEmpty() do
-            futures.wakeup( self._setters:dequeue() )
+            futures.wakeup( self._setters:pop() )
         end
     end
 
@@ -740,9 +740,9 @@ do
             return false
         end
 
-        self._queue:enqueue( value )
+        self._queue:push( value )
 
-        local getter = self._getters:dequeue()
+        local getter = self._getters:pop()
         if getter then
             futures.wakeup( getter )
         end
@@ -756,7 +756,7 @@ do
     ---@return boolean success
     function Channel:put( value, wait )
         while wait ~= false and ( self:full() and not self:closed() ) do
-            self._setters:enqueue( futures.running() )
+            self._setters:push( futures.running() )
             futures.pending()
         end
 
@@ -768,9 +768,9 @@ do
             return nil
         end
 
-        local value = self._queue:dequeue()
+        local value = self._queue:pop()
 
-        local setter = self._setters:dequeue()
+        local setter = self._setters:pop()
         if setter then
             futures.wakeup( setter )
         end
@@ -782,7 +782,7 @@ do
     ---@param wait boolean?
     function Channel:get( wait )
         while wait ~= false and self:empty() and not self:closed() do
-            self._getters:enqueue( futures.running() )
+            self._getters:push( futures.running() )
             futures.pending()
         end
 
