@@ -1,7 +1,7 @@
 --[[
     Lua 5.1 Bigint by soupstream
-    https://github.com/soupstream/lua-5.1-bigint/tree/master
-    Modified by Unknown Developer
+    https://github.com/soupstream/lua-5.1-bigint
+    Re-writed by Unknown Developer
 ]]
 
 local _G = _G
@@ -9,101 +9,77 @@ local _G = _G
 ---@class gpm.std
 local std = _G.gpm.std
 
-local bigint_digits = {
-    "0", "1", "2",
-    "3", "4", "5",
-    "6", "7", "8",
-    "9", "a", "b",
-    "c", "d", "e",
-    "f", "g", "h",
-    "i", "j", "k",
-    "l", "m", "n",
-    "o", "p", "q",
-    "r", "s", "t",
-    "u", "v", "w",
-    "x", "y", "z"
-}
-
-local bigint_constructor
-local bigint_ensureBigInt
-
-local getmetatable, setmetatable = std.getmetatable, std.setmetatable
-local isstring, isnumber, istable = std.isstring, std.isnumber, std.istable
-
 local math = std.math
+local table = std.table
+local string = std.string
+
+local select = std.select
+local table_reverse = table.reverse
+local setmetatable = std.setmetatable
 local math_floor, math_max, math_clamp = math.floor, math.max, math.clamp
-
-local table_concat, table_reverse, table_unpack
-do
-    local table = std.table
-    table_concat, table_reverse, table_unpack = table.concat, table.reverse, table.unpack
-end
-
-local string_sub, string_len, string_rep, string_byte, string_char, string_format
-do
-    local string = std.string
-    string_sub, string_len, string_rep, string_byte, string_char, string_format = string.sub, string.len, string.rep, string.byte, string.char, string.format
-end
 
 ---@alias BigInt gpm.std.BigInt
 ---@class gpm.std.BigInt: gpm.std.Object
 ---@field __class gpm.std.BigIntClass
 ---@field sign integer
+---@field size integer
 local BigInt = std.class.base( "BigInt" )
 
+---@alias gpm.std.BigInt.Sign
+---| integer
+---| `-1`
+---| `0`
+---| `1`
+
+---@protected
 function BigInt:__bitcount()
     return #self * 8
 end
 
+---@protected
 function BigInt:__tobool()
     return self[ 0 ] ~= 0
 end
 
 ---@class gpm.std.BigIntClass: gpm.std.BigInt
----@overload fun( value: string | number | BigInt | table, base: number? ): BigInt
+---@overload fun( value: string | number, base: number? ): gpm.std.BigInt
 local BigIntClass = std.class.create( BigInt )
+std.BigInt = BigIntClass
 
 ---@class gpm.std.BigInt.bit
 local bit = {}
 BigIntClass.bit = bit
 
---[[
-
-    big int:
-    [-1] - sign
-    [0] - length
-    [1-...] - bytes
-
-]]
-
 --- TODO
----@param object BigInt
----@return BigInt
-local function bigint_copy( object )
-    local copy = {}
+---@param object gpm.std.BigInt
+---@return gpm.std.BigInt
+local function copy( object )
+    local object_copy = {
+        [ 0 ] = object[ 0 ]
+    }
 
     for index, value in ipairs( object ) do
-        copy[ index ] = value
+        object_copy[ index ] = value
     end
 
-    return setmetatable( copy, BigInt )
+    return setmetatable( object_copy, BigInt )
 end
 
-BigInt.copy = bigint_copy
+BigInt.copy = copy
 
 --- TODO
----@return BigInt
-local function bigint_new()
+---@return gpm.std.BigInt
+local function new()
     return setmetatable( { [ 0 ] = 0 }, BigInt )
 end
 
-local bigint_one = setmetatable( { [ 0 ] = 1, 1 }, BigInt )
-local bigint_negaive_one = setmetatable( { [ 0 ] = -1, 1 }, BigInt )
+local one = setmetatable( { [ 0 ] = 1, 1 }, BigInt )
+local negaive_one = setmetatable( { [ 0 ] = -1, 1 }, BigInt )
 
 --- TODO
----@param object BigInt
----@return BigInt
-local function bigint_zero( object )
+---@param object gpm.std.BigInt
+---@return gpm.std.BigInt
+local function zero( object )
     object[ 0 ] = 0
 
     for i = 1, #object, 1 do
@@ -113,10 +89,20 @@ local function bigint_zero( object )
     return object
 end
 
+---@protected
 function BigInt:__index( key )
-    return key == "sign" and self[ 0 ] or BigInt[ key ]
+    if key == "sign" then
+        return self[ 0 ]
+    elseif key == 0 then
+        return 0
+    elseif key == "size" then
+        return #self
+    end
+
+    return BigInt[ key ]
 end
 
+---@protected
 function BigInt:__newindex( key, value )
     if key == "sign" then
         local sign = math_clamp( value, -1, 1 )
@@ -124,7 +110,7 @@ function BigInt:__newindex( key, value )
         if self[ 0 ] == 0 or sign == self[ 0 ] then
             return self
         elseif sign == 0 then
-            bigint_zero( self )
+            zero( self )
             return self
         elseif sign == -1 or sign == 1 then
             self[ 0 ] = sign
@@ -137,14 +123,16 @@ function BigInt:__newindex( key, value )
     std.rawset( self, key, value )
 end
 
---- TODO
----@param object BigInt
----@param value BigInt
----@return integer
-local function bigint_compare_unsigned( object, value )
-    local other = bigint_ensureBigInt( value )
-    local byte_count1, byte_count2 = #object, #other
+local tobigint
 
+--- TODO
+---@param object gpm.std.BigInt
+---@param value gpm.std.BigInt
+---@return integer
+local function compare_unsigned( object, value )
+    local other = tobigint( value )
+
+    local byte_count1, byte_count2 = #object, #other
     if byte_count1 < byte_count2 then
         return -1
     elseif byte_count1 > byte_count2 then
@@ -163,8 +151,8 @@ local function bigint_compare_unsigned( object, value )
 end
 
 --- TODO
----@param object BigInt
-local function bigint_rstrip( object )
+---@param object gpm.std.BigInt
+local function rstrip( object )
     local i = #object
     while i ~= 0 and object[ i ] == 0 do
         object[ i ], i = nil, i - 1
@@ -173,13 +161,15 @@ local function bigint_rstrip( object )
     if i == 0 then
         object[ 0 ] = 0
     end
+
+    return object
 end
 
 --- TODO
----@param object BigInt
+---@param object gpm.std.BigInt
 ---@param number integer
----@return BigInt
-local function bigint_fromnumber( object, number )
+---@return gpm.std.BigInt
+local function from_number( object, number )
     if number < 0 then
         number = -number
         object[ 0 ] = -1
@@ -197,44 +187,276 @@ local function bigint_fromnumber( object, number )
     return object
 end
 
-BigInt.fromNumber = bigint_fromnumber
+BigInt.fromNumber = from_number
 
 --- TODO
 ---@param value integer
----@return BigInt
+---@return gpm.std.BigInt
 function BigIntClass.fromNumber( value )
-    return bigint_fromnumber( bigint_new(), value )
+    return from_number( new(), value )
 end
 
-local bigint_fromstring
+local from_string
 do
 
+    local string_byte = string.byte
     local string_len = string.len
 
     do
 
-        local string_reverse = string.reverse
+        local string_reverse, string_rep = string.reverse, string.rep
+        local table_unpack = table.unpack
 
+        do
 
-        -- TODO: rewrite to 2 functions
-        function BigIntClass.fromBytes( binary, little_endian )
-            local object = { [ 0 ] = 1, string_byte( little_endian and binary or string_reverse( binary ), 1, string_len( binary ) ) }
-            setmetatable( object, BigInt )
-            bigint_rstrip( object )
-            return object
+            local string_format = string.format
+            local table_concat = table.concat
+
+            --- TODO
+            ---@param object gpm.std.BigInt
+            ---@param no_prefix? boolean
+            ---@return string
+            local function toHex( object, no_prefix )
+                local sign = object[ 0 ]
+                if sign == 0 then
+                    return no_prefix and "0" or "0x0"
+                end
+
+                local byte_count = #object
+                local result = string_reverse( string_format( "%x" .. string_rep( "%02x", byte_count - 1 ), table_unpack( object, 1, byte_count ) ) )
+
+                if not no_prefix then
+                    result = "0x" .. result
+                end
+
+                if sign == -1 then
+                    result = "-" .. result
+                end
+
+                return result
+            end
+
+            BigInt.toHex = toHex
+
+            --- TODO
+            ---@param object gpm.std.BigInt
+            ---@param no_prefix? boolean
+            ---@return string
+            local function toBin( object, no_prefix )
+                local sign = object[ 0 ]
+                if sign == 0 then
+                    if no_prefix then
+                        return "0"
+                    end
+
+                    return "0b0"
+                end
+
+                local byte_count = #object
+
+                local result = {}
+
+                for i = 1, byte_count, 1 do
+                    local byte_value = object[ i ]
+
+                    local from = ( i - 1 ) * 8 + 1
+                    for j = from, from + 7, 1 do
+                        if byte_value == 0 then
+                            if i == byte_count then
+                                break
+                            end
+
+                            result[ j ] = 0
+                        else
+                            result[ j ] = byte_value % 2
+                            byte_value = math_floor( byte_value * 0.5 )
+                        end
+                    end
+                end
+
+                local str = string_reverse( table_concat( result ) )
+
+                if not no_prefix then
+                    str = "0b" .. str
+                end
+
+                if sign == -1 then
+                    str = "-" .. str
+                end
+
+                return str
+            end
+
+            BigInt.toBin = toBin
+
+            local digits = {
+                "0", "1", "2",
+                "3", "4", "5",
+                "6", "7", "8",
+                "9", "a", "b",
+                "c", "d", "e",
+                "f", "g", "h",
+                "i", "j", "k",
+                "l", "m", "n",
+                "o", "p", "q",
+                "r", "s", "t",
+                "u", "v", "w",
+                "x", "y", "z"
+            }
+
+            --- TODO
+            ---@param object gpm.std.BigInt
+            ---@param value integer
+            ---@param no_prefix? boolean
+            ---@return string
+            local function toString( object, value, no_prefix )
+                local base = math_clamp( value, 2, 36 )
+                if base == 2 then
+                    return toBin( object, no_prefix )
+                elseif base == 16 then
+                    return toHex( object, no_prefix )
+                end
+
+                local sign = object[ 0 ]
+                if sign == 0 then
+                    return "0"
+                end
+
+                local result = {}
+
+                local j, carry = 1, 0
+                for i = #object, 1, -1 do
+                    -- multiply by 256
+                    j, carry = 1, 0
+                    while result[ j ] ~= nil or carry ~= 0 do
+                        local product = ( result[ j ] or 0 ) * 256 + carry
+                        result[ j ] = product % base
+                        j, carry = j + 1, math_floor( product / base )
+                    end
+
+                    -- add byte
+                    j, carry = 1, object[ i ]
+                    while carry ~= 0 do
+                        local sum = ( result[ j ] or 0 ) + carry
+                        result[ j ] = sum % base
+                        j, carry = j + 1, math_floor( sum / base )
+                    end
+                end
+
+                for i = 1, #result, 1 do
+                    result[ i ] = digits[ result[ i ] + 1 ]
+                end
+
+                local str = string_reverse( table_concat( result ) )
+
+                if sign == -1 then
+                    str = "-" .. str
+                end
+
+                return str
+            end
+
+            BigInt.toString = toString
+
+            --- TODO
+            ---@return string
+            function BigInt:toDecimal()
+                return toString( self, 10 )
+            end
+
+            BigInt.__tostring = BigInt.toDecimal
+
+        end
+
+        do
+
+            ---@param sign gpm.std.BigInt.Sign
+            ---@vararg integer
+            ---@return BigInt
+            function BigIntClass.fromBytes( sign, ... )
+                return rstrip( setmetatable( { [ 0 ] = sign or 0, ... }, BigInt ) )
+            end
+
+            --- parse integer from an byte array
+            ---@param object gpm.std.BigInt
+            ---@param sing gpm.std.BigInt.Sign
+            ---@vararg integer
+            ---@return BigInt
+            local function fromBytes( object, sing, ... )
+                object[ 0 ] = sing
+
+                local bytes = { ... }
+                for index = 1, select( "#", ... ), 1 do
+                    object[ index ] = bytes[ index ]
+                end
+
+                rstrip( object )
+                return object
+            end
+
+            BigInt.fromBytes = fromBytes
+
+            --- TODO
+            ---@param str string
+            ---@param big_endian? boolean
+            ---@return BigInt
+            function BigIntClass.fromBinary( str, big_endian )
+                return fromBytes( new(), 1, string_byte( big_endian and string_reverse( str ) or str, 1, string_len( str ) ) )
+            end
+
+            --- TODO
+            ---@param str string
+            ---@param big_endian? boolean
+            ---@return BigInt
+            function BigInt:fromBinary( str, big_endian )
+                return fromBytes( new(), 1, string_byte( big_endian and string_reverse( str ) or str, 1, string_len( str ) ) )
+            end
+
+        end
+
+        do
+
+            local string_char = string.char
+            local math_min = math.min
+
+            function BigInt:toBinary( size, big_endian )
+                local byte_count = #self
+                if byte_count == 0 then
+                    return string_rep( "\0", size or byte_count or 1 )
+                elseif size == nil then
+                    size = byte_count
+                elseif size < 1 then
+                    return ""
+                end
+
+                local sub_size = math_min( size, byte_count )
+
+                local str = string_char( table_unpack( self, 1, sub_size ) )
+
+                if sub_size < size then
+                    str = str .. string_rep( "\0", size - sub_size )
+                end
+
+                if big_endian then
+                    return string_reverse( str )
+                else
+                    return str
+                end
+            end
+
         end
 
     end
 
-
+    local string_sub = string.sub
     local tonumber = std.tonumber
 
     --- TODO
-    ---@param object BigInt
+    ---@param object gpm.std.BigInt
     ---@param str string
     ---@param base? integer
-    ---@return BigInt
-    function bigint_fromstring( object, str, base )
+    ---@return gpm.std.BigInt
+    function from_string( object, str, base )
         local digits_start, digits_end = 1, string_len( str )
 
         if string_byte( str, digits_start ) == 0x2d then -- "-"
@@ -310,36 +532,69 @@ do
         return object
     end
 
-    BigInt.fromString = bigint_fromstring
+    BigInt.fromString = from_string
 
     --- TODO
     ---@param value string
     ---@param base? integer
-    ---@return BigInt
+    ---@return gpm.std.BigInt
     function BigIntClass.fromString( value, base )
-        return bigint_fromstring( bigint_new(), value, base )
+        return from_string( new(), value, base )
+    end
+
+    do
+
+        local isstring, isnumber = std.isstring, std.isnumber
+        local debug_getmetatable = std.debug.getmetatable
+
+        --- TODO
+        ---@param value any
+        ---@param base? integer
+        ---@return gpm.std.BigInt
+        function tobigint( value, base )
+            if debug_getmetatable( value ) == BigInt then
+                return value
+            elseif isstring( value ) then
+                return from_string( new(), value, base )
+            elseif isnumber( value ) then
+                return from_number( new(), value )
+            end
+
+            local number = tonumber( value, base )
+            if number == nil then
+                std.error( "value must be a string or number to be converted to big integer", 2 )
+            end
+
+            ---@cast number integer
+
+            return from_number( new(), number )
+        end
+
+        ---@protected
+        function BigInt:__new( value, base )
+            return tobigint( value, base )
+        end
+
     end
 
 end
 
-local bigint_maxnumber
+local maxnumber
 
 -- determine the max accurate integer supported by this build of Lua
 if 0x1000000 == 0x1000001 then
-    -- max integer that can be accurately represented by a float
-    bigint_maxnumber = bigint_fromstring( bigint_new(), "0xffffff" )
+    maxnumber = from_string( new(), "0xffffff" )
 else
-    -- double
-    bigint_maxnumber = bigint_fromstring( bigint_new(), "0x1FFFFFFFFFFFFF" )
+    maxnumber = from_string( new(), "0x1FFFFFFFFFFFFF" )
 end
 
-BigIntClass.MaxNumber = bigint_maxnumber
+BigIntClass.MaxNumber = maxnumber
 
 --- TODO
----@param object BigInt
+---@param object gpm.std.BigInt
 ---@return integer
-local function bigint_tonumber( object )
-    if bigint_compare_unsigned( object, bigint_maxnumber ) == 1 then
+local function tonumber( object )
+    if compare_unsigned( object, maxnumber ) == 1 then
         std.error( "big integer is too big to be converted to lua number", 2 )
     end
 
@@ -351,64 +606,24 @@ local function bigint_tonumber( object )
     return result * object[ 0 ]
 end
 
-BigInt.tonumber = bigint_tonumber
-
---- parse integer from an byte array
----@param object BigInt
----@param bytes integer[] an array of bytes
----@param little_endian? boolean
----@return BigInt
-local function bigint_from_bytes( object, bytes, little_endian )
-    object[ 0 ] = 1
-
-    for index, value in ipairs( little_endian and bytes or table_reverse( bytes ) ) do
-        object[ index ] = value
-    end
-
-    bigint_rstrip( object )
-    return object
-end
-
---- TODO
----@param array integer[]
----@param little_endian? boolean
----@return BigInt
-function BigIntClass.fromArray( array, little_endian )
-    local object
-
-    if little_endian then
-        object = {}
-        for index, value in ipairs( array ) do
-            object[ index ] = value
-        end
-    else
-        object = table_reverse( array )
-    end
-
-    object[ 0 ] = 1
-
-    setmetatable( object, BigInt )
-    bigint_rstrip( object )
-
-    return object
-end
+BigInt.tonumber = tonumber
+BigInt.__tonumber = tonumber
 
 do
 
     --- TODO
-    ---@param object BigInt
+    ---@param object gpm.std.BigInt
     ---@return boolean
-    local function bigint_is_even( object )
+    local function is_even( object )
         return object[ 0 ] == 0 or object[ 1 ] % 2 == 0
     end
 
-    BigInt.isEven = bigint_is_even
+    BigInt.isEven = is_even
 
     --- TODO
-    ---@param object BigInt
     ---@return boolean
-    function BigInt:isOdd( object )
-        return not bigint_is_even( object )
+    function BigInt:isOdd()
+        return not is_even( self )
     end
 
 end
@@ -421,16 +636,16 @@ end
 
 --- TODO
 ---@return boolean
-local function bigint_is_one( object )
+local function is_one( object )
     return object[ 2 ] == nil and object[ 1 ] == 1
 end
 
-BigInt.isOne = bigint_is_one
+BigInt.isOne = is_one
 
 --- TODO
----@param object BigInt
----@return BigInt
-local function bigint_unm( object )
+---@param object gpm.std.BigInt
+---@return gpm.std.BigInt
+local function unm( object )
     local sign = object[ 0 ]
     if sign ~= 0 then
         object[ 0 ] = -object[ 0 ]
@@ -439,18 +654,18 @@ local function bigint_unm( object )
     return object
 end
 
-BigInt.unm = bigint_unm
+BigInt.unm = unm
 
 --- TODO
----@return BigInt
+---@return gpm.std.BigInt
 function BigInt:__unm()
-    return bigint_unm( bigint_copy( self ) )
+    return unm( copy( self ) )
 end
 
 --- TODO
----@param object BigInt
----@return BigInt
-local function bigint_abs( object )
+---@param object gpm.std.BigInt
+---@return gpm.std.BigInt
+local function abs( object )
     if object[ 0 ] < 0 then
         object[ 0 ] = 1
     end
@@ -458,22 +673,22 @@ local function bigint_abs( object )
     return object
 end
 
-BigInt.abs = bigint_abs
+BigInt.abs = abs
 
-local bigint_bit_lshift
+local bit_lshift
 do
 
-    local bigint_bit_rshift
+    local bit_rshift
 
     --- TODO
-    ---@param object BigInt
+    ---@param object gpm.std.BigInt
     ---@param shift integer
-    ---@return BigInt
-    function bigint_bit_lshift( object, shift )
+    ---@return gpm.std.BigInt
+    function bit_lshift( object, shift )
         if object[ 0 ] == 0 or shift == 0 then
             return object
         elseif shift < 0 then
-            return bigint_bit_rshift( object, -shift )
+            return bit_rshift( object, -shift )
         end
 
         -- shift whole bytes
@@ -513,31 +728,31 @@ do
         return object
     end
 
-    BigInt.lshift = bigint_bit_lshift
+    BigInt.lshift = bit_lshift
 
     --- TODO
-    ---@param object BigInt
+    ---@param object gpm.std.BigInt
     ---@param shift integer
-    ---@return BigInt
+    ---@return gpm.std.BigInt
     function bit.lshift( object, shift )
-        return bigint_bit_lshift( bigint_copy( object ), shift )
+        return bit_lshift( copy( object ), shift )
     end
 
     --- TODO
-    ---@param object BigInt
+    ---@param object gpm.std.BigInt
     ---@param shift integer
-    ---@return BigInt
-    function bigint_bit_rshift( object, shift )
+    ---@return gpm.std.BigInt
+    function bit_rshift( object, shift )
         if object[ 0 ] == 0 or shift == 0 then
             return object
         elseif shift < 0 then
-            return bigint_bit_lshift( object, -shift )
+            return bit_lshift( object, -shift )
         end
 
         -- shift whole bytes
         local shift_bytes, byte_count = math_floor( shift / 8 ), #object
         if shift_bytes >= byte_count then
-            bigint_zero( object )
+            zero( object )
             return object
         end
 
@@ -580,14 +795,14 @@ do
         return object
     end
 
-    BigInt.rshift = bigint_bit_rshift
+    BigInt.rshift = bit_rshift
 
     --- TODO
-    ---@param object BigInt
+    ---@param object gpm.std.BigInt
     ---@param shift integer
-    ---@return BigInt
+    ---@return gpm.std.BigInt
     function bit.rshift( object, shift )
-        return bigint_bit_rshift( bigint_copy( object ), shift )
+        return bit_rshift( copy( object ), shift )
     end
 
 end
@@ -595,17 +810,17 @@ end
 do
 
     --- TODO
-    ---@param object BigInt
-    ---@param value BigInt
-    ---@return BigInt
-    local function bigint_bor( object, value )
-        local other = bigint_ensureBigInt( value )
+    ---@param object gpm.std.BigInt
+    ---@param value gpm.std.BigInt
+    ---@return gpm.std.BigInt
+    local function bor( object, value )
+        local other = tobigint( value )
 
         if other[ 0 ] == 0 then
             return object
         elseif object[ 0 ] == 0 then
-            return bigint_abs( other )
-        elseif bigint_compare_unsigned( object, other ) == 0 then
+            return abs( other )
+        elseif compare_unsigned( object, other ) == 0 then
             return object
         end
 
@@ -639,14 +854,14 @@ do
         return object
     end
 
-    BigInt.bor = bigint_bor
+    BigInt.bor = bor
 
     --- TODO
-    ---@param object BigInt
-    ---@param value BigInt
-    ---@return BigInt
+    ---@param object gpm.std.BigInt
+    ---@param value gpm.std.BigInt
+    ---@return gpm.std.BigInt
     function bit.bor( object, value )
-        return bigint_bor( bigint_copy( object ), value )
+        return bor( copy( object ), value )
     end
 
 end
@@ -654,17 +869,17 @@ end
 do
 
     --- TODO
-    ---@param object BigInt
-    ---@param value BigInt
-    ---@return BigInt
-    local function bigint_band( object, value )
-        local other = bigint_ensureBigInt( value )
+    ---@param object gpm.std.BigInt
+    ---@param value gpm.std.BigInt
+    ---@return gpm.std.BigInt
+    local function band( object, value )
+        local other = tobigint( value )
 
         if object[ 0 ] == 0 then
             return object
         elseif other[ 0 ] == 0 then
-            return bigint_abs( other )
-        elseif bigint_compare_unsigned( object, other ) == 0 then
+            return abs( other )
+        elseif compare_unsigned( object, other ) == 0 then
             return object
         end
 
@@ -694,20 +909,20 @@ do
         end
 
         if changed then
-            bigint_rstrip( object )
+            rstrip( object )
         end
 
         return object
     end
 
-    BigInt.band = bigint_band
+    BigInt.band = band
 
     --- TODO
-    ---@param object BigInt
-    ---@param value BigInt
-    ---@return BigInt
+    ---@param object gpm.std.BigInt
+    ---@param value gpm.std.BigInt
+    ---@return gpm.std.BigInt
     function bit.band( object, value )
-        return bigint_band( bigint_copy( object ), value )
+        return band( copy( object ), value )
     end
 
 end
@@ -715,19 +930,19 @@ end
 do
 
     --- TODO
-    ---@param object BigInt
-    ---@param value BigInt
-    ---@return BigInt
-    local function bigint_bxor( object, value )
-        local other = bigint_ensureBigInt( value )
+    ---@param object gpm.std.BigInt
+    ---@param value gpm.std.BigInt
+    ---@return gpm.std.BigInt
+    local function bxor( object, value )
+        local other = tobigint( value )
 
         if other[ 0 ] == 0 then
             return object
         elseif object[ 0 ] == 0 then
-            bigint_abs( other )
+            abs( other )
             return other
-        elseif bigint_compare_unsigned( object, other ) == 0 then
-            bigint_zero( object )
+        elseif compare_unsigned( object, other ) == 0 then
+            zero( object )
             return object
         end
 
@@ -748,26 +963,30 @@ do
             object[ i ] = result
         end
 
-        bigint_rstrip( object )
+        rstrip( object )
         return object
     end
 
-    BigInt.bxor = bigint_bxor
+    BigInt.bxor = bxor
 
+    --- TODO
+    ---@param object gpm.std.BigInt
+    ---@param value gpm.std.BigInt
+    ---@return gpm.std.BigInt
     function bit.bxor( object, value )
-        return bigint_bxor( bigint_copy( object ), value )
+        return bxor( copy( object ), value )
     end
 
 end
 
-local bigint_bnot
+local bnot
 do
 
     --- TODO
-    ---@param object BigInt
+    ---@param object gpm.std.BigInt
     ---@param value integer
-    ---@return BigInt
-    function bigint_bnot( object, value )
+    ---@return gpm.std.BigInt
+    function bnot( object, value )
         if object[ 0 ] == 0 then
             object[ 0 ], object[ 1 ] = 1, 0xff
             return object
@@ -796,18 +1015,18 @@ do
             object[ i ] = 0xff
         end
 
-        bigint_rstrip( object )
+        rstrip( object )
         return object
     end
 
-    BigInt.bnot = bigint_bnot
+    BigInt.bnot = bnot
 
     --- TODO
-    ---@param object BigInt
+    ---@param object gpm.std.BigInt
     ---@param size integer
-    ---@return BigInt
+    ---@return gpm.std.BigInt
     function bit.bnot( object, size )
-        return bigint_bnot( bigint_copy( object ), size )
+        return bnot( copy( object ), size )
     end
 
 end
@@ -833,90 +1052,84 @@ function BigInt:getBit( index )
     end
 end
 
-do
+--- TODO
+---@vararg integer
+---@return gpm.std.BigInt
+function BigInt:setBits( ... )
+    local arg_count = select( "#", ... )
+    if arg_count == 0 then return self end
 
-    local select = std.select
+    local args = { ... }
+    local changed = false
+    local byte_count = #self
 
-    --- TODO
-    ---@vararg integer
-    ---@return BigInt
-    function BigInt:setBits( ... )
-        local arg_count = select( "#", ... )
-        if arg_count == 0 then return self end
+    for i = 1, arg_count, 1 do
+        local selected_bit = math_max( args[ i ], 1 ) - 1
 
-        local args = { ... }
-        local changed = false
-        local byte_count = #self
-
-        for i = 1, arg_count, 1 do
-            local selected_bit = math_max( args[ i ], 1 ) - 1
-
-            local byte_number = math_floor( selected_bit / 8 ) + 1
-            if byte_number > byte_count then
-                for j = byte_count + 1, byte_number, 1 do
-                    self[ j ] = 0
-                end
-
-                changed = true
-                byte_count = byte_number
+        local byte_number = math_floor( selected_bit / 8 ) + 1
+        if byte_number > byte_count then
+            for j = byte_count + 1, byte_number, 1 do
+                self[ j ] = 0
             end
 
-            local bit_number = 2 ^ ( selected_bit % 8 )
-            local byte_value = self[ byte_number ]
-
-            if ( byte_value / bit_number ) % 2 < 1 then
-                self[ byte_number ] = byte_value + bit_number
-            end
+            changed = true
+            byte_count = byte_number
         end
 
-        if changed and self[ 0 ] == 0 then
-            self[ 0 ] = 1
-        end
+        local bit_number = 2 ^ ( selected_bit % 8 )
+        local byte_value = self[ byte_number ]
 
-        return self
+        if ( byte_value / bit_number ) % 2 < 1 then
+            self[ byte_number ] = byte_value + bit_number
+        end
     end
 
-    --- TODO
-    ---@vararg integer
-    ---@return BigInt
-    function BigInt:unsetBits( ... )
-        if self[ 0 ] == 0 then return self end
-
-        local arg_count = select( "#", ... )
-        if arg_count == 0 then return self end
-
-        local changed = false
-        local args = { ... }
-
-        for i = 1, arg_count, 1 do
-            local selected_bit = math_max( args[ i ], 1 ) - 1
-            local byte_number = math_floor( selected_bit / 8 ) + 1
-
-            local byte_value = self[ byte_number ]
-            if byte_value ~= nil then
-                local bit_number = 2 ^ ( selected_bit % 8 )
-                if ( byte_value / bit_number ) % 2 >= 1 then
-                    self[ byte_number ] = byte_value - bit_number
-                    changed = true
-                end
-            end
-        end
-
-        if changed then
-            bigint_rstrip( self )
-        end
-
-        return self
+    if changed and self[ 0 ] == 0 then
+        self[ 0 ] = 1
     end
 
+    return self
 end
 
 --- TODO
----@param object BigInt
----@param value BigInt
----@return BigInt
-local function bigint_add( object, value )
-    local other = bigint_ensureBigInt( value )
+---@vararg integer
+---@return gpm.std.BigInt
+function BigInt:unsetBits( ... )
+    if self[ 0 ] == 0 then return self end
+
+    local arg_count = select( "#", ... )
+    if arg_count == 0 then return self end
+
+    local changed = false
+    local args = { ... }
+
+    for i = 1, arg_count, 1 do
+        local selected_bit = math_max( args[ i ], 1 ) - 1
+        local byte_number = math_floor( selected_bit / 8 ) + 1
+
+        local byte_value = self[ byte_number ]
+        if byte_value ~= nil then
+            local bit_number = 2 ^ ( selected_bit % 8 )
+            if ( byte_value / bit_number ) % 2 >= 1 then
+                self[ byte_number ] = byte_value - bit_number
+                changed = true
+            end
+        end
+    end
+
+    if changed then
+        rstrip( self )
+    end
+
+    return self
+end
+
+--- TODO
+---@param object gpm.std.BigInt
+---@param value gpm.std.BigInt
+---@return gpm.std.BigInt
+local function add( object, value )
+    local other = tobigint( value )
 
     -- addition of 0
     if other[ 0 ] == 0 then
@@ -933,9 +1146,9 @@ local function bigint_add( object, value )
             swap_order = true
         end
     else
-        local compare_result = bigint_compare_unsigned( object, other )
+        local compare_result = compare_unsigned( object, other )
         if compare_result == 0 then
-            bigint_zero( object )
+            zero( object )
             return object
         elseif compare_result == -1 then
             swap_order, change_sign = true, true
@@ -991,7 +1204,7 @@ local function bigint_add( object, value )
     end
 
     if subtract then
-        bigint_rstrip( object )
+        rstrip( object )
     end
 
     if change_sign then
@@ -1001,38 +1214,38 @@ local function bigint_add( object, value )
     return object
 end
 
-BigInt.add = bigint_add
+BigInt.add = add
 
 --- TODO
----@param value BigInt
----@return BigInt
+---@param value gpm.std.BigInt
+---@return gpm.std.BigInt
 function BigInt:__add( value )
-    return bigint_add( bigint_copy( self ), value )
+    return add( copy( self ), value )
 end
 
 --- TODO
----@param object BigInt
----@param value BigInt
----@return BigInt
-local function bigint_sub( object, value )
-    return bigint_add( object, bigint_unm( bigint_ensureBigInt( value ) ) )
+---@param object gpm.std.BigInt
+---@param value gpm.std.BigInt
+---@return gpm.std.BigInt
+local function sub( object, value )
+    return add( object, unm( tobigint( value ) ) )
 end
 
-BigInt.sub = bigint_sub
+BigInt.sub = sub
 
 --- TODO
----@param value BigInt
----@return BigInt
+---@param value gpm.std.BigInt
+---@return gpm.std.BigInt
 function BigInt:__sub( value )
-    return bigint_sub( bigint_copy( self ), value )
+    return sub( copy( self ), value )
 end
 
 --- TODO
----@param object BigInt
----@param value BigInt
----@return BigInt
-local function bigint_mul( object, value )
-    local other = bigint_ensureBigInt( value )
+---@param object gpm.std.BigInt
+---@param value gpm.std.BigInt
+---@return gpm.std.BigInt
+local function mul( object, value )
+    local other = tobigint( value )
 
     -- multiplication by 0
     if object[ 0 ] == 0 then
@@ -1048,17 +1261,17 @@ local function bigint_mul( object, value )
     end
 
     -- multiplication by 1
-    if bigint_is_one( object ) then
+    if is_one( object ) then
         if object[ 0 ] == -1 then
-            bigint_unm( other )
+            unm( other )
         end
 
         return other
     end
 
-    if bigint_is_one( other ) then
+    if is_one( other ) then
         if other[ 0 ] == -1 then
-            bigint_unm( object )
+            unm( object )
         end
 
         return object
@@ -1117,25 +1330,25 @@ local function bigint_mul( object, value )
     return object
 end
 
-BigInt.mul = bigint_mul
+BigInt.mul = mul
 
 --- TODO
----@param value BigInt
----@return BigInt
+---@param value gpm.std.BigInt
+---@return gpm.std.BigInt
 function BigInt:__mul( value )
-    return bigint_mul( bigint_copy( self ), value )
+    return mul( copy( self ), value )
 end
 
 do
 
     --- TODO
-    ---@param object BigInt
-    ---@param value BigInt
+    ---@param object gpm.std.BigInt
+    ---@param value gpm.std.BigInt
     ---@param ignore_remainder? boolean
-    ---@return BigInt
-    ---@return BigInt
-    local function bigint_full_div( object, value, ignore_remainder )
-        local other = bigint_ensureBigInt( value )
+    ---@return gpm.std.BigInt
+    ---@return gpm.std.BigInt
+    local function full_div( object, value, ignore_remainder )
+        local other = tobigint( value )
 
         -- division of/by 0
         if object[ 0 ] == 0 then
@@ -1145,30 +1358,30 @@ do
         end
 
         -- division by 1
-        if bigint_is_one( other ) then
+        if is_one( other ) then
             if other[ 0 ] == -1 then
-                bigint_unm( object )
+                unm( object )
             end
 
-            return object, bigint_new()
+            return object, new()
         end
 
         -- division by bigger number or object
-        local compare_result = bigint_compare_unsigned( object, other )
+        local compare_result = compare_unsigned( object, other )
         if compare_result == -1 then
             if object[ 0 ] == other[ 0 ] then
-                return bigint_new(), object
+                return new(), object
             elseif ignore_remainder then
-                return bigint_new(), object
+                return new(), object
             end
 
-            return bigint_new(), bigint_add( object, other )
+            return new(), add( object, other )
         elseif compare_result == 0 then
             if object[ 0 ] == other[ 0 ] then
-                return setmetatable( { [ 0 ] = 1, 1 }, BigInt ), bigint_new()
+                return setmetatable( { [ 0 ] = 1, 1 }, BigInt ), new()
             end
 
-            return setmetatable( { [ 0 ] = -1, 1 }, BigInt ), bigint_new()
+            return setmetatable( { [ 0 ] = -1, 1 }, BigInt ), new()
         end
 
         -- general division
@@ -1233,22 +1446,22 @@ do
         end
 
         local sign1, sign2 = b1[ 0 ], b2[ 0 ]
-        bigint_rstrip( b1 )
+        rstrip( b1 )
 
         -- if remainder is negative, add divisor to make it positive
         if not ignore_remainder and sign1 == -sign2 and b1[ 0 ] ~= 0 then
-            bigint_add( b1, b2 )
+            add( b1, b2 )
         end
 
         b2[ 0 ] = sign1 * sign2
 
-        local reversed_result = table_reverse( result )
+        local reversed, length = table_reverse( result )
 
-        for i = 1, #reversed_result, 1 do
-            b2[ i ] = reversed_result[ i ]
+        for index = 1, length, 1 do
+            b2[ index ] = reversed[ index ]
         end
 
-        bigint_rstrip( b2 )
+        rstrip( b2 )
 
         if b1[ 0 ] ~= 0 and sign2 == -1 then
             b1[ 0 ] = -1
@@ -1258,39 +1471,39 @@ do
     end
 
     --- TODO
-    ---@param object BigInt
-    ---@param value BigInt
-    ---@return BigInt
-    local function bigint_div( object, value )
-        local quotient, _ = bigint_full_div( object, value, true )
+    ---@param object gpm.std.BigInt
+    ---@param value gpm.std.BigInt
+    ---@return gpm.std.BigInt
+    local function div( object, value )
+        local quotient, _ = full_div( object, value, true )
         return quotient
     end
 
-    BigInt.div = bigint_div
+    BigInt.div = div
 
     --- TODO
-    ---@param value BigInt
-    ---@return BigInt
+    ---@param value gpm.std.BigInt
+    ---@return gpm.std.BigInt
     function BigInt:__div( value )
-        return bigint_div( bigint_copy( self ), value )
+        return div( copy( self ), value )
     end
 
     --- TODO
-    ---@param object BigInt
-    ---@param value BigInt
-    ---@return BigInt
-    local function bigint_mod( object, value )
-        local _, remainder = bigint_full_div( object, value, false )
+    ---@param object gpm.std.BigInt
+    ---@param value gpm.std.BigInt
+    ---@return gpm.std.BigInt
+    local function mod( object, value )
+        local _, remainder = full_div( object, value, false )
         return remainder
     end
 
-    BigInt.mod = bigint_mod
+    BigInt.mod = mod
 
     --- TODO
-    ---@param value BigInt
-    ---@return BigInt
+    ---@param value gpm.std.BigInt
+    ---@return gpm.std.BigInt
     function BigInt:__mod( value )
-        return bigint_mod( bigint_copy( self ), value )
+        return mod( copy( self ), value )
     end
 
 end
@@ -1298,7 +1511,7 @@ end
 do
 
     --- calculate log2 by finding highest 1 bit
-    ---@return BigInt | nil
+    ---@return gpm.std.BigInt | nil
     function BigInt:log2()
         if self[ 0 ] == 0 then return nil end
 
@@ -1312,7 +1525,7 @@ do
             byte = byte * 0.5
         end
 
-        return bigint_fromnumber( bigint_new(), byte_number - 1 )
+        return from_number( new(), byte_number - 1 )
     end
 
 end
@@ -1320,8 +1533,9 @@ end
 do
 
     --- return log2 if it's an integer, else nil
+    ---@param object gpm.std.BigInt
     ---@return integer | nil
-    local function bigint_log2( object )
+    local function log2( object )
         if object[ 0 ] == 0 then return nil end
 
         local index, power = 1, 0
@@ -1350,18 +1564,18 @@ do
     end
 
     --- TODO
-    ---@param object BigInt
-    ---@param value BigInt
-    ---@return BigInt
-    local function bigint_pow( object, value )
-        local other = bigint_ensureBigInt( value )
+    ---@param object gpm.std.BigInt
+    ---@param value gpm.std.BigInt
+    ---@return gpm.std.BigInt
+    local function pow( object, value )
+        local other = tobigint( value )
 
         if other[ 0 ] == 0 then
             return setmetatable( { [ 0 ] = 1, 1 }, BigInt )
         elseif other[ 0 ] == -1 then
-            bigint_zero( object )
+            zero( object )
             return object
-        elseif bigint_is_one( other ) then
+        elseif is_one( other ) then
             return object
         end
 
@@ -1371,46 +1585,46 @@ do
         end
 
         -- fast exponent if self is a power of 2
-        local power = bigint_log2( object )
+        local power = log2( object )
         if power ~= nil then
             -- assumes other isn't so big that precision becomes an issue
-            local object_copy = bigint_copy( object )
-            bigint_bit_lshift( object_copy, ( bigint_tonumber( object_copy ) - 1 ) * power )
+            local object_copy = copy( object )
+            bit_lshift( object_copy, ( tonumber( object_copy ) - 1 ) * power )
             object_copy.sign = sign
             return object_copy
         end
 
         -- multiply by self repeatedly
-        local other_copy = bigint_copy( other )
+        local other_copy = copy( other )
 
-        bigint_abs( other_copy )
-        bigint_add( other_copy, bigint_negaive_one )
+        abs( other_copy )
+        add( other_copy, negaive_one )
 
-        local object_copy = bigint_copy( object )
+        local object_copy = copy( object )
 
         while other_copy[ 0 ] ~= 0 do
-            bigint_mul( object_copy, object )
-            bigint_add( other_copy, bigint_negaive_one )
+            mul( object_copy, object )
+            add( other_copy, negaive_one )
         end
 
         object_copy[ 0 ] = sign
         return object_copy
     end
 
-    BigInt.pow = bigint_pow
+    BigInt.pow = pow
 
     --- TODO
-    ---@param value BigInt
-    ---@return BigInt
+    ---@param value gpm.std.BigInt
+    ---@return gpm.std.BigInt
     function BigInt:__pow( value )
-        return bigint_pow( bigint_copy( self ), value )
+        return pow( copy( self ), value )
     end
 
 end
 
 --- convert 2's complement unsigned number to signed
 ---@param byte_amt integer
----@return BigInt
+---@return gpm.std.BigInt
 function BigInt:toSigned( byte_amt )
     local byte_count = #self
 
@@ -1420,8 +1634,8 @@ function BigInt:toSigned( byte_amt )
     end
 
     if self[ 0 ] == 1 and ( self[ size ] or 0 ) > 0x7f then
-        bigint_bnot( self, size )
-        bigint_add( self, bigint_one )
+        bnot( self, size )
+        add( self, one )
         self[ 0 ] = -1
     end
 
@@ -1430,7 +1644,7 @@ end
 
 --- convert 2's complement signed number to unsigned
 ---@param byte_amt integer
----@return BigInt
+---@return gpm.std.BigInt
 function BigInt:toUnsigned( byte_amt )
     local byte_count = #self
 
@@ -1441,8 +1655,8 @@ function BigInt:toUnsigned( byte_amt )
 
     if self[ 0 ] == -1 then
         self[ 0 ] = 1
-        bigint_bnot( self, size )
-        bigint_add( self, bigint_one )
+        bnot( self, size )
+        add( self, one )
     end
 
     return self
@@ -1451,11 +1665,11 @@ end
 do
 
     --- TODO
-    ---@param a BigInt
-    ---@param value BigInt
+    ---@param a gpm.std.BigInt
+    ---@param value gpm.std.BigInt
     ---@return integer
     local function compare( a, value )
-        local b = bigint_ensureBigInt( value )
+        local b = tobigint( value )
 
         if a[ 0 ] > b[ 0 ] then
             return 1
@@ -1463,7 +1677,7 @@ do
             return -1
         end
 
-        local compare_result = bigint_compare_unsigned( a, b )
+        local compare_result = compare_unsigned( a, b )
         if compare_result == 0 then
             return 0
         elseif a[ 0 ] == 1 then
@@ -1475,26 +1689,44 @@ do
         end
     end
 
+    --- TODO
+    ---@param other gpm.std.BigInt
+    ---@return boolean
     function BigInt:eq( other )
         return compare( self, other ) == 0
     end
 
+    --- TODO
+    ---@param other gpm.std.BigInt
+    ---@return boolean
     function BigInt:ne( other )
         return compare( self, other ) ~= 0
     end
 
+    --- TODO
+    ---@param other gpm.std.BigInt
+    ---@return boolean
     function BigInt:lt( other )
         return compare( self, other ) == -1
     end
 
+    --- TODO
+    ---@param other gpm.std.BigInt
+    ---@return boolean
     function BigInt:le( other )
         return compare( self, other ) <= 0
     end
 
+    --- TODO
+    ---@param other gpm.std.BigInt
+    ---@return boolean
     function BigInt:gt( other )
         return compare( self, other ) == 1
     end
 
+    --- TODO
+    ---@param other gpm.std.BigInt
+    ---@return boolean
     function BigInt:ge( other )
         return compare( self, other ) >= 0
     end
@@ -1504,205 +1736,3 @@ do
     BigInt.__le = BigInt.le
 
 end
-
--- convert to string of bytes
-function BigInt:toBinary( size, little_endian )
-    -- avoid copying array
-    local byte_count = #self
-
-    size = math_max( size or byte_count, 1 )
-    if byte_count < size then
-        for i = byte_count + 1, size, 1 do
-            self[ i ] = 0
-        end
-    end
-
-    local byteStr
-    if little_endian then
-        byteStr = string_char( table_unpack( self, 1, size ) )
-    elseif byte_count <= size then
-        byteStr = string_char( table_unpack( table_reverse( self ), 1 ) )
-    else
-        byteStr = string_char( table_unpack( table_reverse( self ), byte_count - size + 1, byte_count ) )
-    end
-
-    -- restore original state
-    for i = size, byte_count + 1, -1 do
-        self[ i ] = nil
-    end
-
-    return byteStr
-end
-
-
-
-
-
-
----@param self BigInt
----@param value string | integer | BigInt | integer[]
----@param base integer | nil
----@return gpm.std.BigInt
-function bigint_constructor( self, value, base )
-    if isstring( value ) then
-        ---@cast value string
-        return bigint_fromstring( self, value, base )
-    end
-
-    if isnumber( value ) then
-        ---@cast value number
-        return bigint_fromnumber( self, value )
-    end
-
-    if getmetatable( value ) == BigInt then
-        ---@cast value gpm.std.BigInt
-        return value
-    end
-
-    if istable( value ) then
-        ---@cast value integer[]
-        return bigint_from_bytes( self, value, true )
-    end
-
-    error( "cannot construct bigint from type: " .. std.type( value ) )
-end
-
----@protected
-function BigInt:__init( value, base )
-    self[ 0 ] = 0
-    bigint_constructor( self, value, base )
-end
-
--- fast hex base conversion
-function BigInt:ToHex( no_prefix )
-    if self[ 0 ] == 0 then
-        if no_prefix then
-            return "0"
-        end
-
-        return "0x0"
-    end
-
-    local bytes = table_reverse( self )
-    local byte_count = #bytes
-
-    local result = string_format( "%x" .. string_rep( "%02x", byte_count - 1 ), table_unpack( bytes, 1, byte_count ) )
-    if not no_prefix then
-        result = "0x" .. result
-    end
-
-    if self[ 0 ] == -1 then
-        result = "-" .. result
-    end
-
-    return result
-end
-
--- fast bin base conversion
-function BigInt:ToBin( no_prefix )
-    if self[ 0 ] == 0 then
-        if no_prefix then
-            return "0"
-        end
-
-        return "0b0"
-    end
-
-    local t = {}
-    local bytesCount = #self
-
-    for i = 1, bytesCount, 1 do
-        local byte = self[ i ]
-        local start = ( i - 1 ) * 8 + 1
-        for j = start, start + 7, 1 do
-            if byte == 0 then
-                if i == bytesCount then
-                    break
-                end
-
-                t[ j ] = 0
-            else
-                t[ j ] = byte % 2
-                byte = math_floor( byte / 2 )
-            end
-        end
-    end
-
-    local result = table_concat( table_reverse( t ) )
-    if not no_prefix then
-        result = "0b" .. result
-    end
-
-    if self[ 0 ] == -1 then
-        result = "-" .. result
-    end
-
-    return result
-end
-
--- general base conversion
-function BigInt:ToBase( base )
-    base = math_clamp( base, 1, 36 )
-
-    if base == 2 then
-        return self:ToBin( true )
-    elseif base == 16 then
-        return self:ToHex( true )
-    end
-
-    if self[ 0 ] == 0 then
-        return "0"
-    end
-
-    local result = {}
-
-    local j, carry = 1, 0
-    for i = #self, 1, -1 do
-        -- multiply by 256
-        j, carry = 1, 0
-        while result[ j ] ~= nil or carry ~= 0 do
-            local product = ( result[ j ] or 0 ) * 256 + carry
-            result[ j ] = product % base
-            j, carry = j + 1, math_floor( product / base )
-        end
-
-        -- add byte
-        j, carry = 1, self[ i ]
-        while carry ~= 0 do
-            local sum = ( result[ j ] or 0 ) + carry
-            result[ j ] = sum % base
-            j, carry = j + 1, math_floor( sum / base )
-        end
-    end
-
-    result = table_reverse( result )
-
-    for i = #result, 1, -1 do
-        result[ i ] = bigint_digits[ result[ i ] + 1 ]
-    end
-
-    local str = table_concat( result )
-    if self[ 0 ] == -1 then
-        str = "-" .. str
-    end
-
-    return str
-end
-
-function BigInt:toDecimal()
-    return self:ToBase( 10 )
-end
-
-
--- BigInt.__idiv = ensureSelfIsBigInt( BigInt.Div )
-BigInt.__tostring = BigInt.toDecimal
-
-function bigint_ensureBigInt( obj )
-    if getmetatable( obj ) == BigInt then
-        return obj
-    end
-
-    return bigint_constructor( bigint_new(), obj )
-end
-
-return BigIntClass

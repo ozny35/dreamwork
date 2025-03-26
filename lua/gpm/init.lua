@@ -175,7 +175,7 @@ local tonumber = _G.tonumber
 --- [SHARED AND MENU]
 --- Attempts to convert the value to a number.
 ---@param value any The value to convert.
----@param base number The base used in the string. Can be any integer between 2 and 36, inclusive. (Default: 10)
+---@param base? integer The base used in the string. Can be any integer between 2 and 36, inclusive. (Default: 10)
 ---@return number: The numeric representation of the value with the given base, or `nil` if the conversion failed.
 function std.tonumber( value, base )
     local metatable = debug_getmetatable( value )
@@ -737,7 +737,7 @@ do
 
 end
 
-std.BigInt = include( "std/bigint.lua" )
+include( "std/bigint.lua" )
 
 -- Extensions for string library.
 include( "std/string.extensions.lua" )
