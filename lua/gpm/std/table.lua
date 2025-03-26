@@ -808,9 +808,11 @@ do
     --- [SHARED AND MENU] Reverses the given list (table).
     ---@param tbl table The table to reverse.
     ---@param noCopy? boolean: If `true`, the table will not be copied.
+    ---@param length? integer: The length of the table.
     ---@return table: The reversed table.
-    function table.reverse( tbl, noCopy )
-        local length = #tbl
+    ---@return integer: The length of the reversed table.
+    function table.reverse( tbl, noCopy, length )
+        if length == nil then length = #tbl end
         length = length + 1
 
         if noCopy then
@@ -819,7 +821,7 @@ do
                 tbl[ i ], tbl[ j ] = tbl[ j ], tbl[ i ]
             end
 
-            return tbl
+            return tbl, length - 1
         end
 
         local reversed = {}
@@ -827,7 +829,7 @@ do
             reversed[ length - index ] = tbl[ index ]
         end
 
-        return reversed
+        return reversed, length - 1
     end
 
 end
