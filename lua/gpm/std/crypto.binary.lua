@@ -686,40 +686,39 @@ end
 
 binary.unpack = unpack
 
-local pack
-do
+local string_reverse = string.reverse
 
-	local table_reverse = table.reverse
+--- [SHARED AND MENU]
+--- Writes a sequence of bits to a binary string.
+---@param bits boolean[] The sequence of bits.
+---@param bit_count integer The size of the sequence of bits.
+---@param big_endian? boolean The endianness of the binary string.
+---@param start_position? integer The start position of the binary string.
+---@return string: The binary string.
+local function pack( bits, bit_count, big_endian, start_position )
+	local bytes, length = {}, 0
 
-	--- [SHARED AND MENU]
-	--- Writes a sequence of bits to a binary string.
-	---@param bits boolean[] The sequence of bits.
-	---@param bit_count integer The size of the sequence of bits.
-	---@param big_endian? boolean The endianness of the binary string.
-	---@param start_position? integer The start position of the binary string.
-	---@return string: The binary string.
-	function pack( bits, bit_count, big_endian, start_position )
-		local bytes, length = {}, 0
-
-		for i = start_position or 1, ( bit_count or #bits ) * 8, 8 do
-			length = length + 1
-			bytes[ length ] = unsigned_implode( bits, 8, i )
-		end
-
-		if big_endian then
-			return string_char( table_unpack( table_reverse( bytes ), 1, length ) )
-		else
-			return string_char( table_unpack( bytes, 1, length ) )
-		end
+	for i = start_position or 1, ( bit_count or #bits ) * 8, 8 do
+		length = length + 1
+		bytes[ length ] = unsigned_implode( bits, 8, i )
 	end
 
-	binary.pack = pack
+	if length == 0 then
+		return ""
+	end
 
+	local str = string_char( table_unpack( bytes, 1, length ) )
+	if big_endian then
+		return string_reverse( str )
+	else
+		return str
+	end
 end
+
+binary.pack = pack
 
 local math_huge, math_tiny, math_nan = math.huge, math.tiny, math.nan
 local math_frexp, math_ldexp = math.frexp, math.ldexp
-local string_reverse = string.reverse
 
 --- [SHARED AND MENU]
 --- Reads a float (4 bytes/32 bits) from a binary string.
