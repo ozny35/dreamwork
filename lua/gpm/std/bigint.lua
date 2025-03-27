@@ -145,10 +145,11 @@ local tobigint
 --- [SHARED AND MENU]
 --- Performs an unsigned comparison between two big integers.
 ---@param object gpm.std.BigInt
----@param value gpm.std.BigInt
+---@param value any
 ---@return integer
 local function compare_unsigned( object, value )
     local other = tobigint( value )
+    ---@cast other gpm.std.BigInt
 
     local byte_count1, byte_count2 = #object, #other
     if byte_count1 < byte_count2 then
@@ -174,7 +175,8 @@ end
 local function rstrip( object )
     local i = #object
     while i ~= 0 and object[ i ] == 0 do
-        object[ i ], i = nil, i - 1
+        object[ i ] = nil
+        i = i - 1
     end
 
     if i == 0 then
@@ -183,6 +185,8 @@ local function rstrip( object )
 
     return object
 end
+
+BigInt.rstrip = rstrip
 
 --- [SHARED AND MENU]
 --- Sets a big integer object from a lua_number (must be an integer).
@@ -239,6 +243,8 @@ do
             ---@param no_prefix? boolean
             ---@return string
             local function toHex( object, no_prefix )
+                if no_prefix == nil then no_prefix = false end
+
                 local sign = object[ 0 ]
                 if sign == 0 then
                     return no_prefix and "0" or "0x0"
@@ -286,9 +292,9 @@ do
                     local from = ( i - 1 ) * 8 + 1
                     for j = from, from + 7, 1 do
                         if byte_value == 0 then
-                            if i == byte_count then
-                                break
-                            end
+                            -- if i == byte_count then
+                            --     break
+                            -- end
 
                             result[ j ] = 0
                         else
@@ -370,11 +376,17 @@ do
                     end
                 end
 
-                for i = 1, #result, 1 do
+                local length = #result
+                for i = 1, length, 1 do
                     result[ i ] = digits[ result[ i ] + 1 ]
                 end
 
-                local str = string_reverse( table_concat( result ) )
+                local str
+                if length == 0 then
+                    str = "0"
+                else
+                    str = string_reverse( table_concat( result, "", 1, length ) )
+                end
 
                 if sign == -1 then
                     str = "-" .. str
@@ -383,8 +395,14 @@ do
                 return str
             end
 
-            BigInt.__tostring = toString
             BigInt.toString = toString
+            BigInt.__tostring = toString
+
+            -- ---@return string
+            -- ---@protected
+            -- function BigInt:__tostring()
+            --     return string_format( "Big Integer: %p [%s][%dbit]", self, toString( self, 10, true ), #self * 8 )
+            -- end
 
             --- [SHARED AND MENU]
             --- Converts the big integer to a decimal string.
@@ -403,7 +421,7 @@ do
             ---@vararg integer
             ---@return BigInt
             function BigIntClass.fromBytes( sign, ... )
-                return rstrip( setmetatable( { [ 0 ] = sign or 0, ... }, BigInt ) )
+                return setmetatable( { [ 0 ] = sign or 0, ... }, BigInt )
             end
 
             --- [SHARED AND MENU]
@@ -420,7 +438,6 @@ do
                     object[ index ] = bytes[ index ]
                 end
 
-                rstrip( object )
                 return object
             end
 
@@ -622,7 +639,7 @@ do
 
 end
 
-local toNumber
+local toInteger
 do
 
     local max_number
@@ -638,7 +655,7 @@ do
     --- Converts a big integer object to a lua_number (always an integer).
     ---@param object gpm.std.BigInt
     ---@return integer
-    function toNumber( object )
+    function toInteger( object )
         if compare_unsigned( object, max_number ) == 1 then
             std.error( "big integer is too big to be converted to lua number", 2 )
         end
@@ -651,8 +668,8 @@ do
         return result * object[ 0 ]
     end
 
-    BigInt.toNumber = toNumber
-    BigInt.__tonumber = toNumber
+    BigInt.toInteger = toInteger
+    BigInt.__tonumber = toInteger
 
 end
 
@@ -806,7 +823,7 @@ do
         end
 
         -- shift whole bytes
-        local shift_bytes, byte_count = math_floor( shift / 8 ), #object
+        local shift_bytes, byte_count = math_floor( shift * 0.125 ), #object
         if shift_bytes >= byte_count then
             zero( object )
             return object
@@ -869,10 +886,11 @@ do
     --- [SHARED AND MENU]
     --- Performs a bitwise OR operation between two big integer objects.
     ---@param object gpm.std.BigInt
-    ---@param value gpm.std.BigInt
+    ---@param value any
     ---@return gpm.std.BigInt
     local function bor( object, value )
         local other = tobigint( value )
+        ---@cast other gpm.std.BigInt
 
         if other[ 0 ] == 0 then
             return object
@@ -916,11 +934,18 @@ do
 
     --- [SHARED AND MENU]
     --- Creates a new big integer object that is the result of a bitwise OR operation between two big integer objects.
-    ---@param object gpm.std.BigInt
     ---@param value gpm.std.BigInt
+    ---@vararg any
     ---@return gpm.std.BigInt
-    function bit.bor( object, value )
-        return bor( copy( object ), value )
+    function bit.bor( value, ... )
+        local object = copy( value )
+        local args = { ... }
+
+        for i = 1, select( '#', ... ), 1 do
+            bor( object, args[ i ] )
+        end
+
+        return object
     end
 
 end
@@ -930,10 +955,11 @@ do
     --- [SHARED AND MENU]
     --- Performs a bitwise AND operation between two big integer objects.
     ---@param object gpm.std.BigInt
-    ---@param value gpm.std.BigInt
+    ---@param value any
     ---@return gpm.std.BigInt
     local function band( object, value )
         local other = tobigint( value )
+        ---@cast other gpm.std.BigInt
 
         if object[ 0 ] == 0 then
             return object
@@ -979,11 +1005,18 @@ do
 
     --- [SHARED AND MENU]
     --- Creates a new big integer object that is the result of a bitwise AND operation between two big integer objects.
-    ---@param object gpm.std.BigInt
     ---@param value gpm.std.BigInt
+    ---@vararg any
     ---@return gpm.std.BigInt
-    function bit.band( object, value )
-        return band( copy( object ), value )
+    function bit.band( value, ... )
+        local object = copy( value )
+        local args = { ... }
+
+        for i = 1, select( '#', ... ), 1 do
+            band( object, args[ i ] )
+        end
+
+        return object
     end
 
 end
@@ -993,10 +1026,11 @@ do
     --- [SHARED AND MENU]
     --- Performs a bitwise XOR operation between two big integer objects.
     ---@param object gpm.std.BigInt
-    ---@param value gpm.std.BigInt
+    ---@param value any
     ---@return gpm.std.BigInt
     local function bxor( object, value )
         local other = tobigint( value )
+        ---@cast other gpm.std.BigInt
 
         if other[ 0 ] == 0 then
             return object
@@ -1033,11 +1067,18 @@ do
 
     --- [SHARED AND MENU]
     --- Creates a new big integer object that is the result of a bitwise XOR operation between two big integer objects.
-    ---@param object gpm.std.BigInt
     ---@param value gpm.std.BigInt
+    ---@vararg any
     ---@return gpm.std.BigInt
-    function bit.bxor( object, value )
-        return bxor( copy( object ), value )
+    function bit.bxor( value, ... )
+        local object = copy( value )
+        local args = { ... }
+
+        for i = 1, select( '#', ... ), 1 do
+            bxor( object, args[ i ] )
+        end
+
+        return object
     end
 
 end
@@ -1195,10 +1236,11 @@ end
 --- [SHARED AND MENU]
 --- Adds big integer to a big integer object.
 ---@param object gpm.std.BigInt
----@param value gpm.std.BigInt
+---@param value any
 ---@return gpm.std.BigInt
 local function add( object, value )
     local other = tobigint( value )
+    ---@cast other gpm.std.BigInt
 
     -- addition of 0
     if other[ 0 ] == 0 then
@@ -1295,7 +1337,7 @@ end
 --- [SHARED AND MENU]
 --- Subtracts big integer from a big integer object.
 ---@param object gpm.std.BigInt
----@param value gpm.std.BigInt
+---@param value any
 ---@return gpm.std.BigInt
 local function sub( object, value )
     return add( object, unm( tobigint( value ) ) )
@@ -1313,10 +1355,11 @@ end
 --- [SHARED AND MENU]
 --- Multiplies big integer with a big integer object.
 ---@param object gpm.std.BigInt
----@param value gpm.std.BigInt
+---@param value any
 ---@return gpm.std.BigInt
 local function mul( object, value )
     local other = tobigint( value )
+    ---@cast other gpm.std.BigInt
 
     -- multiplication by 0
     if object[ 0 ] == 0 then
@@ -1415,12 +1458,13 @@ do
     --- [SHARED AND MENU]
     --- Divides big integer by a big integer object and returns the quotient and remainder.
     ---@param object gpm.std.BigInt
-    ---@param value gpm.std.BigInt
+    ---@param value any
     ---@param ignore_remainder? boolean
     ---@return gpm.std.BigInt
     ---@return gpm.std.BigInt
     local function full_div( object, value, ignore_remainder )
         local other = tobigint( value )
+        ---@cast other gpm.std.BigInt
 
         -- division of/by 0
         if object[ 0 ] == 0 then
@@ -1642,10 +1686,11 @@ do
     --- [SHARED AND MENU]
     --- Raises a big integer object to a power.
     ---@param object gpm.std.BigInt
-    ---@param value gpm.std.BigInt
+    ---@param value any
     ---@return gpm.std.BigInt
     local function pow( object, value )
         local other = tobigint( value )
+        ---@cast other gpm.std.BigInt
 
         if other[ 0 ] == 0 then
             return setmetatable( { [ 0 ] = 1, 1 }, BigInt )
@@ -1666,7 +1711,7 @@ do
         if power ~= nil then
             -- assumes other isn't so big that precision becomes an issue
             local object_copy = copy( object )
-            bit_lshift( object_copy, ( toNumber( object_copy ) - 1 ) * power )
+            bit_lshift( object_copy, ( toInteger( object_copy ) - 1 ) * power )
             object_copy.sign = sign
             return object_copy
         end
@@ -1744,10 +1789,11 @@ do
     --- [SHARED AND MENU]
     --- Compares big integer objects.
     ---@param a gpm.std.BigInt
-    ---@param value gpm.std.BigInt
+    ---@param value any
     ---@return integer
     local function compare( a, value )
         local b = tobigint( value )
+        ---@cast b gpm.std.BigInt
 
         if a[ 0 ] > b[ 0 ] then
             return 1
@@ -1820,3 +1866,5 @@ do
     BigInt.__le = BigInt.le
 
 end
+
+BigIntClass.fromBytes( 1, 0, 0, 0, 0, 0, 0, 0, 0 ):toBinaryString( true )
