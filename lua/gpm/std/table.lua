@@ -15,6 +15,7 @@ end
 local istable = std.istable
 
 --- [SHARED AND MENU]
+---
 --- A collection of functions for working with tables.
 ---@class gpm.std.table
 local table = {
@@ -128,7 +129,9 @@ do
         return copy
     end
 
-    --- [SHARED AND MENU] Copies a table.
+    --- [SHARED AND MENU]
+    ---
+    --- Copies a table.
     ---@param source table The table to copy.
     ---@param deepCopy boolean?: Whether to deep copy the table.
     ---@param copyKeys boolean?: Whether to copy the keys.
@@ -158,7 +161,9 @@ do
         return copy
     end
 
-    --- [SHARED AND MENU] Copies a sequential table.
+    --- [SHARED AND MENU]
+    ---
+    --- Copies a sequential table.
     ---@param source table The table to copy.
     ---@param deepCopy boolean?: Whether to deep copy the table.
     ---@param copyKeys boolean?: Whether to copy the keys.
@@ -219,7 +224,9 @@ end
 
 do
 
-    --- [SHARED AND MENU] Checks if two tables are equal.
+    --- [SHARED AND MENU]
+    ---
+    --- Checks if two tables are equal.
     ---@param a table The first table to check.
     ---@param b table The second table to check.
     ---@return boolean
@@ -267,7 +274,9 @@ end
 
 do
 
-    --- [SHARED AND MENU] Returns the difference between two tables as a list of keys.
+    --- [SHARED AND MENU]
+    ---
+    --- Returns the difference between two tables as a list of keys.
     ---@param a table The first table.
     ---@param b table The second table.
     ---@return table: The list of keys.
@@ -320,7 +329,9 @@ end
 
 do
 
-    --- [SHARED AND MENU] Returns the difference between two tables as a table with differences.
+    --- [SHARED AND MENU]
+    ---
+    --- Returns the difference between two tables as a table with differences.
     ---@param a table The first table.
     ---@param b table The second table.
     ---@return table
@@ -372,7 +383,9 @@ do
 
     local isstring = std.isstring
 
-    --- [SHARED AND MENU] Converts a table to lowercase.
+    --- [SHARED AND MENU]
+    ---
+    --- Converts a table to lowercase.
     ---@param tbl table The table to convert.
     ---@param lowerKeys? boolean Whether to convert keys to lowercase.
     ---@param lowerValues? boolean Whether to convert values to lowercase.
@@ -402,7 +415,9 @@ do
 
 end
 
---- [SHARED AND MENU] Returns a slice of the given table.
+--- [SHARED AND MENU]
+---
+--- Returns a slice of the given table.
 ---@param tbl table The table to slice.
 ---@param to? integer: The start position.
 ---@param from? integer: The end position.
@@ -438,7 +453,9 @@ function table.slice( tbl, from, to, step )
     return slice, length
 end
 
---- [SHARED AND MENU] Injects values from one table to another.
+--- [SHARED AND MENU]
+---
+--- Injects values from one table to another.
 ---@param destination table The destination table.
 ---@param source table The source table.
 ---@param position? integer: The position to inject.
@@ -482,7 +499,9 @@ function table.inject( destination, source, position, from, to )
     return destination
 end
 
---- [SHARED AND MENU] Remove all occurrences of the given value.
+--- [SHARED AND MENU]
+---
+--- Remove all occurrences of the given value.
 ---@param tbl table The table to remove from.
 ---@param value any The value to remove.
 function table.removeByValue( tbl, value )
@@ -494,6 +513,7 @@ function table.removeByValue( tbl, value )
 end
 
 --- [SHARED AND MENU]
+---
 --- Removes a range of values from the given table.
 ---@param tbl table The table to remove from.
 ---@param from? integer: The start position.
@@ -533,6 +553,7 @@ function table.eject( tbl, from, to )
 end
 
 --- [SHARED AND MENU]
+---
 --- Returns true if the given list (table) contains the given value.
 ---@param tbl table The table to check.
 ---@param value any The value to check.
@@ -547,7 +568,9 @@ function table.contains( tbl, value )
     return false
 end
 
---- [SHARED AND MENU] Returns true if the given table contains the given value.
+--- [SHARED AND MENU]
+---
+--- Returns true if the given table contains the given value.
 ---@param tbl table The table.
 ---@param value any The value.
 ---@return boolean
@@ -561,7 +584,9 @@ function table.hasValue( tbl, value )
     return false
 end
 
---- [SHARED AND MENU] Returns list (table) of keys and length of this list.
+--- [SHARED AND MENU]
+---
+--- Returns list (table) of keys and length of this list.
 ---@param tbl table The table.
 ---@return any[]: The list of keys.
 ---@return integer: The length of the list.
@@ -575,7 +600,9 @@ function table.getKeys( tbl )
     return keys, length
 end
 
---- [SHARED AND MENU] Returns list (table) of values and length of this list.
+--- [SHARED AND MENU]
+---
+--- Returns list (table) of values and length of this list.
 ---@param tbl table The table.
 ---@return any[]: The list of values.
 ---@return integer: The length of the list.
@@ -589,7 +616,9 @@ function table.getValues( tbl )
     return values, length
 end
 
---- [SHARED AND MENU] Returns the count of keys in the given table.
+--- [SHARED AND MENU]
+---
+--- Returns the count of keys in the given table.
 ---@param tbl table The table.
 ---@return integer: The count of keys.
 function table.count( tbl )
@@ -601,7 +630,9 @@ function table.count( tbl )
     return count
 end
 
---- [SHARED AND MENU] Flips the keys with values in the given list (table).
+--- [SHARED AND MENU]
+---
+--- Flips the keys with values in the given list (table).
 ---@param tbl table The table to flip.
 ---@param noCopy? boolean: Do not copy the table.
 ---@return table: The flipped table.
@@ -630,7 +661,9 @@ function table.flip( tbl, noCopy )
     end
 end
 
---- [SHARED AND MENU] Returns the list (table) of key/value pairs and length of this list.
+--- [SHARED AND MENU]
+---
+--- Returns the list (table) of key/value pairs and length of this list.
 ---@param tbl table The key/value table.
 ---@return table: The list.
 ---@return integer: The length of the list.
@@ -644,7 +677,9 @@ function table.getPairs( tbl )
     return result, length
 end
 
---- [SHARED AND MENU] Returns the value of the given key path.
+--- [SHARED AND MENU]
+---
+--- Returns the value of the given key path.
 ---@param tbl table The table to get the value from.
 ---@param str string The key path to get.
 ---@return any: The value of the key path.
@@ -668,7 +703,9 @@ function table.get( tbl, str )
     return tbl[ string_sub( str, pointer ) ]
 end
 
---- [SHARED AND MENU] Sets the value of the given key path.
+--- [SHARED AND MENU]
+---
+--- Sets the value of the given key path.
 ---@param tbl table The table to set the value in.
 ---@param str string The key path.
 ---@param value any The value to set.
@@ -695,7 +732,9 @@ function table.set( tbl, str, value )
     tbl[ string_sub( str, pointer ) ] = value
 end
 
---- [SHARED AND MENU] Returns true if the given table is sequential.
+--- [SHARED AND MENU]
+---
+--- Returns true if the given table is sequential.
 ---@param tbl table The table to check.
 ---@return boolean: `true` if the table is sequential, `false` otherwise.
 function table.isSequential( tbl )
@@ -711,14 +750,18 @@ function table.isSequential( tbl )
     return true
 end
 
---- [SHARED AND MENU] Returns true if the given table is empty.
+--- [SHARED AND MENU]
+---
+--- Returns true if the given table is empty.
 ---@param tbl table The table to check.
 ---@return boolean: `true` if the table is empty, `false` otherwise.
 function table.isEmpty( tbl )
     return next( tbl ) == nil
 end
 
---- [SHARED AND MENU] Empties the given table.
+--- [SHARED AND MENU]
+---
+--- Empties the given table.
 ---@param tbl table The table to empty.
 ---@param isSequential? boolean: If the table is sequential.
 ---@return table: The empty table.
@@ -736,7 +779,9 @@ function table.empty( tbl, isSequential )
     return tbl
 end
 
---- [SHARED AND MENU] Fills the given table with the given value.
+--- [SHARED AND MENU]
+---
+--- Fills the given table with the given value.
 ---@param tbl table The table to fill.
 ---@param value any The value to fill the table with.
 ---@param from? integer: The start position.
@@ -770,7 +815,9 @@ do
 
     local math_random = math.random
 
-    --- [SHARED AND MENU] Shuffles the given table.
+    --- [SHARED AND MENU]
+    ---
+    --- Shuffles the given table.
     ---@param tbl table The table.
     ---@return table: The shuffled table.
     function table.shuffle( tbl )
@@ -783,7 +830,9 @@ do
         return tbl
     end
 
-    --- [SHARED AND MENU] Returns a random value from the given list (table).
+    --- [SHARED AND MENU]
+    ---
+    --- Returns a random value from the given list (table).
     ---@param tbl table The table.
     ---@return any: The value.
     ---@return integer: The index of the value.
@@ -805,7 +854,9 @@ do
 
     local math_fmul = math.fmul
 
-    --- [SHARED AND MENU] Reverses the given list (table).
+    --- [SHARED AND MENU]
+    ---
+    --- Reverses the given list (table).
     ---@param tbl table The table to reverse.
     ---@param noCopy? boolean: If `true`, the table will not be copied.
     ---@param length? integer: The length of the table.
@@ -837,6 +888,7 @@ end
 do
 
     --- [SHARED AND MENU]
+    ---
     --- Creates a new table, filled with the given value and size.
     ---@param value any The value to fill the table with.
     ---@param ... integer: The sizes of the table.
@@ -859,6 +911,7 @@ do
 end
 
 --- [SHARED AND MENU]
+---
 --- Extracts selected range of values from the table.
 ---@param tbl table The table.
 ---@param from integer: The start position.
@@ -891,7 +944,9 @@ function table.extract( tbl, from, to )
     return extracted, extracted_length
 end
 
---- [SHARED AND MENU] Removes values from the table.
+--- [SHARED AND MENU]
+---
+--- Removes values from the table.
 ---@param tbl table The table.
 ---@param start integer?: The start position.
 ---@param delete_count integer?: The number of values to remove.

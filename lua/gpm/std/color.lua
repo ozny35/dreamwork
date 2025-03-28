@@ -11,40 +11,28 @@ local string_char, string_byte, string_format, string_len = string.char, string.
 local DIV255_CONST = 1 / 255
 
 --- [SHARED AND MENU]
+---
 --- The color object.
 ---@diagnostic disable-next-line: duplicate-doc-alias
 ---@alias Color gpm.std.Color
 ---@class gpm.std.Color : gpm.std.Object
 ---@field __class gpm.std.ColorClass
----@field r integer
----@field g integer
----@field b integer
----@field a integer
----@operator add(Color): Color
----@operator sub(Color): Color
----@operator mul(Color | integer): Color
----@operator div(Color | integer): Color
----@operator unm(): Color
+---@field r integer A red channel of the color. [0, 255].
+---@field g integer A green channel of the color. [0, 255].
+---@field b integer A blue channel of the color. [0, 255].
+---@field a integer An alpha channel of the color. [0, 255].
+---@operator add(gpm.std.Color): gpm.std.Color
+---@operator sub(gpm.std.Color): gpm.std.Color
+---@operator mul(gpm.std.Color | integer): gpm.std.Color
+---@operator div(gpm.std.Color | integer): gpm.std.Color
+---@operator unm(): gpm.std.Color
 local Color = std.class.base( "Color" )
 
-do
-
-    local debug_getmetatable = std.debug.getmetatable
-
-    --- [SHARED AND MENU]
-    --- Checks if the value is a color object.
-    ---@param value any The value to check.
-    ---@return boolean
-    function std.iscolor( value )
-        return debug_getmetatable( value ) == Color
-    end
-
-end
-
 --- [SHARED AND MENU]
+---
 --- The color class.
 ---@class gpm.std.ColorClass : gpm.std.Color
----@field __base Color
+---@field __base gpm.std.Color
 ---@overload fun(r: integer?, g: integer?, b: integer?, a: integer?): gpm.std.Color
 local ColorClass = std.class.create( Color )
 
@@ -86,12 +74,13 @@ do
 end
 
 --- [SHARED AND MENU]
+---
 --- Creates a color object from RGBA values.
 ---@param r integer?: The 8-bit red channel.
 ---@param g integer?: The 8-bit green channel.
 ---@param b integer?: The 8-bit blue channel.
 ---@param a integer?: The 8-bit alpha channel.
----@return Color: The color object.
+---@return gpm.std.Color: The color object.
 local function from_rgba( r, g, b, a )
     r = r and math_min( math_max( r, 0 ), 255 ) or 0
     return setmetatable( {
@@ -109,7 +98,7 @@ ColorClass.fromRGBA = from_rgba
 ---@param g integer?: The 8-bit green channel.
 ---@param b integer?: The 8-bit blue channel.
 ---@param a integer?: The 8-bit alpha channel.
----@return Color: The color object.
+---@return gpm.std.Color: The color object.
 function Color:__new( r, g, b, a )
     return from_rgba( r, g, b, a )
 end
@@ -119,7 +108,7 @@ function Color:__tostring()
     return string_format( "Color: %p [%d, %d, %d, %d]", self, self[ 1 ], self[ 2 ], self[ 3 ], self[ 4 ] )
 end
 
----@param other Color
+---@param other gpm.std.Color
 ---@protected
 function Color:__eq( other )
     return self[ 1 ] == other[ 1 ] and self[ 2 ] == other[ 2 ] and self[ 3 ] == other[ 3 ] and self[ 4 ] == other[ 4 ]
@@ -136,8 +125,9 @@ function Color:__unm()
 end
 
 --- [SHARED AND MENU]
+---
 --- Inverts current color.
----@return Color: The color object.
+---@return gpm.std.Color: The color object.
 function Color:invert()
     self[ 1 ] = math_min( math_max( math_abs( 255 - self[ 1 ] ), 0 ), 255 )
     self[ 2 ] = math_min( math_max( math_abs( 255 - self[ 2 ] ), 0 ), 255 )
@@ -145,7 +135,7 @@ function Color:invert()
     return self
 end
 
----@param color Color
+---@param color gpm.std.Color
 ---@protected
 function Color:__add( color )
     return from_rgba(
@@ -156,7 +146,7 @@ function Color:__add( color )
     )
 end
 
----@param color Color
+---@param color gpm.std.Color
 ---@protected
 function Color:__sub( color )
     return from_rgba(
@@ -167,7 +157,7 @@ function Color:__sub( color )
     )
 end
 
----@param other Color | integer
+---@param other gpm.std.Color | integer
 ---@protected
 function Color:__mul( other )
     if isnumber( other ) then
@@ -180,7 +170,7 @@ function Color:__mul( other )
         )
     end
 
-    ---@cast other Color
+    ---@cast other gpm.std.Color
     return from_rgba(
         self[ 1 ] * other[ 1 ],
         self[ 2 ] * other[ 2 ],
@@ -189,7 +179,7 @@ function Color:__mul( other )
     )
 end
 
----@param other Color | integer
+---@param other gpm.std.Color | integer
 ---@protected
 function Color:__div( other )
     if isnumber( other ) then
@@ -203,7 +193,7 @@ function Color:__div( other )
         )
     end
 
-    ---@cast other Color
+    ---@cast other gpm.std.Color
     return from_rgba(
         self[ 1 ] / other[ 1 ],
         self[ 2 ] / other[ 2 ],
@@ -212,25 +202,26 @@ function Color:__div( other )
     )
 end
 
----@param other Color
+---@param other gpm.std.Color
 ---@protected
 function Color:__lt( other )
     return ( self[ 1 ] + self[ 2 ] + self[ 3 ] + self[ 4 ] ) < ( other[ 1 ] + other[ 2 ] + other[ 3 ] + other[ 4 ] )
 end
 
----@param other Color
+---@param other gpm.std.Color
 ---@protected
 function Color:__le( other )
     return ( self[ 1 ] + self[ 2 ] + self[ 3 ] + self[ 4 ] ) <= ( other[ 1 ] + other[ 2 ] + other[ 3 ] + other[ 4 ] )
 end
 
----@param value Color
+---@param value gpm.std.Color
 ---@protected
 function Color:__concat( value )
     return self:toHex() .. tostring( value )
 end
 
 --- [SHARED AND MENU]
+---
 --- Unpacks the color as r, g, b, a values.
 ---@return integer r: The 8-bit red channel.
 ---@return integer g: The 8-bit green channel.
@@ -241,16 +232,18 @@ function Color:unpack()
 end
 
 --- [SHARED AND MENU]
+---
 --- Makes a copy of the color.
----@return Color: The copy of the color.
+---@return gpm.std.Color: The copy of the color.
 function Color:copy()
     return setmetatable( { self[ 1 ], self[ 2 ], self[ 3 ], self[ 4 ] }, Color )
 end
 
 --- [SHARED AND MENU]
+---
 --- Makes color a copy of the another color.
----@param color Color The color to copy.
----@return Color: The copy of the color.
+---@param color gpm.std.Color The color to copy.
+---@return gpm.std.Color: The copy of the color.
 function Color:copyFrom( color )
     self[ 1 ] = color[ 1 ]
     self[ 2 ] = color[ 2 ]
@@ -260,12 +253,13 @@ function Color:copyFrom( color )
 end
 
 --- [SHARED AND MENU]
+---
 --- Set the color as r, g, b, a values.
 ---@param r integer The 8-bit red channel.
 ---@param g integer The 8-bit green channel.
 ---@param b integer The 8-bit blue channel.
 ---@param a integer The 8-bit alpha channel.
----@return Color: The color object.
+---@return gpm.std.Color: The color object.
 function Color:setUnpacked( r, g, b, a )
     r = r and math_min( math_max( r, 0 ), 255 ) or 0
 
@@ -277,6 +271,7 @@ function Color:setUnpacked( r, g, b, a )
 end
 
 --- [SHARED AND MENU]
+---
 --- Returns the color as hex string.
 ---@param withAlpha boolean?: Whether to include alpha.
 ---@return string: The hex string.
@@ -293,6 +288,7 @@ do
     local bit_bor, bit_lshift = bit.bor, bit.lshift
 
     --- [SHARED AND MENU]
+    ---
     --- Returns the color as 32-bit integer.
     ---@param withAlpha boolean?: Whether to include alpha.
     ---@return integer: The 32-bit integer.
@@ -307,6 +303,7 @@ do
 end
 
 --- [SHARED AND MENU]
+---
 --- Returns the color as binary string.
 ---@param withAlpha boolean?: Whether to include alpha.
 ---@return string: The binary string.
@@ -315,6 +312,7 @@ function Color:toBinary( withAlpha )
 end
 
 --- [SHARED AND MENU]
+---
 --- Returns the color as HSL values (hue, saturation, lightness).
 ---@return integer hue: The hue in degrees [0, 360].
 ---@return number saturation: The saturation as fraction [0, 1].
@@ -352,6 +350,7 @@ function Color:toHSL()
 end
 
 --- [SHARED AND MENU]
+---
 --- Returns the color as HSV values (hue, saturation, value).
 ---@return integer hue: The hue in degrees [0, 360].
 ---@return number saturation: The saturation as fraction [0, 1].
@@ -385,6 +384,7 @@ function Color:toHSV()
 end
 
 --- [SHARED AND MENU]
+---
 --- Returns the color as HWB values (hue, whiteness, blackness).
 ---@return integer hue: The hue in degrees [0, 360].
 ---@return number whiteness: The whiteness as fraction [0, 1].
@@ -395,6 +395,7 @@ function Color:toHWB()
 end
 
 --- [SHARED AND MENU]
+---
 --- Returns the color as CMYK values (cyan, magenta, yellow, black).
 ---@return number cyan: The cyan as fraction [0, 1].
 ---@return number magenta: The magenta as fraction [0, 1].
@@ -410,8 +411,9 @@ do
     local math_lerp = math.lerp
 
     --- [SHARED AND MENU]
+    ---
     --- Smoothing a color object to another color object.
-    ---@param color Color The color to lerp.
+    ---@param color gpm.std.Color The color to lerp.
     ---@param frac number?: The fraction to lerp [0, 1].
     ---@param withAlpha boolean?: Whether to lerp alpha channel.
     ---@return Color
@@ -432,16 +434,18 @@ do
 end
 
 --- [SHARED AND MENU]
+---
 --- Creates a color object from lerp.
----@param color Color The "from" color.
+---@param color gpm.std.Color The "from" color.
 ---@param frac number?: The fraction [0, 1].
 ---@param withAlpha boolean?: Whether to lerp alpha channel.
----@return Color: The color object.
+---@return gpm.std.Color: The color object.
 function Color:getLerped( color, frac, withAlpha )
     return self:copy():lerp( color, frac, withAlpha )
 end
 
 --- [SHARED AND MENU]
+---
 --- Returns the color's hue.
 ---@return integer: The hue in degrees [0, 360].
 function Color:getHue()
@@ -468,15 +472,17 @@ function Color:getHue()
 end
 
 --- [SHARED AND MENU]
+---
 --- Sets the color's hue.
 ---@param hue integer The hue in degrees [0, 360].
----@return Color: The color object.
+---@return gpm.std.Color: The color object.
 function Color:setHue( hue )
     local _, saturation, lightness = self:toHSL()
     return self:fromHSL( hue, saturation, lightness )
 end
 
 --- [SHARED AND MENU]
+---
 --- Returns the color's saturation.
 ---@return number: The saturation as fraction [0, 1].
 function Color:getSaturation()
@@ -486,15 +492,17 @@ function Color:getSaturation()
 end
 
 --- [SHARED AND MENU]
+---
 --- Sets the color's saturation.
 ---@param saturation number The saturation as fraction [0, 1].
----@return Color: The color object.
+---@return gpm.std.Color: The color object.
 function Color:setSaturation( saturation )
     local hue, _, lightness = self:toHSL()
     return self:fromHSL( hue, saturation, lightness )
 end
 
 --- [SHARED AND MENU]
+---
 --- Returns the color's brightness.
 ---@return number: The brightness as fraction [0, 1].
 function Color:getBrightness()
@@ -502,15 +510,17 @@ function Color:getBrightness()
 end
 
 --- [SHARED AND MENU]
+---
 --- Sets the color's brightness.
 ---@param brightness number The brightness as fraction [0, 1].
----@return Color: The color object.
+---@return gpm.std.Color: The color object.
 function Color:setBrightness( brightness )
     local hue, saturation, _ = self:toHSV()
     return self:fromHSV( hue, saturation, brightness )
 end
 
 --- [SHARED AND MENU]
+---
 --- Returns the color's lightness.
 ---@return number: The lightness as fraction [0, 1].
 function Color:getLightness()
@@ -519,15 +529,17 @@ function Color:getLightness()
 end
 
 --- [SHARED AND MENU]
+---
 --- Sets the color's lightness.
 ---@param lightness number The lightness as fraction [0, 1].
----@return Color: The color object.
+---@return gpm.std.Color: The color object.
 function Color:setLightness( lightness )
     local hue, saturation, _ = self:toHSL()
     return self:fromHSL( hue, saturation, lightness )
 end
 
 --- [SHARED AND MENU]
+---
 --- Returns the color's whiteness.
 ---@return number: The whiteness as fraction [0, 1].
 function Color:getWhiteness()
@@ -536,15 +548,17 @@ function Color:getWhiteness()
 end
 
 --- [SHARED AND MENU]
+---
 --- Sets the color's whiteness.
 ---@param whiteness number The whiteness as fraction [0, 1].
----@return Color: The color object.
+---@return gpm.std.Color: The color object.
 function Color:setWhiteness( whiteness )
     local hue, _, blackness = self:toHWB()
     return self:fromHWB( hue, whiteness, blackness )
 end
 
 --- [SHARED AND MENU]
+---
 --- Returns the color's blackness.
 ---@return number: The blackness as fraction [0, 1].
 function Color:getBlackness()
@@ -553,9 +567,10 @@ function Color:getBlackness()
 end
 
 --- [SHARED AND MENU]
+---
 --- Sets the color's blackness.
 ---@param blackness number The blackness as fraction [0, 1].
----@return Color: The color object.
+---@return gpm.std.Color: The color object.
 function Color:setBlackness( blackness )
     local hue, saturation, _ = self:toHSL()
     return self:fromHSL( hue, saturation, blackness )
@@ -589,11 +604,12 @@ do
     end
 
     --- [SHARED AND MENU]
+    ---
     --- Changes the color to hex string.
     ---
     --- Supports hex strings from `0` to `8` characters.
     ---@param hex string The hex string. If the first character is `#`, it will be ignored.
-    ---@return Color: The color object.
+    ---@return gpm.std.Color: The color object.
     function Color:fromHex( hex )
         if string_byte( hex, 1 ) == 0x23 --[[ # ]] then
             hex = string_sub( hex, 2 )
@@ -645,9 +661,10 @@ do
     end
 
     --- [SHARED AND MENU]
+    ---
     --- Creates a color object from hex string.
     ---@param hex string The hex string. If the first character is `#`, it will be ignored.
-    ---@return Color: The color object.
+    ---@return gpm.std.Color: The color object.
     function ColorClass.fromHex( hex )
         return from_rgba( 0, 0, 0, 255 ):fromHex( hex )
     end
@@ -659,10 +676,11 @@ do
     local bit_band, bit_rshift = bit.band, bit.rshift
 
     --- [SHARED AND MENU]
+    ---
     --- Changes the color to 32-bit uint.
     ---@param uint32 integer The 32-bit uint.
     ---@param withAlpha boolean?: Whether to include alpha.
-    ---@return Color: The color object.
+    ---@return gpm.std.Color: The color object.
     function Color:fromUInt32( uint32, withAlpha )
         withAlpha = withAlpha == true
 
@@ -685,10 +703,11 @@ do
     end
 
     --- [SHARED AND MENU]
+    ---
     --- Creates a color object from 32-bit uint.
     ---@param uint32 integer The 32-bit uint.
     ---@param withAlpha boolean?: Whether to include alpha.
-    ---@return Color: The color object.
+    ---@return gpm.std.Color: The color object.
     function ColorClass.fromUInt32( uint32, withAlpha )
         return from_rgba( 0, 0, 0, 255 ):fromUInt32( uint32, withAlpha )
     end
@@ -696,9 +715,10 @@ do
 end
 
 --- [SHARED AND MENU]
+---
 --- Changes the color to binary string.
 ---@param binary string The binary string.
----@return Color: The color object.
+---@return gpm.std.Color: The color object.
 function Color:fromBinary( binary )
     local length = string_len( binary )
     if length == 1 then
@@ -727,19 +747,21 @@ function Color:fromBinary( binary )
 end
 
 --- [SHARED AND MENU]
+---
 --- Creates a color object from binary string.
 ---@param binary string The binary string.
----@return Color: The color object.
+---@return gpm.std.Color: The color object.
 function ColorClass.fromBinary( binary )
     return from_rgba( 0, 0, 0, 255 ):fromBinary( binary )
 end
 
 --- [SHARED AND MENU]
+---
 --- Changes the color to HSL.
 ---@param hue integer The hue in degrees [0, 360].
 ---@param saturation number The saturation [0, 1].
 ---@param lightness number The lightness [0, 1].
----@return Color: The color object.
+---@return gpm.std.Color: The color object.
 function Color:fromHSL( hue, saturation, lightness )
     hue = hue % 360
 
@@ -769,21 +791,23 @@ function Color:fromHSL( hue, saturation, lightness )
 end
 
 --- [SHARED AND MENU]
+---
 --- Creates a color object from HSL values.
 ---@param hue integer The hue in degrees [0, 360].
 ---@param saturation number The saturation [0, 1].
 ---@param lightness number The lightness [0, 1].
----@return Color: The color object.
+---@return gpm.std.Color: The color object.
 function ColorClass.fromHSL( hue, saturation, lightness )
     return from_rgba( 0, 0, 0, 255 ):fromHSL( hue, saturation, lightness )
 end
 
 --- [SHARED AND MENU]
+---
 --- Changes the color to HSV values.
 ---@param hue integer The hue in degrees [0, 360].
 ---@param saturation number The saturation [0, 1].
 ---@param brightness number The brightness [0, 1].
----@return Color: The color object.
+---@return gpm.std.Color: The color object.
 function Color:fromHSV( hue, saturation, brightness )
     hue = hue % 360
 
@@ -813,43 +837,47 @@ function Color:fromHSV( hue, saturation, brightness )
 end
 
 --- [SHARED AND MENU]
+---
 --- Creates a color object from HSV values.
 ---@param hue integer The hue in degrees [0, 360].
 ---@param saturation number The saturation [0, 1].
 ---@param brightness number The brightness [0, 1].
----@return Color: The color object.
+---@return gpm.std.Color: The color object.
 function ColorClass.fromHSV( hue, saturation, brightness )
     return from_rgba( 0, 0, 0, 255 ):fromHSV( hue, saturation, brightness )
 end
 
 --- [SHARED AND MENU]
+---
 --- Changes the color to HWB values.
 ---@param hue integer The hue in degrees [0, 360].
 ---@param saturation number The saturation [0, 1].
 ---@param brightness number The brightness [0, 1].
----@return Color: The color object.
+---@return gpm.std.Color: The color object.
 function Color:fromHWB( hue, saturation, brightness )
     brightness = 1 - brightness
     return self:fromHSV( hue, ( brightness > 0 ) and ( 1 - ( saturation / brightness ) ) or 0, brightness )
 end
 
 --- [SHARED AND MENU]
+---
 --- Creates a color object from HWB values.
 ---@param hue integer The hue in degrees [0, 360].
 ---@param saturation number The saturation [0, 1].
 ---@param brightness number The brightness [0, 1].
----@return Color: The color object.
+---@return gpm.std.Color: The color object.
 function ColorClass.fromHWB( hue, saturation, brightness )
     return from_rgba( 0, 0, 0, 255 ):fromHWB( hue, saturation, brightness )
 end
 
 --- [SHARED AND MENU]
+---
 --- Changes the color to CMYK values.
 ---@param cyan number The cyan as fraction [0, 1].
 ---@param magenta number The magenta as fraction [0, 1].
 ---@param yellow number The yellow as fraction [0, 1].
 ---@param black number The black as fraction [0, 1].
----@return Color: The color object.
+---@return gpm.std.Color: The color object.
 function Color:fromCMYK( cyan, magenta, yellow, black )
     cyan, magenta, yellow, black = cyan * 0.01, magenta * 0.01, yellow * 0.01, black * 0.01
 
@@ -862,22 +890,25 @@ function Color:fromCMYK( cyan, magenta, yellow, black )
 end
 
 --- [SHARED AND MENU]
+---
 --- Creates a color object from CMYK values.
 ---@param cyan number The cyan as fraction [0, 1].
 ---@param magenta number The magenta as fraction [0, 1].
 ---@param yellow number The yellow as fraction [0, 1].
 ---@param black number The black as fraction [0, 1].
----@return Color: The color object.
+---@return gpm.std.Color: The color object.
 function ColorClass.fromCMYK( cyan, magenta, yellow, black )
     return from_rgba( 0, 0, 0, 255 ):fromCMYK( cyan, magenta, yellow, black )
 end
 
 if std.CLIENT then
 
+    ---@diagnostic disable-next-line: undefined-field
     local render_ReadPixel = _G.render.ReadPixel
-    local NamedColor = _G.NamedColor
 
-    --- [CLIENT] Creates a color object from screen coordinates by reading a pixel.
+    --- [CLIENT]
+    ---
+    --- Creates a color object from screen coordinates by reading a pixel.
     ---
     --- Requires `render.CapturePixels` call before using.
     ---
@@ -885,19 +916,102 @@ if std.CLIENT then
     ---@param x integer The x coordinate.
     ---@param y integer The y coordinate.
     ---@param alpha integer? The alpha channel.
-    ---@return Color
+    ---@return gpm.std.Color
     function ColorClass.fromScreen( x, y, alpha )
         local r, g, b, a = render_ReadPixel( x, y )
         return from_rgba( r, g, b, alpha or a )
     end
 
-    --- [CLIENT] Creates a color object from `resource/ClientScheme.res`.
-    ---@param name string The color name in `resource/ClientScheme.res`.
-    ---@return Color?: The color object or `nil` if not found.
-    function ColorClass.fromScheme( name )
-        local tbl = NamedColor( name )
-        if tbl == nil then return end
-        return from_rgba( tbl.r, tbl.g, tbl.b, tbl.a )
+end
+
+do
+
+    local isstring = std.isstring
+
+    --- [SHARED AND MENU]
+    ---
+    --- A table containing named colors.
+    ---
+    --- Also takes colors from `resource/ClientScheme.res` if available. [CLIENT/MENU?]
+    ---
+    --- If no color is found, a new empty color will be created and assigned to specified name.
+    ---
+    --- Table key must be string or integer.
+    ---@class gpm.std.Color.scheme
+    ---@field [string] gpm.std.Color
+    ---@field [integer] gpm.std.Color
+    local scheme = {}
+    ColorClass.scheme = scheme
+
+    local metatable = {}
+
+    function metatable:__tostring()
+        return string_format( "Color Scheme: %p", self )
+    end
+
+    std.setmetatable( scheme, metatable )
+
+    do
+
+        local debug_getmetatable = std.debug.getmetatable
+        local rawset = std.rawset
+
+        --- [SHARED AND MENU]
+        ---
+        --- Checks if the value is a color object.
+        ---@param value any The value to check.
+        ---@return boolean
+        function std.iscolor( value )
+            return debug_getmetatable( value ) == Color
+        end
+
+        function metatable:__newindex( key, value )
+            if ( isstring( key ) or isnumber( key ) ) and debug_getmetatable( value ) == Color then
+                rawset( scheme, key, value )
+            else
+                std.error( "wrong color name", 3 )
+            end
+        end
+
+    end
+
+    ---@diagnostic disable-next-line: undefined-field
+    if std.CLIENT_MENU and _G.NamedColor ~= nil then
+
+        ---@diagnostic disable-next-line: undefined-field
+        local NamedColor = _G.NamedColor
+
+        function metatable:__index( name )
+            local data
+            if isstring( name ) then
+                data = NamedColor( name )
+            elseif not isnumber( name ) then
+                std.error( "wrong color name", 3 )
+            end
+
+            local color
+            if data == nil then
+                color = from_rgba( 255, 255, 255, 255 )
+            else
+                color = from_rgba( data.r, data.g, data.b, data.a )
+            end
+
+            scheme[ name ] = color
+            return color
+        end
+
+    else
+
+        function metatable:__index( name )
+            if isstring( name ) or isnumber( name ) then
+                local color = from_rgba( 255, 255, 255, 255 )
+                scheme[ name ] = color
+                return color
+            else
+                std.error( "wrong color name", 3 )
+            end
+        end
+
     end
 
 end

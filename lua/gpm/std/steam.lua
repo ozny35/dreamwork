@@ -14,6 +14,7 @@ do
 end
 
 --- [SHARED AND MENU]
+---
 --- Steam library.
 ---@class gpm.std.steam
 local steam = {}

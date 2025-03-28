@@ -3,6 +3,7 @@ local std, glua_debug = _G.gpm.std, _G.debug
 local debug_getinfo, glua_string = glua_debug.getinfo, _G.string
 
 --- [SHARED AND MENU]
+---
 --- Just empty function, do nothing.
 local function fempty() end
 
@@ -38,6 +39,7 @@ local debug = {
 }
 
 --- [SHARED AND MENU]
+---
 --- Call function with given arguments.
 ---@param func function The function to call.
 ---@param ... any: Arguments to be passed to the function.
@@ -56,6 +58,7 @@ do
     end
 
     --- [SHARED AND MENU]
+    ---
     --- Returns the metatable of the given name or `nil` if not found.
     ---@param name string The name of the metatable.
     ---@return table | nil: The metatable.
@@ -83,6 +86,7 @@ do
             local type = _G.type
 
             --- [SHARED AND MENU]
+            ---
             --- Returns the metatable of the given value or `nil` if not found.
             ---@param value any The value.
             ---@return table | nil: The metatable.
@@ -92,6 +96,7 @@ do
         end
 
         --- [SHARED AND MENU]
+        ---
         --- Returns the value of the given key in the metatable of the given value or `nil` if not found.
         ---@param value any The value.
         ---@param key string The key.
@@ -106,6 +111,7 @@ do
     local RegisterMetaTable = _G.RegisterMetaTable or fempty
 
     --- [SHARED AND MENU]
+    ---
     --- Registers the metatable of the given name and table.
     ---@param name string The name of the metatable.
     ---@param tbl table The metatable.
@@ -126,6 +132,7 @@ do
 end
 
 --- [SHARED AND MENU]
+---
 --- Returns current stack trace as a table with strings.
 ---@param startPos? integer: The start position of the stack trace.
 ---@return table stack: The stack trace.
@@ -147,6 +154,7 @@ function debug.getstack( startPos )
 end
 
 --- [SHARED AND MENU]
+---
 --- Returns the function within which the call was made or `nil` if not found.
 ---@return function | nil: The function within which the call was made or `nil` if not found.
 function debug.getfmain()
@@ -170,6 +178,7 @@ do
     local gsub_formatter = function( _, str ) return str end
 
     --- [SHARED AND MENU]
+    ---
     --- Returns the path to the file in which it was called or an empty string if it could not be found.
     ---@param location function | integer: The function or location to get the path from.
     ---@return string path: The path to the file in which it was called or an [b]empty string[/b] if it could not be found.
@@ -191,6 +200,7 @@ if std.jit then
     local util_funcinfo = std.jit.util.funcinfo
 
     --- [SHARED AND MENU]
+    ---
     --- Checks if the function is jit compilable.
     ---@param fn function The function to check.
     ---@return boolean: `true` if the function is jit compilable, otherwise `false`.
@@ -213,6 +223,7 @@ do
     local tonumber = std.tonumber
 
     --- [SHARED AND MENU]
+    ---
     --- Returns the memory address of the value.
     ---@param value any The value to get the memory address of.
     ---@return integer | nil: The memory address or `nil` if not found.
@@ -227,6 +238,7 @@ do
     local getfenv = std.getfenv
 
     --- [SHARED AND MENU]
+    ---
     --- Returns the function package or `nil` if not found.
     ---@param location function | integer: The function or stack level.
     ---@return Package?: The function package or `nil` if not found.
@@ -243,6 +255,7 @@ do
     local setfenv = std.setfenv
 
     --- [SHARED AND MENU]
+    ---
     --- Sets the function package.
     ---@param location function | integer: The function or stack level.
     ---@param package Package The package to set.

@@ -64,15 +64,16 @@ local letter2int = {
     a = 10
 }
 
+---@alias SteamID gpm.std.steam.Identifier
 ---@class gpm.std.steam.Identifier: gpm.std.Object
----@field __class gpm.std.steam.IDClass
----@field universe gpm.std.steam.Identifier.Universe
----@field type gpm.std.steam.Identifier.Type
----@field instance integer
----@field id integer
+---@field __class gpm.std.steam.IdentifierClass
+---@field universe gpm.std.steam.Identifier.Universe Indicates the Steam environment (e.g., public, beta).
+---@field type gpm.std.steam.Identifier.Type Specifies the entity type (e.g., individual user, group, game server).
+---@field instance integer Differentiates between multiple instances of the same type within a universe. For individual user accounts, this is typically set to 1, representing the desktop instance.
+---@field id integer The unique account number.
 local Identifier = std.class.base( "Identifier" )
 
----@class gpm.std.steam.IDClass: gpm.std.steam.Identifier
+---@class gpm.std.steam.IdentifierClass: gpm.std.steam.Identifier
 ---@field __base gpm.std.steam.Identifier
 ---@overload fun( universe?: gpm.std.steam.Identifier.Universe, type?: gpm.std.steam.Identifier.Type, id?: integer, instance?: boolean ): gpm.std.steam.Identifier
 local IdentifierClass = std.class.create( Identifier )
@@ -132,6 +133,7 @@ do
     local string_format = std.string.format
 
     --- [SHARED AND MENU]
+    ---
     --- Converts a SteamID object to a Steam2 identifier.
     ---@param ignore_universe? boolean
     ---@return string
@@ -156,6 +158,7 @@ do
     }
 
     --- [SHARED AND MENU]
+    ---
     --- Converts a SteamID object to a Steam3 identifier.
     ---@return string
     function Identifier:toSteam3()
@@ -176,6 +179,7 @@ do
         local BigInt_fromNumber = BigInt.fromNumber
 
         --- [SHARED AND MENU]
+        ---
         --- Converts a SteamID object to a 64-bit integer.
         ---@param object gpm.std.steam.Identifier
         ---@return string
@@ -199,6 +203,7 @@ do
             }
 
             --- [SHARED AND MENU]
+            ---
             --- Gets the URL for a SteamID object.
             ---@param http? boolean
             ---@return string?
@@ -222,6 +227,7 @@ do
         local BitInt_toInteger = BigInt.toInteger
 
         --- [SHARED AND MENU]
+        ---
         --- Checks if a string is a valid 64-bit identifier.
         ---@param str string
         ---@return boolean
@@ -230,6 +236,7 @@ do
         end
 
         --- [SHARED AND MENU]
+        ---
         --- Creates a new SteamID object from a 64-bit number string.
         ---@param str string
         ---@return gpm.std.steam.Identifier
@@ -253,6 +260,7 @@ do
     local string_match = string.match
 
     --- [SHARED AND MENU]
+    ---
     --- Checks if a string is a valid Steam2 identifier.
     ---@param str string
     ---@return boolean
@@ -278,6 +286,7 @@ do
     end
 
     --- [SHARED AND MENU]
+    ---
     --- Checks if a string is a valid Steam3 identifier.
     ---@param str string
     ---@return boolean
@@ -300,6 +309,7 @@ do
     end
 
     --- [SHARED AND MENU]
+    ---
     --- Creates a new SteamID object from a steam2 string.
     ---@param str string
     ---@return gpm.std.steam.Identifier
@@ -318,6 +328,7 @@ do
     end
 
     --- [SHARED AND MENU]
+    ---
     --- Creates a new SteamID object from a steam3 string.
     ---@param str string
     ---@return gpm.std.steam.Identifier

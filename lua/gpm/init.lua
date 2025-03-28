@@ -133,6 +133,7 @@ std.setmetatable( transducers, {
 } )
 
 --- [SHARED AND MENU]
+---
 --- coroutine library
 --- Coroutines are similar to threads, however they do not run simultaneously.
 ---
@@ -173,6 +174,7 @@ end
 local tonumber = _G.tonumber
 
 --- [SHARED AND MENU]
+---
 --- Attempts to convert the value to a number.
 ---@param value any The value to convert.
 ---@param base? integer The base used in the string. Can be any integer between 2 and 36, inclusive. (Default: 10)
@@ -183,6 +185,7 @@ function std.tonumber( value, base )
 end
 
 --- [SHARED AND MENU]
+---
 --- Attempts to convert the value to a boolean.
 ---@param value any The value to convert.
 ---@return boolean
@@ -196,6 +199,7 @@ end
 std.tobool = std.toboolean
 
 --- [SHARED AND MENU]
+---
 --- Checks if the value is valid.
 ---@param value any The value to check.
 ---@return boolean: Returns `true` if the value is valid, otherwise `false`.
@@ -211,6 +215,7 @@ local istable = _G.istable
 if istable == nil then
 
     --- [SHARED AND MENU]
+    ---
     --- Checks if the value type is a `table`.
     ---@param value any The value to check.
     ---@return boolean: Returns `true` if the value is a table, otherwise `false`.
@@ -279,6 +284,7 @@ do
         end
 
         --- [SHARED AND MENU]
+        ---
         --- Checks if the value type is a `boolean`.
         ---@param value any The value to check.
         ---@return boolean: Returns `true` if the value is a boolean, otherwise `false`.
@@ -311,6 +317,7 @@ do
         end
 
         --- [SHARED AND MENU]
+        ---
         --- Checks if the value type is a `number`.
         ---@param value any The value to check.
         ---@return boolean: Returns `true` if the value is a number, otherwise `false`.
@@ -341,6 +348,7 @@ do
         STRING.__tonumber = tonumber
 
         --- [SHARED AND MENU]
+        ---
         --- Checks if the value type is a `string`.
         ---@param value any The value to check.
         ---@return boolean: Returns `true` if the value is a string, otherwise `false`.
@@ -369,6 +377,7 @@ do
         debug_registermetatable( "function", FUNCTION )
 
         --- [SHARED AND MENU]
+        ---
         --- Checks if the value type is a `function`.
         ---@param value any
         ---@return boolean isFunction returns true if the value is a function, otherwise false
@@ -377,6 +386,7 @@ do
         end
 
         --- [SHARED AND MENU]
+        ---
         --- Checks if the value is callable.
         ---@param value any The value to check.
         ---@return boolean: Returns `true` if the value is can be called (like a function), otherwise `false`.
@@ -401,6 +411,7 @@ do
         debug_registermetatable( "thread", THREAD )
 
         --- [SHARED AND MENU]
+        ---
         --- Checks if the value type is a `thread`.
         ---@param value any The value to check.
         ---@return boolean: Returns `true` if the value is a thread, otherwise `false`.
@@ -436,6 +447,7 @@ do
 end
 
 --- [SHARED AND MENU]
+---
 --- string library
 ---@class gpm.std.string
 local string = include( "std/string.lua" )
@@ -452,6 +464,7 @@ local print = std.print or _G.print
 std.print = print
 
 --- [SHARED AND MENU]
+---
 --- Prints a formatted string to the console.
 ---
 --- Basically the same as `print( string.format( str, ... ) )`
@@ -462,10 +475,12 @@ function std.printf( str, ... )
 end
 
 --- [SHARED AND MENU]
+---
 --- bit library
 std.bit = include( "std/bit.lua" )
 
 --- [SHARED AND MENU]
+---
 --- os library
 ---@class gpm.std.os
 local os = include( "std/os.lua" )
@@ -539,6 +554,7 @@ do
     end
 
     --- [SHARED AND MENU]
+    ---
     --- Throws a Lua error.
     ---@param message string | Error: The error message to throw.
     ---@param level gpm.std.ErrorType?: The error level to throw.
@@ -566,6 +582,7 @@ do
     local debug_getinfo = debug.getinfo
 
     --- [SHARED AND MENU]
+    ---
     --- Returns a string representing the name of the type of the passed object.
     ---@param value any The value to get the type of.
     ---@return string: The type name of the given value.
@@ -582,6 +599,7 @@ do
     std.type = type
 
     --- [SHARED AND MENU]
+    ---
     --- Validates the type of the argument and returns a boolean and an error message.
     ---@param value any The argument value.
     ---@param arg_num number The argument number.
@@ -602,6 +620,7 @@ end
 string.utf8 = include( "std/string.utf8.lua" )
 
 --- [SHARED AND MENU]
+---
 --- Returns an iterator `next` for a for loop that will return the values of the specified table in an arbitrary order.
 ---@param tbl table The table to iterate over.
 ---@return function: The iterator function.
@@ -617,6 +636,7 @@ do
     local debug_getmetavalue = debug.getmetavalue
 
     --- [SHARED AND MENU]
+    ---
     --- Returns a [Stateless Iterator](https://www.lua.org/pil/7.3.html) for a [Generic For Loops](https://www.lua.org/pil/4.3.5.html), to return ordered key-value pairs from a table.
     ---
     --- This will only iterate though <b>numerical keys</b>, and these must also be sequential; starting at 1 with no gaps.
@@ -661,7 +681,9 @@ do
     ---@class gpm.std.Symbol : userdata
     ---@alias Symbol gpm.std.Symbol
 
-    --- [SHARED AND MENU] Creates a new symbol.
+    --- [SHARED AND MENU]
+    ---
+    --- Creates a new symbol.
     ---@param name string The name of the symbol.
     ---@return Symbol: The new symbol.
     function std.Symbol( name )
@@ -685,6 +707,7 @@ local Color = include( "std/color.lua" )
 std.Color = Color
 
 --- [SHARED AND MENU]
+---
 --- The white color object (255, 255, 255, 255).
 std.color_white = Color( 255, 255, 255, 255 )
 
@@ -759,6 +782,7 @@ do
     local path = File.path
 
     --- [SHARED AND MENU]
+    ---
     --- Converts a URL to a file path.
     ---@param url string | URL: The URL to convert.
     ---@return string: The file path.
@@ -858,6 +882,7 @@ do
     local string_byte = string.byte
 
     --- [SHARED AND MENU]
+    ---
     --- Loads a chunk
     ---@param chunk string | function: The chunk to load, can be a string or a function.
     ---@param chunkName string?: The chunk name, if chunk is binary the name will be ignored.
@@ -993,6 +1018,7 @@ do
     local tail = "_" .. ( { "osx64", "osx", "linux64", "linux", "win64", "win32" } )[ ( os_name == "Windows" and 4 or 0 ) + ( os_name == "Linux" and 2 or 0 ) + ( is32 and 1 or 0 ) + 1 ] .. ".dll"
 
     --- [SHARED AND MENU]
+    ---
     --- Checks if a binary module is installed and returns its path.
     ---@param name string The binary module name.
     ---@return boolean: `true` if the binary module is installed, `false` otherwise.
@@ -1020,6 +1046,7 @@ do
     local sv_allowcslua = SERVER and console.Variable.get( "sv_allowcslua", "boolean" )
 
     --- [SHARED AND MENU]
+    ---
     --- Loads a binary module
     ---@param name string The binary module name, for example: "chttp"
     ---@return boolean success: true if the binary module is installed

@@ -179,7 +179,9 @@ do
 
     if EntityClass.Created == nil then
 
-        --- [SHARED] A hook that is called when an entity is created.
+        --- [SHARED]
+        ---
+        --- A hook that is called when an entity is created.
         local Created = Hook( "Entity.Created" )
         engine_hookCatch( "OnEntityCreated", Created )
         EntityClass.Created = Created
@@ -188,7 +190,9 @@ do
 
     if std.SERVER and EntityClass.MapEvent == nil then
 
-        --- [SERVER] A hook that is called when map I/O event occurs.
+        --- [SERVER]
+        ---
+        --- A hook that is called when map I/O event occurs.
         local MapEvent = Hook( "Entity.MapEvent" )
         engine_hookCatch( "AcceptInput", MapEvent )
         EntityClass.MapEvent = MapEvent

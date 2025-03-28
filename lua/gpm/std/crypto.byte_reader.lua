@@ -5,6 +5,7 @@ local string = std.string
 local math = std.math
 
 --- [SHARED AND MENU]
+---
 --- The byte reader object.
 ---@alias ByteReader gpm.std.ByteReader
 ---@class gpm.std.ByteReader: gpm.std.Object
@@ -33,12 +34,14 @@ do
 end
 
 --- [SHARED AND MENU]
+---
 --- Resets the reader.
 function ByteReader:flush()
 	self.pointer = 0
 end
 
 --- [SHARED AND MENU]
+---
 --- Returns the current position of the reader.
 function ByteReader:tell()
 	return self.pointer
@@ -49,6 +52,7 @@ do
 	local math_clamp = math.clamp
 
 	--- [SHARED AND MENU]
+	---
 	--- Sets the current position of the reader.
 	---@param position? integer The position to set.
 	---@return integer: The new position.
@@ -67,6 +71,7 @@ do
 end
 
 --- [SHARED AND MENU]
+---
 --- Skips the reader by the specified offset.
 ---@param offset integer The offset to skip.
 ---@return integer: The new position.
@@ -80,6 +85,7 @@ do
 	local math_min = math.min
 
 	--- [SHARED AND MENU]
+	---
 	--- Reads the specified number of bytes from the reader.
 	---@param length? integer The number of bytes to read.
 	---@return string | nil str The readed bytes or `nil` if there are no more bytes to read.
@@ -109,6 +115,7 @@ do
 		local read = data.readFixed
 
 		--- [SHARED AND MENU]
+		---
 		--- Reads a fixed-length string from the reader.
 		---@param length integer The size of the string.
 		---@return string | nil str The fixed-length string or `nil` if there are no more bytes to read.
@@ -127,6 +134,7 @@ do
 		local read = data.readCounted
 
 		--- [SHARED AND MENU]
+		---
 		--- Reads a counted string from the reader.
 		---@param byte_count? integer The number of bytes to read.
 		---@param big_endian? boolean The endianness of the binary string.
@@ -152,6 +160,7 @@ do
 		local read = data.readNullTerminated
 
 		--- [SHARED AND MENU]
+		---
 		--- Reads a null-terminated string from the reader.
 		---@return string | nil str The null-terminated string or `nil` if there are no more bytes to read.
 		function ByteReader:readNullTerminatedString()
@@ -181,6 +190,7 @@ do
 		local read = signed.readByte
 
 		--- [SHARED AND MENU]
+		---
 		--- Reads a signed byte from the reader.
 		---
 		--- Allowable values from `-128` to `127`.
@@ -200,6 +210,7 @@ do
 		local read = signed.readShort
 
 		--- [SHARED AND MENU]
+		---
 		--- Reads a signed short from the reader.
 		---
 		--- Allowable values from `-32768` to `32767`.
@@ -220,6 +231,7 @@ do
 		local read = signed.readInteger
 
 		--- [SHARED AND MENU]
+		---
 		--- Reads a signed integer from the reader.
 		---
 		--- Allowable values from `-2147483648` to `2147483647`.
@@ -243,6 +255,7 @@ do
 		local read = signed.readLong
 
 		--- [SHARED AND MENU]
+		---
 		--- Reads a signed long (4 bytes/32 bits) from the reader.
 		---
 		--- Allowable values from `-2147483648` to `2147483647`.
@@ -263,6 +276,7 @@ do
 		local read = signed.readLongLong
 
 		--- [SHARED AND MENU]
+		---
 		--- Reads a signed long long from the reader.
 		---
 		--- Allowable values from `-9223372036854775808` to `9223372036854775807`.
@@ -283,6 +297,7 @@ do
 		local read = signed.readFixedPoint
 
 		--- [SHARED AND MENU]
+		---
 		--- Reads an signed fixed-point number (**Qm.n**) from the reader.
 		--- <br/>
 		---
@@ -325,6 +340,7 @@ do
 		local read = unsigned.readByte
 
 		--- [SHARED AND MENU]
+		---
 		--- Reads a byte from the reader.
 		---
 		--- Allowable values from `0` to `255`.
@@ -344,6 +360,7 @@ do
 		local read = unsigned.readShort
 
 		--- [SHARED AND MENU]
+		---
 		--- Reads an unsigned short (2 bytes/16 bits) from the reader.
 		---
 		--- Allowable values from `0` to `65535`.
@@ -364,6 +381,7 @@ do
 		local read = unsigned.readInteger
 
 		--- [SHARED AND MENU]
+		---
 		--- Reads an unsigned integer from the reader.
 		---@param byte_count? integer The number of bytes to read.
 		---@param big_endian? boolean The endianness of the binary string.
@@ -385,6 +403,7 @@ do
 		local read = unsigned.readLong
 
 		--- [SHARED AND MENU]
+		---
 		--- Reads an unsigned long (4 bytes/32 bits) from the reader.
 		---
 		--- Allowable values from `0` to `4294967295`.
@@ -405,6 +424,7 @@ do
 		local read = unsigned.readLongLong
 
 		--- [SHARED AND MENU]
+		---
 		--- Reads an unsigned long long (8 bytes/64 bits) from the reader.
 		---
 		--- Allowable values from `0` to `18446744073709551615`.
@@ -425,6 +445,7 @@ do
 		local read = unsigned.readFixedPoint
 
 		--- [SHARED AND MENU]
+		---
 		--- Reads an unsigned fixed-point number (**UQm.n**) from the reader.
 		--- <br/>
 		---
@@ -461,6 +482,7 @@ do
 	local read = binary.readFloat
 
 	--- [SHARED AND MENU]
+	---
 	--- Reads a float from the reader.
 	---
 	--- Allowable values from `-3.4028234663852886E38` to `3.4028234663852886E38`.
@@ -481,6 +503,7 @@ do
 	local read = binary.readDouble
 
 	--- [SHARED AND MENU]
+	---
 	--- Reads a double from the reader.
 	---
 	--- Allowable values from `-1.7976931348623157E308` to `1.7976931348623157E308`.
@@ -497,6 +520,7 @@ do
 end
 
 --- [SHARED AND MENU]
+---
 --- The byte reader class.
 ---@class gpm.std.ByteReaderClass: gpm.std.ByteReader
 ---@field __base gpm.std.ByteReader

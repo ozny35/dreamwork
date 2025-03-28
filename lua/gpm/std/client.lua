@@ -8,6 +8,7 @@ local tonumber = std.tonumber
 local glua_render = _G.render
 
 --- [CLIENT AND MENU]
+---
 --- The game's client library.
 ---@class gpm.std.client
 local client = {
@@ -62,6 +63,7 @@ if std.MENU then
 else
 
     --- [CLIENT AND MENU]
+    ---
     --- Checks if the client is connected to the server.
     ---
     --- NOTE: It always returns `true` on the client.
@@ -69,6 +71,7 @@ else
     function client.isConnected() return true end
 
     --- [CLIENT AND MENU]
+    ---
     --- Checks if the client has connected to the server (looks at the loading screen).
     ---
     --- NOTE: It always returns `false` on the client.
@@ -82,18 +85,21 @@ do
     local command_run = std.console.Command.run
 
     --- [CLIENT AND MENU]
+    ---
     --- Disconnect game from server.
     function client.disconnect()
         command_run( "disconnect" )
     end
 
     --- [CLIENT AND MENU]
+    ---
     --- Retry connection to last server.
     function client.retry()
         command_run( "retry" )
     end
 
     --- [CLIENT AND MENU]
+    ---
     --- Take a screenshot.
     ---@param quality integer The quality of the screenshot (0-100), only used if `useTGA` is `false`.
     ---@param fileName string The name of the screenshot.
@@ -121,6 +127,7 @@ do
 
     if std.CLIENT then
         --- [CLIENT AND MENU]
+        ---
         --- Connects client to the specified server.
         ---@param address string?: The address of the server. ( IP:Port like `127.0.0.1:27015` )
         client.connect = _G.permissions.AskToConnect or function( address ) command_run( "connect", address ) end

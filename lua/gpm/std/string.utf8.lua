@@ -1200,6 +1200,7 @@ local function get( str, index, utf8Length )
 end
 
 --- [SHARED AND MENU]
+---
 --- utf8 string library
 ---@class gpm.string.utf8
 ---@field charpattern string This is NOT a function, it's a pattern (a string, not a function) which matches exactly one UTF-8 byte sequence, assuming that the subject is a valid UTF-8 string.

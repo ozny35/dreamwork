@@ -12,6 +12,7 @@ local system_IsWindowed = _G.system.IsWindowed
 local width, height = _G.ScrW(), _G.ScrH()
 
 --- [CLIENT AND MENU]
+---
 --- The game's client window library.
 ---@class gpm.std.client.window
 ---@field width number The width of the game's window (in pixels).
@@ -58,6 +59,7 @@ do
 end
 
 --- [CLIENT AND MENU]
+---
 --- Returns the width and height of the game's window (in pixels).
 ---@return number: The width of the game's window (in pixels).
 ---@return number: The height of the game's window (in pixels).
@@ -66,6 +68,7 @@ function window.getSize()
 end
 
 --- [CLIENT AND MENU]
+---
 --- Changes the resolution and display mode of the game window.
 ---@param new_width number The width of the game window.
 ---@param new_height number The height of the game window.
@@ -76,6 +79,7 @@ end
 window.isInWindow = system_IsWindowed
 
 --- [CLIENT AND MENU]
+---
 --- Returns whether the game window is fullscreen.
 ---@return boolean: `true` if the game window is fullscreen, `false` if not.
 function window.isInFullscreen()
@@ -83,6 +87,7 @@ function window.isInFullscreen()
 end
 
 --- [CLIENT AND MENU]
+---
 --- Sets the fullscreen state of the game window.
 ---@param value boolean `true` to set the game window to fullscreen, `false` to set it to windowed.
 function window.setFullscreen( value )
@@ -94,6 +99,7 @@ do
     local variable_getBoolean = console_Variable.getBoolean
 
     --- [CLIENT AND MENU]
+    ---
     --- Returns whether the game is running in VSync mode.
     ---@return boolean: `true` if the game is running in VSync mode, `false` if not.
     function window.getVSync()
@@ -107,6 +113,7 @@ do
     local Variable_set = console_Variable.set
 
     --- [CLIENT AND MENU]
+    ---
     --- Sets whether the game is running in VSync mode.
     ---@param value boolean `true` to enable VSync, `false` to disable it.
     function window.setVSync( value )

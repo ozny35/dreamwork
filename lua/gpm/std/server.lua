@@ -9,6 +9,7 @@ local engine_hookCatch = gpm.engine.hookCatch
 local Hook = std.Hook
 
 --- [SHARED AND MENU]
+---
 --- The game's server library.
 ---@class gpm.std.server
 local server = std.server or {}
@@ -23,7 +24,9 @@ end
 
 if std.CLIENT and server.Tick == nil then
 
-    --- [CLIENT] Called once every processed server frame during lag.
+    --- [CLIENT]
+    ---
+    --- Called once every processed server frame during lag.
     local Tick = Hook( "server.Tick" )
     engine_hookCatch( "Think", Tick )
     server.Tick = Tick
@@ -45,7 +48,9 @@ end
 -- GM:GameDetails( server_name, loading_url, map_name, max_players, player_steamid64, gamemode_name )
 if std.MENU then
 
-    --- [MENU] Called when the game details are updated.
+    --- [MENU]
+    ---
+    --- Called when the game details are updated.
     local GameDetailsHook = std.GameDetailsHook or std.Hook( "GameDetails" )
     std.GameDetailsHook = GameDetailsHook
 
@@ -87,13 +92,17 @@ do
 
     server.getAddress = game_GetIPAddress
 
-    --- [SHARED AND MENU] Returns the IP of the server.
+    --- [SHARED AND MENU]
+    ---
+    --- Returns the IP of the server.
     ---@return string: The IP of the server.
     function server.getIP()
         return string_match( game_GetIPAddress(), "(%d%d?%d?%.%d%d?%d?%.%d%d?%d?%.%d%d?%d?):" ) or "127.0.0.1"
     end
 
-    --- [SHARED AND MENU] Returns the port of the server.
+    --- [SHARED AND MENU]
+    ---
+    --- Returns the port of the server.
     ---@return string: The port of the server.
     function server.getPort()
         return string_match( game_GetIPAddress(), ":(%d+)" ) or "27015"
@@ -125,7 +134,9 @@ do
         end )
     end
 
-    --- [SHARED AND MENU] Gets the name of the server.
+    --- [SHARED AND MENU]
+    ---
+    --- Gets the name of the server.
     ---@return string: The name of the server.
     function server.getName()
         ---@diagnostic disable-next-line: return-type-mismatch
@@ -136,13 +147,17 @@ end
 
 if std.SHARED then
 
-    --- [SHARED] Checks if cheats are enabled.
+    --- [SHARED]
+    ---
+    --- Checks if cheats are enabled.
     ---@return boolean: `true` if cheats are enabled, `false` if not.
     function server.isCheatsEnabled()
         return console_Variable.getBoolean( "sv_cheats" )
     end
 
-    --- [SHARED] Enables or disables cheats.
+    --- [SHARED]
+    ---
+    --- Enables or disables cheats.
     ---
     --- It gives all players access to commmands that would normally be abused or misused by players.
     ---@param bool boolean `true` to enable cheats, `false` to disable them.
@@ -150,7 +165,9 @@ if std.SHARED then
         console_Variable.set( "sv_cheats", bool )
     end
 
-    --- [SHARED] Checks if the server allows clients to run `lua_openscript_cl` and `lua_run_cl`.
+    --- [SHARED]
+    ---
+    --- Checks if the server allows clients to run `lua_openscript_cl` and `lua_run_cl`.
     ---@return boolean: `true` if the server allows clients to run lua_openscript_cl and lua_run_cl, `false` if not.
     function server.isUserScriptsAllowed()
         return console_Variable.getBoolean( "sv_allowcslua" )
@@ -162,37 +179,49 @@ if std.SERVER then
 
     server.log = _G.ServerLog
 
-    --- [SERVER] Gets the download URL of the server.
+    --- [SERVER]
+    ---
+    --- Gets the download URL of the server.
     ---@return string: The download URL.
     function server.getDownloadURL()
         return console_Variable.getString( "sv_downloadurl" )
     end
 
-    --- [SERVER] Sets the download URL of the server.
+    --- [SERVER]
+    ---
+    --- Sets the download URL of the server.
     ---@param str string The download URL to set.
     function server.setDownloadURL( str )
         console_Variable.set( "sv_downloadurl", str )
     end
 
-    --- [SERVER] Checks if the server allows downloads.
+    --- [SERVER]
+    ---
+    --- Checks if the server allows downloads.
     ---@return boolean: Whether the server allows downloads.
     function server.isDowloadAllowed()
         return console_Variable.getBoolean( "sv_allowdownload" )
     end
 
-    --- [SERVER] Allow clients to download files from the server.
+    --- [SERVER]
+    ---
+    --- Allow clients to download files from the server.
     ---@param bool boolean Whether the server allows downloads.
     function server.allowDownload( bool )
         console_Variable.set( "sv_allowdownload", bool )
     end
 
-    --- [SERVER] Checks if the server allows uploads.
+    --- [SERVER]
+    ---
+    --- Checks if the server allows uploads.
     ---@return boolean: Whether the server allows uploads.
     function server.isUploadAllowed()
         return console_Variable.getBoolean( "sv_allowupload" )
     end
 
-    --- [SERVER] Allow clients to upload customizations files to the server.
+    --- [SERVER]
+    ---
+    --- Allow clients to upload customizations files to the server.
     ---@param bool boolean Whether the server allows uploads.
     function server.allowUpload( bool )
         console_Variable.set( "sv_allowupload", bool )
@@ -210,37 +239,49 @@ if std.SERVER then
     ---| `7`	Africa
     ---| `255`	World (default)
 
-    --- [SERVER] Gets the console_Variable requested by the server browser to determine in which part of the world the server is located.
+    --- [SERVER]
+    ---
+    --- Gets the console_Variable requested by the server browser to determine in which part of the world the server is located.
     ---@return gpm.std.SERVER_REGION: The region of the world to report this server in.
     function server.getRegion()
         return console_Variable.getNumber( "sv_region" )
     end
 
-    --- [SERVER] Sets the console_Variable requested by the server browser to determine in which part of the world the server is located.
+    --- [SERVER]
+    ---
+    --- Sets the console_Variable requested by the server browser to determine in which part of the world the server is located.
     ---@param region gpm.std.SERVER_REGION: The region of the world to report this server in.
     function server.setRegion( region )
         console_Variable.set( "sv_region", region )
     end
 
-    --- [SERVER] Checks if the server is hidden from the master server.
+    --- [SERVER]
+    ---
+    --- Checks if the server is hidden from the master server.
     ---@return boolean: `true` if the server is hidden, `false` if not.
     function server.isHidden()
         return console_Variable.getBoolean( "hide_server" )
     end
 
-    --- [SERVER] Hides/unhides the server from the master server.
+    --- [SERVER]
+    ---
+    --- Hides/unhides the server from the master server.
     ---@param bool boolean `true` to hide the server, `false` to unhide it.
     function server.setHidden( bool )
         console_Variable.set( "hide_server", bool )
     end
 
-    --- [SERVER] Allow clients to run `lua_openscript_cl` and `lua_run_cl`.
+    --- [SERVER]
+    ---
+    --- Allow clients to run `lua_openscript_cl` and `lua_run_cl`.
     ---@param bool boolean `true` to allow clients to run lua_openscript_cl and lua_run_cl, `false` to disallow them.
     function server.allowUserScripts( bool )
         console_Variable.set( "sv_allowcslua", bool )
     end
 
-    --- [SERVER] Sets the name of the server.
+    --- [SERVER]
+    ---
+    --- Sets the name of the server.
     ---@param str string The name to set.
     function server.setName( str )
         return sv_hostname:set( str )
@@ -267,7 +308,9 @@ if std.SERVER then
 
     if server.getGamemodeTitle == nil then
 
-        --- [SERVER] Returns the title of the gamemode in the server browser.
+        --- [SERVER]
+        ---
+        --- Returns the title of the gamemode in the server browser.
         ---@return string: The title of the gamemode.
         function server.getGamemodeTitle()
             return _G.hook.Call( "GetGameDescription" ) or "unknown"
@@ -283,7 +326,9 @@ if std.SERVER then
             return title
         end )
 
-        --- [SERVER] Sets the title of the gamemode in the server browser.
+        --- [SERVER]
+        ---
+        --- Sets the title of the gamemode in the server browser.
         ---@param str string The title to set.
         function server.setGamemodeTitile( str )
             title = str
@@ -303,7 +348,9 @@ if std.MENU then
 
         local serverlist_PingServer = glua_serverlist.PingServer
 
-        --- [MENU] Queries a server for its information/ping.
+        --- [MENU]
+        ---
+        --- Queries a server for its information/ping.
         ---@param address string The address of the server. ( IP:Port like `127.0.0.1:27015` )
         ---@param timeout number?: The timeout in seconds. Set to `false` to disable the timeout.
         ---@return ServerInfo: The server information.
@@ -350,7 +397,9 @@ if std.MENU then
 
         local serverlist_PlayerList = glua_serverlist.PlayerList
 
-        --- [MENU] Queries a server for it's player list.
+        --- [MENU]
+        ---
+        --- Queries a server for it's player list.
         ---@param address string The address of the server. ( IP:Port like `127.0.0.1:27015` )
         ---@param timeout number?: The timeout in seconds. Set to `false` to disable the timeout.
         ---@async
@@ -378,7 +427,9 @@ if std.MENU then
 
     end
 
-    --- [MENU] Queries the master server for server list.
+    --- [MENU]
+    ---
+    --- Queries the master server for server list.
     ---@param data ServerQueryData The query data to send to the master server.
     function server.getAll( data )
         data.GameDir = data.directory
@@ -409,7 +460,9 @@ if std.MENU then
         local serverlist_IsCurrentServerFavorite = glua_serverlist.IsCurrentServerFavorite
         local serverlist_IsServerFavorite = glua_serverlist.IsServerFavorite
 
-        --- [MENU] Returns true if the given server address is in their favorites.
+        --- [MENU]
+        ---
+        --- Returns true if the given server address is in their favorites.
         ---@param address string?: The address of the server, current server if `nil`. ( IP:Port like `127.0.0.1:27015` )
         ---@return boolean: `true` if the given server is in player favorites, `false` if not.
         function server.isInFavorites( address )
@@ -428,7 +481,9 @@ if std.MENU then
 
         local serverlist_AddServerToFavorites = glua_serverlist.AddServerToFavorites
 
-        --- [MENU] Adds the given server address to their favorites.
+        --- [MENU]
+        ---
+        --- Adds the given server address to their favorites.
         ---@param address string?: The address of the server, current server if `nil`. ( IP:Port like `127.0.0.1:27015` )
         function server.addToFavorites( address )
             if address == nil then
@@ -445,7 +500,9 @@ if std.MENU then
 
         local serverlist_RemoveServerFromFavorites = glua_serverlist.RemoveServerFromFavorites
 
-        --- [MENU] Removes the given server address from their favorites.
+        --- [MENU]
+        ---
+        --- Removes the given server address from their favorites.
         ---@param address string?: The address of the server, current server if `nil`. ( IP:Port like `127.0.0.1:27015` )
         function server.removeFromFavorites( address )
             if address == nil then

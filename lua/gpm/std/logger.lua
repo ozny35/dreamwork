@@ -29,6 +29,7 @@ end
 ---@field debug? fun(): boolean The developer mode check function.
 
 --- [SHARED AND MENU]
+---
 --- The logger object.
 ---@alias Logger gpm.std.Logger
 ---@class gpm.std.Logger : gpm.std.Object
@@ -76,6 +77,7 @@ do
     local string_format, string_gsub = string.format, string.gsub
 
     --- [SHARED AND MENU]
+    ---
     --- Logs a message.
     ---@param color Color The log level color.
     ---@param level string The log level name.
@@ -111,24 +113,28 @@ do
 end
 
 --- [SHARED AND MENU]
+---
 --- Logs an info message.
 function Logger:info( ... )
     return self:log( infoColor, "INFO ", ... )
 end
 
 --- [SHARED AND MENU]
+---
 --- Logs a warning message.
 function Logger:warn( ... )
     return self:log( warnColor, "WARN ", ... )
 end
 
 --- [SHARED AND MENU]
+---
 --- Logs an error message.
 function Logger:error( ... )
     return self:log( errorColor, "ERROR", ... )
 end
 
 --- [SHARED AND MENU]
+---
 --- Logs a debug message.
 function Logger:debug( ... )
     if self:debug_fn() then
@@ -137,6 +143,7 @@ function Logger:debug( ... )
 end
 
 --- [SHARED AND MENU]
+---
 --- The logger class.
 ---@class gpm.std.LoggerClass : gpm.std.Logger
 ---@field __base gpm.std.Logger

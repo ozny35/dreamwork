@@ -148,6 +148,7 @@ do
 end
 
 --- [SHARED AND MENU]
+---
 --- Error object.
 ---@alias Error gpm.std.Error
 ---@class gpm.std.Error : gpm.std.Object
@@ -231,6 +232,7 @@ function Error:__init( message, fileName, lineNumber, stackPos )
 end
 
 --- [SHARED AND MENU]
+---
 --- Displays the error.
 function Error:display()
     if isstring( self ) then
@@ -285,6 +287,7 @@ function Error:display()
 end
 
 --- [SHARED AND MENU]
+---
 --- Basic error class.
 ---@class gpm.std.ErrorClass : gpm.std.Error
 ---@field __base gpm.std.Error
@@ -293,6 +296,7 @@ local ErrorClass = class_create( Error )
 std.Error = ErrorClass
 
 --- [SHARED AND MENU]
+---
 --- Creates a new `Error` with custom name.
 ---@param name string The name of the error.
 ---@param base Error | nil: The base class of the error.

@@ -10,7 +10,9 @@ local detour_attach = gpm.detour.attach
 
 local transducers = gpm.transducers
 
---- [SHARED AND MENU] Source engine events library
+--- [SHARED AND MENU]
+---
+--- Source engine events library
 ---@class gpm.engine
 local engine = gpm.engine or {}
 
@@ -459,6 +461,7 @@ do
     local games, addons, game_count, addon_count
 
     --- [SHARED AND MENU]
+    ---
     --- Returns all mounted addons.
     ---@return table, integer
     function engine.getAddons()

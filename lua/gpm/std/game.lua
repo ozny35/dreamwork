@@ -29,6 +29,7 @@ do
 
 
     --- [SHARED AND MENU]
+    ---
     --- Returns an array of tables corresponding to all games from which Garry's Mod supports mounting content.
     ---@return table: Array of tables with the following fields: `appid`, `title`, `folder`, `owned`, `installed`, `mounted`.
     ---@return integer: The length of the list.
@@ -55,6 +56,7 @@ do
     local mounted_games = engine.mounted_games
 
     --- [SHARED AND MENU]
+    ---
     --- Checks whether or not a game is currently mounted.
     ---@param folder_name string The folder name of the game.
     ---@return boolean: Returns `true` if the game is mounted, `false` otherwise.
@@ -73,13 +75,17 @@ if std.MENU then
     local SetMounted = glua_game.SetMounted
     local tostring = std.tostring
 
-    --- [MENU] Mounts a game on the client.
+    --- [MENU]
+    ---
+    --- Mounts a game on the client.
     ---@param appID number Steam AppID of the game.
     function game.mount( appID )
         SetMounted( tostring( appID ), true )
     end
 
-    --- [MENU] Unmounts a game on the client.
+    --- [MENU]
+    ---
+    --- Unmounts a game on the client.
     ---@param appID number Steam AppID of the game.
     function game.unmount( appID )
         SetMounted( tostring( appID ), false )
@@ -216,7 +222,9 @@ if std.SHARED then
 
     game.getFrameNumber = _G.FrameNumber
 
-    --- [SHARED] Checks if Half-Life 2 aux suit power stuff is enabled.
+    --- [SHARED]
+    ---
+    --- Checks if Half-Life 2 aux suit power stuff is enabled.
     ---@return boolean: `true` if Half-Life 2 aux suit power stuff is enabled, `false` if not.
     function game.getHL2Suit()
         return console_Variable.getBoolean( "gmod_suit" )
@@ -230,7 +238,9 @@ if std.SERVER then
     game.setTimeScale = glua_game.SetTimeScale
     game.print = _G.PrintMessage
 
-    --- [SERVER] Enables Half-Life 2 aux suit power stuff.
+    --- [SERVER]
+    ---
+    --- Enables Half-Life 2 aux suit power stuff.
     ---@param bool boolean `true` to enable Half-Life 2 aux suit power stuff, `false` to disable it.
     function game.setHL2Suit( bool )
         console_Variable.set( "gmod_suit", bool == true )
@@ -273,7 +283,9 @@ do
 
     if game.Tick == nil then
 
-        --- [SHARED AND MENU] A hook that is called every tick.
+        --- [SHARED AND MENU]
+        ---
+        --- A hook that is called every tick.
         local Tick = Hook( "game.Tick" )
         engine_hookCatch( "Tick", Tick )
         game.Tick = Tick
@@ -282,7 +294,9 @@ do
 
     if game.ShutDown == nil then
 
-        --- [SHARED AND MENU] A hook that is called when the game is shutting down.
+        --- [SHARED AND MENU]
+        ---
+        --- A hook that is called when the game is shutting down.
         local ShutDown = Hook( "game.ShutDown" )
         engine_hookCatch( "ShutDown", ShutDown )
         game.ShutDown = ShutDown

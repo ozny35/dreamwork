@@ -231,14 +231,18 @@ do
 
         local debug_getmetatable = debug.getmetatable
 
-        --- [SHARED AND MENU] Returns `true` if the value is a `Vector3`.
+        --- [SHARED AND MENU]
+        ---
+        --- Returns `true` if the value is a `Vector3`.
         ---@param value any The value.
         ---@return boolean: `true` if the value is a `Vector3`, `false` otherwise.
         function std.isvector3( value )
             return debug_getmetatable( value ) == Vector3
         end
 
-        --- [SHARED AND MENU] Returns `true` if the value is an `Angle3`.
+        --- [SHARED AND MENU]
+        ---
+        --- Returns `true` if the value is an `Angle3`.
         ---@param value any The value.
         ---@return boolean: `true` if the value is an `Angle3`, `false` otherwise.
         function std.isangle3( value )

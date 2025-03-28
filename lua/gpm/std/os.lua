@@ -15,6 +15,7 @@ do
     local is_host_big_endian = std.string.byte( std.string.dump( std.debug.fempty ), 7 ) == 0x00
 
     --- [SHARED AND MENU]
+    ---
     --- Returns the endianness of the current machine.
     ---@return string: The endianness of the current machine.
     function os.endianness()
@@ -29,6 +30,7 @@ do
     local level = 100
 
     --- [SHARED AND MENU]
+    ---
     --- Returns the current battery level.
     ---@return number: The battery level, between 0 and 100.
     function os.getBatteryLevel()
@@ -36,6 +38,7 @@ do
     end
 
     --- [SHARED AND MENU]
+    ---
     --- Checks if the system has a battery.
     ---@return boolean: `true` if the system has a battery, `false` if not.
     function os.hasBattery()
@@ -85,6 +88,7 @@ do
     local glua_os_time = glua_os.time
 
     --- [SHARED AND MENU]
+    ---
     --- Converts a DOS date and time to a Unix timestamp.
     ---@param time number The time to convert.
     ---@param date number The date to convert.
@@ -118,6 +122,7 @@ do
     local glua_os_date = glua_os.date
 
     --- [SHARED AND MENU]
+    ---
     --- Converts a Unix timestamp to a DOS date and time.
     ---@param seconds number The Unix timestamp to convert.
     ---@return number time The DOS time.

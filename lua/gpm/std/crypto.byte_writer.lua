@@ -5,6 +5,7 @@ local string = std.string
 local math = std.math
 
 --- [SHARED AND MENU]
+---
 --- The byte writer object.
 ---@alias ByteWriter gpm.std.ByteWriter
 ---@class gpm.std.ByteWriter: gpm.std.Object
@@ -48,6 +49,7 @@ do
 			local string_sub = string.sub
 
 			--- [SHARED AND MENU]
+			---
 			--- Flushes the writer.
 			---@return string data The bynary data.
 			---@return integer size The size of the data.
@@ -80,6 +82,7 @@ do
 		end
 
 		--- [SHARED AND MENU]
+		---
 		--- Skips the specified number of bytes.
 		---@param offset integer The number of bytes to skip.
 		---@return integer position The new position.
@@ -99,6 +102,7 @@ do
 end
 
 --- [SHARED AND MENU]
+---
 --- Returns the current position of the writer.
 ---@return integer position The current position.
 function ByteWriter:tell()
@@ -107,6 +111,7 @@ function ByteWriter:tell()
 end
 
 --- [SHARED AND MENU]
+---
 --- Sets the current position of the writer.
 ---@param position? integer The new position.
 ---@return integer position The new position.
@@ -124,6 +129,7 @@ function ByteWriter:shift( position )
 end
 
 --- [SHARED AND MENU]
+---
 --- Writes the specified string to the writer.
 ---@param str string The string to write.
 function ByteWriter:write( str )
@@ -141,6 +147,7 @@ do
 		local write = data.writeFixed
 
 		--- [SHARED AND MENU]
+		---
 		--- Writes a fixed-length string to the writer.
 		---@param str string The string to write.
 		---@param max_length? integer The size of the string.
@@ -155,6 +162,7 @@ do
 		local write = data.writeCounted
 
 		--- [SHARED AND MENU]
+		---
 		--- Writes a counted string to the writer.
 		---@param byte_count integer The size of the string.
 		---@param big_endian? boolean The endianness of the binary string.
@@ -170,6 +178,7 @@ do
 		local write = data.writeNullTerminated
 
 		--- [SHARED AND MENU]
+		---
 		--- Writes a null-terminated string to the writer.
 		---@param str string The string to write.
 		function ByteWriter:writeNullTerminatedString( str )
@@ -191,6 +200,7 @@ do
 		local write = signed.writeByte
 
 		--- [SHARED AND MENU]
+		---
 		--- Writes a signed byte (1 byte/8 bits) to the writer.
 		---
 		--- Allowable values from `-128` to `127`.
@@ -206,6 +216,7 @@ do
 		local write = signed.writeShort
 
 		--- [SHARED AND MENU]
+		---
 		--- Writes a signed short (2 bytes/16 bits) to the writer.
 		---
 		--- Allowable values from `-32768` to `32767`.
@@ -222,6 +233,7 @@ do
 		local write = signed.writeInteger
 
 		--- [SHARED AND MENU]
+		---
 		--- Writes a signed integer (4 bytes/32 bits) to the writer.
 		---
 		--- Allowable values from `-2147483648` to `2147483647`.
@@ -239,6 +251,7 @@ do
 		local write = signed.writeLong
 
 		--- [SHARED AND MENU]
+		---
 		--- Writes a signed long (4 bytes/32 bits) to the writer.
 		---
 		--- Allowable values from `-2147483648` to `2147483647`.
@@ -255,6 +268,7 @@ do
 		local write = signed.writeLongLong
 
 		--- [SHARED AND MENU]
+		---
 		--- Writes a signed long long (8 bytes/64 bits) to the writer.
 		---
 		--- Allowable values from `-9223372036854775808` to `9223372036854775807`.
@@ -271,6 +285,7 @@ do
 		local write = signed.writeFixedPoint
 
 		--- [SHARED AND MENU]
+		---
 		--- Writes a signed fixed-point number to the writer.
 		---
 		--- Allowable values from `-2.1 billion to ~2.1 billion`.
@@ -296,6 +311,7 @@ do
 		local write = unsigned.writeByte
 
 		--- [SHARED AND MENU]
+		---
 		--- Writes an unsigned byte (1 byte/8 bits) to the writer.
 		---
 		--- Allowable values from `0` to `255`.
@@ -311,6 +327,7 @@ do
 		local write = unsigned.writeShort
 
 		--- [SHARED AND MENU]
+		---
 		--- Writes an unsigned short (2 bytes/16 bits) to the writer.
 		---
 		--- Allowable values from `0` to `65535`.
@@ -327,6 +344,7 @@ do
 		local write = unsigned.writeInteger
 
 		--- [SHARED AND MENU]
+		---
 		--- Writes an unsigned integer to the writer.
 		---
 		--- Allowable values from `0` to `4294967295`.
@@ -344,6 +362,7 @@ do
 		local write = unsigned.writeLong
 
 		--- [SHARED AND MENU]
+		---
 		--- Writes an unsigned long (4 bytes/32 bits) to the writer.
 		---
 		--- Allowable values from `0` to `4294967295`.
@@ -360,6 +379,7 @@ do
 		local write = unsigned.writeLongLong
 
 		--- [SHARED AND MENU]
+		---
 		--- Writes an unsigned long long (8 bytes/64 bits) to the writer.
 		---
 		--- Allowable values from `0` to `18446744073709551615`.
@@ -376,6 +396,7 @@ do
 		local write = unsigned.writeFixedPoint
 
 		--- [SHARED AND MENU]
+		---
 		--- Writes an unsigned fixed-point number (**UQm.n**) from the reader.
 		--- <br/>
 		---
@@ -406,6 +427,7 @@ do
 	local write = binary.writeFloat
 
 	--- [SHARED AND MENU]
+	---
 	--- Writes a float (4 bytes/32 bits) to the writer.
 	---
 	--- Allowable values from `1.175494351e-38` to `3.402823466e+38`.
@@ -422,6 +444,7 @@ do
 	local write = binary.writeDouble
 
 	--- [SHARED AND MENU]
+	---
 	--- Writes a double (8 bytes/64 bits) to the writer.
 	---
 	--- Allowable values from `2.2250738585072014e-308` to `1.7976931348623158e+308`.
@@ -434,6 +457,7 @@ do
 end
 
 --- [SHARED AND MENU]
+---
 --- The byte writer class.
 ---@class gpm.std.ByteWriterClass: gpm.std.ByteWriter
 ---@field __base gpm.std.ByteWriter

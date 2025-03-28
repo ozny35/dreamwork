@@ -145,6 +145,7 @@ do
         }
 
         --- [CLIENT AND MENU]
+        ---
         --- Get the name of a key.
         ---@param key integer The key code.
         ---@return string: The name of the key.
@@ -155,6 +156,7 @@ do
         local name2key = std.table.flip( key2name )
 
         --- [CLIENT AND MENU]
+        ---
         --- Get the key code of a name.
         ---@param name string The name of the key.
         ---@return integer: The key code.

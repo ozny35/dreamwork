@@ -21,6 +21,7 @@ local function atan( y, x )
 end
 
 --- [SHARED AND MENU]
+---
 --- The powerful math library.
 ---@class gpm.std.math
 ---@field e number A variable containing the mathematical constant e. (2.7182818284590)

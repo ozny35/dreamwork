@@ -12,6 +12,7 @@ local bit_bor, setmetatable = std.bit.bor, std.setmetatable
 local table_insert, table_remove = std.table.insert, std.table.remove
 
 --- [SHARED AND MENU]
+---
 --- The console library.
 ---@class gpm.std.console
 ---@field visible boolean `true` if the console is visible, `false` otherwise.
@@ -20,18 +21,21 @@ local console = {}
 if std.MENU then
 
     --- [MENU]
+    ---
     --- Shows the console.
     console.show = _G.gui and _G.gui.ShowConsole or function()
         RunConsoleCommand( "showconsole" )
     end
 
     --- [MENU]
+    ---
     --- Hides the console.
     function console.hide()
         RunConsoleCommand( "hideconsole" )
     end
 
     --- [MENU]
+    ---
     --- Toggles the console.
     function console.toggle()
         RunConsoleCommand( "toggleconsole" )
@@ -65,6 +69,7 @@ do
     console.write = MsgC
 
     --- [SHARED AND MENU]
+    ---
     --- Writes a colored message to the console on a new line.
     ---@param ... string | Color: The message to write to the console.
     function console.writeLine( ... )
@@ -78,6 +83,7 @@ do
     local AddConsoleCommand = _G.AddConsoleCommand
 
     --- [SHARED AND MENU]
+    ---
     --- The console command object.
     ---@alias ConsoleCommand gpm.std.console.Command
     ---@class gpm.std.console.Command : gpm.std.Object
@@ -121,6 +127,7 @@ do
     end
 
     --- [SHARED AND MENU]
+    ---
     --- The console command class.
     ---@class gpm.std.console.CommandClass: gpm.std.console.Command
     ---@field __base gpm.std.console.Command
@@ -129,6 +136,7 @@ do
     console.Command = CommandClass
 
     --- [SHARED AND MENU]
+    ---
     --- Returns the console command with the given name.
     ---@return gpm.std.console.Command?: The console command with the given name, or `nil` if it does not exist.
     function CommandClass.get( name )
@@ -138,6 +146,7 @@ do
     CommandClass.run = RunConsoleCommand
 
     --- [SHARED AND MENU]
+    ---
     --- Runs the console command.
     ---@param ... string: The arguments to pass to the console command.
     function Command:run( ... )
@@ -150,6 +159,7 @@ do
         CommandClass.isBlacklisted = IsConCommandBlocked
 
         --- [SHARED AND MENU]
+        ---
         --- Returns whether the console command is blacklisted.
         ---@return boolean: `true` if the console command is blacklisted, `false` otherwise.
         function Command:isBlacklisted()
@@ -159,6 +169,7 @@ do
     end
 
     --- [SHARED AND MENU]
+    ---
     --- Adds a callback to the console command.
     ---@param identifier any The identifier of the callback.
     ---@param fn function The callback function.
@@ -176,6 +187,7 @@ do
     end
 
     --- [SHARED AND MENU]
+    ---
     --- Removes a callback from the console command.
     ---@param identifier string The identifier of the callback.
     function Command:removeCallback( identifier )
@@ -189,6 +201,7 @@ do
     end
 
     --- [SHARED AND MENU]
+    ---
     --- Waits for the console command to be executed.
     ---@async
     function Command:wait()
@@ -244,6 +257,7 @@ do
     local getBool = CONVAR.GetBool
 
     --- [SHARED AND MENU]
+    ---
     --- The console variable object.
     ---@alias ConsoleVariable gpm.std.console.Variable
     ---@class gpm.std.console.Variable: gpm.std.Object
@@ -333,6 +347,7 @@ do
     end
 
     --- [SHARED AND MENU]
+    ---
     --- The console variable class.
     ---@class gpm.std.console.VariableClass: gpm.std.console.Variable
     ---@field __base gpm.std.console.Variable
@@ -351,6 +366,7 @@ do
         }
 
         --- [SHARED AND MENU]
+        ---
         --- Gets the value of the `ConsoleVariable` object.
         ---@return boolean | string | number: The value of the `ConsoleVariable` object.
         function Variable:get()
@@ -360,6 +376,7 @@ do
     end
 
     --- [SHARED AND MENU]
+    ---
     --- Gets a `ConsoleVariable` object by its name.
     ---@param name string The name of the console variable.
     ---@param cvar_type gpm.std.console.Variable.Type?: The type of the console variable.
@@ -385,6 +402,7 @@ do
     end
 
     --- [SHARED AND MENU]
+    ---
     --- Sets the value of the `ConsoleVariable` object.
     ---@param value any The value to set.
     function Variable:set( value )
@@ -399,6 +417,7 @@ do
     end
 
     --- [SHARED AND MENU]
+    ---
     --- Sets the value of the `ConsoleVariable` object.
     ---@param name string The name of the console variable.
     ---@param value boolean | string | number: The value to set.
@@ -422,6 +441,7 @@ do
     end
 
     --- [SHARED AND MENU]
+    ---
     --- Gets the value of the `ConsoleVariable` object as a string.
     ---@param name string The name of the console variable.
     ---@return string: The value of the `ConsoleVariable` object.
@@ -435,6 +455,7 @@ do
     end
 
     --- [SHARED AND MENU]
+    ---
     --- Gets the value of the `ConsoleVariable` object as a number.
     ---@param name string The name of the console variable.
     ---@return number: The value of the `ConsoleVariable` object.
@@ -448,6 +469,7 @@ do
     end
 
     --- [SHARED AND MENU]
+    ---
     --- Gets the value of the `ConsoleVariable` object as a boolean.
     ---@param name string The name of the console variable.
     ---@return boolean: The value of the `ConsoleVariable` object.
@@ -463,12 +485,14 @@ do
     VariableClass.getBool = VariableClass.getBoolean
 
     --- [SHARED AND MENU]
+    ---
     --- Reverts the value of the `ConsoleVariable` object to its default value.
     function Variable:revert()
         RunConsoleCommand( self.name, getDefault( self.object ) )
     end
 
     --- [SHARED AND MENU]
+    ---
     --- Reverts the value of the `ConsoleVariable` object to its default value.
     ---@param name string The name of the console variable.
     function VariableClass.revert( name )
@@ -481,6 +505,7 @@ do
     end
 
     --- [SHARED AND MENU]
+    ---
     --- Gets the name of the `ConsoleVariable` object.
     ---@return string: The name of the `ConsoleVariable` object.
     function Variable:getName()
@@ -492,6 +517,7 @@ do
         local getHelpText = CONVAR.GetHelpText
 
         --- [SHARED AND MENU]
+        ---
         --- Gets the help text of the `ConsoleVariable` object.
         ---@return string: The help text of the `ConsoleVariable` object.
         function Variable:getHelpText()
@@ -499,6 +525,7 @@ do
         end
 
         --- [SHARED AND MENU]
+        ---
         --- Gets the help text of the `ConsoleVariable` object.
         ---@param name string The name of the console variable.
         ---@return string: The help text of the `ConsoleVariable` object.
@@ -514,6 +541,7 @@ do
     end
 
     --- [SHARED AND MENU]
+    ---
     --- Gets the default value of the `ConsoleVariable` object.
     ---@return string: The default value of the `ConsoleVariable` object.
     function Variable:getDefault()
@@ -521,6 +549,7 @@ do
     end
 
     --- [SHARED AND MENU]
+    ---
     --- Gets the default value of the `ConsoleVariable` object.
     ---@param name string The name of the console variable.
     ---@return string: The default value of the `ConsoleVariable` object.
@@ -538,6 +567,7 @@ do
         local getFlags = CONVAR.GetFlags
 
         --- [SHARED AND MENU]
+        ---
         --- Gets the `Enums/FCVAR` flags of the `ConsoleVariable` object.
         ---@return number: The `Enums/FCVAR` flags of the `ConsoleVariable` object.
         function Variable:getFlags()
@@ -545,6 +575,7 @@ do
         end
 
         --- [SHARED AND MENU]
+        ---
         --- Gets the `Enums/FCVAR` flags of the `ConsoleVariable` object.
         ---@param name string The name of the console variable.
         ---@return number: The `Enums/FCVAR` flags of the `ConsoleVariable` object.
@@ -564,6 +595,7 @@ do
         local isFlagSet = CONVAR.IsFlagSet
 
         --- [SHARED AND MENU]
+        ---
         --- Checks if the `Enums/FCVAR` flag is set on the `ConsoleVariable` object.
         ---@param flag number The `Enums/FCVAR` flag to check.
         ---@return boolean: `true` if the `Enums/FCVAR` flag is set on the `ConsoleVariable` object, `false` otherwise.
@@ -572,6 +604,7 @@ do
         end
 
         --- [SHARED AND MENU]
+        ---
         --- Checks if the `Enums/FCVAR` flag is set on the `ConsoleVariable` object.
         ---@param name string The name of the console variable.
         ---@param flag number The `Enums/FCVAR` flag to check.
@@ -592,6 +625,7 @@ do
         local getMin, getMax = CONVAR.GetMin, CONVAR.GetMax
 
         --- [SHARED AND MENU]
+        ---
         --- Gets the minimum value of the `ConsoleVariable` object.
         ---@return number
         function Variable:getMin()
@@ -599,6 +633,7 @@ do
         end
 
         --- [SHARED AND MENU]
+        ---
         --- Gets the minimum value of the `ConsoleVariable` object.
         ---@param name string The name of the console variable.
         ---@return number
@@ -612,6 +647,7 @@ do
         end
 
         --- [SHARED AND MENU]
+        ---
         --- Gets the maximum value of the `ConsoleVariable` object.
         ---@return number
         function Variable:getMax()
@@ -619,6 +655,7 @@ do
         end
 
         --- [SHARED AND MENU]
+        ---
         --- Gets the maximum value of the `ConsoleVariable` object.
         ---@param name string The name of the console variable.
         ---@return number
@@ -632,6 +669,7 @@ do
         end
 
         --- [SHARED AND MENU]
+        ---
         --- Gets the minimum and maximum values of the `ConsoleVariable` object.
         ---@return number, number
         function Variable:getBounds()
@@ -640,6 +678,7 @@ do
         end
 
         --- [SHARED AND MENU]
+        ---
         --- Gets the minimum and maximum values of the `ConsoleVariable` object.
         ---@param name string The name of the console variable.
         ---@return number, number
@@ -655,6 +694,7 @@ do
     end
 
     --- [SHARED AND MENU]
+    ---
     --- Adds a callback to the `ConsoleVariable` object.
     ---@param identifier string The identifier of the callback.
     ---@param fn fun( object: gpm.std.console.Variable, old: boolean | string | number, new: boolean | string | number ) The callback function.
@@ -672,6 +712,7 @@ do
     end
 
     --- [SHARED AND MENU]
+    ---
     --- Removes a callback from the `ConsoleVariable` object.
     ---@param identifier string The identifier of the callback.
     function Variable:removeChangeCallback( identifier )
@@ -697,6 +738,7 @@ do
     end
 
     --- [SHARED AND MENU]
+    ---
     --- Waits for the `ConsoleVariable` object to change.
     ---@return boolean | string | number
     ---@async

@@ -1,7 +1,9 @@
 local std = _G.gpm.std
 local rawget, getmetatable, setmetatable, string_format = std.rawget, std.getmetatable, std.setmetatable, std.string.format
 
---- [SHARED AND MENU] The class library.
+--- [SHARED AND MENU]
+---
+--- The class library.
 ---@class gpm.std.class
 local class = {}
 
@@ -36,6 +38,7 @@ do
     end
 
     --- [SHARED AND MENU]
+    ---
     --- Creates a new class base ( metatable ).
     ---@param name string The name of the class.
     ---@param parent Class | unknown | nil: The parent of the class.
@@ -77,6 +80,7 @@ do
     do
 
         --- [SHARED AND MENU]
+        ---
         --- Calls the base initialization function, <b>if it exists</b>, and returns the given object.
         ---@param obj table The object to initialize.
         ---@param base Object The base object, aka metatable.
@@ -133,6 +137,7 @@ do
     local rawset = std.rawset
 
     --- [SHARED AND MENU]
+    ---
     --- Creates a new class from the given base.
     ---@param base Object The base object, aka metatable.
     ---@return Class | unknown: The class.

@@ -6,11 +6,13 @@ local error, string = std.error, std.string
 local glua_sql = _G.sql
 
 --- [SHARED AND MENU]
+---
 --- The local SQLite library.
 ---@class gpm.std.sqlite
 local sqlite = {}
 
 --- [SHARED AND MENU]
+---
 --- Returns the last error message from the last query.
 ---@return string: The last error message.
 function sqlite.getLastError()
@@ -23,6 +25,7 @@ do
     local string_replace, string_find, string_sub = string.replace, string.find, string.sub
 
     --- [SHARED AND MENU]
+    ---
     --- Converts a string to a safe string for use in an SQL query.
     ---@param str string?: The string to convert.
     ---@return string: The safe string.
@@ -54,6 +57,7 @@ do
     local type = std.type
 
     --- [SHARED AND MENU]
+    ---
     --- Executes a raw SQL query.
     ---@param str string The SQL query to execute.
     ---@return table?: The result of the query.
@@ -84,6 +88,7 @@ end
 sqlite.rawQuery = rawQuery
 
 --- [SHARED AND MENU]
+---
 --- Checks if a table exists in the database.
 ---@param name string The name of the table to check.
 ---@return boolean: `true` if the table exists, `false` otherwise.
@@ -92,6 +97,7 @@ function sqlite.tableExists( name )
 end
 
 --- [SHARED AND MENU]
+---
 --- Checks if an index exists in the database.
 ---@param name string The name of the index to check.
 ---@return boolean: `true` if the index exists, `false` otherwise.
@@ -105,6 +111,7 @@ do
     local string_gsub = string.gsub
 
     --- [SHARED AND MENU]
+    ---
     --- Executes a SQL query with parameters.
     ---@param str string The SQL query to execute.
     ---@param ... string: The parameters to use in the query.
@@ -137,6 +144,7 @@ do
 end
 
 --- [SHARED AND MENU]
+---
 --- Executes a SQL query and returns a specific row.
 ---@param str string The SQL query to execute.
 ---@param row number?: The row to return.
@@ -154,6 +162,7 @@ end
 sqlite.queryRow = queryRow
 
 --- [SHARED AND MENU]
+---
 --- Executes a SQL query and returns the first row.
 ---@param str string The SQL query to execute.
 ---@param ... string?: The parameters to use in the query.
@@ -169,6 +178,7 @@ do
     local next = std.next
 
     --- [SHARED AND MENU]
+    ---
     --- Executes a SQL query and returns the first value of the first row.
     ---@param str string The SQL query to execute.
     ---@param ... string?: The parameters to use in the query.
@@ -189,6 +199,7 @@ do
     local pcall = std.pcall
 
     --- [SHARED AND MENU]
+    ---
     --- Executes a transaction of SQL queries in one block.
     ---@param fn function The function to execute all SQL queries in one transaction.
     ---@return any: The result of function execution.

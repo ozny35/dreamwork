@@ -6,6 +6,7 @@ local table_unpack = table.unpack
 local math_floor = math.floor
 
 --- [SHARED AND MENU]
+---
 --- A binary library.
 ---@class gpm.std.crypto.binary
 local binary = {}
@@ -14,6 +15,7 @@ local unsigned, unsigned_implode, unsigned_explode, unsigned_readInteger, unsign
 do
 
 	--- [SHARED AND MENU]
+	---
 	--- The unsigned binary library.
 	---@class gpm.std.crypto.binary.unsigned
 	unsigned = {}
@@ -65,6 +67,7 @@ do
 	unsigned.explode = unsigned_explode
 
 	--- [SHARED AND MENU]
+	---
 	--- Reads an unsigned integer from a binary string.
 	---@param str string The binary string.
 	---@param byte_count? integer The number of bytes to read.
@@ -101,6 +104,7 @@ do
 	unsigned.readInteger = unsigned_readInteger
 
 	--- [SHARED AND MENU]
+	---
 	--- Writes an unsigned integer to a binary string.
 	---@param value integer The unsigned integer.
 	---@param byte_count? integer The number of bytes to write.
@@ -125,6 +129,7 @@ do
 	unsigned.writeInteger = unsigned_writeInteger
 
 	--- [SHARED AND MENU]
+	---
 	--- Reads an unsigned byte (1 byte/8 bits) from a binary string.
 	---
 	--- Allowable values from `0` to `255`.
@@ -136,6 +141,7 @@ do
 	end
 
 	--- [SHARED AND MENU]
+	---
 	--- Writes an unsigned byte (1 byte/8 bits) to a binary string.
 	---
 	--- Allowable values from `0` to `255`.
@@ -146,6 +152,7 @@ do
 	end
 
 	--- [SHARED AND MENU]
+	---
 	--- Reads an unsigned short (2 bytes/16 bits) from a binary string.
 	---
 	--- Allowable values from `0` to `65535`.
@@ -167,6 +174,7 @@ do
 	end
 
 	--- [SHARED AND MENU]
+	---
 	--- Writes an unsigned short (2 bytes/16 bits) to a binary string.
 	---
 	--- Allowable values from `0` to `65535`.
@@ -181,6 +189,7 @@ do
 	end
 
 	--- [SHARED AND MENU]
+	---
 	--- Reads an unsigned long (4 bytes/32 bits) from a binary string.
 	---
 	--- Allowable values from `0` to `4294967295`.
@@ -202,6 +211,7 @@ do
 	end
 
 	--- [SHARED AND MENU]
+	---
 	--- Writes an unsigned long (4 bytes/32 bits) to a binary string.
 	---
 	--- Allowable values from `0` to `4294967295`.
@@ -218,6 +228,7 @@ do
 	end
 
 	--- [SHARED AND MENU]
+	---
 	--- Reads an unsigned long long (8 bytes/53 bits) from a binary string.
 	---
 	--- Allowable values from `0` to `9007199254740991`.
@@ -239,6 +250,7 @@ do
 	end
 
 	--- [SHARED AND MENU]
+	---
 	--- Writes an unsigned long long (8 bytes/53 bits) to a binary string.
 	---
 	--- Allowable values from `0` to `9007199254740991`.
@@ -259,6 +271,7 @@ do
 	end
 
 	--- [SHARED AND MENU]
+	---
 	--- Reads an unsigned fixed-point number (**UQm.n**) from a binary string.
 	--- <br/>
 	---
@@ -288,6 +301,7 @@ do
 	end
 
 	--- [SHARED AND MENU]
+	---
 	--- Writes an unsigned fixed-point number (**UQm.n**) to a binary string.
 	--- <br/>
 	---
@@ -320,12 +334,14 @@ end
 do
 
 	--- [SHARED AND MENU]
+	---
 	--- The signed binary module.
 	---@class gpm.std.crypto.binary.signed
 	local signed = {}
 	binary.signed = signed
 
 	--- [SHARED AND MENU]
+	---
 	--- Reads a signed integer from a binary string.
 	---@param str string The binary string.
 	---@param byte_count? integer The number of bytes to read.
@@ -340,6 +356,7 @@ do
 	signed.readInteger = signed_readInteger
 
 	--- [SHARED AND MENU]
+	---
 	--- Writes a signed integer to a binary string.
 	---@param value integer The signed integer.
 	---@param byte_count? integer The number of bytes to write.
@@ -352,6 +369,7 @@ do
 	signed.writeInteger = signed_writeInteger
 
 	--- [SHARED AND MENU]
+	---
 	--- Reads a signed byte (1 byte/8 bits) from a binary string.
 	---
 	--- Allowable values from `-128` to `127`.
@@ -363,6 +381,7 @@ do
 	end
 
 	--- [SHARED AND MENU]
+	---
 	--- Writes a signed byte (1 byte/8 bits) to a binary string.
 	---
 	--- Allowable values from `-128` to `127`.
@@ -377,6 +396,7 @@ do
 		local unsigned_readShort = unsigned.readShort
 
 		--- [SHARED AND MENU]
+		---
 		--- Reads a signed short (2 bytes/16 bits) from a binary string.
 		---
 		--- Allowable values from `-32768` to `32767`.
@@ -395,6 +415,7 @@ do
 		local unsigned_writeShort = unsigned.writeShort
 
 		--- [SHARED AND MENU]
+		---
 		--- Writes a signed short (2 bytes/16 bits) to a binary string.
 		---
 		--- Allowable values from `-32768` to `32767`.
@@ -412,6 +433,7 @@ do
 		local unsigned_readLong = unsigned.readLong
 
 		--- [SHARED AND MENU]
+		---
 		--- Reads a signed long (4 bytes/32 bits) from a binary string.
 		---
 		--- Allowable values from `-2147483648` to `2147483647`.
@@ -430,6 +452,7 @@ do
 		local unsigned_writeLong = unsigned.writeLong
 
 		--- [SHARED AND MENU]
+		---
 		--- Writes a signed long (4 bytes/32 bits) to a binary string.
 		---
 		--- Allowable values from `-2147483648` to `2147483647`.
@@ -443,6 +466,7 @@ do
 	end
 
 	--- [SHARED AND MENU]
+	---
 	--- Reads a signed long long (8 bytes/53 bits) from a binary string.
 	---
 	--- Allowable values from `-9007199254740991` to `9007199254740991`.
@@ -471,6 +495,7 @@ do
 		local math_ispositive = math.ispositive
 
 		--- [SHARED AND MENU]
+		---
 		--- Writes a signed long long (8 bytes/53 bits) to a binary string.
 		---
 		--- Allowable values from `-9007199254740991` to `9007199254740991`.
@@ -493,6 +518,7 @@ do
 	end
 
 	--- [SHARED AND MENU]
+	---
 	--- Reads an signed fixed-point number (**Qm.n**) from a binary string.
 	--- <br/>
 	---
@@ -525,6 +551,7 @@ do
 	end
 
 	--- [SHARED AND MENU]
+	---
 	--- Writes an signed fixed-point number (**Qm.n**) to a binary string.
 	--- <br/>
 	---
@@ -560,12 +587,14 @@ end
 do
 
 	--- [SHARED AND MENU]
+	---
 	--- The data binary module.
 	---@class gpm.std.crypto.binary.data
 	local data = {}
 	binary.data = data
 
 	--- [SHARED AND MENU]
+	---
 	--- Reads a fixed-length string from a binary string.
 	---@param str string The binary string.
 	---@param length? integer The size of the string.
@@ -577,6 +606,7 @@ do
 	end
 
 	--- [SHARED AND MENU]
+	---
 	--- Reads a fixed-length string from a binary string.
 	---@param str string The binary string.
 	---@param max_length? integer The size of the string. ( 255 by default )
@@ -595,6 +625,7 @@ do
 	end
 
 	--- [SHARED AND MENU]
+	---
 	--- Reads a counted string from a binary string.
 	---@param str string The binary string.
 	---@param byte_count? integer The number of bytes to read.
@@ -614,6 +645,7 @@ do
 	end
 
 	--- [SHARED AND MENU]
+	---
 	--- Writes a counted string to a binary string.
 	---@param str string The counted string.
 	---@param byte_count? integer The number of bytes to read.
@@ -628,6 +660,7 @@ do
 	end
 
 	--- [SHARED AND MENU]
+	---
 	--- Reads a null-terminated string from a binary string.
 	---@param str string The binary string.
 	---@param start_position? integer The start position of the binary string.
@@ -649,6 +682,7 @@ do
 	end
 
 	--- [SHARED AND MENU]
+	---
 	--- Writes a null-terminated string to a binary string.
 	---@param str string The null-terminated string.
 	---@return string: The binary string.
@@ -659,6 +693,7 @@ do
 end
 
 --- [SHARED AND MENU]
+---
 --- Reads a sequence of bits from a binary string.
 ---@param str string The binary string.
 ---@param byte_count? integer The number of bytes to read.
@@ -689,6 +724,7 @@ binary.unpack = unpack
 local string_reverse = string.reverse
 
 --- [SHARED AND MENU]
+---
 --- Writes a sequence of bits to a binary string.
 ---@param bits boolean[] The sequence of bits.
 ---@param bit_count integer The size of the sequence of bits.
@@ -721,6 +757,7 @@ local math_huge, math_tiny, math_nan = math.huge, math.tiny, math.nan
 local math_frexp, math_ldexp = math.frexp, math.ldexp
 
 --- [SHARED AND MENU]
+---
 --- Reads a float (4 bytes/32 bits) from a binary string.
 ---
 --- Allowable values from `1.175494351e-38` to `3.402823466e+38`.
@@ -766,6 +803,7 @@ end
 do
 
 	--- [SHARED AND MENU]
+	---
 	--- Writes a float (4 bytes/32 bits) to a binary string.
 	---
 	--- Allowable values from `1.175494351e-38` to `3.402823466e+38`.
@@ -807,6 +845,7 @@ do
 end
 
 --- [SHARED AND MENU]
+---
 --- Reads a double from a binary string.
 ---
 --- Allowable values from `2.2250738585072014e-308` to `1.7976931348623158e+308`.
@@ -852,6 +891,7 @@ end
 do
 
 	--- [SHARED AND MENU]
+	---
 	--- Writes a double to a binary string.
 	---
 	--- Allowable values from `2.2250738585072014e-308` to `1.7976931348623158e+308`.
@@ -898,6 +938,7 @@ do
 end
 
 --- [SHARED AND MENU]
+---
 --- Reads a binary string as a stream of bits.
 ---
 --- Can be used as iterator in for loops.
@@ -923,6 +964,7 @@ function binary.reader( str, big_endian )
 end
 
 --- [SHARED AND MENU]
+---
 --- Writes a stream of bits to a binary string.
 ---
 ---@param bytes integer[] The stream of bits.
