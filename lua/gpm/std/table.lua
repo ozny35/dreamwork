@@ -59,10 +59,12 @@ do
         for key, value in pairs( source ) do
             local key_copy
             if istable( key ) then
+                ---@cast key table
                 key_copy = lookup_table[ key ] or deep_copy_with_keys_and_meta( key, lookup_table )
             end
 
             if istable( value ) then
+                ---@cast key table
                 copy[ key_copy or key ] = lookup_table[ value ] or deep_copy_with_keys_and_meta( value, lookup_table )
             else
                 copy[ key_copy or key ] = value
@@ -79,10 +81,12 @@ do
         for key, value in pairs( source ) do
             local key_copy
             if istable( key ) then
+                ---@cast key table
                 key_copy = lookup_table[ key ] or deep_copy_with_keys( key, lookup_table )
             end
 
             if istable( value ) then
+                ---@cast value table
                 copy[ key_copy or key ] = lookup_table[ value ] or deep_copy_with_keys( value, lookup_table )
             else
                 copy[ key_copy or key ] = value
@@ -102,6 +106,7 @@ do
 
         for key, value in pairs( source ) do
             if istable( key ) then
+                ---@cast key table
                 lookup_table = lookup_table or {}
                 lookup_table[ source ] = copy
                 copy[ key ] = lookup_table[ value ] or deep_copy_with_meta( value, lookup_table )
@@ -118,6 +123,7 @@ do
 
         for key, value in pairs( source ) do
             if istable( value ) then
+                ---@cast value table
                 lookup_table = lookup_table or {}
                 lookup_table[ source ] = copy
                 copy[ key ] = lookup_table[ value ] or deep_copy( value, lookup_table )
@@ -187,6 +193,8 @@ do
                 for index = from, to, 1 do
                     local value = rawget( source, index )
                     if istable( value ) then
+                        ---@cast value table
+
                         if copyMetatables then
                             copy[ index ] = deep_copy_with_keys_and_meta( source, {} )
                         else
@@ -200,6 +208,8 @@ do
                 for index = from, to, 1 do
                     local value = rawget( source, index )
                     if istable( value ) then
+                        ---@cast value table
+
                         if copyMetatables then
                             copy[ index ] = deep_copy_with_meta( source )
                         else
@@ -242,6 +252,9 @@ do
             end
 
             if not ( debug_getmetatable( value ) or debug_getmetatable( alt ) ) and istable( value ) and istable( alt ) then
+                ---@cast value table
+                ---@cast alt table
+
                 return equal( value, alt )
             end
 
@@ -257,6 +270,9 @@ do
             end
 
             if not ( debug_getmetatable( value ) or debug_getmetatable( alt ) ) and istable( value ) and istable( alt ) then
+                ---@cast value table
+                ---@cast alt table
+
                 return equal( value, alt )
             end
 
@@ -294,6 +310,9 @@ do
             end
 
             if not ( debug_getmetatable( value ) or debug_getmetatable( alt ) ) and istable( value ) and istable( alt ) then
+                ---@cast value table
+                ---@cast alt table
+
                 result, length = diffKeys( value, alt, result, length )
             end
 
@@ -311,6 +330,9 @@ do
             end
 
             if not ( debug_getmetatable( value ) or debug_getmetatable( alt ) ) and istable( value ) and istable( alt ) then
+                ---@cast value table
+                ---@cast alt table
+
                 result, length = diffKeys( value, alt, result, length )
             end
 
@@ -345,7 +367,9 @@ do
             end
 
             if not ( debug_getmetatable( value ) or debug_getmetatable( alt ) ) and istable( value ) and istable( alt ) then
+                ---@cast value table
                 ---@cast alt table
+
                 result[ key ] = diff( value, alt )
             end
 
@@ -362,7 +386,9 @@ do
                 end
 
                 if not ( debug_getmetatable( value ) or debug_getmetatable( alt ) ) and istable( value ) and istable( alt ) then
+                    ---@cast value table
                     ---@cast alt table
+
                     result[ key ] = diff( value, alt )
                 end
 
@@ -393,15 +419,19 @@ do
     local function lower( tbl, lowerKeys, lowerValues )
         for key, value in pairs( tbl ) do
             if istable( key ) then
+                ---@cast key table
                 lower( key, lowerKeys, lowerValues )
             elseif lowerKeys and isstring( key ) then
+                ---@cast key string
                 tbl[ key ] = nil
                 key = string_lower( key )
             end
 
             if istable( value ) then
+                ---@cast value table
                 lower( value, lowerKeys, lowerValues )
             elseif lowerValues and isstring( value ) then
+                ---@cast value string
                 value = string_lower( value )
             end
 
