@@ -62,18 +62,18 @@ std.assert = std.assert or _G.assert
 std.getmetatable = std.getmetatable or _G.getmetatable
 std.setmetatable = std.setmetatable or _G.setmetatable
 
-local getfenv, setfenv = std.getfenv or _G.getfenv, std.setfenv or _G.setfenv
-std.getfenv = getfenv -- removed in Lua 5.2
-std.setfenv = setfenv -- removed in Lua 5.2
+std.getfenv = std.getfenv or _G.getfenv -- removed in Lua 5.2
+std.setfenv = std.setfenv or _G.setfenv -- removed in Lua 5.2
 
-local rawget, rawset = std.rawget or _G.rawget, std.rawset or _G.rawset
-std.rawget, std.rawset = rawget, rawset
+local rawget = std.rawget or _G.rawget
+std.rawget = rawget
+
+std.rawset = std.rawset or _G.rawset
 
 std.rawequal = std.rawequal or _G.rawequal
 std.rawlen = std.rawlen or _G.rawlen or function( value ) return #value end
 
-local tostring = std.tostring or _G.tostring
-std.tostring = tostring
+std.tostring = std.tostring or _G.tostring
 
 std.select = std.select or _G.select
 
@@ -523,6 +523,7 @@ do
     local coroutine_running = coroutine.running
     local debug_getinfo = debug.getinfo
     local string_rep = string.rep
+    local tostring = std.tostring
 
     ---@diagnostic disable-next-line: undefined-field
     local ErrorNoHalt = _G.ErrorNoHalt or print
@@ -879,6 +880,7 @@ do
 
     ---@diagnostic disable-next-line: undefined-field
     local CompileString, gmbc_load_bytecode = _G.CompileString, _G.gmbc_load_bytecode
+    local getfenv, setfenv = std.getfenv, std.setfenv
     local string_byte = string.byte
 
     --- [SHARED AND MENU]
@@ -1121,11 +1123,11 @@ end
 std.server = include( "std/server.lua" )
 
 if std.TYPE.COUNT ~= 44 then
-    logger:warn( "Global TYPE_COUNT mismatch, data corruption suspected. (" .. tostring( _G.TYPE_COUNT or "missing" ) .. " ~= 44)"  )
+    logger:warn( "Global TYPE_COUNT mismatch, data corruption suspected. (" .. std.tostring( _G.TYPE_COUNT or "missing" ) .. " ~= 44)"  )
 end
 
 if std._VERSION ~= "Lua 5.1" then
-    logger:warn( "Lua version changed, possible unpredictable behavior. (" .. tostring( _G._VERSION or "missing") .. ")" )
+    logger:warn( "Lua version changed, possible unpredictable behavior. (" .. std.tostring( _G._VERSION or "missing") .. ")" )
 end
 
 logger:info( "Start-up time: %.4f sec.", getTime() - gpm.StartTime )
