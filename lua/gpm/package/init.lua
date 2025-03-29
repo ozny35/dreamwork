@@ -43,3 +43,21 @@ end
 local PackageClass = class.create( Package )
 gpm.Package = PackageClass
 
+local debug_getmetatable = std.debug.getmetatable
+local debug_getfmain = std.debug.getfmain
+local getfenv = std.getfenv
+
+function PackageClass.getName()
+    local fn = debug_getfmain()
+    if fn ~= nil then
+        local fenv = getfenv( fn )
+        if fenv ~= nil then
+            local metatable = debug_getmetatable( fenv )
+            if metatable ~= nil then
+                return rawget( metatable, "__package" )
+            end
+        end
+    end
+
+    return "gpm"
+end

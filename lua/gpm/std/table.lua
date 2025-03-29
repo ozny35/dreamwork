@@ -534,12 +534,36 @@ end
 --- Remove all occurrences of the given value.
 ---@param tbl table The table to remove from.
 ---@param value any The value to remove.
-function table.removeByValue( tbl, value )
-    for index = #tbl, 1, -1 do
-        if tbl[ index ] == value then
-            table_remove( tbl, index )
+---@param no_copy? boolean: Don't copy the table.
+---@param length? integer: The length of the table.
+---@return table tbl Table without the given value/'s.
+---@return integer length New length of the table.
+function table.removeByValue( tbl, value, no_copy, length )
+    if no_copy then
+        if length == nil then length = #tbl end
+
+        for index = length, 1, -1 do
+            if tbl[ index ] == value then
+                table_remove( tbl, index )
+                length = length - 1
+            end
+        end
+
+        return tbl, length
+    end
+
+    local copy = {}
+    length = 0
+
+    for i = 1, #tbl, 1 do
+        local table_value = tbl[ i ]
+        if table_value ~= value then
+            length = length + 1
+            copy[ length ] = table_value
         end
     end
+
+    return copy, length
 end
 
 --- [SHARED AND MENU]

@@ -16,8 +16,6 @@ local transducers = gpm.transducers
 ---@class gpm.engine
 local engine = gpm.engine or {}
 
--- TODO: ENGINE HOOKS AND OTHER THINGS
-
 if engine.hookCatch == nil then
 
     local engine_hooks = {}

@@ -33,6 +33,21 @@ function string.cut( str, index )
     return string_sub( str, 1, index - 1 ), string_sub( str, index, string_len( str ) )
 end
 
+--- Divides the string by the pattern.
+---@param str string The input string.
+---@param pattern string The pattern to divide by.
+---@param from number? The start index.
+---@param with_pattern boolean? If set to true, the pattern will be included in the resulting strings.
+---@return string, string: The first part of the string, the second part of the string.
+function string.divide( str, pattern, from, with_pattern )
+    local startPos, endPos = string_find( str, pattern, from or 1, with_pattern ~= true )
+    if startPos == nil then
+        return str, ""
+    else
+        return string_sub( str, 1, startPos - 1 ), string_sub( str, ( endPos or startPos ) + 1, string_len( str ) )
+    end
+end
+
 --- Inserts a value into the string.
 ---@param str string The input string.
 ---@param index number The string insertion index.

@@ -97,17 +97,15 @@ if SERVER then
     ---@diagnostic disable-next-line: undefined-field
     local AddCSLuaFile = _G.AddCSLuaFile
     if AddCSLuaFile ~= nil then
-        AddCSLuaFile( "gpm/database.lua" )
-        AddCSLuaFile( "gpm/detour.lua" )
-        AddCSLuaFile( "gpm/engine.lua" )
+        AddCSLuaFile( "database.lua" )
+        AddCSLuaFile( "detour.lua" )
+        AddCSLuaFile( "engine.lua" )
+
+        AddCSLuaFile( "package/init.lua" )
 
         local files = _G.file.Find( "gpm/std/*", "lsv" )
-        local string_find = _G.string.find
-
         for i = 1, #files do
-            if not string_find( files[ i ], ".meta.lua$" ) then
-                AddCSLuaFile( "gpm/std/" .. files[ i ] )
-            end
+            AddCSLuaFile( "std/" .. files[ i ] )
         end
     end
 end
@@ -701,6 +699,8 @@ end
 std.Hook = include( "std/hook.lua" )
 std.Timer = include( "std/timer.lua" )
 
+include( "package/init.lua" )
+
 local File = include( "std/file.lua" )
 std.File = File
 
@@ -1101,6 +1101,8 @@ do
 
 end
 
+include( "std/addon.lua" )
+
 if std.CLIENT_MENU then
 
     std.input = include( "std/input.lua" )
@@ -1175,7 +1177,7 @@ end
 
 --     local files = _G.file.Find( "gpm/plugins/*.lua", "LUA" )
 --     for i = 1, #files do
---         include( "gpm/plugins/" .. files[ i ] )
+--         include( "plugins/" .. files[ i ] )
 --     end
 
 -- end

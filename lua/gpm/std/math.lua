@@ -20,7 +20,7 @@ local function atan( y, x )
     elseif y == 0 then
       return 0.0
     elseif x == 0 then
-        return math_pi / 2
+        return math_pi * 0.5
     end
 
     return math_atan( y / x )
