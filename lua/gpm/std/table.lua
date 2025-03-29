@@ -664,10 +664,10 @@ end
 ---
 --- Flips the keys with values in the given list (table).
 ---@param tbl table The table to flip.
----@param noCopy? boolean: Do not copy the table.
+---@param no_copy? boolean: Do not copy the table.
 ---@return table: The flipped table.
-function table.flip( tbl, noCopy )
-    if noCopy then
+function table.flip( tbl, no_copy )
+    if no_copy then
         local keys, length = {}, 0
         for key in pairs( tbl ) do
             length = length + 1
@@ -888,15 +888,15 @@ do
     ---
     --- Reverses the given list (table).
     ---@param tbl table The table to reverse.
-    ---@param noCopy? boolean: If `true`, the table will not be copied.
+    ---@param no_copy? boolean: If `true`, the table will not be copied.
     ---@param length? integer: The length of the table.
     ---@return table: The reversed table.
     ---@return integer: The length of the reversed table.
-    function table.reverse( tbl, noCopy, length )
+    function table.reverse( tbl, no_copy, length )
         if length == nil then length = #tbl end
         length = length + 1
 
-        if noCopy then
+        if no_copy then
             for i = 1, math_fmul( length - 1, 0.5 ), 1 do
                 local j = length - i
                 tbl[ i ], tbl[ j ] = tbl[ j ], tbl[ i ]

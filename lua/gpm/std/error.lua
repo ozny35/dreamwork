@@ -300,7 +300,7 @@ std.Error = ErrorClass
 --- Creates a new `Error` with custom name.
 ---@param name string The name of the error.
 ---@param base Error | nil: The base class of the error.
----@return Error: The new error class.
+---@return Error cls The new error class.
 function ErrorClass.make( name, base )
     return class_create( class_base( name, base or ErrorClass ) ) ---@type Error
 end

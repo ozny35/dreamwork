@@ -67,7 +67,7 @@ else
     --- Checks if the client is connected to the server.
     ---
     --- NOTE: It always returns `true` on the client.
-    ---@return boolean: `true` if connected, `false` if not.
+    ---@return boolean bool The `true` if connected, `false` if not.
     function client.isConnected() return true end
 
     --- [CLIENT AND MENU]
@@ -75,7 +75,7 @@ else
     --- Checks if the client has connected to the server (looks at the loading screen).
     ---
     --- NOTE: It always returns `false` on the client.
-    ---@return boolean: `true` if connecting, `false` if not.
+    ---@return boolean bool The `true` if connecting, `false` if not.
     function client.isConnecting() return false end
 
 end

@@ -90,6 +90,8 @@ local function asyncThread( fn, ... )
     return asyncThreadResult( pcall( fn, ... ) )
 end
 
+--- [SHARED AND MENU]
+---
 --- Executes a function in a new coroutine
 --- you can use this function to call async functions even in sync code
 --- callback will be called when function returned or errored
@@ -140,6 +142,8 @@ local function handlePending( value, ... )
     end
 end
 
+--- [SHARED AND MENU]
+---
 --- Puts current coroutine to sleep until futures.wakeup is called
 --- can be used to wait for some event.
 ---
@@ -170,6 +174,8 @@ function futures.pending()
     return handlePending( coroutine.yield() )
 end
 
+--- [SHARED AND MENU]
+---
 --- Used to wake up pending coroutine.
 ---
 ---@see gpm.std.futures.pending for example
@@ -179,6 +185,8 @@ function futures.wakeup( co, ... )
 end
 
 
+--- [SHARED AND MENU]
+---
 --- Cancels execution of passed coroutine.
 ---
 --- `CancelError` will be thrown in coroutine.
@@ -219,6 +227,8 @@ function futures.cancel( co )
 end
 
 
+--- [SHARED AND MENU]
+---
 --- Transfers data between coroutines in symmetrical way
 --- used in asynchronous iterators
 --- you probably should not use it.
@@ -262,6 +272,8 @@ local function handleYield( ok, value, ... )
     end
 end
 
+--- [SHARED AND MENU]
+---
 --- Yields given arguments to the apairs listener.
 ---
 ---@see gpm.std.futures.apairs for example
@@ -316,6 +328,8 @@ local function handleAnext( co, ok, value, ... )
     return handleAnext( co, true, coroutine.yield() )
 end
 
+--- [SHARED AND MENU]
+---
 --- Retrieves next value from async iterator coroutine
 --- this function returned by apairs
 --- you probably should not use it.
@@ -327,6 +341,8 @@ function futures.anext( iterator, ... )
     return handleAnext( iterator, futures.transfer( iterator, ACTION_RESUME, ... ) )
 end
 
+--- [SHARED AND MENU]
+---
 --- Iterates over async iterator, calling it with given arguments.
 ---
 --- ## Example
@@ -362,6 +378,8 @@ function futures.apairs( iterator, ... )
 end
 
 
+--- [SHARED AND MENU]
+---
 --- Collects all values from async iterator into a list.
 ---@async
 ---@generic V
@@ -378,6 +396,8 @@ function futures.collect( iterator, ... )
     return results, length
 end
 
+--- [SHARED AND MENU]
+---
 --- Collects all values from async iterator into a table.
 ---@async
 ---@generic K, V
@@ -459,24 +479,32 @@ do
         end
     end
 
+    --- [SHARED AND MENU]
+    ---
     --- Returns `true` if Future is pending.
     ---@return boolean
     function Future:isPending()
         return self._state == STATE_PENDING
     end
 
+    --- [SHARED AND MENU]
+    ---
     --- Returns `true` if Future is finished (or cancelled).
     ---@return boolean
     function Future:isFinished()
         return self._state ~= STATE_PENDING
     end
 
+    --- [SHARED AND MENU]
+    ---
     --- Returns true if Future was cancelled.
     ---@return boolean
     function Future:isCancelled()
         return self._state == STATE_CANCELLED
     end
 
+    --- [SHARED AND MENU]
+    ---
     ---@private
     function Future:runCallbacks()
         local callbacks = self._callbacks

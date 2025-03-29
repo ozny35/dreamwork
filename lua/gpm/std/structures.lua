@@ -7,6 +7,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- A stack is a last-in-first-out (LIFO) data structure object.
+    ---@diagnostic disable-next-line: duplicate-doc-alias
     ---@alias Stack gpm.std.Stack
     ---@class gpm.std.Stack: gpm.std.Object
     ---@field __class gpm.std.StackClass

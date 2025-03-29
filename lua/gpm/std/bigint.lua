@@ -18,6 +18,7 @@ local table_reverse = table.reverse
 local setmetatable = std.setmetatable
 local math_floor, math_max, math_clamp = math.floor, math.max, math.clamp
 
+
 --- [SHARED AND MENU]
 ---
 --- The big integer object.

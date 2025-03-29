@@ -43,7 +43,7 @@ local debug = {
 --- Call function with given arguments.
 ---@param func function The function to call.
 ---@param ... any: Arguments to be passed to the function.
----@return any ...: The return values of the function.
+---@return any ... The return values of the function.
 function debug.fcall( func, ... )
     return func( ... )
 end
@@ -61,7 +61,7 @@ do
     ---
     --- Returns the metatable of the given name or `nil` if not found.
     ---@param name string The name of the metatable.
-    ---@return table | nil: The metatable.
+    ---@return table | nil meta The metatable.
     function debug.findmetatable( name )
         local cached = registry[ name ]
         if cached ~= nil then
@@ -89,7 +89,7 @@ do
             ---
             --- Returns the metatable of the given value or `nil` if not found.
             ---@param value any The value.
-            ---@return table | nil: The metatable.
+            ---@return table | nil meta The metatable.
             function debug.getmetatable( value )
                 return debug_getmetatable( value ) or registry[ type( value ) ]
             end
@@ -100,7 +100,7 @@ do
         --- Returns the value of the given key in the metatable of the given value or `nil` if not found.
         ---@param value any The value.
         ---@param key string The key.
-        ---@return any | nil: The value.
+        ---@return any | nil value The value.
         function debug.getmetavalue( value, key )
             local metatable = debug_getmetatable( value )
             return metatable and rawget( metatable, key )
@@ -116,7 +116,7 @@ do
     ---@param name string The name of the metatable.
     ---@param tbl table The metatable.
     ---@param do_full_register? boolean: If true, the metatable will be registered.
-    ---@return integer: The ID of the metatable or -1 if not fully registered.
+    ---@return integer meta_id The ID of the metatable or -1 if not fully registered.
     function debug.registermetatable( name, tbl, do_full_register )
         tbl = registry[ name ] or tbl
         registry[ name ] = tbl
@@ -135,8 +135,8 @@ end
 ---
 --- Returns current stack trace as a table with strings.
 ---@param startPos? integer: The start position of the stack trace.
----@return table stack: The stack trace.
----@return integer length: The length of the stack trace.
+---@return table stack The stack trace.
+---@return integer length The length of the stack trace.
 function debug.getstack( startPos )
     local stack, length = {}, 0
 
@@ -156,7 +156,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Returns the function within which the call was made or `nil` if not found.
----@return function | nil: The function within which the call was made or `nil` if not found.
+---@return function | nil fn The function within which the call was made or `nil` if not found.
 function debug.getfmain()
     for location = 2, 16, 1 do
         local info = debug_getinfo( location, "fS" )
@@ -181,7 +181,7 @@ do
     ---
     --- Returns the path to the file in which it was called or an empty string if it could not be found.
     ---@param location function | integer: The function or location to get the path from.
-    ---@return string path: The path to the file in which it was called or an [b]empty string[/b] if it could not be found.
+    ---@return string path The path to the file in which it was called or an [b]empty string[/b] if it could not be found.
     function debug.getfpath( location )
         local info = debug_getinfo( location, "S" )
         if info.what == "main" then
@@ -203,7 +203,7 @@ if std.jit then
     ---
     --- Checks if the function is jit compilable.
     ---@param fn function The function to check.
-    ---@return boolean: `true` if the function is jit compilable, otherwise `false`.
+    ---@return boolean bool `true` if the function is jit compilable, otherwise `false`.
     function debug.isjitcompilable( fn )
         local info = util_funcinfo( fn )
         return info and info.ffid ~= nil
@@ -226,7 +226,7 @@ do
     ---
     --- Returns the memory address of the value.
     ---@param value any The value to get the memory address of.
-    ---@return integer | nil: The memory address or `nil` if not found.
+    ---@return integer | nil address The memory address or `nil` if not found.
     function debug.getpointer( value )
         return tonumber( string_format( "%p", value ), 16 )
     end
@@ -241,7 +241,7 @@ do
     ---
     --- Returns the function package or `nil` if not found.
     ---@param location function | integer: The function or stack level.
-    ---@return Package?: The function package or `nil` if not found.
+    ---@return Package? pkg The function package or `nil` if not found.
     function debug.getfpackage( location )
         -- TODO: Check this after creating the package class
         local fenv = getfenv( location )

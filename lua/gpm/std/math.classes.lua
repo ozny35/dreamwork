@@ -112,6 +112,7 @@ local Angle3Class = class.create( Angle3 )
 Angle3Class.zero = setmetatable( { 0, 0, 0 }, Angle3 )
 std.Angle = Angle3Class
 
+---@diagnostic disable-next-line: duplicate-doc-alias
 ---@alias VMatrix gpm.std.VMatrix
 ---@class gpm.std.VMatrix: gpm.std.Object
 ---@field __class gpm.std.VMatrixClass
@@ -253,11 +254,14 @@ do
 
 end
 
+---@return Vector2
 ---@protected
 function Vector2:__new( x, y )
     return setmetatable( { x or 0, y or 0 }, Vector2 )
 end
 
+--- [SHARED AND MENU]
+---
 --- Returns the x and y coordinates of the vector.
 ---@return number x: The x coordinate of the vector.
 ---@return number y: The y coordinate of the vector.
@@ -265,6 +269,8 @@ function Vector2:unpack()
     return self[ 1 ], self[ 2 ]
 end
 
+--- [SHARED AND MENU]
+---
 --- Sets the x and y coordinates of the vector.
 ---@param x number The x coordinate of the vector.
 ---@param y number The y coordinate of the vector.
@@ -273,12 +279,16 @@ function Vector2:setUnpacked( x, y )
     self[ 2 ] = y
 end
 
+--- [SHARED AND MENU]
+---
 --- Creates a copy of the vector.
 ---@return Vector2: The copy of the vector.
 function Vector2:copy()
     return setmetatable( { self[ 1 ], self[ 2 ] }, Vector2 )
 end
 
+--- [SHARED AND MENU]
+---
 --- Scales the vector.
 ---@param scale number The scale factor.
 ---@return Vector2: The scaled vector.
@@ -297,6 +307,8 @@ function Vector2:scale( scale )
     return self
 end
 
+--- [SHARED AND MENU]
+---
 --- Returns a scaled copy of the vector.
 ---@param scale number The scale factor.
 ---@return Vector2: The scaled copy of the vector.
@@ -304,6 +316,8 @@ function Vector2:getScaled( scale )
     return self:copy():scale( scale )
 end
 
+--- [SHARED AND MENU]
+---
 --- Adds the vector to another vector.
 ---@param vector Vector2 The other vector.
 ---@return Vector2: The sum of the two vectors.
@@ -313,6 +327,8 @@ function Vector2:add( vector )
     return self
 end
 
+--- [SHARED AND MENU]
+---
 --- Subtracts the vector from another vector.
 ---@param other Vector2 The other vector.
 ---@return Vector2: The difference of the two vectors.
@@ -322,6 +338,8 @@ function Vector2:sub( other )
     return self
 end
 
+--- [SHARED AND MENU]
+---
 --- Multiplies the vector by another vector or a number.
 ---@param other Vector2 | number: The other vector or a number.
 ---@return Vector2: The product of the two vectors or the vector multiplied by a number.
@@ -338,6 +356,8 @@ function Vector2:mul( other )
     return self
 end
 
+--- [SHARED AND MENU]
+---
 --- Divides the vector by another vector or a number.
 ---@param other Vector2 | number: The other vector or a number.
 ---@return Vector2: The quotient of the two vectors or the vector divided by a number.
@@ -354,6 +374,8 @@ function Vector2:div( other )
     return self
 end
 
+--- [SHARED AND MENU]
+---
 --- Negates the vector.
 ---@return Vector2
 function Vector2:negate()
@@ -364,18 +386,21 @@ end
 
 ---@param other Vector2 The other vector.
 ---@return Vector2: The sum of the two vectors.
+---@protected
 function Vector2:__add( other )
     return self:copy():add( other )
 end
 
----@param other Vector2 The other vector.
----@return Vector2: The difference of the two vectors.
+---@param other Vector2
+---@return Vector2
+---@protected
 function Vector2:__sub( other )
     return self:copy():sub( other )
 end
 
----@param other Vector2 | number: The other vector or a number.
----@return Vector2: The product of the two vectors or the vector multiplied by a number.
+---@param other Vector2 | number
+---@return Vector2
+---@protected
 function Vector2:__mul( other )
     if isnumber( other ) then
         ---@cast other number
@@ -386,8 +411,9 @@ function Vector2:__mul( other )
     end
 end
 
----@param other Vector2 | number: The other vector or a number.
----@return Vector2: The quotient of the two vectors or the vector divided by a number.
+---@param other Vector2 | number
+---@return Vector2
+---@protected
 function Vector2:__div( other )
     if isnumber( other ) then
         ---@cast other number
@@ -400,28 +426,36 @@ function Vector2:__div( other )
 end
 
 ---@return Vector3
+---@protected
 function Vector2:__unm()
     return setmetatable( { -self[ 1 ], -self[ 2 ] }, Vector2 )
 end
 
----@param vector Vector2 The other vector.
----@return boolean: `true` if the two vectors are equal, `false` otherwise.
+---@param vector Vector2
+---@return boolean
+---@protected
 function Vector2:__eq( vector )
     return self[ 1 ] == vector[ 1 ] and self[ 2 ] == vector[ 2 ]
 end
 
+--- [SHARED AND MENU]
+---
 --- Calculates the squared length of the vector.
 ---@return number: The squared length of the vector.
 function Vector2:getLengthSqr()
     return self[ 1 ] ^ 2 + self[ 2 ] ^ 2
 end
 
+--- [SHARED AND MENU]
+---
 --- Calculates the length of the vector.
 ---@return number: The length of the vector.
 function Vector2:getLength()
     return math_sqrt( self:getLengthSqr() )
 end
 
+--- [SHARED AND MENU]
+---
 --- Calculates the distance between two vectors.
 ---@param vector Vector2 The other vector.
 ---@return number: The distance between the two vectors.
@@ -429,6 +463,8 @@ function Vector2:getDistance( vector )
     return math_sqrt( ( vector[ 1 ] - self[ 1 ] ) ^ 2 + ( vector[ 2 ] - self[ 2 ] ) ^ 2 )
 end
 
+--- [SHARED AND MENU]
+---
 --- Normalizes the vector.
 ---@return Vector2: The normalized vector.
 function Vector2:normalize()
@@ -436,12 +472,16 @@ function Vector2:normalize()
     return length == 0 and self or self:scale( 1 / length )
 end
 
+--- [SHARED AND MENU]
+---
 --- Returns a normalized copy of the vector.
 ---@return Vector2: The normalized copy of the vector.
 function Vector2:getNormalized()
     return self:copy():normalize()
 end
 
+--- [SHARED AND MENU]
+---
 --- Checks if the vector is zero.
 ---@return boolean: `true` if the vector is zero, `false` otherwise.
 function Vector2:isZero()
@@ -449,6 +489,8 @@ function Vector2:isZero()
            self[ 2 ] == 0
 end
 
+--- [SHARED AND MENU]
+---
 --- Sets the vector to zero.
 ---@return Vector2: The zero vector.
 function Vector2:zero()
@@ -457,6 +499,8 @@ function Vector2:zero()
     return self
 end
 
+--- [SHARED AND MENU]
+---
 --- Calculates the dot product of two vectors.
 ---@param vector Vector2 The other vector.
 ---@return number: The dot product of two vectors.
@@ -464,6 +508,8 @@ function Vector2:dot( vector )
     return self[ 1 ] * vector[ 1 ] + self[ 2 ] * vector[ 2 ]
 end
 
+--- [SHARED AND MENU]
+---
 --- Calculates the cross product of two vectors.
 ---@param vector Vector2 The other vector.
 ---@return number: The cross product of two vectors.
@@ -471,6 +517,8 @@ function Vector2:cross( vector )
     return self[ 1 ] * vector[ 2 ] - self[ 2 ] * vector[ 1 ]
 end
 
+--- [SHARED AND MENU]
+---
 --- Returns the angle of the vector.
 ---@param up? Vector2: The direction of the angle.
 ---@return number: The angle of the vector.
@@ -504,6 +552,7 @@ do
 
     ---@param key string | number
     ---@return number | function | nil
+    ---@protected
     function Angle3:__index( key )
         if isnumber( key ) then
             return rawget( self, key ) or 0
@@ -512,6 +561,7 @@ do
         end
     end
 
+    ---@protected
     function Angle3:__newindex( key, value )
         if isnumber( key ) then
             rawset( self, key, value )
@@ -532,6 +582,7 @@ do
 
     ---@param key string | number
     ---@return number | function | nil
+    ---@protected
     function Vector3:__index( key )
         if isnumber( key ) then
             return rawget( self, key ) or 0
@@ -540,6 +591,7 @@ do
         return rawget( self, key2index[ key ] or key ) or Vector3[ key ]
     end
 
+    ---@protected
     function Vector3:__newindex( key, value )
         if isnumber( key ) then
             rawset( self, key, value )
@@ -550,6 +602,8 @@ do
 
 end
 
+--- [SHARED AND MENU]
+---
 --- Returns the x, y, and z coordinates of the vector.
 ---@return number x: The x coordinate of the vector.
 ---@return number y: The y coordinate of the vector.
@@ -558,6 +612,8 @@ function Vector3:unpack()
     return self[ 1 ], self[ 2 ], self[ 3 ]
 end
 
+--- [SHARED AND MENU]
+---
 --- Sets the x, y, and z coordinates of the vector.
 ---@param x number The x coordinate of the vector.
 ---@param y number The y coordinate of the vector.
@@ -568,6 +624,8 @@ function Vector3:setUnpacked( x, y, z )
     self[ 3 ] = z
 end
 
+--- [SHARED AND MENU]
+---
 --- Creates a copy of the vector.
 ---@return Vector3: The copy of the vector.
 function Vector3:copy()
@@ -578,6 +636,8 @@ do
 
     local math_huge = math.huge
 
+    --- [SHARED AND MENU]
+    ---
     --- Scales the vector.
     ---@param scale number The scale factor.
     ---@return Vector3: The scaled vector.
@@ -601,6 +661,8 @@ do
 
 end
 
+--- [SHARED AND MENU]
+---
 --- Returns a scaled copy of the vector.
 ---@param scale number The scale factor.
 ---@return Vector3: The scaled copy of the vector.
@@ -608,6 +670,8 @@ function Vector3:getScaled( scale )
     return self:copy():scale( scale )
 end
 
+--- [SHARED AND MENU]
+---
 --- Adds the vector to another vector.
 ---@param vector Vector3 The other vector.
 ---@return Vector3: The sum of the two vectors.
@@ -618,6 +682,8 @@ function Vector3:add( vector )
     return self
 end
 
+--- [SHARED AND MENU]
+---
 --- Subtracts the vector from another vector.
 ---@param vector Vector3 The other vector.
 ---@return Vector3: The difference of the two vectors.
@@ -628,6 +694,8 @@ function Vector3:sub( vector )
     return self
 end
 
+--- [SHARED AND MENU]
+---
 --- Multiplies the vector by another vector or a number.
 ---@param value Vector3 | number: The other vector or a number.
 ---@return Vector3: The product of the two vectors or the vector multiplied by a number.
@@ -644,6 +712,8 @@ function Vector3:mul( value )
     return self
 end
 
+--- [SHARED AND MENU]
+---
 --- Divides the vector by another vector or a number.
 ---@param value Vector3 | number: The other vector or a number.
 ---@return Vector3: The quotient of the two vectors or the vector divided by a number.
@@ -660,6 +730,8 @@ function Vector3:div( value )
     return self
 end
 
+--- [SHARED AND MENU]
+---
 --- Negates the vector.
 ---@return Vector3
 function Vector3:negate()
@@ -669,41 +741,49 @@ function Vector3:negate()
     return self
 end
 
----@param vector Vector3 The other vector.
----@return Vector3: The sum of the two vectors.
+---@param vector Vector3
+---@return Vector3
+---@protected
 function Vector3:__add( vector )
     return self:copy():add( vector )
 end
 
----@param vector Vector3 The other vector.
----@return Vector3: The difference of the two vectors.
+---@param vector Vector3
+---@return Vector3
+---@protected
 function Vector3:__sub( vector )
     return self:copy():sub( vector )
 end
 
----@param value Vector3 | number: The other vector or a number.
----@return Vector3: The product of the two vectors or the vector multiplied by a number.
+---@param value Vector3 | number
+---@return Vector3
+---@protected
 function Vector3:__mul( value )
     return self:copy():mul( value )
 end
 
----@param value Vector3 | number: The other vector or a number.
----@return Vector3: The quotient of the two vectors or the vector divided by a number.
+---@param value Vector3 | number
+---@return Vector3
+---@protected
 function Vector3:__div( value )
     return self:copy():div( value )
 end
 
 ---@return Vector3
+---@protected
 function Vector3:__unm()
     return setmetatable( { -self[ 1 ], -self[ 2 ], -self[ 3 ] }, Vector3 )
 end
 
----@param vector Vector3 The other vector.
----@return boolean: `true` if the two vectors are equal, `false` otherwise.
+---@param vector Vector3
+---@return boolean
+---@protected
 function Vector3:__eq( vector )
     return self[ 1 ] == vector[ 1 ] and self[ 2 ] == vector[ 2 ] and self[ 3 ] == vector[ 3 ]
 end
 
+--- [SHARED AND MENU]
+---
 --- Calculates the squared length of the vector.
 ---@param ignoreZ? boolean: `true` to ignore the z component of the vector, `false` otherwise.
 ---@return number: The squared length of the vector.
@@ -714,14 +794,16 @@ end
 do
 
     local math_sqrt = math.sqrt
-
+    --- [SHARED AND MENU]
+    ---
     --- Calculates the length of the vector.
     ---@param ignoreZ? boolean: `true` to ignore the z component of the vector, `false` otherwise.
     ---@return number: The length of the vector.
     function Vector3:getLength( ignoreZ )
         return math_sqrt( self:getLengthSqr( ignoreZ ) )
     end
-
+    --- [SHARED AND MENU]
+    ---
     --- Calculates the distance between two vectors.
     ---@param vector Vector3 The other vector.
     ---@return number: The distance between the two vectors.
@@ -731,6 +813,8 @@ do
 
 end
 
+--- [SHARED AND MENU]
+---
 --- Normalizes the vector.
 ---@return Vector3: The normalized vector.
 function Vector3:normalize()
@@ -738,12 +822,16 @@ function Vector3:normalize()
     return length == 0 and self or self:scale( 1 / length )
 end
 
+--- [SHARED AND MENU]
+---
 --- Returns a normalized copy of the vector.
 ---@return Vector3: The normalized copy of the vector.
 function Vector3:getNormalized()
     return self:copy():normalize()
 end
 
+--- [SHARED AND MENU]
+---
 --- Checks if the vector is zero.
 ---@return boolean: `true` if the vector is zero, `false` otherwise.
 function Vector3:isZero()
@@ -752,6 +840,8 @@ function Vector3:isZero()
            self[ 3 ] == 0
 end
 
+--- [SHARED AND MENU]
+---
 --- Sets the vector to zero.
 ---@return Vector3: The zero vector.
 function Vector3:zero()
@@ -761,6 +851,8 @@ function Vector3:zero()
     return self
 end
 
+--- [SHARED AND MENU]
+---
 --- Calculates the dot product of two vectors.
 ---@param vector Vector3 The other vector.
 ---@return number: The dot product of two vectors.
@@ -768,6 +860,8 @@ function Vector3:dot( vector )
     return self[ 1 ] * vector[ 1 ] + self[ 2 ] * vector[ 2 ] + self[ 3 ] * vector[ 3 ]
 end
 
+--- [SHARED AND MENU]
+---
 --- Calculates the cross product of two vectors.
 ---@param vector Vector3 The other vector.
 ---@return Vector3: The cross product of two vectors.
@@ -781,6 +875,8 @@ function Vector3:cross( vector )
     }, Vector3 )
 end
 
+--- [SHARED AND MENU]
+---
 --- Checks if the vector is within an axis-aligned box.
 ---@param vector Vector3 The other vector.
 ---@return boolean: `true` if the vector is within the box, `false` otherwise.
@@ -793,8 +889,10 @@ end
 
 do
 
-    local math_deg, math_asin, math_atan2 = math.deg, math.asin, math.atan2
+    local math_asin = math.asin
 
+    --- [SHARED AND MENU]
+    ---
     --- Returns the angle of the vector.
     ---@param up Vector3?: The direction of the angle.
     ---@return Angle3: The angle of the vector.
@@ -824,6 +922,8 @@ do
 
     local math_acos = math.acos
 
+    --- [SHARED AND MENU]
+    ---
     --- Calculates the angle between two vectors.
     ---@param vector Vector3 The other vector.
     ---@return number degrees The angle between two vectors.
@@ -833,6 +933,8 @@ do
 
 end
 
+--- [SHARED AND MENU]
+---
 --- Checks if the vector is equal to the given vector with the given tolerance.
 ---@param vector Vector3 The vector to check.
 ---@param tolerance number The tolerance to use.
@@ -843,6 +945,8 @@ function Vector3:isNear( vector, tolerance )
            math_abs( self[ 3 ] - vector[ 3 ] ) <= tolerance
 end
 
+--- [SHARED AND MENU]
+---
 --- Rotates the vector by the given angle.
 ---@param angle Angle3 The angle to rotate by.
 ---@return Vector3: The rotated vector.
@@ -859,6 +963,8 @@ function Vector3:rotate( angle )
     return self
 end
 
+--- [SHARED AND MENU]
+---
 --- Returns a copy of the vector rotated by the given angle.
 ---@param angle Angle3 The angle to rotate by.
 ---@return Vector3: The rotated vector.
@@ -866,6 +972,8 @@ function Vector3:getRotated( angle )
     return self:copy():rotate( angle )
 end
 
+--- [SHARED AND MENU]
+---
 --- Linear interpolation between two vectors.
 ---@param vector Vector3 | number: The other vector or a number.
 ---@param frac number The interpolation factor.
@@ -886,6 +994,8 @@ function Vector3:lerp( vector, frac )
     return self
 end
 
+--- [SHARED AND MENU]
+---
 --- Returns a copy of the vector linearly interpolated between two vectors.
 ---@param vector Vector3 | number: The other vector or a number.
 ---@param frac number The interpolation factor.
@@ -894,6 +1004,8 @@ function Vector3:getLerped( vector, frac )
     return self:copy():lerp( vector, frac )
 end
 
+--- [SHARED AND MENU]
+---
 --- Projects the vector onto another vector.
 ---@param vector Vector3 The other vector.
 ---@return Vector3: The projected vector.
@@ -906,6 +1018,8 @@ function Vector3:project( vector )
     return self
 end
 
+--- [SHARED AND MENU]
+---
 --- Returns a copy of the vector projected onto another vector.
 ---@param vector Vector3 The other vector.
 ---@return Vector3: The projected vector.
@@ -913,6 +1027,8 @@ function Vector3:getProjected( vector )
     return self:copy():project( vector )
 end
 
+--- [SHARED AND MENU]
+---
 --- Modifies the given vectors so that all of vector2's axis are larger than vector1's by switching them around.
 ---
 --- Also known as ordering vectors.
@@ -935,6 +1051,8 @@ do
     ---@class gpm.std.Color
     local Color = ColorClass.__base
 
+    --- [SHARED AND MENU]
+    ---
     --- Creates a color object from vector.
     ---@param vector Vector3 The vector.
     ---@return Color: The color object.
@@ -947,6 +1065,8 @@ do
         }, Color )
     end
 
+    --- [SHARED AND MENU]
+    ---
     --- Returns the color as vector.
     ---@return Vector: The vector.
     function Color:toVector3()
@@ -959,6 +1079,8 @@ do
 
 end
 
+--- [SHARED AND MENU]
+---
 --- Unpacks the angle.
 ---@return number pitch: The pitch angle.
 ---@return number yaw: The yaw angle.
@@ -967,6 +1089,8 @@ function Angle3:unpack()
     return self[ 1 ], self[ 2 ], self[ 3 ]
 end
 
+--- [SHARED AND MENU]
+---
 --- Sets the angle from unpacked angles.
 ---@param pitch number?: The pitch angle.
 ---@param yaw number?: The yaw angle.
@@ -979,6 +1103,8 @@ function Angle3:setUnpacked( pitch, yaw, roll )
     return self
 end
 
+--- [SHARED AND MENU]
+---
 --- Returns a copy of the angle.
 ---@return Angle3: A copy of the angle.
 function Angle3:copy()
@@ -990,6 +1116,8 @@ function Angle3:__new( pitch, yaw, roll )
     return setmetatable( { pitch, yaw, roll }, Angle3 )
 end
 
+--- [SHARED AND MENU]
+---
 --- Adds the angle.
 ---@param angle Angle3 The angle to add.
 ---@return Angle3: The sum of the angles.
@@ -1000,6 +1128,8 @@ function Angle3:add( angle )
     return self
 end
 
+--- [SHARED AND MENU]
+---
 --- Subtracts the angle.
 ---@param angle Angle3 The angle to subtract.
 ---@return Angle3: The subtracted angle.
@@ -1010,6 +1140,8 @@ function Angle3:sub( angle )
     return self
 end
 
+--- [SHARED AND MENU]
+---
 --- Multiplies the angle with a number or angle.
 ---@param angle number | Angle3: The angle to multiply with.
 ---@return Angle3: The multiplied angle.
@@ -1029,6 +1161,8 @@ function Angle3:mul( angle )
     return self
 end
 
+--- [SHARED AND MENU]
+---
 --- Divides the angle with a number or angle.
 ---@param angle number | Angle3: The angle to divide with.
 ---@return Angle3: The divided angle.
@@ -1046,6 +1180,8 @@ function Angle3:div( angle )
     return self
 end
 
+--- [SHARED AND MENU]
+---
 --- Negates the angle.
 ---@return Angle3: The negated angle.
 function Angle3:negate()
@@ -1055,41 +1191,49 @@ function Angle3:negate()
     return self
 end
 
----@param angle Angle3 The other angle.
----@return Angle3: The sum of the angles.
+---@param angle Angle3
+---@return Angle3
+---@protected
 function Angle3:__add( angle )
     return self:copy():add( angle )
 end
 
----@param angle Angle3 The angle to subtract.
----@return Angle3: The subtracted angle.
+---@param angle Angle3
+---@return Angle3
+---@protected
 function Angle3:__sub( angle )
     return self:copy():sub( angle )
 end
 
----@param angle number | Angle3: The angle to multiply with.
----@return Angle3: The multiplied angle.
+---@param angle number | Angle3
+---@return Angle3
+---@protected
 function Angle3:__mul( angle )
     return self:copy():mul( angle )
 end
 
----@param angle number | Angle3: The angle to divide with.
----@return Angle3: The divided angle.
+---@param angle number | Angle3
+---@return Angle3
+---@protected
 function Angle3:__div( angle )
     return self:copy():div( angle )
 end
 
----@return Angle3: The negated angle
+---@return Angle3
+---@protected
 function Angle3:__unm()
     return setmetatable( { -self[ 1 ], -self[ 2 ], -self[ 3 ] }, Angle3 )
 end
 
----@param angle Angle3 The other angle.
----@return boolean: `true` if the angles are equal, `false` otherwise.
+---@param angle Angle3
+---@return boolean
+---@protected
 function Angle3:__eq( angle )
     return self[ 1 ] == angle[ 1 ] and self[ 2 ] == angle[ 2 ] and self[ 3 ] == angle[ 3 ]
 end
 
+--- [SHARED AND MENU]
+---
 --- Linearly interpolates the angle.
 ---@param angle Angle3 | number: The other angle.
 ---@param frac number The interpolation factor.
@@ -1110,6 +1254,8 @@ function Angle3:lerp( angle, frac )
     return self
 end
 
+--- [SHARED AND MENU]
+---
 --- Returns a copy of the angle linearly interpolated between two angles.
 ---@param angle Angle3 | number: The other angle.
 ---@param frac number The interpolation factor.
@@ -1118,36 +1264,48 @@ function Angle3:getLerped( angle, frac )
     return self:copy():lerp( angle, frac )
 end
 
+--- [SHARED AND MENU]
+---
 --- Returns the forward direction of the angle.
 ---@return Vector3: The forward direction of the angle.
 function Angle3:getForward()
     return setmetatable( { 1, 0, 0 }, Vector3 ):rotate( self )
 end
 
+--- [SHARED AND MENU]
+---
 --- Returns the backward direction of the angle.
 ---@return Vector3: The backward direction of the angle.
 function Angle3:getBackward()
     return setmetatable( { -1, 0, 0 }, Vector3 ):rotate( self )
 end
 
+--- [SHARED AND MENU]
+---
 --- Returns the left direction of the angle.
 ---@return Vector3: The left direction of the angle.
 function Angle3:getLeft()
     return setmetatable( { 0, 1, 0 }, Vector3 ):rotate( self )
 end
 
+--- [SHARED AND MENU]
+---
 --- Returns the right direction of the angle.
 ---@return Vector3: The right direction of the angle.
 function Angle3:getRight()
     return setmetatable( { 0, -1, 0 }, Vector3 ):rotate( self )
 end
 
+--- [SHARED AND MENU]
+---
 --- Returns the up direction of the angle.
 ---@return Vector3: The up direction of the angle.
 function Angle3:getUp()
     return setmetatable( { 0, 0, 1 }, Vector3 ):rotate( self )
 end
 
+--- [SHARED AND MENU]
+---
 --- Returns the down direction of the angle.
 ---@return Vector3: The down direction of the angle.
 function Angle3:getDown()
@@ -1158,6 +1316,8 @@ do
 
     local math_angleNormalize = math.angleNormalize
 
+    --- [SHARED AND MENU]
+    ---
     --- Normalizes the angle.
     ---@return Angle3: The normalized angle.
     function Angle3:normalize()
@@ -1167,6 +1327,8 @@ do
         return self
     end
 
+    --- [SHARED AND MENU]
+    ---
     --- Returns a normalized copy of the angle.
     ---@return Angle3: A normalized copy of the angle.
     function Angle3:getNormalized()
@@ -1175,6 +1337,8 @@ do
 
 end
 
+--- [SHARED AND MENU]
+---
 --- Checks if the angle is within the given tolerance of the given angle.
 ---@param angle Angle3 The angle to check against.
 ---@param tolerance number The tolerance.
@@ -1185,12 +1349,16 @@ function Angle3:isNear( angle, tolerance )
            math_abs( self[ 3 ] - angle[ 3 ] ) <= tolerance
 end
 
+--- [SHARED AND MENU]
+---
 --- Checks if the angle is zero.
 ---@return boolean: `true` if the angle is zero, `false` otherwise.
 function Angle3:isZero()
     return self[ 1 ] == 0 and self[ 2 ] == 0 and self[ 3 ] == 0
 end
 
+--- [SHARED AND MENU]
+---
 --- Sets the angle to zero.
 ---@return Angle3: The angle.
 function Angle3:zero()
@@ -1200,6 +1368,8 @@ function Angle3:zero()
     return self
 end
 
+--- [SHARED AND MENU]
+---
 --- Rotates the angle around the specified axis by the specified degrees.
 ---@param axis Vector3 The axis to rotate around as a normalized unit vector. When argument is not a unit vector, you will experience numerical offset errors in the rotated angle.
 ---@param rotation number The degrees to rotate around the specified axis.
@@ -1210,6 +1380,8 @@ function Angle3:rotate( axis, rotation )
     return self
 end
 
+--- [SHARED AND MENU]
+---
 --- Returns a new vector from world position and world angle.
 ---@param position Vector3 The local position.
 ---@param angle Angle3 The local angle.
@@ -1223,6 +1395,8 @@ function Vector3Class.translateToLocal( position, angle, world_position, world_a
 
 end
 
+--- [SHARED AND MENU]
+---
 --- Returns a new vector from local position and local angle.
 ---@param local_position Vector3 The local position.
 ---@param local_angle Angle3 The local angle.
@@ -1235,6 +1409,8 @@ function Vector3Class.translateToWorld( local_position, local_angle, world_posit
 
 end
 
+--- [SHARED AND MENU]
+---
 --- Returns a new vector from screen position.
 ---@param view_angle Angle3 The view angle.
 ---@param view_fov number The view fov.
@@ -1537,6 +1713,8 @@ function VMatrix:inverse()
     return true, dst
 end
 
+--- [SHARED AND MENU]
+---
 --- Does a fast inverse, assuming the matrix only contains translation and rotation.
 function VMatrix:inverseTranslation()
 

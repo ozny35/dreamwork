@@ -187,7 +187,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- Start the timer.
-    ---@return boolean: Returns `true` if successful, otherwise `false`.
+    ---@return boolean success Returns `true` if successful, otherwise `false`.
     function Timer:start()
         local status = self[ -1 ]
         if status == 0 or status == 3 then return false end
@@ -204,7 +204,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- Restart the timer.
-    ---@return boolean: Returns `true` if successful, otherwise `false`.
+    ---@return boolean success Returns `true` if successful, otherwise `false`.
     function Timer:restart()
         if self[ -1 ] == 0 then return false end
         self:setPause( false )
@@ -223,7 +223,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- Stops the timer.
-    ---@return boolean: Returns `true` if successful, otherwise `false`.
+    ---@return boolean success Returns `true` if successful, otherwise `false`.
     function Timer:stop()
         local status = self[ -1 ]
         if status == 0 or status == 1 then return false end
@@ -246,7 +246,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- Returns the number of timer repetitions.
-    ---@return integer: The number of timer repetitions.
+    ---@return integer repetitions The number of timer repetitions.
     function Timer:getRepetitions()
         return self[ -4 ]
     end
@@ -255,7 +255,7 @@ do
     ---
     --- Sets the number of timer repetitions.
     ---@param repetitions integer?: The number of timer repetitions.
-    ---@return boolean: Returns `true` if successful, otherwise `false`.
+    ---@return boolean success Returns `true` if successful, otherwise `false`.
     function Timer:setRepetitions( repetitions )
         if self[ -1 ] == 0 then return false end
         repetitions = self[ -4 ] or repetitions
@@ -272,7 +272,7 @@ do
         --- [SHARED AND MENU]
         ---
         --- Returns the number of timer repetitions left.
-        ---@return integer: The number of timer repetitions left.
+        ---@return integer repetitions The number of timer repetitions left.
         function Timer:getRepetitionsLeft()
             if self[ -1 ] == 0 then return 0 end
             return timer_RepsLeft( self[ -1 ] )
@@ -283,7 +283,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- Returns the delay between repetitions of the timer in seconds.
-    ---@return number: The delay between repetitions in seconds.
+    ---@return number delay The delay between repetitions in seconds.
     function Timer:getDelay()
         return self[ -3 ]
     end
@@ -292,7 +292,7 @@ do
     ---
     --- Sets the delay between repetitions of the timer in seconds.
     ---@param delay number?: The delay between repetitions in seconds.
-    ---@return boolean: Returns `true` if successful, otherwise `false`.
+    ---@return boolean success Returns `true` if successful, otherwise `false`.
     function Timer:setDelay( delay )
         if self[ -1 ] == 0 then return false end
         delay = self[ -3 ] or delay
@@ -312,7 +312,7 @@ do
         --- [SHARED AND MENU]
         ---
         --- Returns the time left to the next callbacks call in seconds.
-        ---@return number: The time left in seconds.
+        ---@return number timef The time left in seconds.
         function Timer:getTimeLeft()
             if self[ -1 ] == 3 then
                 return timer_TimeLeft( self[ -2 ] )
@@ -332,7 +332,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- Removes the timer.
-    ---@return boolean: Returns `true` if successful, `false` if timer already removed.
+    ---@return boolean success Returns `true` if successful, `false` if timer already removed.
     function Timer:remove()
         if self[ -1 ] == 0 then return false end
         self[ -1 ] = 0
@@ -347,7 +347,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Checks if the timer is valid.
----@return boolean: Returns `true` if the timer is valid (not removed), otherwise `false`.
+---@return boolean is_valid Returns `true` if the timer is valid (not removed), otherwise `false`.
 function Timer:isValid()
     return self[ -1 ] ~= 0
 end
@@ -355,7 +355,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Checks if the timer is stopped.
----@return boolean: Returns `true` if the timer is stopped, otherwise `false`.
+---@return boolean is_stopped Returns `true` if the timer is stopped, otherwise `false`.
 function Timer:isStopped()
     return self[ -1 ] == 1
 end
@@ -363,7 +363,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Checks if the timer is paused.
----@return boolean: Returns `true` if the timer is paused, otherwise `false`.
+---@return boolean is_paused Returns `true` if the timer is paused, otherwise `false`.
 function Timer:isPaused()
     return self[ -1 ] == 2
 end
@@ -371,7 +371,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Checks if the timer is running.
----@return boolean: Returns `true` if the timer is running, otherwise `false`.
+---@return boolean is_running Returns `true` if the timer is running, otherwise `false`.
 function Timer:isRunning()
     return self[ -1 ] == 3
 end
@@ -384,7 +384,7 @@ do
     ---
     --- Pauses/unpauses the timer.
     ---@param value boolean `true` to pause, `false` to unpause.
-    ---@return boolean: Returns `true` if successful, otherwise `false`.
+    ---@return boolean success Returns `true` if successful, otherwise `false`.
     function Timer:setPause( value )
         local status = self[ -1 ]
         if status == 0 or status == 1 then return false end
@@ -427,7 +427,7 @@ do
     ---
     --- Checks if the timer exists.
     ---@param name string The name of the timer.
-    ---@return boolean: Returns `true` if the timer exists, otherwise `false`.
+    ---@return boolean exists Returns `true` if the timer exists, otherwise `false`.
     function TimerClass.exists( name )
         return timer_Exists( name )
     end

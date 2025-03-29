@@ -28,7 +28,7 @@ do
 
     --- Returns the decompressed size of the given string.
     ---@param str string Compressed string.
-    ---@return number: The decompressed size in bytes.
+    ---@return number size The decompressed size in bytes.
     function lzma.size( str )
         if string_len( str ) < 20 then return 0 end
 

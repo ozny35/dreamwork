@@ -18,10 +18,15 @@ do
         string_len, string_find = string.len, string.find
     end
 
+    --- [SHARED AND MENU]
+    ---
+    --- A cache for http requests.
     ---@class gpm.http_cache
     ---@field MAX_SIZE number The maximum size of cached content.
     local http_cache = {}
 
+    --- [SHARED AND MENU]
+    ---
     --- Gets the cached content for the specified URL.
     ---@param url string
     ---@return table?
@@ -32,6 +37,12 @@ do
     local MAX_SIZE = 50 * 1024
     http_cache.MAX_SIZE = MAX_SIZE
 
+    --- [SHARED AND MENU]
+    ---
+    --- Sets the cached content for the specified URL.
+    ---@param url string The URL to cache.
+    ---@param etag string The ETag for the cached content.
+    ---@param content string The cached content.
     function http_cache.set( url, etag, content )
         -- do not cache content that are larger than MAX_SIZE
         if string_len( content ) > MAX_SIZE then
@@ -53,9 +64,14 @@ end
 -- key-value store for gpm
 do
 
+    --- [SHARED AND MENU]
+    ---
+    --- A key-value store for gpm.
     ---@class gpm.store
     local store = {}
 
+    --- [SHARED AND MENU]
+    ---
     --- Returns the value for the specified key.
     ---@param key string
     ---@return string
@@ -63,6 +79,8 @@ do
         return sqlite_queryValue( "select value from 'gpm.store' where key=?", key )
     end
 
+    --- [SHARED AND MENU]
+    ---
     --- Sets the value for the specified key.
     ---@param key string
     ---@param value string
@@ -80,11 +98,18 @@ if std.SERVER then
     ---@class gpm.repositories
     local repositories = {}
 
-    ---@return table: all saved repositories
+    --- [SERVER]
+    ---
+    --- Returns a list of all repositories
+    ---@return table lst The list of repositories.
     function repositories.getRepositories()
         return sqlite_query( "select * from 'gpm.repositories'" ) or {}
     end
 
+    --- [SERVER]
+    ---
+    --- Adds a new repository to the database.
+    ---@param url string
     function repositories.addRepository( url )
         -- sadly gmod's sqlite does not support returning clause :(
         return sqlite_queryOne( "insert or ignore into 'gpm.repositories' (url) values (?); select * from 'gpm.repositories' where url=?", url, url )
@@ -92,8 +117,11 @@ if std.SERVER then
 
     local isstring, isnumber, istable = std.isstring, std.isnumber, std.istable
 
-    ---@param value table | number | string
-    ---@return number?
+    --- [SERVER]
+    ---
+    --- Returns the repository ID for the specified repository.
+    ---@param value table | number | string The repository to get the ID for.
+    ---@return number? id The repository ID, or `nil` if the repository does not exist.
     local function getRepositoryID( value )
         if istable( value ) then
             ---@cast value table
@@ -107,15 +135,17 @@ if std.SERVER then
         end
     end
 
+    --- [SERVER]
+    ---
+    --- Removes the specified repository from the database.
+    ---@param repository table | number | string The repository to remove.
     function repositories.removeRepository( repository )
-        local repositoryID = getRepositoryID( repository )
-        if repositoryID == nil then
+        local repository_id = getRepositoryID( repository )
+        if repository_id == nil then
             std.error( "invalid repository '" .. tostring( repository ) .. "' was given as #1 argument" )
         end
 
-        local repositoryIDStr = tostring( repositoryID )
-        repositoryID = nil
-        repository = nil
+        local repositoryIDStr = tostring( repository_id )
 
         sqlite_transaction( function()
             -- delete all versions, packages and repository
@@ -131,32 +161,37 @@ if std.SERVER then
         end )
     end
 
+    --- [SERVER]
+    ---
+    --- Returns the package for the specified repository and name.
+    ---@param repository table | number | string The repository to get the package from.
+    ---@param name string The name of the package to get.
+    ---@return table? pkg The package, or `nil` if the package does not exist.
     function repositories.getPackage( repository, name )
-        local repositoryID = getRepositoryID( repository )
-        if repositoryID == nil then
+        local repository_id = getRepositoryID( repository )
+        if repository_id == nil then
             std.error( "invalid repository '" .. tostring( repository ) .. "' was given as #1 argument" )
         end
 
-        repository = nil
-
-        local pkg = sqlite_queryOne( "select * from 'gpm.packages' where name=? and repositoryID=?", name, tostring( repositoryID ) )
+        local pkg = sqlite_queryOne( "select * from 'gpm.packages' where name=? and repositoryID=?", name, tostring( repository_id ) )
         if pkg == nil then return end
-        repositoryID = nil
 
         pkg.versions = sqlite_query( "select version, metadata from 'gpm.package_versions' where packageID=?", pkg.id )
         return pkg
     end
 
+    --- [SERVER]
+    ---
+    --- Returns a list of packages for the specified repository.
+    ---@param repository table | number | string The repository to get the packages from.
+    ---@return table lst The list of packages.
     function repositories.getPackages( repository )
-        local repositoryID = getRepositoryID( repository )
-        if repositoryID == nil then
+        local repository_id = getRepositoryID( repository )
+        if repository_id == nil then
             std.error( "invalid repository '" .. tostring( repository ) .. "' was given as #1 argument" )
         end
 
-        repository = nil
-
-        local packages = sqlite_query( "select * from 'gpm.packages' where repositoryID=?", tostring( repositoryID ) )
-        repositoryID = nil
+        local packages = sqlite_query( "select * from 'gpm.packages' where repositoryID=?", tostring( repository_id ) )
 
         if packages == nil then
             return {}
@@ -171,15 +206,18 @@ if std.SERVER then
         return packages
     end
 
+    --- [SERVER]
+    ---
+    --- Updates the packages for the specified repository.
+    ---@param repository table | number | string The repository to update.
+    ---@param packages table The packages to update.
     function repositories.updateRepository( repository, packages )
-        local repositoryID = getRepositoryID( repository )
-        if repositoryID == nil then
+        local repository_id = getRepositoryID( repository )
+        if repository_id == nil then
             std.error( "invalid repository '" .. tostring( repository ) .. "' was given as #1 argument" )
         end
 
-        local repositoryIDStr = tostring( repositoryID )
-        repositoryID = nil
-        repository = nil
+        local repositoryIDStr = tostring( repository_id )
 
         local oldPackages = sqlite_query( "select id, name from 'gpm.packages' where repositoryID=?", repositoryIDStr ) or {}
         for i = 1, #oldPackages do
@@ -219,13 +257,28 @@ do
 
     local tonumber = std.tonumber
 
+    --- [SHARED AND MENU]
+    ---
+    --- The files hash database.
     ---@class gpm.files
     local files = {}
 
+    --- [SHARED AND MENU]
+    ---
+    --- Saves a file to the database.
+    ---@param path string The path of the file.
+    ---@param size number The size of the file.
+    ---@param seconds number The last modified time of the file.
+    ---@param hash string The hash of the file.
     function files.save( path, size, seconds, hash )
         sqlite_query( "insert or replace into 'gpm.files' (path, size, os_time, hash) values (?, ?, ?, ?)", path, size, seconds, hash )
     end
 
+    --- [SHARED AND MENU]
+    ---
+    --- Returns a file from the database.
+    ---@param path string The path of the file.
+    ---@return table? data The file data.
     function files.get( path )
         local result = sqlite_queryOne( "select * from 'gpm.files' where path=?", path )
         if result == nil then return end
@@ -271,92 +324,97 @@ gpm.engine.hookCatch( "ShutDown", function()
     end
 end )
 
-local migrations = {
-    {
-        name = "initial",
-        execute = function() end
-    },
-    {
-        name = "http_cache add primary key",
-        execute = function()
-            sqlite_rawQuery("drop table if exists 'gpm.http_cache'")
-            sqlite_rawQuery([[create table 'gpm.http_cache' (
-                url text primary key,
-                etag text,
-                timestamp int,
-                content blob
-            )]])
-            return nil
-        end
-    },
-    {
-        name = "added key-value store",
-        execute = function()
-            sqlite_rawQuery("create table 'gpm.store' ( key text unique, value text )")
-            return nil
-        end
-    },
-    {
-        name = "initial repositories and packages",
-        execute = function()
-            sqlite_rawQuery( "drop table if exists 'gpm.table_version'" )
-            sqlite_rawQuery( "drop table if exists 'gpm.repository'" )
-            sqlite_rawQuery( "drop table if exists 'gpm.packages'" )
+do
 
-            if std.SERVER then
-                sqlite_rawQuery( "create table 'gpm.repositories' ( id integer primary key autoincrement, url text unique not null )" )
+    local migrations = {
+        {
+            name = "initial",
+            execute = function() end
+        },
+        {
+            name = "http_cache add primary key",
+            execute = function()
+                sqlite_rawQuery("drop table if exists 'gpm.http_cache'")
+                sqlite_rawQuery([[create table 'gpm.http_cache' (
+                    url text primary key,
+                    etag text,
+                    timestamp int,
+                    content blob
+                )]])
+                return nil
+            end
+        },
+        {
+            name = "added key-value store",
+            execute = function()
+                sqlite_rawQuery("create table 'gpm.store' ( key text unique, value text )")
+                return nil
+            end
+        },
+        {
+            name = "initial repositories and packages",
+            execute = function()
+                sqlite_rawQuery( "drop table if exists 'gpm.table_version'" )
+                sqlite_rawQuery( "drop table if exists 'gpm.repository'" )
+                sqlite_rawQuery( "drop table if exists 'gpm.packages'" )
+
+                if std.SERVER then
+                    sqlite_rawQuery( "create table 'gpm.repositories' ( id integer primary key autoincrement, url text unique not null )" )
+                    sqlite_rawQuery( [[
+                        create table 'gpm.packages' (
+                            id integer primary key autoincrement,
+                            name text not null,
+                            url text not null,
+                            type int not null,
+                            repositoryID integer,
+
+                            foreign key(repositoryID) references 'gpm.repositories' (id)
+                            unique(name, repositoryID) on conflict replace
+                        )
+                    ]] )
+
+                    sqlite_rawQuery( [[
+                        create table 'gpm.package_versions' (
+                            version text not null,
+                            metadata text,
+                            packageID integer not null,
+
+                            foreign key(packageID) references 'gpm.packages' (id)
+                            unique(version, packageID) on conflict replace
+                        )
+                    ]] )
+                end
+            end
+        },
+        {
+            name = "initial file table",
+            execute = function()
                 sqlite_rawQuery( [[
-                    create table 'gpm.packages' (
+                    create table 'gpm.files' (
                         id integer primary key autoincrement,
-                        name text not null,
-                        url text not null,
-                        type int not null,
-                        repositoryID integer,
-
-                        foreign key(repositoryID) references 'gpm.repositories' (id)
-                        unique(name, repositoryID) on conflict replace
-                    )
-                ]] )
-
-                sqlite_rawQuery( [[
-                    create table 'gpm.package_versions' (
-                        version text not null,
-                        metadata text,
-                        packageID integer not null,
-
-                        foreign key(packageID) references 'gpm.packages' (id)
-                        unique(version, packageID) on conflict replace
+                        path text not null unique,
+                        size integer not null,
+                        os_time number,
+                        hash text
                     )
                 ]] )
             end
-        end
-    },
-    {
-        name = "initial file table",
-        execute = function()
-            sqlite_rawQuery( [[
-                create table 'gpm.files' (
-                    id integer primary key autoincrement,
-                    path text not null unique,
-                    size integer not null,
-                    os_time number,
-                    hash text
-                )
-            ]] )
-        end
+        }
     }
-}
 
-do
-
+    --- [SHARED AND MENU]
+    ---
+    --- Database module.
     ---@class gpm.db
     local db = {}
 
     sqlite_rawQuery( "create table if not exists 'gpm.migration_history' (name text, timestamp integer)" )
 
+    --- [SHARED AND MENU]
+    ---
     --- Checks if a migration exists and returns `true` or `false`.
     ---@param name string The name of the migration.
-    ---@return boolean: `true` if migration exists, `false` otherwise.
+    ---@return boolean exists `true` if migration exists, `false` otherwise.
     local function migrationExists( name )
         for i = 1, #migrations do
             if migrations[ i ].name == name then
@@ -371,8 +429,13 @@ do
 
     local isfunction = std.isfunction
 
-    -- TODO: ls desc
-    local function runMigration( migration )
+
+    --- [SHARED AND MENU]
+    ---
+    --- Runs a migration by migration table.
+    ---@param migration table The migration to run.
+    ---@return boolean success Returns `true` if successful, `false` if failed.
+    local function migrateByTable( migration )
         if not isfunction( migration.execute ) then
             std.error( "Migration '" .. tostring( migration.name ) .. "' does not have an execute function" )
         end
@@ -387,9 +450,11 @@ do
         end
     end
 
-    db.runMigration = runMigration
+    db.migrateByTable = migrateByTable
 
+    --- [SHARED AND MENU]
     ---
+    --- Runs a migration by its name.
     ---@param name string
     function db.migrate( name )
         local history = sqlite_rawQuery( "select name from 'gpm.migration_history'" ) or {}
@@ -405,7 +470,7 @@ do
         -- first execute migrations
         for i = 1, #migrations do
             local migration = migrations[ i ]
-            if ( not history[ migration.name ] and runMigration( migration ) == false ) or ( migration.name == name ) then
+            if ( not history[ migration.name ] and migrateByTable( migration ) == false ) or ( migration.name == name ) then
                 break
             end
         end

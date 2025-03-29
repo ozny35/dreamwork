@@ -8,6 +8,12 @@ local ln2 = math_log( 2 )
 local huge = glua_math.huge
 local tiny = -huge
 
+--- [SHARED AND MENU]
+---
+--- Returns the arc tangent of y/x.
+---@param y number The y coordinate.
+---@param x number The x coordinate.
+---@return number: The arc tangent of y/x.
 local function atan( y, x )
     if x == nil then
         return math_atan( y )
@@ -110,6 +116,8 @@ local math = {
     end
 }
 
+--- [SHARED AND MENU]
+---
 --- Checks if a number is a boolean.
 ---@param x number The number to check.
 ---@return boolean: `true` if the number is a boolean, otherwise `false`.
@@ -117,6 +125,8 @@ function math.isbool( x )
     return x == 0 or x == 1 and ( x % 1 ) == 0
 end
 
+--- [SHARED AND MENU]
+---
 --- Checks if a number is a byte.
 ---@param x number The number to check.
 ---@return boolean: `true` if the number is an integer, otherwise `false`.
@@ -124,6 +134,8 @@ function math.isbyte( x )
     return x >= 0 and x <= 255 and ( x % 1 ) == 0
 end
 
+--- [SHARED AND MENU]
+---
 --- Checks if a number is an unsigned byte.
 ---@param x number The number to check.
 ---@return boolean: `true` if the number is an integer, otherwise `false`.
@@ -131,6 +143,8 @@ function math.isubyte( x )
     return x >= -128 and x <= 127 and ( x % 1 ) == 0
 end
 
+--- [SHARED AND MENU]
+---
 --- Checks if a number is a short integer.
 ---@param x number The number to check.
 ---@return boolean
@@ -138,6 +152,8 @@ function math.isshort( x )
     return x >= -32768 and x <= 32767 and ( x % 1 ) == 0
 end
 
+--- [SHARED AND MENU]
+---
 --- Checks if a number is an unsigned short integer.
 ---@param x number The number to check.
 ---@return boolean: `true` if the number is an integer, otherwise `false`.
@@ -145,6 +161,8 @@ function math.isushort( x )
     return x >= 0 and x <= 65535 and ( x % 1 ) == 0
 end
 
+--- [SHARED AND MENU]
+---
 --- Checks if a number is a long integer.
 ---@param x number The number to check.
 ---@return boolean: `true` if the number is an integer, otherwise `false`.
@@ -152,12 +170,16 @@ function math.islong( x )
     return x >= -2147483648 and x <= 2147483647 and ( x % 1 ) == 0
 end
 
+--- [SHARED AND MENU]
+---
 --- Checks if a number is an unsigned long integer.
 --- @param x number: The number to check.
 function math.isulong( x )
     return x >= 0 and x <= 4294967295 and ( x % 1 ) == 0
 end
 
+--- [SHARED AND MENU]
+---
 --- Checks if a number is an unsigned integer.
 ---@param x number The number to check.
 ---@return boolean: `true` if the number is an integer, otherwise `false`.
@@ -165,6 +187,8 @@ function math.isuint( x )
     return x >= 0 and ( x % 1 ) == 0
 end
 
+--- [SHARED AND MENU]
+---
 --- Checks if a number is an signed integer.
 ---@param x number The number to check.
 ---@return boolean: `true` if the number is an integer, otherwise `false`.
@@ -172,6 +196,8 @@ end
     return ( x % 1 ) == 0
 end
 
+--- [SHARED AND MENU]
+---
 --- Checks if a number is a float.
 ---@param x number The number to check.
 ---@return boolean: `true` if the number is a float, otherwise `false`.
@@ -179,6 +205,8 @@ function math.isfloat( x )
     return ( x % 1 ) ~= 0 and x >= 1.175494351E-38 and x <= 3.402823466E+38
 end
 
+--- [SHARED AND MENU]
+---
 --- Checks if a number is a double.
 ---@param x number The number to check.
 ---@return boolean: `true` if the number is a double, otherwise `false`.
@@ -186,6 +214,8 @@ function math.isdouble( x )
     return ( x % 1 ) ~= 0 and ( x < 1.175494351E-38 or x > 3.402823466E+38 )
 end
 
+--- [SHARED AND MENU]
+---
 --- Checks if a number is positive or negative infinity.
 ---@param x number The number to check.
 ---@return boolean: `true` if the number is positive or negative infinity, otherwise `false`.
@@ -193,6 +223,8 @@ function math.isinf( x )
     return x == huge or x == tiny
 end
 
+--- [SHARED AND MENU]
+---
 --- Checks if a number is NaN.
 ---@param x number The number to check.
 ---@return boolean: `true` if the number is NaN, otherwise `false`.
@@ -200,6 +232,8 @@ function math.isnan( x )
     return x ~= x
 end
 
+--- [SHARED AND MENU]
+---
 --- Checks if a number is finite.
 ---@param x number The number to check.
 ---@return boolean: `true` if the number is finite, otherwise `false`.
@@ -207,6 +241,8 @@ function math.isfinite( x )
     return x ~= huge and x ~= tiny and x == x
 end
 
+--- [SHARED AND MENU]
+---
 --- Checks if two numbers are equal with a given tolerance.
 ---@param a number The first number to check.
 ---@param b number The second number to check.
@@ -216,6 +252,8 @@ function math.isequalwith( a, b, tolerance )
     return math_abs( a - b ) <= tolerance
 end
 
+--- [SHARED AND MENU]
+---
 --- Checks if a number is divisible by another number without remainder.
 ---@param a number The first number to check.
 ---@param b number The second number to check.
@@ -224,6 +262,8 @@ function math.isdivideable( a, b )
     return ( a % b ) == 0
 end
 
+--- [SHARED AND MENU]
+---
 --- Checks if a number is a boolean.
 ---@param x number The number to check.
 ---@return boolean: `true` if the number is a boolean, otherwise `false`.
@@ -231,6 +271,8 @@ function math.isbool( x )
     return x == 0 or x == 1
 end
 
+--- [SHARED AND MENU]
+---
 --- Checks if a number is even.
 ---@param x number The number to check.
 ---@return boolean: `true` if the number is even, otherwise `false`.
@@ -238,6 +280,8 @@ function math.iseven( x )
     return x == 0 or ( x % 2 ) == 0
 end
 
+--- [SHARED AND MENU]
+---
 --- Checks if a number is odd.
 ---@param x number The number to check.
 ---@return boolean: `true` if the number is odd, otherwise `false`.
@@ -245,6 +289,8 @@ function math.isodd( x )
     return x ~= 0 and ( x % 2 ) ~= 0
 end
 
+--- [SHARED AND MENU]
+---
 --- Checks if a number is positive.
 ---@param x number The number to check.
 ---@return boolean: `true` if the number is positive, otherwise `false`.
@@ -252,6 +298,8 @@ function math.ispositive( x )
     return x > 0 or ( 1 / x ) == huge
 end
 
+--- [SHARED AND MENU]
+---
 --- Checks if a number is negative.
 ---@param x number The number to check.
 ---@return boolean: `true` if the number is negative, otherwise `false`.
@@ -259,6 +307,8 @@ function math.isnegative( x )
     return x < 0 or ( 1 / x ) == tiny
 end
 
+--- [SHARED AND MENU]
+---
 --- Returns the sign of a number as 1 or -1.
 ---@param x number The number to check.
 ---@return number: `1` if the number is positive, `-1` if the number is negative.
@@ -268,6 +318,8 @@ end
 
 math.sign = sign
 
+--- [SHARED AND MENU]
+---
 --- Rounds the given value to the nearest whole number or to the given decimal places.
 ---@param number number The number to round.
 ---@param decimals? number: The number of decimal places to round to.
@@ -281,6 +333,8 @@ function math.round( number, decimals )
     return math_floor( number + 0.5 )
 end
 
+--- [SHARED AND MENU]
+---
 --- Returns the smallest integer greater than or equal to the given number.
 ---@param number number The number to round.
 ---@param step number The step size to round to.
@@ -291,6 +345,8 @@ end
 
 do
 
+    --- [SHARED AND MENU]
+    ---
     --- Returns the integer part of the given number.
     ---@param number number The number to truncate.
     ---@return number: The integer part of the number.
@@ -300,6 +356,8 @@ do
 
     math.trunc = math_trunc
 
+    --- [SHARED AND MENU]
+    ---
     --- Splits a number into its integer and fractional parts.
     ---@param x number The number to split.
     ---@return number: The integer part of the number.
@@ -310,6 +368,8 @@ do
 
 end
 
+--- [SHARED AND MENU]
+---
 --- Returns the natural logarithm of the given number.
 ---@param x number The number to calculate the logarithm of.
 ---@return number: The natural logarithm of the number.
@@ -317,6 +377,8 @@ function math.log1p( x )
     return math_log( x + 1 )
 end
 
+--- [SHARED AND MENU]
+---
 --- Returns the base 2 logarithm of the given number.
 ---@param x number The number to calculate the logarithm of.
 ---@return number: The base 2 logarithm of the number.
@@ -324,6 +386,8 @@ function math.log2( x )
     return math_log( x ) / ln2
 end
 
+--- [SHARED AND MENU]
+---
 --- Returns a random floating point number in the range [a, b).
 ---@param a number The minimum value.
 ---@param b number The maximum value.
@@ -332,6 +396,8 @@ function math.randomf( a, b )
     return a + ( b - a ) * math_random()
 end
 
+--- [SHARED AND MENU]
+---
 --- Returns floor addition of two numbers.
 ---@param a number The first number.
 ---@param b number The second number.
@@ -340,6 +406,8 @@ function math.fadd( a, b )
     return math_floor( a + b )
 end
 
+--- [SHARED AND MENU]
+---
 --- Returns floor subtraction of two numbers.
 ---@param a number The first number.
 ---@param b number The second number.
@@ -348,6 +416,8 @@ function math.fsub( a, b )
     return math_floor( a - b )
 end
 
+--- [SHARED AND MENU]
+---
 --- Returns floor division of two numbers. ( // from Lua 5.3 )
 ---@param a number The dividend.
 ---@param b number The divisor.
@@ -356,6 +426,8 @@ function math.fdiv( a, b )
     return math_floor( a / b )
 end
 
+--- [SHARED AND MENU]
+---
 --- Returns floor multiplication of two numbers.
 ---@param a number The first number.
 ---@param b number The second number.
@@ -364,6 +436,8 @@ function math.fmul( a, b )
     return math_floor( a * b )
 end
 
+--- [SHARED AND MENU]
+---
 --- Returns floor exponentiation of two numbers.
 ---@param a number The base.
 ---@param b number The exponent.
@@ -372,6 +446,8 @@ function math.fpow( a, b )
     return math_floor( a ^ b )
 end
 
+--- [SHARED AND MENU]
+---
 --- Returns the square root of the sum of squares of its arguments.
 ---@param ... number: The numbers to calculate the square root of.
 ---@return number: The square root of the sum of squares of its arguments.
@@ -388,6 +464,8 @@ do
 
     local one_third = 1 / 3
 
+    --- [SHARED AND MENU]
+    ---
     --- Returns the cube root of the given number.
     ---@param x number The number to calculate the cube root of.
     ---@return number: The cube root of the number.
@@ -397,6 +475,8 @@ do
 
 end
 
+--- [SHARED AND MENU]
+---
 --- Returns the root of a given number with a given base.
 ---@param a number The number to calculate the root of.
 ---@param b number The base of the root.
@@ -405,6 +485,8 @@ function math.root( a, b )
     return a ^ ( 1 / b )
 end
 
+--- [SHARED AND MENU]
+---
 --- Returns the fraction of where the current time is relative to the start and end times
 ---@param from number The start time.
 ---@param to number The end time.
@@ -414,6 +496,8 @@ function math.timef( from, to, time )
     return ( from - to ) / ( time - to )
 end
 
+--- [SHARED AND MENU]
+---
 --- Gradually approaches the target value by the specified amount.
 ---@param current number The current value.
 ---@param target number The target value.
@@ -424,6 +508,8 @@ function math.approach( current, target, change )
     return current + sign( diff ) * math_min( math_abs( diff ), change )
 end
 
+--- [SHARED AND MENU]
+---
 --- Clamps a number between a minimum and maximum value.
 ---@param number number The number to clamp.
 ---@param min number The minimum value.
@@ -433,6 +519,8 @@ function math.clamp( number, min, max )
     return math_min( math_max( number, min ), max )
 end
 
+--- [SHARED AND MENU]
+---
 --- Performs a linear interpolation from the start number to the end number.
 ---@param fraction number The fraction of the way between the start and end numbers.
 ---@param from number The start number.
@@ -442,6 +530,8 @@ function math.lerp( fraction, from, to )
     return from + ( to - from ) * fraction
 end
 
+--- [SHARED AND MENU]
+---
 --- Performs an inverse linear interpolation from the start number to the end number.
 ---@param result number The interpolated value.
 ---@param from number The start number.
@@ -451,6 +541,8 @@ function math.ilerp( result, from, to )
     return ( result - from ) / ( to - from )
 end
 
+--- [SHARED AND MENU]
+---
 --- Performs a smooth interpolation from the start number to the end number.
 ---@param previous number The previous value.
 ---@param next number The next value.
@@ -460,6 +552,8 @@ function math.smooth( previous, next, alpha )
     return alpha * next + ( 1 - alpha ) * previous
 end
 
+--- [SHARED AND MENU]
+---
 --- Remaps a number from one range to another.
 ---@param number number The number to remap.
 ---@param inMin number The minimum value of the input range.
@@ -471,6 +565,8 @@ function math.remap( number, inMin, inMax, outMin, outMax  )
     return outMin + ( outMax - outMin ) * ( number - inMin ) / ( inMax - inMin )
 end
 
+--- [SHARED AND MENU]
+---
 --- Checks if a number is in a range.
 ---@param number number The number to check.
 ---@param from number The minimum value of the range.
@@ -486,6 +582,8 @@ do
 
     local isnumber = std.isnumber
 
+    --- [SHARED AND MENU]
+    ---
     --- Returns "integer" if x is an integer, "float" if it is a float, or nil if x is not a number.
     ---@param x number The number to get the type of.
     ---@return "integer" | "float" | nil: The type of the number.
@@ -499,6 +597,8 @@ do
 
 end
 
+--- [SHARED AND MENU]
+---
 --- Calculates the angle between two points.
 ---@param x1 number The x coordinate of the first point.
 ---@param y1 number The y coordinate of the first point.
@@ -509,6 +609,8 @@ function math.angle( x1, y1, x2, y2 )
     return math_deg( atan( y2 - y1, x2 - x1 ) )
 end
 
+--- [SHARED AND MENU]
+---
 --- Returns the normalised angle between two points.
 ---@param angle number The angle to normalise.
 ---@return number: The normalised angle.
@@ -518,6 +620,8 @@ end
 
 math.angleNormalize = angleNormalize
 
+--- [SHARED AND MENU]
+---
 --- Returns the difference between two angles.
 ---@param a number The first angle.
 ---@param b number The second angle.
@@ -531,6 +635,8 @@ function math.angleDifference( a, b )
     return diff - 360
 end
 
+--- [SHARED AND MENU]
+---
 --- Calculates the magnitude (distance) between two points.
 ---@param x1 number The x coordinate of the first point.
 ---@param y1 number The y coordinate of the first point.
@@ -543,6 +649,8 @@ end
 
 math.magnitude = magnitude
 
+--- [SHARED AND MENU]
+---
 --- Calculates the direction between two points.
 ---@param x1 number The x coordinate of the first point.
 ---@param y1 number The y coordinate of the first point.
@@ -559,6 +667,8 @@ function math.direction( x1, y1, x2, y2 )
     return ( x2 - x1 ) / diff, ( y2 - y1 ) / diff
 end
 
+--- [SHARED AND MENU]
+---
 --- Calculates the euclidean modulus.
 ---@param numerator number The numerator.
 ---@param denominator number The denominator.
@@ -568,6 +678,8 @@ function math.euclideanMod( numerator, denominator )
     return result < 0 and result + denominator or result
 end
 
+--- [SHARED AND MENU]
+---
 --- Checks if a number is near another number.
 ---@param a number The first number.
 ---@param b number?: The second number.
@@ -577,6 +689,8 @@ function math.isnear( a, b, tolerance )
     return math_abs( a - ( b or 0 ) ) <= ( tolerance or 0 )
 end
 
+--- [SHARED AND MENU]
+---
 --- Returns x with the same sign as y.
 ---@param x number The number to copy the sign of.
 ---@param y number The number to get the sign from.
@@ -585,6 +699,8 @@ function math.copysign( x, y )
     return ( ( x > 0 and y > 0 ) or ( x < 0 and y < 0 ) ) and x or -x
 end
 
+--- [SHARED AND MENU]
+---
 --- Converts a bits number to a byte number.
 ---@param x number The bits number.
 ---@return number bytes: The byte number.
@@ -592,6 +708,8 @@ function math.bit2byte( x )
     return math_ceil( x / 8 )
 end
 
+--- [SHARED AND MENU]
+---
 --- Converts a byte number to a bits number.
 ---@param x number The byte number.
 ---@return number bits: The bits number.
@@ -599,6 +717,8 @@ function math.byte2bit( x )
     return math_ceil( x ) * 8
 end
 
+--- [SHARED AND MENU]
+---
 --- Returns the variance of a list.
 ---@param lst number[] The list.
 ---@param mean number The mean of the list.

@@ -86,9 +86,9 @@ do
     ---@param str string The input string.
     ---@param searchable string The searchable string.
     ---@param position? number: The position to start from.
-    ---@param withPattern? boolean: If the pattern is used.
+    ---@param with_pattern? boolean: If the pattern is used.
     ---@return number: The index of the searchable string, otherwise `-1`.
-    function string.indexOf( str, searchable, position, withPattern )
+    function string.indexOf( str, searchable, position, with_pattern )
         if searchable == nil then
             return 0
         elseif searchable == "" then
@@ -99,7 +99,7 @@ do
                 return -1
             end
 
-            return string_find( str, searchable, position, withPattern ~= true ) or -1
+            return string_find( str, searchable, position, with_pattern ~= true ) or -1
         end
     end
 
@@ -139,9 +139,9 @@ end
 --- Splits the string.
 ---@param str string The input string.
 ---@param pattern? string: The pattern to split by.
----@param withPattern? boolean: If the pattern is used.
+---@param with_pattern? boolean: If the pattern is used.
 ---@return string[] result, number length: The resulting string array and the length of the array.
-function string.split( str, pattern, withPattern )
+function string.split( str, pattern, with_pattern )
     if pattern == nil then
         return { str }, 1
     elseif pattern == "" then
@@ -151,26 +151,26 @@ function string.split( str, pattern, withPattern )
         end
 
         return result, length
-    else
-        local result, length, pointer = {}, 0, 1
-        withPattern = withPattern ~= true
-
-        while true do
-            local startPos, endPos = string_find( str, pattern, pointer, withPattern )
-            if startPos == nil then
-                break
-            else
-                length = length + 1
-                result[ length ] = string_sub( str, pointer, startPos - 1 )
-                pointer = endPos + 1
-            end
-        end
-
-        length = length + 1
-        result[ length ] = string_sub( str, pointer )
-
-        return result, length
     end
+
+    local result, length, pointer = {}, 0, 1
+    with_pattern = with_pattern ~= true
+
+    while true do
+        local startPos, endPos = string_find( str, pattern, pointer, with_pattern )
+        if startPos == nil then
+            break
+        else
+            length = length + 1
+            result[ length ] = string_sub( str, pointer, startPos - 1 )
+            pointer = endPos + 1
+        end
+    end
+
+    length = length + 1
+    result[ length ] = string_sub( str, pointer )
+
+    return result, length
 end
 
 --- Extracts the string.
@@ -190,29 +190,29 @@ end
 --- Returns the number of matches of a string.
 ---@param str string The input string.
 ---@param pattern? string: The pattern to count by.
----@param withPattern? boolean: If the pattern is used.
+---@param with_pattern? boolean: If the pattern is used.
 ---@return number: The number of matches.
-function string.count( str, pattern, withPattern )
+function string.count( str, pattern, with_pattern )
     if pattern == nil then
         return 0
     elseif pattern == "" then
         return string_len( str )
-    else
-        withPattern = withPattern ~= true
-        local pointer, length = 1, 0
-
-        while true do
-            local startPos, endPos = string_find( str, pattern, pointer, withPattern )
-            if startPos == nil then
-                break
-            else
-                length = length + 1
-                pointer = endPos + 1
-            end
-        end
-
-        return length
     end
+
+    with_pattern = with_pattern ~= true
+    local pointer, length = 1, 0
+
+    while true do
+        local startPos, endPos = string_find( str, pattern, pointer, with_pattern )
+        if startPos == nil then
+            break
+        else
+            length = length + 1
+            pointer = endPos + 1
+        end
+    end
+
+    return length
 end
 
 --- Splits a string by a byte.
@@ -350,10 +350,13 @@ end
 ---@param str string The input string.
 ---@param searchable string The pattern to search for.
 ---@param replaceable string The string to replace.
----@param withPattern? boolean: Whether to use pattern or not.
+---@param with_pattern? boolean: Whether to use pattern or not.
 ---@return string str: The replaced string.
-function string.replace( str, searchable, replaceable, withPattern )
-    if withPattern == nil then
+function string.replace( str, searchable, replaceable, with_pattern )
+    if with_pattern then
+        ---@diagnostic disable-next-line: redundant-return-value
+        return string_gsub( str, searchable, replaceable ), nil
+    else
         local startPos, endPos = string_find( str, searchable, 1, true )
         while startPos ~= nil do
             str = string_sub( str, 1, startPos - 1 ) .. replaceable .. string_sub( str, endPos + 1 )
@@ -361,9 +364,6 @@ function string.replace( str, searchable, replaceable, withPattern )
         end
 
         return str
-    else
-        ---@diagnostic disable-next-line: redundant-return-value
-        return string_gsub( str, searchable, replaceable ), nil
     end
 end
 

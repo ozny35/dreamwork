@@ -178,7 +178,7 @@ local tonumber = _G.tonumber
 --- Attempts to convert the value to a number.
 ---@param value any The value to convert.
 ---@param base? integer The base used in the string. Can be any integer between 2 and 36, inclusive. (Default: 10)
----@return number: The numeric representation of the value with the given base, or `nil` if the conversion failed.
+---@return number num The numeric representation of the value with the given base, or `nil` if the conversion failed.
 function std.tonumber( value, base )
     local metatable = debug_getmetatable( value )
     return metatable ~= nil and metatable.__tonumber( value, base ) or 0
@@ -188,7 +188,7 @@ end
 ---
 --- Attempts to convert the value to a boolean.
 ---@param value any The value to convert.
----@return boolean
+---@return boolean bool The boolean representation of the value, or `false` if the conversion failed.
 function std.toboolean( value )
     if value == nil or value == false then return false end
 
@@ -202,7 +202,7 @@ std.tobool = std.toboolean
 ---
 --- Checks if the value is valid.
 ---@param value any The value to check.
----@return boolean: Returns `true` if the value is valid, otherwise `false`.
+---@return boolean is_valid Returns `true` if the value is valid, otherwise `false`.
 function std.isvalid( value )
     local metatable = debug_getmetatable( value )
     return ( metatable and metatable.__isvalid and metatable.__isvalid( value ) ) == true
@@ -218,7 +218,7 @@ if istable == nil then
     ---
     --- Checks if the value type is a `table`.
     ---@param value any The value to check.
-    ---@return boolean: Returns `true` if the value is a table, otherwise `false`.
+    ---@return boolean is_table Returns `true` if the value is a table, otherwise `false`.
     function istable( value )
         return rawtype( value ) == "table"
     end
@@ -287,7 +287,7 @@ do
         ---
         --- Checks if the value type is a `boolean`.
         ---@param value any The value to check.
-        ---@return boolean: Returns `true` if the value is a boolean, otherwise `false`.
+        ---@return boolean is_bool Returns `true` if the value is a boolean, otherwise `false`.
         function std.isboolean( value )
             return debug_getmetatable( value ) == BOOLEAN
         end
@@ -320,7 +320,7 @@ do
         ---
         --- Checks if the value type is a `number`.
         ---@param value any The value to check.
-        ---@return boolean: Returns `true` if the value is a number, otherwise `false`.
+        ---@return boolean is_number Returns `true` if the value is a number, otherwise `false`.
         function std.isnumber( value )
             return debug_getmetatable( value ) == NUMBER
         end
@@ -351,7 +351,7 @@ do
         ---
         --- Checks if the value type is a `string`.
         ---@param value any The value to check.
-        ---@return boolean: Returns `true` if the value is a string, otherwise `false`.
+        ---@return boolean is_string Returns `true` if the value is a string, otherwise `false`.
         function isstring( value )
             return debug_getmetatable( value ) == STRING
         end
@@ -389,7 +389,7 @@ do
         ---
         --- Checks if the value is callable.
         ---@param value any The value to check.
-        ---@return boolean: Returns `true` if the value is can be called (like a function), otherwise `false`.
+        ---@return boolean is_callable Returns `true` if the value is can be called (like a function), otherwise `false`.
         function std.iscallable( value )
             local metatable = debug_getmetatable( value )
             return metatable ~= nil and ( metatable == FUNCTION or debug_getmetatable( metatable.__call ) == FUNCTION )
@@ -414,7 +414,7 @@ do
         ---
         --- Checks if the value type is a `thread`.
         ---@param value any The value to check.
-        ---@return boolean: Returns `true` if the value is a thread, otherwise `false`.
+        ---@return boolean is_thread Returns `true` if the value is a thread, otherwise `false`.
         function std.isthread( value )
             return debug_getmetatable( value ) == THREAD
         end
@@ -586,7 +586,7 @@ do
     ---
     --- Returns a string representing the name of the type of the passed object.
     ---@param value any The value to get the type of.
-    ---@return string: The type name of the given value.
+    ---@return string type_name The type name of the given value.
     function type( value )
         local metatable = debug_getmetatable( value )
         if metatable ~= nil then
@@ -605,8 +605,8 @@ do
     ---@param value any The argument value.
     ---@param arg_num number The argument number.
     ---@param expected_type string The expected type name.
-    ---@return boolean: `true` if the argument is of the expected type, `false` otherwise.
-    ---@return string?: The error message.
+    ---@return boolean ok Returns `true` if the argument is of the expected type, `false` otherwise.
+    ---@return string? msg The error message.
     function std.arg( value, arg_num, expected_type )
         local got = type( value )
         if got == expected_type or expected_type == "any" then
@@ -624,9 +624,9 @@ string.utf8 = include( "std/string.utf8.lua" )
 ---
 --- Returns an iterator `next` for a for loop that will return the values of the specified table in an arbitrary order.
 ---@param tbl table The table to iterate over.
----@return function: The iterator function.
----@return table: The table being iterated over.
----@return any: The previous key in the table (by default `nil`).
+---@return function iter The iterator function.
+---@return table tbl The table being iterated over.
+---@return any prev The previous key in the table (by default `nil`).
 function std.pairs( tbl )
     local metatable = debug_getmetatable( tbl )
     return ( metatable ~= nil and metatable.__pairs or pairs )( tbl )
@@ -643,9 +643,9 @@ do
     --- This will only iterate though <b>numerical keys</b>, and these must also be sequential; starting at 1 with no gaps.
     ---
     ---@param tbl table The table to iterate over.
-    ---@return function: The iterator function.
-    ---@return table: The table being iterated over.
-    ---@return number: The origin index =0.
+    ---@return function iter The iterator function.
+    ---@return table lst The table being iterated over.
+    ---@return number index The origin index =0.
     function std.ipairs( tbl )
         if debug_getmetavalue( tbl, "__index" ) == nil then
             return ipairs( tbl )
@@ -686,7 +686,7 @@ do
     ---
     --- Creates a new symbol.
     ---@param name string The name of the symbol.
-    ---@return Symbol: The new symbol.
+    ---@return Symbol obj The new symbol.
     function std.Symbol( name )
         ---@class gpm.std.Symbol
         local obj = debug_newproxy( true )
@@ -786,7 +786,7 @@ do
     ---
     --- Converts a URL to a file path.
     ---@param url string | URL: The URL to convert.
-    ---@return string: The file path.
+    ---@return string path The file path.
     function path.fromURL( url )
         if not is_url( url ) then
             ---@cast url string
@@ -885,13 +885,13 @@ do
 
     --- [SHARED AND MENU]
     ---
-    --- Loads a chunk
-    ---@param chunk string | function: The chunk to load, can be a string or a function.
-    ---@param chunkName string?: The chunk name, if chunk is binary the name will be ignored.
-    ---@param mode string?: The string mode controls whether the chunk can be text or binary (that is, a precompiled chunk). It may be the string "b" (only binary chunks), "t" (only text chunks), or "bt" (both binary and text). The default is "bt".
-    ---@param env table?: The environment to load the chunk in.
-    ---@return function?: The loaded chunk
-    ---@return string?: Error message
+    --- Loads a chunk of code in the specified environment.
+    ---@param chunk string | function The chunk to load, can be a string or a function.
+    ---@param chunkName string? The chunk name, if chunk is binary the name will be ignored.
+    ---@param mode string? The string mode controls whether the chunk can be text or binary (that is, a precompiled chunk). It may be the string "b" (only binary chunks), "t" (only text chunks), or "bt" (both binary and text). The default is "bt".
+    ---@param env table? The environment to load the chunk in.
+    ---@return function? fn The compiled lua function.
+    ---@return string? msg The error message.
     local function load( chunk, chunkName, mode, env )
         if env == nil then env = getfenv( 2 ) end
 
@@ -1023,8 +1023,8 @@ do
     ---
     --- Checks if a binary module is installed and returns its path.
     ---@param name string The binary module name.
-    ---@return boolean: `true` if the binary module is installed, `false` otherwise.
-    ---@return string: The absolute path to the binary module.
+    ---@return boolean installed `true` if the binary module is installed, `false` otherwise.
+    ---@return string path The absolute path to the binary module.
     local function lookupbinary( name )
         if name == "" then return false, "" end
 
@@ -1051,8 +1051,8 @@ do
     ---
     --- Loads a binary module
     ---@param name string The binary module name, for example: "chttp"
-    ---@return boolean success: true if the binary module is installed
-    ---@return table? module: the binary module table
+    ---@return boolean success true if the binary module is installed
+    ---@return table? module the binary module table
     ---@protected
     function loadbinary( name )
         if lookupbinary( name ) then

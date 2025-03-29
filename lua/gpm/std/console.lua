@@ -138,7 +138,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- Returns the console command with the given name.
-    ---@return gpm.std.console.Command?: The console command with the given name, or `nil` if it does not exist.
+    ---@return gpm.std.console.Command? obj The console command with the given name, or `nil` if it does not exist.
     function CommandClass.get( name )
         return commands[ name ]
     end
@@ -161,7 +161,7 @@ do
         --- [SHARED AND MENU]
         ---
         --- Returns whether the console command is blacklisted.
-        ---@return boolean: `true` if the console command is blacklisted, `false` otherwise.
+        ---@return boolean is_blacklisted `true` if the console command is blacklisted, `false` otherwise.
         function Command:isBlacklisted()
             return IsConCommandBlocked( self.name )
         end
@@ -368,7 +368,7 @@ do
         --- [SHARED AND MENU]
         ---
         --- Gets the value of the `ConsoleVariable` object.
-        ---@return boolean | string | number: The value of the `ConsoleVariable` object.
+        ---@return boolean | string | number value The value of the `ConsoleVariable` object.
         function Variable:get()
             return type2fn[ self.type ]( self.object )
         end
@@ -444,7 +444,7 @@ do
     ---
     --- Gets the value of the `ConsoleVariable` object as a string.
     ---@param name string The name of the console variable.
-    ---@return string: The value of the `ConsoleVariable` object.
+    ---@return string value The value of the `ConsoleVariable` object.
     function VariableClass.getString( name )
         local object = GetConVar( name )
         if object == nil then
@@ -458,7 +458,7 @@ do
     ---
     --- Gets the value of the `ConsoleVariable` object as a number.
     ---@param name string The name of the console variable.
-    ---@return number: The value of the `ConsoleVariable` object.
+    ---@return number value The value of the `ConsoleVariable` object.
     function VariableClass.getNumber( name )
         local object = GetConVar( name )
         if object == nil then
@@ -472,7 +472,7 @@ do
     ---
     --- Gets the value of the `ConsoleVariable` object as a boolean.
     ---@param name string The name of the console variable.
-    ---@return boolean: The value of the `ConsoleVariable` object.
+    ---@return boolean value The value of the `ConsoleVariable` object.
     function VariableClass.getBoolean( name )
         local object = GetConVar( name )
         if object == nil then
@@ -507,7 +507,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- Gets the name of the `ConsoleVariable` object.
-    ---@return string: The name of the `ConsoleVariable` object.
+    ---@return string name The name of the `ConsoleVariable` object.
     function Variable:getName()
         return self.name
     end
@@ -519,7 +519,7 @@ do
         --- [SHARED AND MENU]
         ---
         --- Gets the help text of the `ConsoleVariable` object.
-        ---@return string: The help text of the `ConsoleVariable` object.
+        ---@return string help The help text of the `ConsoleVariable` object.
         function Variable:getHelpText()
             return getHelpText( self.object )
         end
@@ -528,7 +528,7 @@ do
         ---
         --- Gets the help text of the `ConsoleVariable` object.
         ---@param name string The name of the console variable.
-        ---@return string: The help text of the `ConsoleVariable` object.
+        ---@return string help The help text of the `ConsoleVariable` object.
         function VariableClass.getHelpText( name )
             local object = GetConVar( name )
             if object == nil then
@@ -543,7 +543,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- Gets the default value of the `ConsoleVariable` object.
-    ---@return string: The default value of the `ConsoleVariable` object.
+    ---@return string default The default value of the `ConsoleVariable` object.
     function Variable:getDefault()
         return getDefault( self.object )
     end
@@ -552,7 +552,7 @@ do
     ---
     --- Gets the default value of the `ConsoleVariable` object.
     ---@param name string The name of the console variable.
-    ---@return string: The default value of the `ConsoleVariable` object.
+    ---@return string default The default value of the `ConsoleVariable` object.
     function VariableClass.getDefault( name )
         local object = GetConVar( name )
         if object == nil then
@@ -569,7 +569,7 @@ do
         --- [SHARED AND MENU]
         ---
         --- Gets the `Enums/FCVAR` flags of the `ConsoleVariable` object.
-        ---@return number: The `Enums/FCVAR` flags of the `ConsoleVariable` object.
+        ---@return integer flags The `Enums/FCVAR` flags of the `ConsoleVariable` object.
         function Variable:getFlags()
             return getFlags( self.object )
         end
@@ -578,7 +578,7 @@ do
         ---
         --- Gets the `Enums/FCVAR` flags of the `ConsoleVariable` object.
         ---@param name string The name of the console variable.
-        ---@return number: The `Enums/FCVAR` flags of the `ConsoleVariable` object.
+        ---@return integer flags The `Enums/FCVAR` flags of the `ConsoleVariable` object.
         function VariableClass.getFlags( name )
             local object = GetConVar( name )
             if object == nil then
@@ -598,7 +598,7 @@ do
         ---
         --- Checks if the `Enums/FCVAR` flag is set on the `ConsoleVariable` object.
         ---@param flag number The `Enums/FCVAR` flag to check.
-        ---@return boolean: `true` if the `Enums/FCVAR` flag is set on the `ConsoleVariable` object, `false` otherwise.
+        ---@return boolean is_set `true` if the `Enums/FCVAR` flag is set on the `ConsoleVariable` object, `false` otherwise.
         function Variable:isFlagSet( flag )
             return isFlagSet( self.object, flag )
         end
@@ -608,7 +608,7 @@ do
         --- Checks if the `Enums/FCVAR` flag is set on the `ConsoleVariable` object.
         ---@param name string The name of the console variable.
         ---@param flag number The `Enums/FCVAR` flag to check.
-        ---@return boolean: `true` if the `Enums/FCVAR` flag is set on the `ConsoleVariable` object, `false` otherwise.
+        ---@return boolean is_set `true` if the `Enums/FCVAR` flag is set on the `ConsoleVariable` object, `false` otherwise.
         function VariableClass.isFlagSet( name, flag )
             local object = GetConVar( name )
             if object == nil then

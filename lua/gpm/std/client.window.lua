@@ -61,8 +61,8 @@ end
 --- [CLIENT AND MENU]
 ---
 --- Returns the width and height of the game's window (in pixels).
----@return number: The width of the game's window (in pixels).
----@return number: The height of the game's window (in pixels).
+---@return number width The width of the game's window (in pixels).
+---@return number height The height of the game's window (in pixels).
 function window.getSize()
     return width, height
 end
@@ -81,7 +81,7 @@ window.isInWindow = system_IsWindowed
 --- [CLIENT AND MENU]
 ---
 --- Returns whether the game window is fullscreen.
----@return boolean: `true` if the game window is fullscreen, `false` if not.
+---@return boolean is_on `true` if the game window is fullscreen, `false` if not.
 function window.isInFullscreen()
     return system_IsWindowed() == false
 end
@@ -101,7 +101,7 @@ do
     --- [CLIENT AND MENU]
     ---
     --- Returns whether the game is running in VSync mode.
-    ---@return boolean: `true` if the game is running in VSync mode, `false` if not.
+    ---@return boolean is_on `true` if the game is running in VSync mode, `false` if not.
     function window.getVSync()
         return variable_getBoolean( "mat_vsync" )
     end

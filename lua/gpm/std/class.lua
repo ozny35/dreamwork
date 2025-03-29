@@ -32,7 +32,7 @@ do
     local pairs = std.pairs
 
     ---@param obj Object The object to convert to a string.
-    ---@return string: The string representation of the object.
+    ---@return string str The string representation of the object.
     local function base__tostring( obj )
         return string_format( "%s: %p", rawget( getmetatable( obj ), "__type" ), obj )
     end
@@ -42,7 +42,7 @@ do
     --- Creates a new class base ( metatable ).
     ---@param name string The name of the class.
     ---@param parent Class | unknown | nil: The parent of the class.
-    ---@return Object: The base of the class.
+    ---@return Object base The base of the class.
     function class.base( name, parent )
         local base = {
             __type = name,
@@ -85,7 +85,7 @@ do
         ---@param obj table The object to initialize.
         ---@param base Object The base object, aka metatable.
         ---@param ... any?: Arguments to pass to the constructor.
-        ---@return Object: The initialized object.
+        ---@return Object object The initialized object.
         local function init( obj, base, ... )
             local init_fn = find_rawkey( base, "__init" )
             if init_fn ~= nil then
@@ -99,7 +99,7 @@ do
         class.init = init
 
         ---@param self Class The class.
-        ---@return Object: The new object.
+        ---@return Object object The new object.
         function class__call( self, ... )
             local base = find_rawkey( self, "__base" )
             if base == nil then
@@ -129,7 +129,7 @@ do
     end
 
     ---@param cls Class The class.
-    ---@return string: The string representation of the class.
+    ---@return string str The string representation of the class.
     local function class__tostring( cls )
         return string_format( "%sClass: %p", rawget( rawget( cls, "__base" ), "__type" ), cls )
     end
@@ -140,7 +140,7 @@ do
     ---
     --- Creates a new class from the given base.
     ---@param base Object The base object, aka metatable.
-    ---@return Class | unknown: The class.
+    ---@return Class | unknown cls The class.
     function class.create( base )
         local cls = {
             __base = base
