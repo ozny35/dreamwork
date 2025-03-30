@@ -7,19 +7,14 @@ local math = std.math
 --- [SHARED AND MENU]
 ---
 --- The byte writer object.
----@alias ByteWriter gpm.std.ByteWriter
----@class gpm.std.ByteWriter: gpm.std.Object
----@field __class gpm.std.ByteWriterClass
----@field protected buffer_size integer
----@field protected buffer string[]
----@field protected pointer integer
----@field protected size integer
----@field protected data string
+---@alias ByteWriter gpm.std.crypto.ByteWriter
+---@class gpm.std.crypto.ByteWriter: gpm.std.Object
+---@field __class gpm.std.crypto.ByteWriterClass
 local ByteWriter = std.class.base( "ByteWriter" )
 
 ---@protected
 function ByteWriter:__tostring()
-	return string.format( "ByteWriter: %p [%d/%d]", self, self.pointer, self.size )
+	return string.format( "ByteWriter: %p [%d/%d]", self, self[ 2 ], self[ 0 ] )
 end
 
 do
@@ -28,15 +23,14 @@ do
 
 	---@protected
 	function ByteWriter:__init( base )
-		self.buffer_size = 0
-		self.buffer = {}
-
 		if base == nil then
-			self.data, self.size, self.pointer = "", 0, 0
+			self[ 0 ], self[ 1 ], self[ 2 ] = 0, "", 0
 		else
 			local size = string_len( base )
-			self.data, self.size, self.pointer = base, size, size
+			self[ 0 ], self[ 1 ], self[ 2 ] = size, base, size
 		end
+
+		self[ 3 ], self[ 4 ] = {}, 0
 	end
 
 	do
@@ -54,27 +48,27 @@ do
 			---@return string data The bynary data.
 			---@return integer size The size of the data.
 			function ByteWriter:flush()
-				local buffer_size = self.buffer_size
-				self.buffer_size = 0
+				local buffer_size = self[ 4 ]
+				self[ 4 ] = 0
 
 				if buffer_size == 0 then
-					return self.data, self.size
+					return self[ 1 ], self[ 0 ]
 				end
 
-				local old_data, size, pointer = self.data, self.size, self.pointer
+				local old_data, size, pointer = self[ 1 ], self[ 0 ], self[ 2 ]
 				if pointer > size then
 					old_data, size = old_data .. string_rep( "\0", pointer - size ), pointer
 				end
 
-				local content = table_concat( self.buffer, "", 1, buffer_size )
+				local content = table_concat( self[ 3 ], "", 1, buffer_size )
 				local content_size = string_len( content )
-				self.buffer = {}
+				self[ 3 ] = {}
 
 				local new_data = string_sub( old_data, 1, pointer ) .. content .. string_sub( old_data, pointer + content_size + 1, size )
 				local new_size = string_len( new_data )
 
-				self.data, self.size = new_data, new_size
-				self.pointer = pointer + content_size
+				self[ 1 ], self[ 0 ] = new_data, new_size
+				self[ 2 ] = pointer + content_size
 
 				return new_data, new_size
 			end
@@ -87,7 +81,7 @@ do
 		---@param offset integer The number of bytes to skip.
 		---@return integer position The new position.
 		function ByteWriter:skip( offset )
-			local pointer, size = self.pointer, self.size
+			local pointer, size = self[ 2 ], self[ 0 ]
 			local new_position = pointer + offset
 
 			if new_position > size then
@@ -107,24 +101,36 @@ end
 ---@return integer position The current position.
 function ByteWriter:tell()
 	self:flush()
-	return self.pointer
+	return self[ 2 ]
+end
+
+--- [SHARED AND MENU]
+---
+--- Returns the size of the writer data in bytes.
+---@return integer size The size of data in bytes.
+function ByteWriter:size()
+	self:flush()
+	return self[ 0 ]
 end
 
 --- [SHARED AND MENU]
 ---
 --- Sets the current position of the writer.
----@param position? integer The new position.
----@return integer position The new position.
+---@param position? integer The position to set.
+---@return integer new_position The new position.
 function ByteWriter:shift( position )
 	self:flush()
 
 	if position == nil then
 		position = 0
-	else
-		position = math.max( 0, position )
+	elseif position < 0 then
+		local size = self[ 0 ]
+		while position < 0 do
+			position = position + size + 1
+		end
 	end
 
-	self.pointer = position
+	self[ 2 ] = position
 	return position
 end
 
@@ -133,14 +139,14 @@ end
 --- Writes the specified string to the writer.
 ---@param str string The string to write.
 function ByteWriter:write( str )
-	local buffer_size = self.buffer_size + 1
-	self.buffer[ buffer_size ] = str
-	self.buffer_size = buffer_size
+	local buffer_size = self[ 4 ] + 1
+	self[ 3 ][ buffer_size ] = str
+	self[ 4 ] = buffer_size
 end
 
 do
 
-	local data = binary.data
+	local data = binary[ 1 ]
 
 	do
 
@@ -168,7 +174,7 @@ do
 		---@param big_endian? boolean The endianness of the binary string.
 		function ByteWriter:writeCountedString( byte_count, big_endian )
 			---@diagnostic disable-next-line: redundant-parameter
-			return self:write( write( self.data, byte_count, big_endian ), nil )
+			return self:write( write( self[ 1 ], byte_count, big_endian ), nil )
 		end
 
 	end
@@ -459,9 +465,9 @@ end
 --- [SHARED AND MENU]
 ---
 --- The byte writer class.
----@class gpm.std.ByteWriterClass: gpm.std.ByteWriter
----@field __base gpm.std.ByteWriter
----@overload fun( base?: string ): ByteWriter
+---@class gpm.std.crypto.ByteWriterClass: gpm.std.crypto.ByteWriter
+---@field __base gpm.std.crypto.ByteWriter
+---@overload fun( base?: string ): gpm.std.crypto.ByteWriter
 local ByteWriterClass = std.class.create( ByteWriter )
 
 return ByteWriterClass

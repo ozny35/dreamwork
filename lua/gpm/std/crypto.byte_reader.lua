@@ -7,17 +7,14 @@ local math = std.math
 --- [SHARED AND MENU]
 ---
 --- The byte reader object.
----@alias ByteReader gpm.std.ByteReader
----@class gpm.std.ByteReader: gpm.std.Object
----@field __class gpm.std.ByteReaderClass
----@field protected pointer integer
----@field protected size integer
----@field protected data string
+---@alias ByteReader gpm.std.crypto.ByteReader
+---@class gpm.std.crypto.ByteReader: gpm.std.Object
+---@field __class gpm.std.crypto.ByteReaderClass
 local ByteReader = std.class.base( "ByteReader" )
 
 ---@protected
 function ByteReader:__tostring()
-	return string.format( "ByteReader: %p [%d/%d]", self, self.pointer, self.size )
+	return string.format( "ByteReader: %p [%d/%d]", self, self[ 2 ], self[ 0 ] )
 end
 
 do
@@ -26,25 +23,34 @@ do
 
 	---@protected
 	function ByteReader:__init( data )
-		self.size = string_len( data )
-		self.pointer = 0
-		self.data = data
+		self[ 0 ] = string_len( data )
+		self[ 1 ] = data
+		self[ 2 ] = 0
 	end
 
 end
 
 --- [SHARED AND MENU]
 ---
---- Resets the reader.
+--- Returns position of the reader to the beginning.
 function ByteReader:flush()
-	self.pointer = 0
+	self[ 2 ] = 0
 end
 
 --- [SHARED AND MENU]
 ---
 --- Returns the current position of the reader.
+---@return integer position The current position.
 function ByteReader:tell()
-	return self.pointer
+	return self[ 2 ]
+end
+
+--- [SHARED AND MENU]
+---
+--- Returns the size of the reader content in bytes.
+---@return integer size The size of data in bytes.
+function ByteReader:size()
+	return self[ 0 ]
 end
 
 do
@@ -60,10 +66,10 @@ do
 		if position == nil then
 			position = 0
 		else
-			position = math_clamp( 0, position, self.size )
+			position = math_clamp( 0, position, self[ 0 ] )
 		end
 
-		self.pointer = position
+		self[ 2 ] = position
 
 		return position
 	end
@@ -76,7 +82,7 @@ end
 ---@param offset integer The offset to skip.
 ---@return integer position The new position.
 function ByteReader:skip( offset )
-	return self:shift( self.pointer + offset )
+	return self:shift( self[ 2 ] + offset )
 end
 
 do
@@ -90,7 +96,7 @@ do
 	---@param length? integer The number of bytes to read.
 	---@return string | nil str The readed bytes or `nil` if there are no more bytes to read.
 	function ByteReader:read( length )
-		local size = self.size
+		local size = self[ 0 ]
 
 		if length == nil then
 			length = size
@@ -98,17 +104,17 @@ do
 			length = size + length + 1
 		end
 
-		local position = self.pointer
+		local position = self[ 2 ]
 		if ( position + length ) >= size then return end
-		self.pointer = math_min( position + length, size )
-		return string_sub( self.data, position + 1, position + length )
+		self[ 2 ] = math_min( position + length, size )
+		return string_sub( self[ 1 ], position + 1, position + length )
 	end
 
 end
 
 do
 
-	local data = binary.data
+	local data = binary[ 1 ]
 
 	do
 
@@ -120,11 +126,11 @@ do
 		---@param length integer The size of the string.
 		---@return string | nil str The fixed-length string or `nil` if there are no more bytes to read.
 		function ByteReader:readFixedString( length )
-			local pointer = self.pointer
-			if ( pointer + length ) >= self.size then return end
+			local pointer = self[ 2 ]
+			if ( pointer + length ) >= self[ 0 ] then return end
 
 			self:skip( length )
-			return read( self.data, length, pointer )
+			return read( self[ 1 ], length, pointer )
 		end
 
 	end
@@ -142,12 +148,12 @@ do
 		---@return integer | nil length The length of the counted string or `nil` if there are no more bytes to read.
 		function ByteReader:readCountedString( byte_count, big_endian )
 			if byte_count == nil then byte_count = 1 end
-			local pointer = self.pointer
+			local pointer = self[ 2 ]
 
-			local str, length = read( self.data, byte_count, big_endian, pointer )
+			local str, length = read( self[ 1 ], byte_count, big_endian, pointer )
 
 			local skip_size = length + byte_count
-			if ( skip_size + pointer ) > self.size then return end
+			if ( skip_size + pointer ) > self[ 0 ] then return end
 
 			self:skip( skip_size )
 			return str, length
@@ -164,12 +170,12 @@ do
 		--- Reads a null-terminated string from the reader.
 		---@return string | nil str The null-terminated string or `nil` if there are no more bytes to read.
 		function ByteReader:readNullTerminatedString()
-			local pointer = self.pointer
+			local pointer = self[ 2 ]
 
-			local str, length = read( self.data, pointer )
+			local str, length = read( self[ 1 ], pointer )
 
 			local skip_size = length + 1
-			if ( skip_size + pointer ) > self.size then return end
+			if ( skip_size + pointer ) > self[ 0 ] then return end
 
 			self:skip( skip_size )
 			return str
@@ -196,11 +202,11 @@ do
 		--- Allowable values from `-128` to `127`.
 		---@return integer | nil byte The signed byte or `nil` if there are no more bytes to read.
 		function ByteReader:readSByte()
-			local position = self.pointer
-			if ( position + 1 ) > self.size then return end
+			local position = self[ 2 ]
+			if ( position + 1 ) > self[ 0 ] then return end
 
 			self:skip( 1 )
-			return read( self.data, position )
+			return read( self[ 1 ], position )
 		end
 
 	end
@@ -217,11 +223,11 @@ do
 		---@param big_endian? boolean The endianness of the binary string.
 		---@return integer | nil short The signed short or `nil` if there are no more bytes to read.
 		function ByteReader:readShort( big_endian )
-			local position = self.pointer
-			if ( position + 2 ) > self.size then return end
+			local position = self[ 2 ]
+			if ( position + 2 ) > self[ 0 ] then return end
 
 			self:skip( 2 )
-			return read( self.data, big_endian, position )
+			return read( self[ 1 ], big_endian, position )
 		end
 
 	end
@@ -241,11 +247,11 @@ do
 		function ByteReader:readInt( byte_count, big_endian )
 			if byte_count == nil then byte_count = 4 end
 
-			local position = self.pointer
-			if ( position + byte_count ) > self.size then return end
+			local position = self[ 2 ]
+			if ( position + byte_count ) > self[ 0 ] then return end
 
 			self:skip( byte_count )
-			return read( self.data, byte_count, big_endian, position )
+			return read( self[ 1 ], byte_count, big_endian, position )
 		end
 
 	end
@@ -262,11 +268,11 @@ do
 		---@param big_endian? boolean The endianness of the binary string.
 		---@return integer | nil long The signed long or `nil` if there are no more bytes to read.
 		function ByteReader:readLong( big_endian )
-			local position = self.pointer
-			if ( position + 4 ) > self.size then return end
+			local position = self[ 2 ]
+			if ( position + 4 ) > self[ 0 ] then return end
 
 			self:skip( 4 )
-			return read( self.data, big_endian, position )
+			return read( self[ 1 ], big_endian, position )
 		end
 
 	end
@@ -283,11 +289,11 @@ do
 		---@param big_endian? boolean The endianness of the binary string.
 		---@return integer | nil longlong The signed long long or `nil` if there are no more bytes to read.
 		function ByteReader:readLongLong( big_endian )
-			local position = self.pointer
-			if ( position + 8 ) > self.size then return end
+			local position = self[ 2 ]
+			if ( position + 8 ) > self[ 0 ] then return end
 
 			self:skip( 8 )
-			return read( self.data, big_endian, position )
+			return read( self[ 1 ], big_endian, position )
 		end
 
 	end
@@ -318,10 +324,10 @@ do
 		---@param big_endian? boolean The endianness of the binary string.
 		---@return number | nil number The signed fixed-point number or `nil` if there are no more bytes to read.
 		function ByteReader:readFixedPoint( m, n, big_endian )
-			local position = self.pointer
+			local position = self[ 2 ]
 
-			local number, byte_count = read( self.data, m, n, big_endian, position )
-			if ( position + byte_count ) > self.size then return end
+			local number, byte_count = read( self[ 1 ], m, n, big_endian, position )
+			if ( position + byte_count ) > self[ 0 ] then return end
 
 			self:skip( byte_count )
 			return number
@@ -346,11 +352,11 @@ do
 		--- Allowable values from `0` to `255`.
 		---@return integer | nil byte The byte or `nil` if there are no more bytes to read.
 		function ByteReader:readByte()
-			local position = self.pointer
-			if ( position + 1 ) > self.size then return end
+			local position = self[ 2 ]
+			if ( position + 1 ) > self[ 0 ] then return end
 
 			self:skip( 1 )
-			return read( self.data, position )
+			return read( self[ 1 ], position )
 		end
 
 	end
@@ -367,11 +373,11 @@ do
 		---@param big_endian? boolean The endianness of the binary string.
 		---@return number | nil short The unsigned short or `nil` if there are no more bytes to read.
 		function ByteReader:readUShort( big_endian )
-			local position = self.pointer
-			if ( position + 2 ) > self.size then return end
+			local position = self[ 2 ]
+			if ( position + 2 ) > self[ 0 ] then return end
 
 			self:skip( 2 )
-			return read( self.data, big_endian, position )
+			return read( self[ 1 ], big_endian, position )
 		end
 
 	end
@@ -389,11 +395,11 @@ do
 		function ByteReader:readUInt( byte_count, big_endian )
 			if byte_count == nil then byte_count = 4 end
 
-			local position = self.pointer
-			if ( position + byte_count ) > self.size then return end
+			local position = self[ 2 ]
+			if ( position + byte_count ) > self[ 0 ] then return end
 
 			self:skip( byte_count )
-			return read( self.data, byte_count, big_endian, position )
+			return read( self[ 1 ], byte_count, big_endian, position )
 		end
 
 	end
@@ -410,11 +416,11 @@ do
 		---@param big_endian? boolean The endianness of the binary string.
 		---@return number | nil long The unsigned long or `nil` if there are no more bytes to read.
 		function ByteReader:readULong( big_endian )
-			local position = self.pointer
-			if ( position + 4 ) > self.size then return end
+			local position = self[ 2 ]
+			if ( position + 4 ) > self[ 0 ] then return end
 
 			self:skip( 4 )
-			return read( self.data, big_endian, position )
+			return read( self[ 1 ], big_endian, position )
 		end
 
 	end
@@ -431,11 +437,11 @@ do
 		---@param big_endian? boolean The endianness of the binary string.
 		---@return integer | nil longlong The unsigned long long or `nil` if there are no more bytes to read.
 		function ByteReader:readULongLong( big_endian )
-			local position = self.pointer
-			if ( position + 8 ) > self.size then return end
+			local position = self[ 2 ]
+			if ( position + 8 ) > self[ 0 ] then return end
 
 			self:skip( 8 )
-			return read( self.data, big_endian, position )
+			return read( self[ 1 ], big_endian, position )
 		end
 
 	end
@@ -464,10 +470,10 @@ do
 		---@return number | nil number The unsigned fixed-point number.
 		---@return string | nil err The error message or `nil` if there is no error.
 		function ByteReader:readUnsignedFixedPoint( m, n, big_endian )
-			local position = self.pointer
+			local position = self[ 2 ]
 
-			local number, byte_count = read( self.data, m, n, big_endian, position )
-			if ( position + byte_count ) > self.size then return end
+			local number, byte_count = read( self[ 1 ], m, n, big_endian, position )
+			if ( position + byte_count ) > self[ 0 ] then return end
 
 			self:skip( byte_count )
 			return number, nil
@@ -489,11 +495,11 @@ do
 	---@param big_endian? boolean The endianness of the binary string.
 	---@return number | nil float The float or `nil` if there are no more bytes to read.
 	function ByteReader:readFloat( big_endian )
-		local position = self.pointer
-		if ( position + 4 ) > self.size then return end
+		local position = self[ 2 ]
+		if ( position + 4 ) > self[ 0 ] then return end
 
 		self:skip( 4 )
-		return read( self.data, big_endian, position )
+		return read( self[ 1 ], big_endian, position )
 	end
 
 end
@@ -510,11 +516,11 @@ do
 	---@param big_endian? boolean The endianness of the binary string.
 	---@return number | nil double The double or `nil` if there are no more bytes to read.
 	function ByteReader:readDouble( big_endian )
-		local position = self.pointer
-		if ( position + 8 ) > self.size then return end
+		local position = self[ 2 ]
+		if ( position + 8 ) > self[ 0 ] then return end
 
 		self:skip( 8 )
-		return read( self.data, big_endian, position )
+		return read( self[ 1 ], big_endian, position )
 	end
 
 end
@@ -522,9 +528,9 @@ end
 --- [SHARED AND MENU]
 ---
 --- The byte reader class.
----@class gpm.std.ByteReaderClass: gpm.std.ByteReader
----@field __base gpm.std.ByteReader
----@overload fun( data: string ): ByteReader
+---@class gpm.std.crypto.ByteReaderClass: gpm.std.crypto.ByteReader
+---@field __base gpm.std.crypto.ByteReader
+---@overload fun( data: string ): gpm.std.crypto.ByteReader
 local ByteReaderClass = std.class.create( ByteReader )
 
 return ByteReaderClass
