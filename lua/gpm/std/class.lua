@@ -134,7 +134,7 @@ do
         return string_format( "%sClass: %p", raw_get( raw_get( cls, "__base" ), "__type" ), cls )
     end
 
-    local rawset = std.rawset
+    local raw_set = std.raw.set
 
     --- [SHARED AND MENU]
     ---
@@ -169,7 +169,7 @@ do
             __type = raw_get( base, "__type" ) .. "Class"
         } ) ---@cast cls -Object
 
-        rawset( base, "__class", cls )
+        raw_set( base, "__class", cls )
         return cls
     end
 
