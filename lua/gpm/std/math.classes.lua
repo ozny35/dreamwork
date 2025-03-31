@@ -44,6 +44,7 @@ local gpm = _G.gpm
 local std = gpm.std
 
 local class = std.class
+local raw_get, raw_set = std.raw.get, std.raw.set
 
 local isnumber = std.isnumber
 local setmetatable = std.setmetatable
@@ -555,18 +556,18 @@ do
     ---@protected
     function Angle3:__index( key )
         if isnumber( key ) then
-            return rawget( self, key ) or 0
+            return raw_get( self, key ) or 0
         else
-            return rawget( self, key2index[ key ] or key ) or Angle3[ key ]
+            return raw_get( self, key2index[ key ] or key ) or Angle3[ key ]
         end
     end
 
     ---@protected
     function Angle3:__newindex( key, value )
         if isnumber( key ) then
-            rawset( self, key, value )
+            raw_set( self, key, value )
         else
-            rawset( self, key2index[ key ] or key, value )
+            raw_set( self, key2index[ key ] or key, value )
         end
     end
 
@@ -585,18 +586,18 @@ do
     ---@protected
     function Vector3:__index( key )
         if isnumber( key ) then
-            return rawget( self, key ) or 0
+            return raw_get( self, key ) or 0
         end
 
-        return rawget( self, key2index[ key ] or key ) or Vector3[ key ]
+        return raw_get( self, key2index[ key ] or key ) or Vector3[ key ]
     end
 
     ---@protected
     function Vector3:__newindex( key, value )
         if isnumber( key ) then
-            rawset( self, key, value )
+            raw_set( self, key, value )
         else
-            rawset( self, key2index[ key ] or key, value )
+            raw_set( self, key2index[ key ] or key, value )
         end
     end
 

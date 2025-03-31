@@ -82,7 +82,7 @@ do
 
     local int2universe = std.table.flip( universe2int )
     local int2type = std.table.flip( type2int )
-    local rawget = std.rawget
+    local raw_get = std.raw.get
 
     ---@protected
     function Identifier:__index( key )
@@ -95,7 +95,7 @@ do
         elseif key == "id" then
             return self[ 4 ]
         else
-            return rawget( self, key ) or rawget( Identifier, key )
+            return raw_get( self, key ) or raw_get( Identifier, key )
         end
     end
 

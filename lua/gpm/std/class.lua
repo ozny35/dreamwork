@@ -1,5 +1,5 @@
 local std = _G.gpm.std
-local rawget, getmetatable, setmetatable, string_format = std.rawget, std.getmetatable, std.setmetatable, std.string.format
+local raw_get, getmetatable, setmetatable, string_format = std.raw.get, std.getmetatable, std.setmetatable, std.string.format
 
 --- [SHARED AND MENU]
 ---
@@ -23,7 +23,7 @@ local class = {}
 ---@param key string The key to search for.
 local function find_rawkey( obj, key )
     if obj == nil then return nil end
-    return rawget( obj, key ) or find_rawkey( getmetatable( obj ), key )
+    return raw_get( obj, key ) or find_rawkey( getmetatable( obj ), key )
 end
 
 do
@@ -34,7 +34,7 @@ do
     ---@param obj Object The object to convert to a string.
     ---@return string str The string representation of the object.
     local function base__tostring( obj )
-        return string_format( "%s: %p", rawget( getmetatable( obj ), "__type" ), obj )
+        return string_format( "%s: %p", raw_get( getmetatable( obj ), "__type" ), obj )
     end
 
     --- [SHARED AND MENU]
@@ -52,7 +52,7 @@ do
         base.__index = base
 
         if parent then
-            local parent_base = rawget( parent, "__base" )
+            local parent_base = raw_get( parent, "__base" )
             if parent_base == nil then
                 std.error( "parent class has no base", 2 )
             end
@@ -131,7 +131,7 @@ do
     ---@param cls Class The class.
     ---@return string str The string representation of the class.
     local function class__tostring( cls )
-        return string_format( "%sClass: %p", rawget( rawget( cls, "__base" ), "__type" ), cls )
+        return string_format( "%sClass: %p", raw_get( raw_get( cls, "__base" ), "__type" ), cls )
     end
 
     local rawset = std.rawset
@@ -146,16 +146,16 @@ do
             __base = base
         }
 
-        local parent_base = rawget( base, "__parent" )
+        local parent_base = raw_get( base, "__parent" )
         if parent_base ~= nil then
             ---@cast parent_base gpm.std.Object
             cls.__parent = parent_base.__class
 
-            local parent = rawget( parent_base, "__class" )
+            local parent = raw_get( parent_base, "__class" )
             if parent == nil then
                 std.error( "parent class has no class", 2 )
             else
-                local inherited_fn = rawget( parent, "__inherited" )
+                local inherited_fn = raw_get( parent, "__inherited" )
                 if inherited_fn ~= nil then
                     inherited_fn( parent, cls )
                 end
@@ -166,7 +166,7 @@ do
             __index = base,
             __call = class__call,
             __tostring = class__tostring,
-            __type = rawget( base, "__type" ) .. "Class"
+            __type = raw_get( base, "__type" ) .. "Class"
         } ) ---@cast cls -Object
 
         rawset( base, "__class", cls )

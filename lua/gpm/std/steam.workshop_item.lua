@@ -660,7 +660,7 @@ end
 do
 
     local steamworks_DownloadUGC = steamworks.DownloadUGC
-    local file_write = std.File.write
+    local file_write = std.file.write
 
     --- [SHARED AND MENU]
     ---

@@ -2,8 +2,9 @@ local _G = _G
 local std, tlib = _G.gpm.std, _G.table
 local math = std.math
 
-local select, pairs, setmetatable, rawget, rawset, next = std.select, std.pairs, std.setmetatable, std.rawget, std.rawset, std.next
+local select, pairs, setmetatable, next = std.select, std.pairs, std.setmetatable, std.next
 local debug_getmetatable = std.debug.getmetatable
+local raw_get, raw_set = std.raw.get, std.raw.set
 local table_remove = tlib.remove
 
 local string_sub, string_find, string_len, string_lower
@@ -52,7 +53,7 @@ do
         lookup_table[ source ] = copy
 
         local metatable = debug_getmetatable( source )
-        if metatable ~= nil and rawget( metatable, "__type" ) == nil then
+        if metatable ~= nil and raw_get( metatable, "__type" ) == nil then
             setmetatable( copy, metatable )
         end
 
@@ -100,7 +101,7 @@ do
         local copy = {}
 
         local metatable = debug_getmetatable( source )
-        if metatable ~= nil and rawget( metatable, "__type" ) == nil then
+        if metatable ~= nil and raw_get( metatable, "__type" ) == nil then
             setmetatable( copy, metatable )
         end
 
@@ -160,7 +161,7 @@ do
         else
             copy = {}
             for key, value in pairs( source ) do
-                rawset( copy, key, value )
+                raw_set( copy, key, value )
             end
         end
 
@@ -184,14 +185,14 @@ do
         if deepCopy then
             if copyMetatables then
                 local metatable = debug_getmetatable( source )
-                if metatable ~= nil and rawget( metatable, "__type" ) == nil then
+                if metatable ~= nil and raw_get( metatable, "__type" ) == nil then
                     setmetatable( copy, metatable )
                 end
             end
 
             if copyKeys then
                 for index = from, to, 1 do
-                    local value = rawget( source, index )
+                    local value = raw_get( source, index )
                     if istable( value ) then
                         ---@cast value table
 
@@ -206,7 +207,7 @@ do
                 end
             else
                 for index = from, to, 1 do
-                    local value = rawget( source, index )
+                    local value = raw_get( source, index )
                     if istable( value ) then
                         ---@cast value table
 
@@ -223,7 +224,7 @@ do
         else
             copy = {}
             for index = from, to, 1 do
-                copy[ index ] = rawget( source, index )
+                copy[ index ] = raw_get( source, index )
             end
         end
 
@@ -246,7 +247,7 @@ do
         end
 
         for key, value in pairs( a ) do
-            local alt = rawget( b, key )
+            local alt = raw_get( b, key )
             if alt == nil then
                 return false
             end
@@ -264,7 +265,7 @@ do
         end
 
         for key, value in pairs( b ) do
-            local alt = rawget( a, key )
+            local alt = raw_get( a, key )
             if alt == nil then
                 return false
             end
@@ -303,7 +304,7 @@ do
         if a == b then return {}, 0 end
 
         for key, value in pairs( a ) do
-            local alt = rawget( b, key )
+            local alt = raw_get( b, key )
             if alt == nil then
                 length = length + 1
                 result[ length ] = key
@@ -323,7 +324,7 @@ do
         end
 
         for key, value in pairs( b ) do
-            local alt = rawget( a, key )
+            local alt = raw_get( a, key )
             if alt == nil then
                 length = length + 1
                 result[ length ] = key
@@ -361,7 +362,7 @@ do
     local result = {}
 
     for key, value in pairs( a ) do
-            local alt = rawget( b, key )
+            local alt = raw_get( b, key )
             if alt == nil then
                 result[ key ] = { value, alt }
             end
@@ -380,7 +381,7 @@ do
 
         for key, value in pairs( b ) do
             if result[ key ] == nil then
-                local alt = rawget( a, key )
+                local alt = raw_get( a, key )
                 if alt == nil then
                     result[ key ] = { value, alt }
                 end
@@ -774,11 +775,11 @@ function table.set( tbl, str, value )
             local key = string_sub( str, pointer, startPos - 1 )
             pointer = startPos + 1
 
-            local tbl_value = rawget( tbl, key )
+            local tbl_value = raw_get( tbl, key )
             if istable( tbl_value ) then
                 tbl = tbl_value
             else
-                rawset( tbl, key, {} )
+                raw_set( tbl, key, {} )
             end
         end
     end
@@ -1033,9 +1034,9 @@ function table.splice( tbl, start, delete_count, ... )
     ::back::
 
     for index = start, tbl_length, 1 do
-        if keys == nil or keys[ rawget( tbl, index ) ] then
+        if keys == nil or keys[ raw_get( tbl, index ) ] then
             removed_length = removed_length + 1
-            removed[ removed_length ] = rawget( tbl, index )
+            removed[ removed_length ] = raw_get( tbl, index )
 
             delete_count = delete_count - 1
             table_remove( tbl, index )

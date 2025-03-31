@@ -12,7 +12,7 @@ do
     debug_getfmain, debug_getfpath = debug.getfmain, debug.getfpath
 end
 
-local getfenv, rawget, select = std.getfenv, std.rawget, std.select
+local getfenv, raw_get, select = std.getfenv, std.raw.get, std.select
 
 ---@class gpm.std.File.path
 local path = {}
@@ -233,7 +233,7 @@ local function getCurrentFile( fn )
 
     local fenv = getfenv( fn )
     if fenv then
-        local filePath = rawget( fenv, "__filename" )
+        local filePath = raw_get( fenv, "__filename" )
         if filePath then
             return filePath
         end
@@ -266,7 +266,7 @@ local function getCurrentDirectory( fn, withTrailingSlash )
 
         local fenv = getfenv( fn )
         if fenv then
-            local dirPath = rawget( fenv, "__dirname" )
+            local dirPath = raw_get( fenv, "__dirname" )
             if dirPath then
                 if withTrailingSlash then
                     dirPath = dirPath .. "/"

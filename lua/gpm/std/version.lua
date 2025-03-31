@@ -9,7 +9,7 @@
 local _G = _G
 local std = _G.gpm.std
 local table_sort = std.table.sort
-local error, tonumber, rawget = std.error, std.tonumber, std.rawget
+local error, tonumber, raw_get = std.error, std.tonumber, std.raw.get
 
 local bit_band, bit_bor, bit_lshift, bit_rshift
 do
@@ -244,12 +244,12 @@ local keys = {}
 setmetatable( keys, { __mode = "kv" } )
 
 function Version:unpack()
-	local values = rawget( keys, self )
+	local values = raw_get( keys, self )
 	return values[ 1 ], values[ 2 ], values[ 3 ], values[ 4 ], values[ 5 ]
 end
 
 function Version:__index( key )
-	return rawget( rawget( keys, self ), key ) or rawget( Version, key )
+	return raw_get( raw_get( keys, self ), key ) or raw_get( Version, key )
 end
 
 local names = {}
@@ -486,7 +486,7 @@ do
 
 		keys_metatable = {
 			__index = function( tbl, key )
-				return rawget( tbl, rawget( key2key, string_lower( key ) ) or -1 )
+				return raw_get( tbl, raw_get( key2key, string_lower( key ) ) or -1 )
 			end
 		}
 

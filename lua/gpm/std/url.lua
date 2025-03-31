@@ -1,6 +1,7 @@
 ---@class gpm.std
 local std = _G.gpm.std
-local tostring, tonumber, rawget, rawset, getmetatable, pairs = std.tostring, std.tonumber, std.rawget, std.rawset, std.getmetatable, std.pairs
+local raw_get, raw_set = std.raw.get, std.raw.set
+local tostring, tonumber, getmetatable, pairs = std.tostring, std.tonumber, std.getmetatable, std.pairs
 
 ---@class gpm.std.string
 local string = std.string
@@ -1973,12 +1974,12 @@ local STATE_FIELDS = {
 
 ---@param obj URL
 local function resetCache( obj )
-	rawset( obj, "_href", nil )
-	rawset( obj, "_origin", nil )
-	rawset( obj, "_host", nil )
-	rawset( obj, "_hostname", nil )
-	rawset( obj, "_pathname", nil )
-	rawset( obj, "_query", nil )
+	raw_set( obj, "_href", nil )
+	raw_set( obj, "_origin", nil )
+	raw_set( obj, "_host", nil )
+	raw_set( obj, "_hostname", nil )
+	raw_set( obj, "_pathname", nil )
+	raw_set( obj, "_query", nil )
 end
 
 ---@generic V: string | number
@@ -1987,7 +1988,7 @@ end
 ---@param value V
 ---@return V
 local function cacheValue( obj, key, value )
-	rawset( obj, key, value )
+	raw_set( obj, key, value )
 	return value
 end
 
@@ -2001,14 +2002,14 @@ function URL:__tostring()
 end
 
 function URL:__index( key )
-	local state = rawget( self, "state" )
+	local state = raw_get( self, "state" )
 
 	-- State fields
 	if STATE_FIELDS[ key ] then
 		if "hostname" == key then
-			return rawget( self, "_hostname" ) or cacheValue( self, "_hostname", serializeHost( state.hostname ) )
+			return raw_get( self, "_hostname" ) or cacheValue( self, "_hostname", serializeHost( state.hostname ) )
 		elseif "query" == key then
-			return rawget( self, "_query" ) or cacheValue( self, "_query", isURLSearchParams( state.query ) and tostring( state.query ) or state.query )
+			return raw_get( self, "_query" ) or cacheValue( self, "_query", isURLSearchParams( state.query ) and tostring( state.query ) or state.query )
 		else
 			return state[ key ]
 		end
@@ -2016,20 +2017,20 @@ function URL:__index( key )
 
 	-- Special fields
 	if "href" == key then
-		return rawget( self, "_href" ) or cacheValue( self, "_href", serialize( state ) )
+		return raw_get( self, "_href" ) or cacheValue( self, "_href", serialize( state ) )
 	elseif "origin" == key then
-		return rawget( self, "_origin" ) or cacheValue( self, "_origin", serializeOrigin( state ) )
+		return raw_get( self, "_origin" ) or cacheValue( self, "_origin", serializeOrigin( state ) )
 	elseif "protocol" == key then
 		return state.scheme and state.scheme .. ":" or nil
 	elseif "host" == key then
-		local cached = rawget( self, "_host" )
+		local cached = raw_get( self, "_host" )
 		if cached then return cached end
 
 		if not state.hostname then return "" end
 
 		return cacheValue( self, "_host", state.port and self.hostname .. ":" .. state.port or self.hostname )
 	elseif "pathname" == key then
-		local cached = rawget( self, "_pathname" )
+		local cached = raw_get( self, "_pathname" )
 		if cached then return cached end
 
 		if not istable(state.path) then
@@ -2060,7 +2061,7 @@ function URL:__index( key )
 end
 
 function URL:__newindex( key, value )
-	local state = rawget( self, "state" )
+	local state = raw_get( self, "state" )
 
 	-- State fields
 	if STATE_FIELDS[ key ] then
@@ -2100,7 +2101,7 @@ function URL:__newindex( key, value )
 
 		state = {}
 		parse( state, value )
-		rawset( self, "state", state )
+		raw_set( self, "state", state )
 	-- elseif "origin" == key then
 	-- 	return
 	elseif "protocol" == key then
@@ -2131,7 +2132,7 @@ function URL:__newindex( key, value )
 		resetCache( self )
 		parseFragment( state, value, ( string_byte( value, 1 ) == 0x23 ) and 2 or 1, #value )
 	else
-		rawset( self, key, value )
+		raw_set( self, key, value )
 	end
 end
 

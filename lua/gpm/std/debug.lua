@@ -80,6 +80,7 @@ do
     do
 
         local debug_getmetatable = debug.getmetatable
+        local raw_get = std.raw.get
 
         -- in case the game gets killed ( p.s. rubat and garry wants this )
         if debug_getmetatable( fempty ) == nil then
@@ -103,7 +104,7 @@ do
         ---@return any | nil value The value.
         function debug.getmetavalue( value, key )
             local metatable = debug_getmetatable( value )
-            return metatable and rawget( metatable, key )
+            return metatable and raw_get( metatable, key )
         end
 
     end

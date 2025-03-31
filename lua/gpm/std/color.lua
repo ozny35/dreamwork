@@ -38,7 +38,7 @@ local ColorClass = std.class.create( Color )
 
 do
 
-    local rawget, rawset = std.rawget, std.rawset
+    local raw_get, raw_set = std.raw.get, std.raw.set
 
     local key2index = {
         r = 1,
@@ -56,9 +56,9 @@ do
     function Color:__index( key )
         local index = key2index[ key ]
         if index == nil then
-            return rawget( Color, key )
+            return raw_get( Color, key )
         else
-            return rawget( self, index ) or 0
+            return raw_get( self, index ) or 0
         end
     end
 
@@ -67,7 +67,7 @@ do
     function Color:__newindex( key, value )
         local index = key2index[ key ]
         if index ~= nil then
-            rawset( self, index, value )
+            raw_set( self, index, value )
         end
     end
 
@@ -954,7 +954,7 @@ do
     do
 
         local debug_getmetatable = std.debug.getmetatable
-        local rawset = std.rawset
+        local raw_set = std.raw_set
 
         --- [SHARED AND MENU]
         ---
@@ -967,7 +967,7 @@ do
 
         function metatable:__newindex( key, value )
             if ( isstring( key ) or isnumber( key ) ) and debug_getmetatable( value ) == Color then
-                rawset( scheme, key, value )
+                raw_set( scheme, key, value )
             else
                 std.error( "wrong color name", 3 )
             end

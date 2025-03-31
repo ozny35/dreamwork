@@ -55,36 +55,47 @@ if std == nil then
     gpm.std = std
 end
 
-local error = _G.error
-std.error = error
+--- [SHARED AND MENU]
+---
+--- Library containing functions for working with raw data. (ignoring metatables)
+---@class gpm.std.raw
+local raw = std.raw
+if raw == nil then
+    raw = {
+        tonumber = _G.tonumber,
+        equal = _G.rawequal,
+        ipairs = _G.ipairs,
+        pairs = _G.pairs,
+        error = _G.error,
+        get = _G.rawget,
+        set = _G.rawset,
+        type = _G.type,
+        len = _G.rawlen or function( value )
+            return #value
+        end
+    }
+
+    std.raw = raw
+end
 
 std.assert = std.assert or _G.assert
+std.select = std.select or _G.select
+
+std.tostring = std.tostring or _G.tostring
+
 std.getmetatable = std.getmetatable or _G.getmetatable
 std.setmetatable = std.setmetatable or _G.setmetatable
 
 std.getfenv = std.getfenv or _G.getfenv -- removed in Lua 5.2
 std.setfenv = std.setfenv or _G.setfenv -- removed in Lua 5.2
 
-local rawget = std.rawget or _G.rawget
-std.rawget = rawget
-
-std.rawset = std.rawset or _G.rawset
-
-std.rawequal = std.rawequal or _G.rawequal
-std.rawlen = std.rawlen or _G.rawlen or function( value ) return #value end
-
-std.tostring = std.tostring or _G.tostring
-
-std.select = std.select or _G.select
-
-local ipairs, pairs = std.ipairs or _G.ipairs, std.pairs or _G.pairs
-std.ipairs, std.pairs = ipairs, pairs
-
-std.inext = std.inext or ipairs( std )
+std.inext = std.inext or raw.ipairs( std )
 std.next = std.next or _G.next
 
 std.xpcall = std.xpcall or _G.xpcall
 std.pcall = std.pcall or _G.pcall
+
+local raw_get = raw.get
 
 -- jit library
 local jit = std.jit or _G.jit
@@ -103,9 +114,8 @@ if SERVER then
 
         AddCSLuaFile( "package/init.lua" )
 
-        local files = _G.file.Find( "gpm/std/*", "lsv" )
-        for i = 1, #files do
-            AddCSLuaFile( "std/" .. files[ i ] )
+        for _, file_name in raw.ipairs( _G.file.Find( "gpm/std/*", "lsv" ) ) do
+            AddCSLuaFile( "std/" .. file_name )
         end
     end
 end
@@ -123,12 +133,111 @@ std.setmetatable( transducers, {
         local metatable = debug_getmetatable( value )
         if metatable == nil then return value end
 
-        local fn = rawget( self, metatable )
+        local fn = raw_get( self, metatable )
         if fn == nil then return value end
 
         return fn( value )
     end
 } )
+
+--- [SHARED AND MENU]
+---
+--- Returns the length of the given value.
+---@param value any The value to get the length of.
+---@return integer length The length of the given value.
+function std.len( value )
+    local metatable = debug_getmetatable( value )
+    if metatable == nil then return #value end
+
+    local fn = raw_get( metatable, "__len" )
+    if fn == nil then return #value end
+
+    return fn( value )
+end
+
+do
+
+    local raw_pairs = raw.pairs
+
+    --- [SHARED AND MENU]
+    ---
+    --- Returns an iterator `next` for a for loop that will return the values of the specified table in an arbitrary order.
+    ---@param tbl table The table to iterate over.
+    ---@return function iter The iterator function.
+    ---@return table tbl The table being iterated over.
+    ---@return any prev The previous key in the table (by default `nil`).
+    function std.pairs( tbl )
+        local metatable = debug_getmetatable( tbl )
+        return ( metatable ~= nil and metatable.__pairs or raw_pairs )( tbl )
+    end
+
+end
+
+do
+
+    local debug_getmetavalue = debug.getmetavalue
+    local raw_ipairs = raw.ipairs
+
+    --- [SHARED AND MENU]
+    ---
+    --- Returns a [Stateless Iterator](https://www.lua.org/pil/7.3.html) for a [Generic For Loops](https://www.lua.org/pil/4.3.5.html), to return ordered key-value pairs from a table.
+    ---
+    --- This will only iterate though <b>numerical keys</b>, and these must also be sequential; starting at 1 with no gaps.
+    ---
+    ---@param tbl table The table to iterate over.
+    ---@return function iter The iterator function.
+    ---@return table lst The table being iterated over.
+    ---@return number index The origin index =0.
+    function std.ipairs( tbl )
+        if debug_getmetavalue( tbl, "__index" ) == nil then
+            return raw_ipairs( tbl )
+        else
+            local index = 0
+            return function()
+                index = index + 1
+                local value = tbl[ index ]
+                if value == nil then return end
+                return index, value
+            end, tbl, index
+        end
+    end
+
+end
+
+--- [SHARED AND MENU]
+---
+--- Attempts to convert the value to a number.
+---@param value any The value to convert.
+---@param base? integer The base used in the string. Can be any integer between 2 and 36, inclusive. (Default: 10)
+---@return number num The numeric representation of the value with the given base, or `nil` if the conversion failed.
+function std.tonumber( value, base )
+    local metatable = debug_getmetatable( value )
+    return metatable ~= nil and metatable.__tonumber( value, base ) or 0
+end
+
+--- [SHARED AND MENU]
+---
+--- Attempts to convert the value to a boolean.
+---@param value any The value to convert.
+---@return boolean bool The boolean representation of the value, or `false` if the conversion failed.
+function std.toboolean( value )
+    if value == nil or value == false then return false end
+
+    local metatable = debug_getmetatable( value )
+    return metatable ~= nil and metatable.__tobool( value ) or true
+end
+
+std.tobool = std.toboolean
+
+--- [SHARED AND MENU]
+---
+--- Checks if the value is valid.
+---@param value any The value to check.
+---@return boolean is_valid Returns `true` if the value is valid, otherwise `false`.
+function std.isvalid( value )
+    local metatable = debug_getmetatable( value )
+    return ( metatable and metatable.__isvalid and metatable.__isvalid( value ) ) == true
+end
 
 --- [SHARED AND MENU]
 ---
@@ -169,48 +278,10 @@ do
 
 end
 
-local tonumber = _G.tonumber
-
---- [SHARED AND MENU]
----
---- Attempts to convert the value to a number.
----@param value any The value to convert.
----@param base? integer The base used in the string. Can be any integer between 2 and 36, inclusive. (Default: 10)
----@return number num The numeric representation of the value with the given base, or `nil` if the conversion failed.
-function std.tonumber( value, base )
-    local metatable = debug_getmetatable( value )
-    return metatable ~= nil and metatable.__tonumber( value, base ) or 0
-end
-
---- [SHARED AND MENU]
----
---- Attempts to convert the value to a boolean.
----@param value any The value to convert.
----@return boolean bool The boolean representation of the value, or `false` if the conversion failed.
-function std.toboolean( value )
-    if value == nil or value == false then return false end
-
-    local metatable = debug_getmetatable( value )
-    return metatable ~= nil and metatable.__tobool( value ) or true
-end
-
-std.tobool = std.toboolean
-
---- [SHARED AND MENU]
----
---- Checks if the value is valid.
----@param value any The value to check.
----@return boolean is_valid Returns `true` if the value is valid, otherwise `false`.
-function std.isvalid( value )
-    local metatable = debug_getmetatable( value )
-    return ( metatable and metatable.__isvalid and metatable.__isvalid( value ) ) == true
-end
-
-local rawtype = std.rawtype or _G.type
-std.rawtype = rawtype
-
 local istable = _G.istable
 if istable == nil then
+
+    local raw_type = raw.type
 
     --- [SHARED AND MENU]
     ---
@@ -218,7 +289,7 @@ if istable == nil then
     ---@param value any The value to check.
     ---@return boolean is_table Returns `true` if the value is a table, otherwise `false`.
     function istable( value )
-        return rawtype( value ) == "table"
+        return raw_type( value ) == "table"
     end
 
 end
@@ -343,7 +414,7 @@ do
             return value ~= "" and value ~= "0" and value ~= "false"
         end
 
-        STRING.__tonumber = tonumber
+        STRING.__tonumber = raw.tonumber
 
         --- [SHARED AND MENU]
         ---
@@ -522,6 +593,7 @@ do
     local debug_getinfo = debug.getinfo
     local string_rep = string.rep
     local tostring = std.tostring
+    local raw_error = raw.error
 
     ---@diagnostic disable-next-line: undefined-field
     local ErrorNoHalt = _G.ErrorNoHalt or print
@@ -569,7 +641,7 @@ do
         elseif level == -2 then
             return ErrorNoHaltWithStack( message )
         else
-            return error( message, level )
+            return raw_error( message, level )
         end
     end
 
@@ -579,6 +651,7 @@ local type
 do
 
     local debug_getinfo = debug.getinfo
+    local raw_type = raw.type
 
     --- [SHARED AND MENU]
     ---
@@ -588,11 +661,11 @@ do
     function type( value )
         local metatable = debug_getmetatable( value )
         if metatable ~= nil then
-            local name = rawget( metatable, "__type" )
+            local name = raw_get( metatable, "__type" )
             if isstring( name ) then return name end
         end
 
-        return rawtype( value )
+        return raw_type( value )
     end
 
     std.type = type
@@ -617,49 +690,6 @@ do
 end
 
 string.utf8 = include( "std/string.utf8.lua" )
-
---- [SHARED AND MENU]
----
---- Returns an iterator `next` for a for loop that will return the values of the specified table in an arbitrary order.
----@param tbl table The table to iterate over.
----@return function iter The iterator function.
----@return table tbl The table being iterated over.
----@return any prev The previous key in the table (by default `nil`).
-function std.pairs( tbl )
-    local metatable = debug_getmetatable( tbl )
-    return ( metatable ~= nil and metatable.__pairs or pairs )( tbl )
-end
-
-do
-
-    local debug_getmetavalue = debug.getmetavalue
-
-    --- [SHARED AND MENU]
-    ---
-    --- Returns a [Stateless Iterator](https://www.lua.org/pil/7.3.html) for a [Generic For Loops](https://www.lua.org/pil/4.3.5.html), to return ordered key-value pairs from a table.
-    ---
-    --- This will only iterate though <b>numerical keys</b>, and these must also be sequential; starting at 1 with no gaps.
-    ---
-    ---@param tbl table The table to iterate over.
-    ---@return function iter The iterator function.
-    ---@return table lst The table being iterated over.
-    ---@return number index The origin index =0.
-    function std.ipairs( tbl )
-        if debug_getmetavalue( tbl, "__index" ) == nil then
-            return ipairs( tbl )
-        else
-            local index = 0
-            return function()
-                index = index + 1
-                local value = tbl[ index ]
-                if value == nil then return end
-                return index, value
-            end, tbl, index
-        end
-    end
-
-end
-
 gpm.engine = include( "engine.lua" )
 
 local class = include( "std/class.lua" )
@@ -672,7 +702,7 @@ do
 
     local function __tostring( self )
         ---@diagnostic disable-next-line: param-type-mismatch
-        return rawget( debug_getmetatable( self ), "__type" )
+        return raw_get( debug_getmetatable( self ), "__type" )
     end
 
     local debug_newproxy = debug.newproxy
@@ -730,7 +760,7 @@ do
     function std.sleep( seconds )
         local co = futures_running()
         if co == nil then
-            std.error( "sleep cannot be called from main thread" )
+            std.error( "sleep cannot be called from main thread", 2 )
         else
             Timer_wait( function()
                 futures.wakeup( co )

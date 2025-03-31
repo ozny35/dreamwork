@@ -126,25 +126,31 @@ function BigInt:__index( key )
     return BigInt[ key ]
 end
 
----@protected
-function BigInt:__newindex( key, value )
-    if key == "sign" then
-        local sign = math_clamp( value, -1, 1 )
+do
 
-        if self[ 0 ] == 0 or sign == self[ 0 ] then
-            return self
-        elseif sign == 0 then
-            zero( self )
-            return self
-        elseif sign == -1 or sign == 1 then
-            self[ 0 ] = sign
-            return self
+    local raw_set = std.raw.set
+
+    ---@protected
+    function BigInt:__newindex( key, value )
+        if key == "sign" then
+            local sign = math_clamp( value, -1, 1 )
+
+            if self[ 0 ] == 0 or sign == self[ 0 ] then
+                return self
+            elseif sign == 0 then
+                zero( self )
+                return self
+            elseif sign == -1 or sign == 1 then
+                self[ 0 ] = sign
+                return self
+            end
+
+            std.error( "invalid sign", 2 )
         end
 
-        std.error( "invalid sign", 2 )
+        raw_set( self, key, value )
     end
 
-    std.rawset( self, key, value )
 end
 
 local tobigint
