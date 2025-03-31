@@ -114,7 +114,7 @@ end
 
 do
 
-	local data = binary[ 1 ]
+	local data = binary.data
 
 	do
 
