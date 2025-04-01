@@ -17,66 +17,66 @@ local getfenv, raw_get, select = std.getfenv, std.raw.get, std.select
 ---@class gpm.std.file.path
 local path = {}
 
---- Get the file name with extension from filePath.
----@param filePath string The file path.
+--- Get the file name with extension from file_path.
+---@param file_path string The file path.
 ---@return string: The file name with extension.
-local function getFile( filePath )
-    for index = string_len( filePath ), 1, -1 do
-        if string_byte( filePath, index ) == 0x2F --[[ / ]] then
-            return string_sub( filePath, index + 1 )
+local function getFile( file_path )
+    for index = string_len( file_path ), 1, -1 do
+        if string_byte( file_path, index ) == 0x2F --[[ / ]] then
+            return string_sub( file_path, index + 1 )
         end
     end
 
-    return filePath
+    return file_path
 end
 
 path.getFile = getFile
 
---- Get the file name from filePath.
----@param filePath string The file path.
+--- Get the file name from file_path.
+---@param file_path string The file path.
 ---@param withExtension boolean?: Whether to include the extension.
 ---@return string: The file name.
-function path.getFileName( filePath, withExtension )
+function path.getFileName( file_path, withExtension )
     if withExtension then
-        return getFile( filePath )
+        return getFile( file_path )
     end
 
     local position
-    for index = string_len( filePath ), 1, -1 do
-        local byte = string_byte( filePath, index )
+    for index = string_len( file_path ), 1, -1 do
+        local byte = string_byte( file_path, index )
         if byte == 0x2E --[[ . ]] then
             if position == nil then
                 position = index
             end
         elseif byte == 0x2F --[[ / ]] then
             if position == nil then
-                return string_sub( filePath, index + 1 )
+                return string_sub( file_path, index + 1 )
             else
-                return string_sub( filePath, index + 1, position - 1 )
+                return string_sub( file_path, index + 1, position - 1 )
             end
         end
     end
 
     if position == nil then
-        return filePath
+        return file_path
     else
-        return string_sub( filePath, 1, position - 1 )
+        return string_sub( file_path, 1, position - 1 )
     end
 end
 
---- Get the directory from filePath.
----@param filePath string The file path.
----@param withTrailingSlash boolean?: Whether to include the trailing slash.
+--- Get the directory from file_path.
+---@param file_path string The file path.
+---@param with_trailing_slash boolean?: Whether to include the trailing slash.
 ---@return string: The directory path.
-local function getDirectory( filePath, withTrailingSlash )
-    if withTrailingSlash == nil then withTrailingSlash = true end
+local function getDirectory( file_path, with_trailing_slash )
+    if with_trailing_slash == nil then with_trailing_slash = true end
 
-    for index = string_len( filePath ), 1, -1 do
-        if string_byte( filePath, index ) == 0x2F --[[ / ]] then
-            if withTrailingSlash then
-                return string_sub( filePath, 1, index )
+    for index = string_len( file_path ), 1, -1 do
+        if string_byte( file_path, index ) == 0x2F --[[ / ]] then
+            if with_trailing_slash then
+                return string_sub( file_path, 1, index )
             else
-                return string_sub( filePath, 1, index - 1)
+                return string_sub( file_path, 1, index - 1)
             end
         end
     end
@@ -86,20 +86,20 @@ end
 
 path.getDirectory = getDirectory
 
---- Get the extension from filePath.
----@param filePath string The file path.
----@param withDot boolean?: Whether to include the dot.
+--- Get the extension from file_path.
+---@param file_path string The file path.
+---@param with_dot boolean?: Whether to include the dot.
 ---@return string: The extension.
-local function getExtension( filePath, withDot )
-    for index = string_len( filePath ), 1, -1 do
-        local byte = string_byte( filePath, index )
+local function getExtension( file_path, with_dot )
+    for index = string_len( file_path ), 1, -1 do
+        local byte = string_byte( file_path, index )
         if byte == 0x2F --[[ / ]] then
             break
         elseif byte == 0x2E --[[ . ]] then
-            if withDot then
-                return string_sub( filePath, index )
+            if with_dot then
+                return string_sub( file_path, index )
             else
-                return string_sub( filePath, index + 1 )
+                return string_sub( file_path, index + 1 )
             end
         end
     end
@@ -109,107 +109,109 @@ end
 
 path.getExtension = getExtension
 
---- Strip the file name from filePath.
----@param filePath string The file path.
+--- Strip the file name from file_path.
+---@param file_path string The file path.
+---@param with_trailing_slash boolean? Whether to include the trailing slash in the directory path.
 ---@return string: The directory path.
 ---@return string: The file name with extension.
-local function stripFile( filePath, withTrailingSlash )
-    for index = string_len( filePath ), 1, -1 do
-        if string_byte( filePath, index ) == 0x2F --[[ / ]] then
-            if withTrailingSlash then
-                return string_sub( filePath, 1, index ), string_sub( filePath, index + 1 )
+local function stripFile( file_path, with_trailing_slash )
+    for index = string_len( file_path ), 1, -1 do
+        if string_byte( file_path, index ) == 0x2F --[[ / ]] then
+            if with_trailing_slash then
+                return string_sub( file_path, 1, index ), string_sub( file_path, index + 1 )
             else
-                return string_sub( filePath, 1, index - 1 ), string_sub( filePath, index + 1 )
+                return string_sub( file_path, 1, index - 1 ), string_sub( file_path, index + 1 )
             end
         end
     end
 
-    return "", filePath
+    return "", file_path
 end
 
 path.stripFile = stripFile
 
---- Strip the directory from filePath.
----@param filePath string The file path.
+--- Strip the directory from file_path.
+---@param file_path string The file path.
+---@param with_trailing_slash boolean? Whether to include the trailing slash in the directory path.
 ---@return string: The file name with extension.
 ---@return string: The directory path.
-local function stripDirectory( filePath, withTrailingSlash )
-    for index = string_len( filePath ), 1, -1 do
-        if string_byte( filePath, index ) == 0x2F --[[ / ]] then
-            if withTrailingSlash then
-                return string_sub( filePath, index + 1 ), string_sub( filePath, 1, index )
+local function stripDirectory( file_path, with_trailing_slash )
+    for index = string_len( file_path ), 1, -1 do
+        if string_byte( file_path, index ) == 0x2F --[[ / ]] then
+            if with_trailing_slash then
+                return string_sub( file_path, index + 1 ), string_sub( file_path, 1, index )
             else
-                return string_sub( filePath, index + 1 ), string_sub( filePath, 1, index - 1 )
+                return string_sub( file_path, index + 1 ), string_sub( file_path, 1, index - 1 )
             end
         end
     end
 
-    return filePath, ""
+    return file_path, ""
 end
 
 path.stripDirectory = stripDirectory
 
---- Strip the extension from filePath.
----@param filePath string The file path.
----@param withDot boolean?: Whether to include the dot in the extension.
+--- Strip the extension from file_path.
+---@param file_path string The file path.
+---@param with_dot boolean?: Whether to include the dot in the extension.
 ---@return string: The file name without extension.
 ---@return string: The extension.
-local function stripExtension( filePath, withDot )
-    for index = string_len( filePath ), 1, -1 do
-        local byte = string_byte( filePath, index )
+local function stripExtension( file_path, with_dot )
+    for index = string_len( file_path ), 1, -1 do
+        local byte = string_byte( file_path, index )
         if byte == 0x2F --[[ / ]] then
-            return filePath, ""
+            return file_path, ""
         elseif byte == 0x2E --[[ . ]] then
-            if withDot then
-                return string_sub( filePath, 1, index - 1 ), string_sub( filePath, index )
+            if with_dot then
+                return string_sub( file_path, 1, index - 1 ), string_sub( file_path, index )
             else
-                return string_sub( filePath, 1, index - 1 ), string_sub( filePath, index + 1 )
+                return string_sub( file_path, 1, index - 1 ), string_sub( file_path, index + 1 )
             end
         end
     end
 
-    return filePath, ""
+    return file_path, ""
 end
 
 path.stripExtension = stripExtension
 
---- Replace the file name from filePath.
----@param filePath string The file path.
----@param newFile string The new file name with extension.
+--- Replace the file name from file_path.
+---@param file_path string The file path.
+---@param file_name string The new file name with extension.
 ---@return string: The new file path.
-function path.replaceFile( filePath, newFile )
-    return stripFile( filePath ) .. newFile
+function path.replaceFile( file_path, file_name )
+    return stripFile( file_path ) .. file_name
 end
 
---- Replace the directory from filePath.
----@param filePath string The file path.
----@param newDirectory string The new directory path.
+--- Replace the directory from file_path.
+---@param file_path string The file path.
+---@param directory_name string The new directory path.
 ---@return string: The new file path.
-function path.replaceDirectory( filePath, newDirectory )
-    if string_byte( newDirectory, string_len( newDirectory ) ) ~= 0x2F --[[ / ]] then
-        newDirectory = newDirectory .. "/"
+function path.replaceDirectory( file_path, directory_name )
+    if string_byte( directory_name, string_len( directory_name ) ) ~= 0x2F --[[ / ]] then
+        directory_name = directory_name .. "/"
     end
 
-    return newDirectory .. stripDirectory( filePath )
+    return directory_name .. stripDirectory( file_path )
 end
 
---- Replace the extension from filePath.
----@param filePath string The file path.
----@param newExtension string The new extension.
+--- Replace the extension from file_path.
+---@param file_path string The file path.
+---@param extension string The new extension.
 ---@return string: The new file path.
-function path.replaceExtension( filePath, newExtension )
-    return stripExtension( filePath ) .. "." .. newExtension
+function path.replaceExtension( file_path, extension )
+    return stripExtension( file_path ) .. "." .. extension
 end
 
---- Remove the trailing slash from filePath.
----@param filePath string The file path.
+--- Remove the trailing slash from file_path.
+---@param file_path string The file path.
 ---@return string: The file path without the trailing slash.
-local function removeTrailingSlash( filePath )
-    local length = string_len( filePath )
-    if string_byte( filePath, length ) == 0x2F --[[ / ]] then
-        return string_sub( filePath, 1, length - 1 )
+local function removeTrailingSlash( file_path )
+    local length = string_len( file_path )
+    if string_byte( file_path, length ) == 0x2F --[[ / ]] then
+        return string_sub( file_path, 1, length - 1 )
     else
-        return filePath
+        return file_path
     end
 end
 
@@ -241,38 +243,38 @@ local function getCurrentFile( fn )
 
     local fenv = getfenv( fn )
     if fenv then
-        local filePath = raw_get( fenv, "__filename" )
-        if filePath then
-            return filePath
+        local file_path = raw_get( fenv, "__filename" )
+        if file_path then
+            return file_path
         end
     end
 
-    local filePath = debug_getfpath( fn )
-    if string_isURL( filePath ) then
-        filePath = string_match( filePath, "^[^/]*([^#?]+).*$" )
-        return string_match( filePath, "^//[^/]+/?(.+)$" ) or filePath
+    local file_path = debug_getfpath( fn )
+    if string_isURL( file_path ) then
+        file_path = string_match( file_path, "^[^/]*([^#?]+).*$" )
+        return string_match( file_path, "^//[^/]+/?(.+)$" ) or file_path
     end
 
-    return "/" .. filePath
+    return "/" .. file_path
 end
 
 path.getCurrentFile = getCurrentFile
 
 --- Get the current directory path or function directory path.
 ---@param fn function?: The function to get the directory path from.
----@param withTrailingSlash boolean?: Whether to include the trailing slash.
+---@param with_trailing_slash boolean?: Whether to include the trailing slash.
 ---@return string: The directory path.
-local function getCurrentDirectory( fn, withTrailingSlash )
+local function getCurrentDirectory( fn, with_trailing_slash )
     if fn then
-        if withTrailingSlash == nil then
-            withTrailingSlash = true
+        if with_trailing_slash == nil then
+            with_trailing_slash = true
         end
 
         local fenv = getfenv( fn )
         if fenv then
             local dirPath = raw_get( fenv, "__dirname" )
             if dirPath then
-                if withTrailingSlash then
+                if with_trailing_slash then
                     dirPath = dirPath .. "/"
                 else
                     return dirPath
@@ -280,13 +282,13 @@ local function getCurrentDirectory( fn, withTrailingSlash )
             end
         end
 
-        local filePath = debug_getfpath( fn )
-        if string_isURL( filePath ) then
-            filePath = string_match( filePath, "^[^/]*([^#?]+).*$" )
-            return getDirectory( string_match( filePath, "^//[^/]+/?(.+)$" ) or filePath, withTrailingSlash )
+        local file_path = debug_getfpath( fn )
+        if string_isURL( file_path ) then
+            file_path = string_match( file_path, "^[^/]*([^#?]+).*$" )
+            return getDirectory( string_match( file_path, "^//[^/]+/?(.+)$" ) or file_path, with_trailing_slash )
         end
 
-        return getDirectory( "/" .. filePath, withTrailingSlash )
+        return getDirectory( "/" .. file_path, with_trailing_slash )
     end
 
     return "/"
@@ -297,11 +299,11 @@ path.getCurrentDirectory = getCurrentDirectory
 path.delimiter = ":"
 path.sep = "/"
 
---- Check if filePath is absolute, i.e. starts with a slash.
----@param filePath string The file path.
----@return boolean: `true` if filePath is absolute, `false` otherwise.
-local function isAbsolute( filePath )
-    return string_byte( filePath, 1 ) == 0x2F
+--- Check if file_path is absolute, i.e. starts with a slash.
+---@param file_path string The file path.
+---@return boolean: `true` if file_path is absolute, `false` otherwise.
+local function isAbsolute( file_path )
+    return string_byte( file_path, 1 ) == 0x2F
 end
 
 path.isAbsolute = isAbsolute
@@ -333,58 +335,58 @@ do
 end
 
 --- Split a filename into [root, dir, basename].
----@param filePath string The file path.
----@return boolean: Whether filePath is absolute.
+---@param file_path string The file path.
+---@return boolean: Whether file_path is absolute.
 ---@return string: The directory.
 ---@return string: The basename.
-local function splitPath( filePath )
+local function splitPath( file_path )
     local root
-    if isAbsolute( filePath ) then
-        filePath = string_sub( filePath, 2 )
+    if isAbsolute( file_path ) then
+        file_path = string_sub( file_path, 2 )
         root = true
     else
         root = false
     end
 
-    local basename, dir = stripDirectory( filePath )
+    local basename, dir = stripDirectory( file_path )
     return root, dir, basename
 end
 
 path.splitPath = splitPath
 
 --- Get the directory of a file.
----@param filePath string The file path.
----@param withTrailingSlash boolean?: Whether to include the trailing slash.
+---@param file_path string The file path.
+---@param with_trailing_slash boolean?: Whether to include the trailing slash.
 ---@return string: The directory path.
-function path.dirname( filePath, withTrailingSlash )
-    if withTrailingSlash == nil then
-        withTrailingSlash = true
+function path.dirname( file_path, with_trailing_slash )
+    if with_trailing_slash == nil then
+        with_trailing_slash = true
     end
 
-    filePath = getDirectory( filePath, withTrailingSlash )
-    if filePath == "" then
-        if withTrailingSlash then
+    file_path = getDirectory( file_path, with_trailing_slash )
+    if file_path == "" then
+        if with_trailing_slash then
             return "./"
         else
             return "."
         end
     end
 
-    return filePath
+    return file_path
 end
 
---- Get the basename from filePath.
----@param filePath string The file path.
+--- Get the basename from file_path.
+---@param file_path string The file path.
 ---@param stripSuffix boolean?: Whether to strip the extension.
 ---@return string: The basename.
 ---@return string: The file extension.
-function path.basename( filePath, stripSuffix )
-    filePath = getFile( filePath )
+function path.basename( file_path, stripSuffix )
+    file_path = getFile( file_path )
     if stripSuffix then
-        return stripExtension( filePath )
+        return stripExtension( file_path )
     end
 
-    return filePath, ""
+    return file_path, ""
 end
 
 path.extname = getExtension
@@ -395,17 +397,17 @@ do
     local table_insert, table_remove = table.insert, table.remove
 
     --- Normalizes a file path by removing all "." and ".." parts.
-    ---@param filePath string The file path.
+    ---@param file_path string The file path.
     ---@return string: The normalized file path.
-    function normalize( filePath )
-        local trailingSlashes = string_byte( filePath, string_len( filePath ) ) == 0x2F --[[ / ]]
+    function normalize( file_path )
+        local trailingSlashes = string_byte( file_path, string_len( file_path ) ) == 0x2F --[[ / ]]
 
-        local isAbs = isAbsolute( filePath )
+        local isAbs = isAbsolute( file_path )
         if isAbs then
-            filePath = string_sub( filePath, 2 )
+            file_path = string_sub( file_path, 2 )
         end
 
-        local parts, length = string_byteSplit( filePath, 0x2F --[[ / ]] )
+        local parts, length = string_byteSplit( file_path, 0x2F --[[ / ]] )
         local skip = 0
 
         for index = length, 1, -1 do
@@ -432,8 +434,8 @@ do
             end
         end
 
-        filePath = table_concat( parts, "/", 1, length )
-        if filePath == "" then
+        file_path = table_concat( parts, "/", 1, length )
+        if file_path == "" then
             if isAbs then
                 return "/"
             elseif trailingSlashes then
@@ -444,14 +446,14 @@ do
         end
 
         if trailingSlashes then
-            filePath = filePath .. "/"
+            file_path = file_path .. "/"
         end
 
         if isAbs then
-            filePath = "/" .. filePath
+            file_path = "/" .. file_path
         end
 
-        return fixSlashes( filePath )
+        return fixSlashes( file_path )
     end
 
     path.normalize = normalize
@@ -499,9 +501,9 @@ path.join = join
 local function resolve( ... )
     local args, resolvedPath = { ... }, ""
     for index = select( "#", ... ), 1, -1 do
-        local filePath = args[ index ]
-        if filePath and filePath ~= "" then
-            resolvedPath = join( normalize( filePath ), resolvedPath )
+        local file_path = args[ index ]
+        if file_path and file_path ~= "" then
+            resolvedPath = join( normalize( file_path ), resolvedPath )
             if isAbsolute( resolvedPath ) then
                 return resolvedPath
             end
@@ -563,10 +565,10 @@ end
 ]]
 
 --- Parse a file path into [root, dir, basename, ext, name].
----@param filePath string The file path.
+---@param file_path string The file path.
 ---@return ParsedFilePath: The parsed file path.
-function path.parse( filePath )
-    local isAbs, dir, base = splitPath( filePath )
+function path.parse( file_path )
+    local isAbs, dir, base = splitPath( file_path )
     if isAbs then dir = "/" .. dir end
 
     local name, ext = string_match( base, "^(.+)%.(.+)$" )
