@@ -132,11 +132,11 @@ do
                 end
 
                 local mount_path = data[ 3 ]
-                if mount_path ~= nil then
-                    local_path = mount_path .. "/" .. local_path
+                if mount_path == nil then
+                    return string.lower( local_path ), path_name
+                else
+                    return mount_path .. "/" .. string.lower( local_path ), path_name
                 end
-
-                return local_path, path_name
             end
         end
 
@@ -198,6 +198,10 @@ function file.find( file_path )
     return file_Find( path_unpack( resolve_path( file_path ), false, 2 ) )
 end
 
+local function do_tralling_slash( str )
+    return ( str == "" or string.byte( str, -1 ) == 0x2F --[[ / ]] ) and str or ( str .. "/" )
+end
+
 do
 
     local function search( local_path, game_path, searchable, plain, lst, offset )
@@ -242,104 +246,102 @@ do
     ---@return integer count The number of files in the list.
     function file.search( directory_path, searchable, plain )
         local lst, local_path, game_path = {}, path_unpack( resolve_path( directory_path ), false, 2 )
-        return lst, search( ( local_path == "" or string.byte( local_path, -1 ) == 0x2F --[[ / ]] ) and local_path or ( local_path .. "/" ), game_path, searchable, plain, lst, 0 )
+        return lst, search( do_tralling_slash( local_path ), game_path, searchable, plain, lst, 0 )
     end
 
 end
 
-do
+---@param local_path string
+---@param game_path string
+---@return integer
+local function directory_Size( local_path, game_path )
+    local files, directories = file_Find( local_path .. "*", game_path )
+    local size = 0
 
-    local function folder_Size( local_path, game_path )
-        local size = 0
-
-        local files, directories = file_Find( local_path .. "*", game_path )
-
-        for _, file_name in raw_ipairs( files ) do
-            size = size + file_Size( local_path .. file_name, game_path )
-        end
-
-        for _, directory_name in raw_ipairs( directories ) do
-            size = size + folder_Size( local_path .. directory_name .. "/", game_path )
-        end
-
-        return size
+    for _, file_name in raw_ipairs( files ) do
+        size = size + file_Size( local_path .. file_name, game_path )
     end
 
-    --- [SHARED AND MENU]
-    ---
-    --- Returns the size of a file or directory by given path.
-    ---@param file_path string The path to the file or directory.
-    ---@return integer size The size of the file or directory in bytes.
-    function file.getSize( file_path )
-        local local_path, game_path = path_unpack( resolve_path( file_path ), false, 2 )
-        if file_IsDir( local_path, game_path ) then
-            return folder_Size( ( local_path == "" or string.byte( local_path, -1 ) == 0x2F --[[ / ]] ) and local_path or ( local_path .. "/" ), game_path )
-        else
-            return file_Size( local_path, game_path )
-        end
+    for _, directory_name in raw_ipairs( directories ) do
+        size = size + directory_Size( local_path .. directory_name .. "/", game_path )
     end
 
+    return size
+end
+
+--- [SHARED AND MENU]
+---
+--- Returns the size of a file or directory by given path.
+---@param file_path string The path to the file or directory.
+---@return integer size The size of the file or directory in bytes.
+function file.getSize( file_path )
+    local local_path, game_path = path_unpack( resolve_path( file_path ), false, 2 )
+    if file_IsDir( local_path, game_path ) then
+        return directory_Size( do_tralling_slash( local_path ), game_path )
+    else
+        return file_Size( local_path, game_path )
+    end
 end
 
 local file_Delete, file_CreateDir = glua_file.Delete, glua_file.CreateDir
 
-local create_Directory
-do
+---@param local_path string
+---@param game_path string
+local function directory_Delete( local_path, game_path )
+    local files, directories = file_Find( local_path .. "*", game_path )
 
-    local function directory_Delete( local_path, game_path )
-        local files, directories = file_Find( local_path .. "*", game_path )
+    for _, file_name in raw_ipairs( files ) do
+        file_Delete( local_path .. file_name, game_path )
+    end
 
-        for _, file_name in raw_ipairs( files ) do
-            file_Delete( local_path .. file_name, game_path )
-        end
+    for _, directory_name in raw_ipairs( directories ) do
+        directory_Delete( local_path .. directory_name .. "/", game_path )
+    end
 
-        for _, directory_name in raw_ipairs( directories ) do
-            directory_Delete( local_path .. directory_name .. "/", game_path )
-        end
+    file_Delete( local_path, game_path )
+end
 
+--- [SHARED AND MENU]
+---
+--- Deletes a file or directory by given path.
+---@param file_path string The path to the file or directory to delete.
+---@param forced? boolean If `true`, then the file or directory will be deleted even if it is not empty. (useless for files)
+function file.delete( file_path, forced )
+    local local_path, game_path = path_unpack( resolve_path( file_path ), true, 2 )
+    if forced and file_IsDir( local_path, game_path ) then
+        directory_Delete( do_tralling_slash( local_path ), game_path )
+    else
         file_Delete( local_path, game_path )
     end
+end
 
-    --- [SHARED AND MENU]
-    ---
-    --- Deletes a file or directory by given path.
-    ---@param file_path string The path to the file or directory to delete.
-    ---@param forced? boolean If `true`, then the file or directory will be deleted even if it is not empty. (useless for files)
-    function file.delete( file_path, forced )
-        local local_path, game_path = path_unpack( resolve_path( file_path ), true, 2 )
-        if forced and file_IsDir( local_path, game_path ) then
-            directory_Delete( ( local_path == "" or string.byte( local_path, -1 ) == 0x2F --[[ / ]] ) and local_path or ( local_path .. "/" ), game_path )
-        else
-            file_Delete( local_path, game_path )
-        end
-    end
-
-    function create_Directory( forced, local_path, game_path )
-        if not file_IsDir( local_path, game_path ) then
-            local parts, count = string.byteSplit( local_path, 0x2F --[[ / ]] )
-            for index = 1, count, 1 do
-                local directory_path = table.concat( parts, "/", 1, index )
-                if not file_IsDir( directory_path, game_path ) then
-                    if forced and file_Exists( directory_path, game_path ) then
-                        file_Delete( directory_path, game_path )
-                    end
-
-                    ---@diagnostic disable-next-line: redundant-parameter
-                    file_CreateDir( directory_path, game_path )
+---@param forced? boolean
+---@param local_path string
+---@param game_path string
+local function directory_Create( forced, local_path, game_path )
+    if not file_IsDir( local_path, game_path ) then
+        local parts, count = string.byteSplit( local_path, 0x2F --[[ / ]] )
+        for index = 1, count, 1 do
+            local directory_path = table.concat( parts, "/", 1, index )
+            if not file_IsDir( directory_path, game_path ) then
+                if forced and file_Exists( directory_path, game_path ) then
+                    file_Delete( directory_path, game_path )
                 end
+
+                ---@diagnostic disable-next-line: redundant-parameter
+                file_CreateDir( directory_path, game_path )
             end
         end
     end
+end
 
-    --- [SHARED AND MENU]
-    ---
-    --- Creates a directory by given path.
-    ---@param file_path string The path to the directory to create. (creates all non-existing directories in the path)
-    ---@param forced? boolean If `true`, all files in the path will be deleted if they exist.
-    function file.createDirectory( file_path, forced )
-        return create_Directory( forced, path_unpack( resolve_path( file_path ), true, 2 ) )
-    end
-
+--- [SHARED AND MENU]
+---
+--- Creates a directory by given path.
+---@param file_path string The path to the directory to create. (creates all non-existing directories in the path)
+---@param forced? boolean If `true`, all files in the path will be deleted if they exist.
+function file.createDirectory( file_path, forced )
+    return directory_Create( forced, path_unpack( resolve_path( file_path ), true, 2 ) )
 end
 
 local FILE = std.debug.findmetatable( "File" )
@@ -349,6 +351,151 @@ local FILE_Read, FILE_Write = FILE.Read, FILE.Write
 local FILE_Close = FILE.Close
 
 local file_Open = glua_file.Open
+
+---@param source_local_path string
+---@param source_game_path string
+---@param target_local_path string
+---@param target_game_path string
+---@param error_level? integer
+local function file_Copy( source_local_path, source_game_path, target_local_path, target_game_path, error_level )
+    if error_level == nil then error_level = 1 end
+    error_level = error_level + 1
+
+    local source_handler = file_Open( source_local_path, "rb", source_game_path )
+    if source_handler == nil then
+        std.error( "File '" .. source_local_path .. "' cannot be readed.", error_level )
+    end
+
+    ---@diagnostic disable-next-line: cast-type-mismatch
+    ---@cast source_handler File
+
+    local content = FILE_Read( source_handler )
+    FILE_Close( source_handler )
+
+    local target_handler = file_Open( target_local_path, "wb", target_game_path )
+    if target_handler == nil then
+        std.error( "File '" .. target_local_path .. "' cannot be written.", error_level )
+    end
+
+    ---@diagnostic disable-next-line: cast-type-mismatch
+    ---@cast target_handler File
+
+    FILE_Write( target_handler, content )
+    FILE_Close( target_handler )
+end
+
+---@param source_local_path string
+---@param source_game_path string
+---@param target_local_path string
+---@param target_game_path string
+---@param error_level? integer
+local function directory_Copy( source_local_path, source_game_path, target_local_path, target_game_path, error_level )
+    if error_level == nil then error_level = 1 end
+    error_level = error_level + 1
+
+    ---@diagnostic disable-next-line: redundant-parameter
+    file_CreateDir( target_local_path, target_game_path )
+
+    local files, directories = file_Find( source_local_path .. "*", source_game_path )
+
+    for _, file_name in raw_ipairs( files ) do
+        file_Copy( source_local_path .. file_name, source_game_path, target_local_path .. file_name, target_game_path, error_level )
+    end
+
+    for _, directory_name in raw_ipairs( directories ) do
+        directory_Copy( source_local_path .. directory_name .. "/", source_game_path, target_local_path .. directory_name .. "/", target_game_path, error_level )
+    end
+end
+
+--- [SHARED AND MENU]
+---
+--- Copies file or directory by given paths.
+---@param source_path string
+---@param target_path? string
+---@param forced? boolean
+---@return string
+function file.copy( source_path, target_path, forced )
+    local resolved_source_path = resolve_path( source_path )
+    local source_local_path, source_game_path = path_unpack( resolved_source_path, target_path == nil, 2 )
+
+    local resolved_target_path, target_local_path, target_game_path
+
+    if target_path == nil then
+        if file_IsDir( source_local_path, source_game_path ) then
+            target_local_path, target_game_path = source_local_path .. "-copy", source_game_path
+            resolved_target_path = resolved_source_path .. "-copy"
+        else
+
+            local directory, file_name_with_ext = path.stripFile( source_local_path, true )
+            local file_name, extension = path.stripExtension( file_name_with_ext, true )
+            local new_file_name = file_name .. "-copy" .. extension
+
+            resolved_target_path = path.stripFile( resolved_source_path, true ) .. new_file_name
+            target_local_path, target_game_path = directory .. new_file_name, source_game_path
+        end
+    else
+        resolved_target_path = resolve_path( target_path )
+        target_local_path, target_game_path = path_unpack( resolved_target_path, true, 2 )
+        if target_game_path == source_game_path and target_local_path == source_local_path then
+            std.error( "Source and target paths cannot be the same.", 2 )
+        end
+    end
+
+    if forced and file_Exists( target_local_path, target_game_path ) and not file_IsDir( target_local_path, target_game_path ) then
+        file_Delete( target_local_path, target_game_path )
+    end
+
+    if file_IsDir( source_local_path, source_game_path ) then
+        directory_Copy( do_tralling_slash( source_local_path ), source_game_path, do_tralling_slash( target_local_path ), target_game_path, 2 )
+    else
+        file_Copy( source_local_path, source_game_path, target_local_path, target_game_path, 2 )
+    end
+
+    return resolved_target_path
+end
+
+--- [SHARED AND MENU]
+---
+--- Moves file or directory by given paths.
+---@param source_path string The path to the file or directory to move.
+---@param target_path string The path to the target file or directory.
+---@param forced? boolean If `true`, the target file or directory will be deleted if it already exists.
+---@return string new_path The path to the new file or directory.
+function file.move( source_path, target_path, forced )
+    local resolved_target_path = resolve_path( target_path )
+
+    local target_local_path, target_game_path = path_unpack( resolved_target_path, true, 2 )
+    local source_local_path, source_game_path = path_unpack( resolve_path( source_path ), false, 2 )
+
+    if target_game_path == source_game_path and file_IsDir( source_local_path, source_game_path ) and string.startsWith( target_local_path, source_local_path ) then
+        std.error( "Cannot move a file or directory to itself.", 2 )
+    end
+
+    if file_Exists( target_local_path, target_game_path ) then
+        if forced then
+            if file_IsDir( target_local_path, target_game_path ) then
+                directory_Delete( do_tralling_slash( target_local_path ), target_game_path )
+            else
+                file_Delete( target_local_path, target_game_path )
+            end
+        elseif file_IsDir( target_local_path, target_game_path ) then
+            std.error( "Directory '" .. target_local_path .. "' already exists.", 2 )
+        else
+            std.error( "File '" .. target_local_path .. "' already exists.", 2 )
+        end
+    end
+
+    if file_IsDir( source_local_path, source_game_path ) then
+        source_local_path = do_tralling_slash( source_local_path )
+        directory_Copy( source_local_path, source_game_path, do_tralling_slash( target_local_path ), target_game_path, 2 )
+        directory_Delete( source_local_path, source_game_path )
+    else
+        file_Copy( source_local_path, source_game_path, target_local_path, target_game_path, 2 )
+        file_Delete( source_local_path, source_game_path )
+    end
+
+    return resolved_target_path
+end
 
 --- [SHARED AND MENU]
 ---
@@ -379,13 +526,17 @@ end
 --- Writes data to a file by given path.
 ---@param file_path string The path to the file to write.
 ---@param data string The data to write to the file.
----@param ignore_directory? boolean If `true`, the directory will not be created if it does not exist.
-function file.write( file_path, data, ignore_directory )
+---@param forced? boolean If `true`, the directory will not be created if it does not exist.
+function file.write( file_path, data, forced )
     local resolved_path = resolve_path( file_path )
     local local_path, game_path = path_unpack( resolved_path, true, 2 )
 
-    if not ignore_directory then
-        create_Directory( true, path.stripFile( local_path, false ), game_path )
+    if forced then
+        if file_IsDir( local_path, game_path ) then
+            directory_Delete( do_tralling_slash( local_path ), game_path )
+        else
+            directory_Create( true, path.stripFile( local_path, false ), game_path )
+        end
     end
 
     local handler = file_Open( local_path, "wb", game_path )
@@ -405,13 +556,17 @@ end
 --- Appends data to a file by given path.
 ---@param file_path string The path to the file to append.
 ---@param data string The data to append to the file.
----@param ignore_directory? boolean If `true`, the directory will not be created if it does not exist.
-function file.append( file_path, data, ignore_directory )
+---@param forced? boolean If `true`, the directory will not be created if it does not exist.
+function file.append( file_path, data, forced )
     local resolved_path = resolve_path( file_path )
     local local_path, game_path = path_unpack( resolved_path, true, 2 )
 
-    if not ignore_directory then
-        create_Directory( true, path.stripFile( local_path, false ), game_path )
+    if forced then
+        if file_IsDir( local_path, game_path ) then
+            directory_Delete( do_tralling_slash( local_path ), game_path )
+        else
+            directory_Create( true, path.stripFile( local_path, false ), game_path )
+        end
     end
 
     local handler = file_Open( local_path, "ab", game_path )
