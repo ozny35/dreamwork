@@ -41,8 +41,6 @@ end
 ---@field log2e number A variable containing the mathematical constant logarithm of 2 to the base e. (1.4426950408889)
 ---@field sqrt2 number A variable containing the mathematical constant square root of 2. (1.4142135623731)
 ---@field sqrt1_2 number A variable containing the mathematical constant square root of 1/2. (0.70710678118655)
----@field maxinteger number A variable containing the maximum 32bit integer. (2147483647)
----@field mininteger number A variable containing the minimum 32bit integer. (-2147483648)
 local math = {
     e = e,
     ln2 = ln2,
@@ -55,8 +53,6 @@ local math = {
     log2e = math_log( e, 2.0 ),
     sqrt2 = math_sqrt( 2.0 ),
     sqrt1_2 = math_sqrt( 0.5 ),
-    maxinteger = 0x7FFFFFFF,
-    mininteger = -0x80000000,
 
     -- Lua 5.1 functions
     abs = math_abs,
