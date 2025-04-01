@@ -14,7 +14,7 @@ end
 
 local getfenv, raw_get, select = std.getfenv, std.raw.get, std.select
 
----@class gpm.std.File.path
+---@class gpm.std.file.path
 local path = {}
 
 --- Get the file name with extension from filePath.
@@ -113,10 +113,14 @@ path.getExtension = getExtension
 ---@param filePath string The file path.
 ---@return string: The directory path.
 ---@return string: The file name with extension.
-local function stripFile( filePath )
+local function stripFile( filePath, withTrailingSlash )
     for index = string_len( filePath ), 1, -1 do
         if string_byte( filePath, index ) == 0x2F --[[ / ]] then
-            return string_sub( filePath, 1, index ), string_sub( filePath, index + 1 )
+            if withTrailingSlash then
+                return string_sub( filePath, 1, index ), string_sub( filePath, index + 1 )
+            else
+                return string_sub( filePath, 1, index - 1 ), string_sub( filePath, index + 1 )
+            end
         end
     end
 
@@ -129,10 +133,14 @@ path.stripFile = stripFile
 ---@param filePath string The file path.
 ---@return string: The file name with extension.
 ---@return string: The directory path.
-local function stripDirectory( filePath )
+local function stripDirectory( filePath, withTrailingSlash )
     for index = string_len( filePath ), 1, -1 do
         if string_byte( filePath, index ) == 0x2F --[[ / ]] then
-            return string_sub( filePath, index + 1 ), string_sub( filePath, 1, index )
+            if withTrailingSlash then
+                return string_sub( filePath, index + 1 ), string_sub( filePath, 1, index )
+            else
+                return string_sub( filePath, index + 1 ), string_sub( filePath, 1, index - 1 )
+            end
         end
     end
 
@@ -255,10 +263,6 @@ path.getCurrentFile = getCurrentFile
 ---@param withTrailingSlash boolean?: Whether to include the trailing slash.
 ---@return string: The directory path.
 local function getCurrentDirectory( fn, withTrailingSlash )
-    if fn == nil then
-        fn = debug_getfmain()
-    end
-
     if fn then
         if withTrailingSlash == nil then
             withTrailingSlash = true

@@ -1,683 +1,544 @@
 local _G = _G
-local gpm = _G.gpm
-local std, Logger = gpm.std, gpm.Logger
-local string, table = std.string, std.table
-
-local assert = std.assert
-
-local glua_file = _G.file
-local file_Exists, file_IsDir, file_Find = glua_file.Exists, glua_file.IsDir, glua_file.Find
-
-local string_byte, string_sub, string_len, string_byteSplit = string.byte, string.sub, string.len, string.byteSplit
-local table_inject, table_concat = table.inject, table.concat
-
-local Future = std.Future
-
-local CLIENT, SERVER, MENU = std.CLIENT, std.SERVER, std.MENU
-
-local lua_game_paths = {
-    LuaMenu = true,
-    lcl = true,
-    lsv = true,
-    LUA = true
-}
-
----@alias File gpm.std.File
----@class gpm.std.File: gpm.std.Object
----@field __class gpm.std.FileClass
----@field path gpm.std.File.path
-local File = std.class.base( "File" )
-
----@class gpm.std.FileClass: gpm.std.File
----@field __base gpm.std.File
----@overload fun( file_path: string ): File
-local FileClass = std.class.create( File )
-
----@alias gpm.std.File.mode
----| integer # The mode to open the file with.
----| `0` # Read
----| `1` # Read-binary
----| `2` # Write-binary
----| `3` # Append-binary
----| `4` # Write
----| `5` # Append
-
---[[
-
-    Virtual file system scheme:
-
-    / [BASE_PATH]:
-        /bin [GAMEBIN]
-        /base [MOD]
-
-        /game [GAME]
-            /download [DOWNLOAD]
-            /data [DATA]
-            /lua [LUA]
-
-        /mnt
-            /addons [WORKSHOP]
-            /local [THIRDPARTY]
-            /level [BSP]
-            /games
-
-]]
-
--- print()
--- PrintTable( select( 2, file.Find( "*", "THIRDPARTY" ) ), nil )
-
-
-
----@class gpm.std.File.path
-local path = _G.include( "file.path.lua" )
-FileClass.path = path
-
-local path_resolve, path_getDirectory = path.resolve, path.getDirectory
-
-local normalizeGamePath, absoluteGamePath
-local perform_game_path
-do
-
-    local tostring = std.tostring
-
-    function File:__isvalid()
-        return tostring( self.handler ) ~= "File [NULL]"
-    end
-
-    local engine = gpm.engine
-
-    local LUA_PATH
-    if SERVER then
-        LUA_PATH = "lsv"
-    elseif CLIENT then
-        LUA_PATH = "lcl"
-    elseif MENU then
-        LUA_PATH = "LuaMenu"
-    else
-        LUA_PATH = "LUA"
-    end
-
-    local path2path = {
-        ["local"] = "THIRDPARTY",
-        exe = "EXECUTABLE_PATH",
-        download = "DOWNLOAD",
-        base = "BASE_PATH",
-        gmod = "garrysmod",
-        mnt = "WORKSHOP",
-        lmn = "LuaMenu",
-        bin = "GAMEBIN",
-        lua = LUA_PATH,
-        game = "GAME",
-        data = "DATA",
-        maps = "BSP",
-        mod = "MOD",
-        lsv = "lsv",
-        lcl = "lcl"
-    }
-
-    local mounted_addons = engine.mounted_addons
-    local mounted_games = engine.mounted_games
-
-    function perform_game_path( game_path, write_mode )
-        if not game_path then
-            game_path = "game"
-        end
-
-        if write_mode and game_path ~= "data" and not MENU then
-            return false, "game path '" .. game_path .. "' is not writable."
-        end
-
-        local formatted = path2path[ game_path ]
-        if formatted == nil then
-            if mounted_addons[ game_path ] or mounted_games[ game_path ] then
-                return game_path
-            else
-                return false, "game path '" .. game_path .. "' does not exist."
-            end
-        else
-            return formatted
-        end
-    end
-
-    local path_getCurrentDirectory = path.getCurrentDirectory
-    -- local isurl = environment.isurl
-
-    local game_dirs = {
-        lua = true,
-        data = true,
-        download = true
-    }
-
-    ---
-    ---@param abs_path string The absolute file path.
-    ---@param game_path? string
-    ---@return string: The normalized file path.
-    ---@return string
-    function normalizeGamePath( abs_path, game_path )
-        -- if not game_path and isurl( abs_path ) then
-        --     if abs_path.scheme ~= "file" then
-        --         std.error(FileSystemError("Cannot resolve URL '" .. tostring(abs_path) .. "' because it is not a file URL."))
-        --     end
-
-        --     abs_path = abs_path.pathname
-        -- end
-
-        local b1, b2 = string_byte( abs_path, 1, 2 )
-        if b1 == 0x2F --[[ / ]] then
-            abs_path = string_sub( abs_path, 2, string_len( abs_path ) )
-            if game_path then
-                return abs_path, game_path
-            end
-        elseif b1 == 0x2E --[[ . ]] then
-            if b2 == 0x2F --[[ / ]] or ( b2 == 0x2E --[[ . ]] and string_byte( abs_path, 3 ) == 0x2F --[[ / ]] ) then
-                local currentDir = path_getCurrentDirectory()
-                currentDir = string_sub( currentDir, 5, string_len( currentDir ) )
-                if currentDir == "" then
-                    std.error( "Cannot resolve relative path '" .. tostring( abs_path ) .. "' because main file is unknown.", 2 )
-                else
-                    abs_path = string_sub( path_resolve( currentDir .. abs_path ), 2, string_len( abs_path ) )
-                    game_path = LUA_PATH
-                end
-            end
-        end
-
-        if not game_path then
-            for index = 1, string_len( abs_path ), 1 do
-                if string_byte( abs_path, index ) == 0x2F --[[ / ]] then
-                    local rootDir = string_sub( abs_path, 1, index - 1 )
-
-                    if game_dirs[ rootDir ] then
-                        game_path = rootDir
-                    end
-
-                    if game_path then
-                        abs_path = string_sub( abs_path, index + 1 )
-                    end
-
-                    break
-                end
-            end
-        end
-
-        return abs_path, game_path or "game"
-    end
-
-    local path2dir = {
-        download = "/download",
-        lmn = "/lua",
-        data = "/data",
-        lua = "/lua",
-        lsv = "/lua",
-        lcl = "/lua"
-    }
-
-    ---
-    ---@param file_path string
-    ---@param game_path? string
-    ---@return string The absolute file path.
-    function absoluteGamePath( file_path, game_path )
-        if game_path then
-            return ( path2dir[ game_path ] or "" ) .. "/" .. file_path
-        else
-            return file_path
-        end
-    end
-
-    local DEDICATED = std.DEDICATED
-
-    --- TODO
-    ---@param file_path string The file or folder path.
-    ---@param game_path? string: The path to look for the files and directories in.
-    ---@return string: The addon name.
-    function FileClass.whereis( file_path, game_path, skipNormalize )
-        if not skipNormalize then
-            file_path, game_path = normalizeGamePath( file_path, game_path )
-        end
-
-        local searchable = string_sub( absoluteGamePath( file_path, assert( perform_game_path( game_path ) ) ), 2 )
-        local mounted = engine.mounted
-
-        for i = 1, engine.mounted_count, 1 do
-            if file_Exists( searchable, mounted[ i ] ) then
-                -- TODO: add vfs path part here
-                return mounted[ i ]
-            end
-        end
-
-        if SERVER or MENU or not DEDICATED then
-            local _, folders = file_Find( searchable, "GAME" )
-            for i = 1, #folders, 1 do
-                if file_Exists( "addons/" .. folders[ i ] .. "/" .. searchable, "GAME" ) then
-                    return folders[ i ]
-                end
-            end
-        end
-
-        return "unknown"
-    end
-
-end
-
--- print( assert( perform_game_path( "data", true ) ) )
-
--- local function assertWriteAllowed( file_path, game_path )
---     if write_allowed_game_paths[ game_path ] or MENU then
---        return nil
---     end
---     std.error(FileSystemError(
---     "File '" .. tostring(file_path) .. "' is not allowed to be written to '" .. tostring(game_path) .. "'.", 3))
--- 	return nil
--- end
-
-do
-
-    local FILE = std.debug.findmetatable( "File" )
-    ---@cast FILE File
-
-    local file_Open = glua_file.Open
-    local FILE_Close = FILE.Close
-
-    local id2mode = {
-        [ 0 ] = "r",
-        [ 1 ] = "rb",
-        [ 2 ] = "wb",
-        [ 3 ] = "ab",
-        [ 4 ] = "w",
-        [ 5 ] = "a"
-    }
-
-    setmetatable( id2mode, {
-        __index = function( _, key )
-            std.error( "unknown file mode '" .. tostring( key ) .. "'", 3 )
-        end
-    } )
-
-    ---
-    ---@param file_path string
-    ---@param mode? gpm.std.File.mode
-    ---@param game_path? string
-    ---@param skipNormalize? boolean
-    function File:__init( file_path, mode, game_path, skipNormalize )
-        if mode == nil then mode = 0 end
-
-        if not skipNormalize then
-            file_path, game_path = normalizeGamePath( file_path, game_path )
-        end
-
-        game_path = assert( perform_game_path( game_path, mode > 1 ) )
-
-        local handler = file_Open( file_path, id2mode[ mode ], game_path )
-        if handler == nil then
-            std.error( "Failed to open file '" .. absoluteGamePath( file_path, game_path ) .. "'.", 4 )
-        end
-
-        self.handler = handler
-        self.file_path = absoluteGamePath( file_path, game_path )
-    end
-
-    function File:close()
-        FILE_Close( self.handler )
-    end
-
-    do
-
-        local FILE_Read = FILE.Read
-
-        ---
-        ---@param size? integer
-        ---@return string
-        function File:read( size )
-            return FILE_Read( self.handler, size )
-        end
-
-        ---
-        ---@param file_path string
-        ---@param game_path? string
-        ---@param skipNormalize? boolean
-        ---@return string
-        function FileClass.read( file_path, game_path, skipNormalize )
-            if not skipNormalize then
-                file_path, game_path = normalizeGamePath( file_path, game_path )
-            end
-
-            game_path = assert( perform_game_path( game_path ) )
-
-            local handler = file_Open( file_path, "rb", game_path )
-            if handler == nil then
-                std.error( "Failed to open file '" .. absoluteGamePath( file_path, game_path ) .. "' for reading.", 2 )
-            end
-
-            ---@diagnostic disable-next-line: cast-type-mismatch
-            ---@cast handler File
-
-            local str = FILE_Read( handler ) or ""
-            FILE_Close( handler )
-
-            return str
-        end
-
-    end
-
-    do
-
-        local FILE_Write = FILE.Write
-
-        ---
-        ---@param data string
-        function File:write( data )
-            FILE_Write( self.handler, data )
-        end
-
-        ---
-        ---@param file_path string
-        ---@param data string
-        ---@param game_path? string
-        ---@param skipNormalize? boolean
-        function FileClass.write( file_path, data, game_path, skipNormalize )
-            if not skipNormalize then
-                file_path, game_path = normalizeGamePath( file_path, game_path )
-            end
-
-            game_path = assert( perform_game_path( game_path ) )
-
-            local handler = file_Open( file_path, "wb", game_path )
-            if handler == nil then
-                std.error( "Failed to open file '" .. absoluteGamePath( file_path, game_path ) .. "' for writing.", 2 )
-            end
-
-            ---@diagnostic disable-next-line: cast-type-mismatch
-            ---@cast handler File
-
-            FILE_Write( handler, data )
-            FILE_Close( handler )
-        end
-
-        function FileClass.append( file_path, data, game_path, skipNormalize )
-            if not skipNormalize then
-                file_path, game_path = normalizeGamePath( file_path, game_path )
-            end
-
-            game_path = assert( perform_game_path( game_path ) )
-
-            local handler = file_Open( file_path, "ab", game_path )
-            if handler == nil then
-                std.error( "Failed to open file '" .. absoluteGamePath( file_path, game_path ) .. "' for appending.", 2 )
-            end
-
-            ---@diagnostic disable-next-line: cast-type-mismatch
-            ---@cast handler File
-
-            FILE_Write( handler, data )
-            FILE_Close( handler )
-        end
-
-    end
-
-end
-
-do
-
-    local FSASYNC = {
-        [ -8 ] = "filename not part of the specified file system, try a different one.",
-        [ -7 ] = "failure for a reason that might be temporary, you might retry, but not immediately.",
-        [ -6 ] = "read parameters invalid for unbuffered IO.",
-        [ -5 ] = "hard subsystem failure.",
-        [ -4 ] = "read error on file.",
-        [ -3 ] = "out of memory for file read.",
-        [ -2 ] = "caller's provided id is not recognized.",
-        [ -1 ] = "filename could not be opened (bad path, not exist, etc).",
-        [  0 ] = "operation is successful.",
-        [  1 ] = "file is properly queued, waiting for service.",
-        [  2 ] = "file is being accessed.",
-        [  3 ] = "file was aborted by caller.",
-        [  4 ] = "file is not yet queued."
-    }
-
-    do
-
-        local file_AsyncRead = glua_file.AsyncRead
-
-        ---@async
-        function FileClass.readAsync( file_path, game_path, skipNormalize )
-            if not skipNormalize then
-                file_path, game_path = normalizeGamePath( file_path, game_path )
-            end
-
-            local f = Future()
-
-            file_AsyncRead( file_path, assert( perform_game_path( game_path ) ), function( _, __, status, content )
-                if status == 0 then
-                    f:setResult( FileClass( content ) )
-                else
-                    f:setError( FSASYNC[ status ] or "unknown error." )
-                end
-            end, false )
-
-            return f:await()
-        end
-
-    end
-
-end
-
-local isFileMounted, isDirMounted
-do
-
-    local allowed_game_paths = {
-        LUA = true,
-        lsv = true,
-        lcl = true,
-        GAME = true,
-        WORKSHOP = true,
-        THIRDPARTY = true
-    }
-
-    local files = {}
-
-    function isFileMounted( file_path, game_path, skipNormalize )
-        if not skipNormalize then
-            file_path, game_path = normalizeGamePath( file_path, game_path )
-        end
-
-        if game_path == nil then
-            game_path = "GAME"
-        elseif game_path == "lmn" then
-            game_path = "LuaMenu"
-        end
-
-        if allowed_game_paths[ game_path ] then
-            if lua_game_paths[ game_path ] then
-                file_path = "lua/" .. file_path
-            end
-
-            return files[ file_path ]
-        else
-            return false
-        end
-    end
-
-    FileClass.isFileMounted = isFileMounted
-
-    local folders = {}
-
-    function isDirMounted( file_path, game_path, skipNormalize )
-        if not skipNormalize then
-            file_path, game_path = normalizeGamePath( file_path, game_path )
-        end
-
-        if allowed_game_paths[ game_path ] then
-            if lua_game_paths[ game_path ] then
-                file_path = "lua/" .. file_path
-            end
-
-            return folders[ file_path ]
-        else
-            return false
-        end
-    end
-
-    FileClass.isDirMounted = isDirMounted
-
-    do
-
-        local game_MountGMA = _G.game.MountGMA
-
-        ---
-        ---@param relativePath string:
-        ---@return true | false
-        ---@return table: The list of mounted files.
-        function FileClass.mountGMA( relativePath )
-            local success, mounted_files = game_MountGMA( string_sub( path_resolve( relativePath ), 2 ) )
-            if success then
-                local fileCount = #mounted_files
-                for index = 1, fileCount do
-                    local file_path = mounted_files[ index ]
-
-                    -- mounted files
-                    files[ file_path ] = true
-
-                    -- mounted dirs
-                    local segments, segmentCount = string_byteSplit( path_getDirectory( file_path, false ), 0x2F --[[ / ]] )
-                    segmentCount = segmentCount - 1
-
-                    while segmentCount ~= 0 do
-                        folders[ table_concat( segments, "/", 1, segmentCount ) ] = true
-                        segmentCount = segmentCount - 1
-                    end
-                end
-
-                Logger:debug( "GMA file '%s' was mounted to GAME with %d files.", relativePath, fileCount )
-            end
-
-            return success, mounted_files
-        end
-    end
-end
-
-function FileClass.exists( file_path, game_path, skipNormalize )
-    if not skipNormalize then
-        file_path, game_path = normalizeGamePath( file_path, game_path )
-    end
-
-    return ( isFileMounted( file_path, game_path, true ) or isDirMounted( file_path, game_path, true ) ) or file_Exists( file_path, game_path ) or ( CLIENT and lua_game_paths[ game_path ] and file_Exists( "lua/" .. file_path, "WORKSHOP" ) )
-end
-
-local function isDir( file_path, game_path, skipNormalize )
-    if not skipNormalize then
-        file_path, game_path = normalizeGamePath( file_path, game_path )
-    end
-
-    return isDirMounted( file_path, game_path, true ) or file_IsDir( file_path, game_path ) or ( CLIENT and lua_game_paths[ game_path ] and file_IsDir( "lua/" .. file_path, "WORKSHOP" ) )
-end
-
-FileClass.isDir = isDir
-
-local function isFile( file_path, game_path, skipNormalize )
-    if not skipNormalize then
-        file_path, game_path = normalizeGamePath( file_path, game_path )
-    end
-
-    if isFileMounted( file_path, game_path, true ) then
-        return true
-    elseif isDirMounted( file_path, game_path, true ) then
-        return false
-    elseif file_Exists( file_path, game_path ) then
-        return not file_IsDir( file_path, game_path )
-    elseif CLIENT and lua_game_paths[ game_path ] and file_Exists( "lua/" .. file_path, "WORKSHOP" ) then
-        return not file_IsDir( "lua/" .. file_path, "WORKSHOP" )
-    else
-        return false
-    end
-end
-
-FileClass.isFile = isFile
-
----
----@param file_path string:
----@param game_path? string
----@param sorting string
----@param skipNormalize boolean
----@return table files
----@return table dirs
-function FileClass.find( file_path, game_path, sorting, skipNormalize )
-    if not skipNormalize then
-        file_path, game_path = normalizeGamePath( file_path, game_path )
-    end
-
-    ---@cast game_path string
-
-    local files, dirs = file_Find( file_path, game_path, sorting )
-    if CLIENT and lua_game_paths[ game_path ] then
-        local workshop_files, workshop_dirs = file_Find( "lua/" .. file_path, "WORKSHOP", sorting )
-        table_inject( files, workshop_files )
-        table_inject( dirs, workshop_dirs )
-    end
-
-    return files, dirs
-end
-
-do
-
-    local file_Time = glua_file.Time
-
-    ---
-    ---@param file_path string The file or folder path.
-    ---@param game_path? gpm.std.File.Path
-    ---@param skipNormalize boolean
-    ---@return number: Seconds passed since Unix epoch, or 0 if the file is not found.
-    function FileClass.time( file_path, game_path, skipNormalize )
-        if not skipNormalize then
-            file_path, game_path = normalizeGamePath( file_path, game_path )
-        end
-
-        ---@cast game_path string
-
-        if file_Exists( file_path, game_path ) then
-            return file_Time( file_path, game_path )
-        elseif CLIENT and lua_game_paths[ game_path ] then
-            return file_Time( "lua/" .. file_path, "WORKSHOP" )
-        else
-            return 0
-        end
-    end
-
-end
-
-do
-
-    local path_replaceDirectory = path.replaceDirectory
-    local Rename = file.Rename
-
-    function file.Move(pathFrom, pathTo, gamePathFrom, gamePathTo, skipNormalize)
-        if not skipNormalize then
-            pathFrom, gamePathFrom = normalizeGamePath(pathFrom, gamePathFrom)
-        end
-
-        assertWriteAllowed(pathFrom, gamePathFrom)
-
-        if not skipNormalize then
-            pathTo, gamePathTo = normalizeGamePath(pathTo, gamePathTo)
-        end
-        assertWriteAllowed(pathTo, gamePathTo)
-
-        return Rename(pathFrom, path_replaceDirectory(pathFrom, pathTo), gamePathFrom, gamePathTo)
-    end
-
-    local path_replaceFile = path.replaceFile
-
-    function file.Rename(file_path, newName, game_path, skipNormalize)
-        if not skipNormalize then
-            file_path, game_path = normalizeGamePath(file_path, game_path)
-        end
-
-        assertWriteAllowed(file_path, game_path)
-
-        return Rename(file_path, path_replaceFile(file_path, newName), game_path)
-    end
-
-end
 
 -- TODO: https://wiki.facepunch.com/gmod/resource
 -- TODO: https://wiki.facepunch.com/gmod/Global.AddCSLuaFile
 
-return FileClass
+local glua_file = _G.file
+
+---@class gpm.std
+local std = _G.gpm.std
+
+local CLIENT, SERVER, MENU = std.CLIENT, std.SERVER, std.MENU
+local raw_ipairs = std.raw.ipairs
+local string = std.string
+
+--- [SHARED AND MENU]
+---
+--- The game's file library.
+---@class gpm.std.file
+local file = std.file or {}
+std.file = file
+
+local path = include( "file.path.lua" )
+file.path = path
+
+local debug = std.debug
+
+local function resolve_path( resolving_path  )
+    if not resolving_path or resolving_path == "" or resolving_path == "." then
+        return path.getCurrentDirectory( debug.getfmain(), false )
+    elseif resolving_path == "./" then
+        return path.getCurrentDirectory( debug.getfmain(), true )
+    elseif string.byte( resolving_path, 1 ) == 0x2F --[[ / ]] then
+        return path.normalize( resolving_path )
+    else
+        return path.normalize( path.getCurrentDirectory( debug.getfmain(), true ) .. resolving_path )
+    end
+end
+
+local engine = gpm.engine
+
+local path_unpack
+do
+
+    local mounted_addons = engine.mounted_addons
+    local mounted_games = engine.mounted_games
+
+    local fstab = {
+        { "/lua", ( SERVER and "lsv" or ( CLIENT and "lcl" or ( MENU and "LuaMenu" or "LUA" ) ) ) },
+        { "/materials", "GAME", "materials" },
+        { "/particles", "GAME", "particles" },
+        { "/gamemodes", "GAME", "gamemodes" },
+        { "/scripts", "GAME", "scripts" },
+        { "/shaders", "GAME", "shaders" },
+        { "/models", "GAME", "models" },
+        { "/scenes", "GAME", "scenes" },
+        { "/sound", "GAME", "sound" },
+        { "/download", "DOWNLOAD" },
+        { "/maps", "GAME", "maps" },
+        { "/fonts", "GAME", "resource/fonts" },
+        { "/localization", "GAME", "resource/localization" },
+        { "/data", "DATA", nil, true },
+        {
+            "/addons",
+            function( file_path )
+                local addon_name, local_path = string.match( file_path, "([^/]+)/?(.*)" )
+
+                if mounted_addons[ addon_name ] then
+                    return local_path, addon_name
+                end
+
+                std.error( "Addon '" .. addon_name .. "' is not mounted, path '/mnt/addons/" .. file_path .. "' is not available.", 3 )
+            end
+        },
+        { "/garrysmod", "MOD", nil, not MENU },
+        { "/mounted", "WORKSHOP" },
+        -- { "/game", "GAME" },
+        {
+            "/bspzip",
+            function( file_path )
+                return file_path, "BSP"
+            end
+        },
+        {
+            "",
+            function( file_path )
+                local game_folder, local_path = string.match( file_path, "([^/]+)/?(.*)" )
+
+                if game_folder == nil then
+                    return "", "BASE_PATH"
+                elseif mounted_games[ game_folder ] then
+                    return local_path, game_folder
+                else
+                    return local_path, "BASE_PATH"
+                end
+            end
+        }
+    }
+
+    for i = 1, #fstab do
+        local data = fstab[ i ]
+        data[ 5 ] = string.len( data[ 1 ] )
+    end
+
+    local fstab_length = #fstab
+
+    function path_unpack( resolved_path, write_mode, error_level )
+        for i = 1, fstab_length, 1 do
+            local data = fstab[ i ]
+
+            local mounted_path = data[ 1 ]
+            if mounted_path == resolved_path or string.sub( resolved_path, 1, data[ 5 ] + 1 ) == ( mounted_path .. "/" ) then
+                if write_mode and not data[ 4 ] then
+                    std.error( "Attempt to write into read-only directory '" .. path.getDirectory( resolved_path, true ) .. "'.", ( error_level or 1 ) + 1 )
+                end
+
+                local local_path, path_name
+
+                local game_path = data[ 2 ]
+                if isstring( game_path ) then
+                    ---@cast game_path string
+                    local_path, path_name = string.sub( resolved_path, data[ 5 ] + 2 ), game_path
+                elseif isfunction( game_path ) then
+                    ---@diagnostic disable-next-line: cast-type-mismatch
+                    ---@cast game_path function
+                    local_path, path_name = game_path( string.sub( resolved_path, data[ 5 ] + 2 ) )
+                else
+                    std.error( "Game path corrupted, critical failure.", 1 )
+                end
+
+                local mount_path = data[ 3 ]
+                if mount_path ~= nil then
+                    local_path = mount_path .. "/" .. local_path
+                end
+
+                return local_path, path_name
+            end
+        end
+
+        std.error( "Path '" .. resolved_path .. "' is not mounted.", ( error_level or 1 ) + 1 )
+    end
+
+end
+
+local file_Exists, file_IsDir = glua_file.Exists, glua_file.IsDir
+
+--- [SHARED AND MENU]
+---
+--- Checks if a file or directory exists by given path.
+---@param file_path string The path to the file.
+---@return boolean exists Returns `true` if the file or directory exists, otherwise `false`.
+function file.exists( file_path )
+    return file_Exists( path_unpack( resolve_path( file_path ), false, 2 ) )
+end
+
+--- [SHARED AND MENU]
+---
+--- Checks if a directory exists and is not a file by given path.
+---@param directory_path string The path to the directory.
+---@return boolean exists Returns `true` if the directory exists and is not a file, otherwise `false`.
+function file.isExistingDirectory( directory_path )
+    return file_IsDir( path_unpack( resolve_path( directory_path ), false, 2 ) )
+end
+
+--- [SHARED AND MENU]
+---
+--- Checks if a file exists and is not a directory by given path.
+---@param file_path string The path to the file.
+---@return boolean exists Returns `true` if the file exists and is not a directory, otherwise `false`.
+function file.isExistingFile( file_path )
+    local local_path, game_path = path_unpack( resolve_path( file_path ), false, 2 )
+    return file_Exists( local_path, game_path ) and not file_IsDir( local_path, game_path )
+end
+
+local file_Time = glua_file.Time
+
+--- [SHARED AND MENU]
+---
+--- Returns the last modified time of a file or directory by given path.
+---@param file_path string The path to the file or directory.
+---@return integer unix_time The last modified time of the file or directory.
+function file.getLastWriteTime( file_path )
+    return file_Time( path_unpack( resolve_path( file_path ), false, 2 ) )
+end
+
+local file_Find, file_Size = glua_file.Find, glua_file.Size
+
+--- [SHARED AND MENU]
+---
+--- Returns a list of files and directories by given path.
+---@param file_path string The path to the file or directory.
+---@return table files The list of files.
+---@return table directories The list of directories.
+function file.find( file_path )
+    return file_Find( path_unpack( resolve_path( file_path ), false, 2 ) )
+end
+
+do
+
+    local function search( local_path, game_path, searchable, plain, lst, offset )
+        local files, directories = file_Find( local_path .. "*", game_path )
+        local file_count = offset
+
+        if searchable == nil then
+            for _, file_name in raw_ipairs( files ) do
+                file_count = file_count + 1
+                lst[ file_count ] = local_path .. file_name
+            end
+        elseif plain then
+            for _, file_name in raw_ipairs( files ) do
+                if file_name == searchable then
+                    file_count = file_count + 1
+                    lst[ file_count ] = local_path .. file_name
+                end
+            end
+        else
+            for _, file_name in raw_ipairs( files ) do
+                if string.match( file_name, searchable ) ~= nil then
+                    file_count = file_count + 1
+                    lst[ file_count ] = local_path .. file_name
+                end
+            end
+        end
+
+        for _, directory_name in raw_ipairs( directories ) do
+            file_count = file_count + search( local_path .. directory_name .. "/", game_path, searchable, plain, lst, file_count )
+        end
+
+        return file_count - offset
+    end
+
+    --- [SHARED AND MENU]
+    ---
+    --- Returns a list of files and directories by given path.
+    ---@param directory_path string The path to the directory to search in.
+    ---@param searchable? string The string to search for, or `nil` to return ALL files in the directory.
+    ---@param plain? boolean If `true`, then the search will be based on the exact file name.
+    ---@return table files The list of files.
+    ---@return integer count The number of files in the list.
+    function file.search( directory_path, searchable, plain )
+        local lst, local_path, game_path = {}, path_unpack( resolve_path( directory_path ), false, 2 )
+        return lst, search( ( local_path == "" or string.byte( local_path, -1 ) == 0x2F --[[ / ]] ) and local_path or ( local_path .. "/" ), game_path, searchable, plain, lst, 0 )
+    end
+
+end
+
+do
+
+    local function folder_Size( local_path, game_path )
+        local size = 0
+
+        local files, directories = file_Find( local_path .. "*", game_path )
+
+        for _, file_name in raw_ipairs( files ) do
+            size = size + file_Size( local_path .. file_name, game_path )
+        end
+
+        for _, directory_name in raw_ipairs( directories ) do
+            size = size + folder_Size( local_path .. directory_name .. "/", game_path )
+        end
+
+        return size
+    end
+
+    --- [SHARED AND MENU]
+    ---
+    --- Returns the size of a file or directory by given path.
+    ---@param file_path string The path to the file or directory.
+    ---@return integer size The size of the file or directory in bytes.
+    function file.getSize( file_path )
+        local local_path, game_path = path_unpack( resolve_path( file_path ), false, 2 )
+        if file_IsDir( local_path, game_path ) then
+            return folder_Size( ( local_path == "" or string.byte( local_path, -1 ) == 0x2F --[[ / ]] ) and local_path or ( local_path .. "/" ), game_path )
+        else
+            return file_Size( local_path, game_path )
+        end
+    end
+
+end
+
+local file_Delete, file_CreateDir = glua_file.Delete, glua_file.CreateDir
+
+local create_Directory
+do
+
+    local function directory_Delete( local_path, game_path )
+        local files, directories = file_Find( local_path .. "*", game_path )
+
+        for _, file_name in raw_ipairs( files ) do
+            file_Delete( local_path .. file_name, game_path )
+        end
+
+        for _, directory_name in raw_ipairs( directories ) do
+            directory_Delete( local_path .. directory_name .. "/", game_path )
+        end
+
+        file_Delete( local_path, game_path )
+    end
+
+    --- [SHARED AND MENU]
+    ---
+    --- Deletes a file or directory by given path.
+    ---@param file_path string The path to the file or directory to delete.
+    ---@param forced? boolean If `true`, then the file or directory will be deleted even if it is not empty. (useless for files)
+    function file.delete( file_path, forced )
+        local local_path, game_path = path_unpack( resolve_path( file_path ), true, 2 )
+        if forced and file_IsDir( local_path, game_path ) then
+            directory_Delete( ( local_path == "" or string.byte( local_path, -1 ) == 0x2F --[[ / ]] ) and local_path or ( local_path .. "/" ), game_path )
+        else
+            file_Delete( local_path, game_path )
+        end
+    end
+
+    function create_Directory( forced, local_path, game_path )
+        if not file_IsDir( local_path, game_path ) then
+            local parts, count = string.byteSplit( local_path, 0x2F --[[ / ]] )
+            for index = 1, count, 1 do
+                local directory_path = table.concat( parts, "/", 1, index )
+                if not file_IsDir( directory_path, game_path ) then
+                    if forced and file_Exists( directory_path, game_path ) then
+                        file_Delete( directory_path, game_path )
+                    end
+
+                    ---@diagnostic disable-next-line: redundant-parameter
+                    file_CreateDir( directory_path, game_path )
+                end
+            end
+        end
+    end
+
+    --- [SHARED AND MENU]
+    ---
+    --- Creates a directory by given path.
+    ---@param file_path string The path to the directory to create. (creates all non-existing directories in the path)
+    ---@param forced? boolean If `true`, all files in the path will be deleted if they exist.
+    function file.createDirectory( file_path, forced )
+        return create_Directory( forced, path_unpack( resolve_path( file_path ), true, 2 ) )
+    end
+
+end
+
+local FILE = std.debug.findmetatable( "File" )
+---@cast FILE File
+
+local FILE_Read, FILE_Write = FILE.Read, FILE.Write
+local FILE_Close = FILE.Close
+
+local file_Open = glua_file.Open
+
+--- [SHARED AND MENU]
+---
+--- Reads data from a file by given path.
+---@param file_path string The path to the file to read.
+---@param length? integer The number of bytes to read, or `nil` to read the entire file.
+---@return string data The data read from the file.
+function file.read( file_path, length )
+    local resolved_path = resolve_path( file_path )
+    local local_path, game_path = path_unpack( resolved_path, false, 2 )
+
+    local handler = file_Open( local_path, "rb", game_path )
+    if handler == nil then
+        std.error( "File '" .. resolved_path .. "' cannot be read.", 2 )
+    end
+
+    ---@diagnostic disable-next-line: cast-type-mismatch
+    ---@cast handler File
+
+    local data = FILE_Read( handler, length )
+    FILE_Close( handler )
+
+    return data
+end
+
+--- [SHARED AND MENU]
+---
+--- Writes data to a file by given path.
+---@param file_path string The path to the file to write.
+---@param data string The data to write to the file.
+---@param ignore_directory? boolean If `true`, the directory will not be created if it does not exist.
+function file.write( file_path, data, ignore_directory )
+    local resolved_path = resolve_path( file_path )
+    local local_path, game_path = path_unpack( resolved_path, true, 2 )
+
+    if not ignore_directory then
+        create_Directory( true, path.stripFile( local_path, false ), game_path )
+    end
+
+    local handler = file_Open( local_path, "wb", game_path )
+    if handler == nil then
+        std.error( "File '" .. resolved_path .. "' cannot be written.", 2 )
+    end
+
+    ---@diagnostic disable-next-line: cast-type-mismatch
+    ---@cast handler File
+
+    FILE_Write( handler, data )
+    FILE_Close( handler )
+end
+
+--- [SHARED AND MENU]
+---
+--- Appends data to a file by given path.
+---@param file_path string The path to the file to append.
+---@param data string The data to append to the file.
+---@param ignore_directory? boolean If `true`, the directory will not be created if it does not exist.
+function file.append( file_path, data, ignore_directory )
+    local resolved_path = resolve_path( file_path )
+    local local_path, game_path = path_unpack( resolved_path, true, 2 )
+
+    if not ignore_directory then
+        create_Directory( true, path.stripFile( local_path, false ), game_path )
+    end
+
+    local handler = file_Open( local_path, "ab", game_path )
+    if handler == nil then
+        std.error( "File '" .. resolved_path .. "' cannot be written.", 2 )
+    end
+
+    ---@diagnostic disable-next-line: cast-type-mismatch
+    ---@cast handler File
+
+    FILE_Write( handler, data )
+    FILE_Close( handler )
+end
+
+
+local class = std.class
+
+do
+
+    --- [SHARED AND MENU]
+    ---
+    --- TODO
+    ---@alias FileReader gpm.std.file.Reader
+    ---@class gpm.std.file.Reader: gpm.std.Object
+    ---@field __class gpm.std.file.ReaderClass
+    local Reader = class.base( "FileReader" )
+
+    --[[
+
+        [ 0 ] - handler
+        [ 1 ] - file path
+
+    ]]
+
+    ---@protected
+    function Reader:__init( resolving_path )
+        local resolved_path = resolve_path( resolving_path )
+        self[ 1 ] = resolved_path
+
+        local local_path, game_path = path_unpack( resolved_path, false, 3 )
+
+        local handler = file_Open( local_path, "rb", game_path )
+        if handler == nil then
+            std.error( "Failed to open file '" .. resolved_path .. "'.", 4 )
+        end
+
+        self[ 0 ] = handler
+    end
+
+    ---@return boolean
+    ---@protected
+    function Reader:__isvalid()
+        return self[ 0 ] ~= nil
+    end
+
+    --- [SHARED AND MENU]
+    ---
+    --- Returns the path to the file.
+    function Reader:path()
+        return self[ 1 ]
+    end
+
+    --- [SHARED AND MENU]
+    ---
+    --- Closes the file.
+    function Reader:close()
+        local handler = self[ 0 ]
+        if handler ~= nil then
+            self[ 0 ] = nil
+            FILE_Close( handler )
+        end
+    end
+
+    --- [SHARED AND MENU]
+    ---
+    --- TODO
+    ---@param length? integer
+    ---@return string? content
+    function Reader:read( length )
+        local handler = self[ 0 ]
+        if handler == nil then
+            return nil
+        end
+
+        return FILE_Read( handler, length )
+    end
+
+    --- [SHARED AND MENU]
+    ---
+    --- TODO
+    ---@class gpm.std.file.ReaderClass: gpm.std.file.Reader
+    ---@field __base gpm.std.file.Reader
+    ---@overload fun( file_path: string ): gpm.std.file.Reader
+    local ReaderClass = class.create( Reader )
+    file.Reader = Reader
+
+end
+
+do
+
+    --- [SHARED AND MENU]
+    ---
+    --- TODO
+    ---@alias FileWriter gpm.std.file.Writer
+    ---@class gpm.std.file.Writer: gpm.std.Object
+    ---@field __class gpm.std.file.WriterClass
+    local Writer = class.base( "FileWriter" )
+
+    ---@protected
+    function Writer:__init()
+        self[ 0 ] = {}
+    end
+
+    function Writer:__isvalid()
+        return
+    end
+
+    --[[
+
+        [ 0 ] - queue
+
+
+    --]]
+
+    --- [SHARED AND MENU]
+    ---
+    --- TODO
+    ---@class gpm.std.file.WriterClass: gpm.std.file.Writer
+    ---@field __base gpm.std.file.Writer
+    ---@overload fun( file_path: string ): gpm.std.file.Writer
+    local WriterClass = class.create( Writer )
+    file.Writer = Writer
+
+end

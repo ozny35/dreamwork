@@ -733,8 +733,7 @@ std.Timer = include( "std/timer.lua" )
 
 include( "package/init.lua" )
 
-local File = include( "std/file.lua" )
-std.File = File
+include( "std/file.lua" )
 
 local Color = include( "std/color.lua" )
 std.Color = Color
@@ -803,7 +802,7 @@ std.Version = include( "std/version.lua" )
 -- URL and URLSearchParams classes
 include( "std/url.lua" )
 
--- Additional `File.path` function
+-- Additional `file.path` function
 do
 
     local string_byteSplit, string_lower = string.byteSplit, string.lower
@@ -811,8 +810,8 @@ do
     local is_url = std.isurl
     local URL = std.URL
 
-    ---@class gpm.std.File.path
-    local path = File.path
+    ---@class gpm.std.file.path
+    local path = std.file.path
 
     --- [SHARED AND MENU]
     ---

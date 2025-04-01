@@ -1,9 +1,8 @@
 local _G = _G
 local gpm = _G.gpm
 local std = gpm.std
-local File = std.File
-local path = File.path
 local string = std.string
+local path = std.file.path
 local tonumber = std.tonumber
 local glua_render = _G.render
 

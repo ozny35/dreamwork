@@ -46,6 +46,7 @@ gpm.Package = PackageClass
 local debug_getmetatable = std.debug.getmetatable
 local debug_getfmain = std.debug.getfmain
 local getfenv = std.getfenv
+local raw_get = std.raw.get
 
 function PackageClass.getName()
     local fn = debug_getfmain()
@@ -54,10 +55,25 @@ function PackageClass.getName()
         if fenv ~= nil then
             local metatable = debug_getmetatable( fenv )
             if metatable ~= nil then
-                return rawget( metatable, "__package" )
+                return raw_get( metatable, "__package" )
             end
         end
     end
 
-    return "gpm"
+    return "base"
+end
+
+function PackageClass.getMountName()
+    local fn = debug_getfmain()
+    if fn ~= nil then
+        local fenv = getfenv( fn )
+        if fenv ~= nil then
+            local metatable = debug_getmetatable( fenv )
+            if metatable ~= nil then
+                return raw_get( metatable, "__mount" )
+            end
+        end
+    end
+
+    return "GAME"
 end
