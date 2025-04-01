@@ -64,15 +64,19 @@ do
             function( file_path )
                 local addon_name, local_path = string.match( file_path, "([^/]+)/?(.*)" )
 
-                if mounted_addons[ addon_name ] then
-                    return local_path, addon_name
+                if addon_name == nil then
+                    std.error( "Wrong path '/addons/" .. file_path .. "'.", 3 )
                 end
 
-                std.error( "Addon '" .. addon_name .. "' is not mounted, path '/mnt/addons/" .. file_path .. "' is not available.", 3 )
+                if mounted_addons[ addon_name ] then
+                    return local_path or "", addon_name
+                end
+
+                std.error( "Addon '" .. addon_name .. "' is not mounted, path '/addons/" .. file_path .. "' is not available.", 3 )
             end
         },
         { "/garrysmod", "MOD", nil, not MENU },
-        { "/mounted", "WORKSHOP" },
+        -- { "/mounted", "WORKSHOP" },
         -- { "/game", "GAME" },
         {
             "/bspzip",

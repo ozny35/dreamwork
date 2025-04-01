@@ -1,5 +1,7 @@
 local _G = _G
 local gpm = _G.gpm
+
+---@class gpm.std
 local std = gpm.std
 
 local table = std.table
@@ -54,6 +56,7 @@ local Hook = std.class.base( "Hook" )
 ---@field __base gpm.std.Hook
 ---@overload fun( name: string?, returns_vararg: boolean? ): Hook
 local HookClass = std.class.create( Hook )
+std.Hook = HookClass
 
 function Hook:__tostring()
     return std.string.format( "Hook: %p [%s][%s]", self, self[ -2 ], self[ -1 ] and "running" or "stopped" )

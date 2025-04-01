@@ -494,8 +494,9 @@ end
 
 ---@class gpm.std.math
 local math = include( "std/math.lua" )
-math.ease = include( "std/math.ease.lua" )
 std.math = math
+
+math.ease = include( "std/math.ease.lua" )
 
 do
 
@@ -728,7 +729,7 @@ do
 
 end
 
-std.Hook = include( "std/hook.lua" )
+include( "std/hook.lua" )
 std.Timer = include( "std/timer.lua" )
 
 include( "package/init.lua" )
