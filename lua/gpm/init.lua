@@ -1164,12 +1164,12 @@ if std._VERSION ~= "Lua 5.1" then
     logger:warn( "Lua version changed, possible unpredictable behavior. (" .. std.tostring( _G._VERSION or "missing") .. ")" )
 end
 
-logger:info( "Start-up time: %.4f sec.", getTime() - gpm.StartTime )
+logger:info( "Start-up time: %.2f ms.", ( getTime() - gpm.StartTime ) * 1000 )
 
 do
     local start_time = getTime()
     std.debug.gc.collect()
-    logger:info( "Clean-up time: %.4f sec.", getTime() - start_time )
+    logger:info( "Clean-up time: %.2f ms.", ( getTime() - start_time ) * 1000 )
 end
 
 -- TODO: put https://wiki.facepunch.com/gmod/Global.DynamicLight somewhere
