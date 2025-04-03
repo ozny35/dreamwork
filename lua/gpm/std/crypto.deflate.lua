@@ -1,8 +1,25 @@
--- Based on LibDeflate by safeteeWow: https://github.com/safeteeWow/LibDeflate
-local _G = _G
-local assert, error, pairs, tostring = _G.assert, _G.error, _G.pairs, _G.tostring
-local type = _G.gpm.std.type
+--[[
+    Based on LibDeflate by safeteeWow
+    https://github.com/safeteeWow/LibDeflate
 
+    Edit by Unknown Developer
+--]]
+
+local _G = _G
+
+local std = _G.gpm.std
+local assert = std.assert
+local raw_pairs, raw_ipairs = std.raw.pairs, std.raw.ipairs
+
+local table = std.table
+local table_concat, table_insert, table_sort = table.concat, table.insert, table.sort
+
+local string = std.string
+local string_byte, string_char, string_find, string_gsub, string_sub, string_len = string.byte, string.char, string.find, string.gsub, string.sub, string.len
+
+--- [SHARED AND MENU]
+---
+--- A library for compressing and decompressing data using the deflate algorithm and more.
 ---@class gpm.std.crypto.deflate
 local deflate = {
     _VERSION = "1.0.2-release",
@@ -10,19 +27,6 @@ local deflate = {
     _MAJOR = "LibDeflate",
     _MINOR = 3
 }
-
--- localize Lua api for faster access.
-local string_format, string_byte, string_char, string_find, string_gsub, string_sub
-do
-    local string = _G.string
-    string_format, string_byte, string_char, string_find, string_gsub, string_sub = string.format, string.byte, string.char, string.find, string.gsub, string.sub
-end
-
-local table_concat, table_sort
-do
-    local table = _G.table
-    table_concat, table_sort = table.concat, table.sort
-end
 
 -- Converts i to 2^i, (0<=i<=32)
 -- This is used to implement bit left shift and bit right shift.
@@ -286,22 +290,23 @@ end
 ---
 --- See RFC1950 Page 9 https://tools.ietf.org/html/rfc1950 for the definition of Adler-32 checksum.
 ---@param str string the input string to calcuate its Adler-32 checksum.
----@return number: The Adler-32 checksum, which is greater or equal to 0, and less than 2^32 (4294967296).
-local function adler32( str )
+---@return number: The Adler-32 checksum, which is greater or equal to 0, and less than 2^32 (0x100000000).
+local function calculate_adler32( str )
     -- This function is loop unrolled by better performance.
     --
     -- Here is the minimum code:
     --
     -- local a = 1
     -- local b = 0
-    -- for i=1, #str do
-    -- 		local s = string.byte(str, i, i)
-    -- 		a = (a+s)%65521
-    -- 		b = (b+a)%65521
-    -- 		end
-    -- return b*65536+a
+    -- for i=1, string_len( str ), 1 do
+    -- 		local s = string.byte( str, i, i )
+    -- 		a = ( a + s ) % 65521
+    -- 		b = ( b + a ) % 65521
+    -- end
+    --
+    -- return b * 0x10000 + a
 
-    local strlen = #str
+    local strlen = string_len( str )
     local i = 1
     local a = 1
     local b = 0
@@ -320,16 +325,18 @@ local function adler32( str )
         i = i + 1
     end
 
-    return ( b * 65536 + a ) % 4294967296
+    return ( b * 0x10000 + a ) % 0x100000000
 end
 
-deflate.adler32 = adler32
+deflate.calculateAdler32 = calculate_adler32
 
 --- Compare adler32 checksum.
 --- adler32 should be compared with a mod to avoid sign problem 4072834167 (unsigned) is the same adler32 as -222133129
 local function isEqualAdler32( actual, expected )
-    return ( actual % 4294967296 ) == ( expected % 4294967296 )
+    return ( actual % 0x100000000 ) == ( expected % 0x100000000 )
 end
+
+deflate.isEqualAdler32 = isEqualAdler32
 
 --- Create a preset dictionary.
 ---
@@ -350,13 +357,13 @@ end
 ---
 ---@usage local dict_str = "1234567890"
 ---
---- print(dict_str:len(), deflate.adler32(dict_str))
+--- print(dict_str:len(), deflate.calculateAdler32(dict_str))
 --- Hardcode the print result below to verify it to avoid acciently
 --- modification of 'str' during the program development.
 --- string length: 10, Adler-32: 187433486,
 --- Don't calculate string length and its Adler-32 at run-time.
 ---
---- local dict = deflate.CreateDictionary(dict_str, 10, 187433486)
+--- local dict = deflate.createDictionary(dict_str, 10, 187433486)
 ---
 ---@param str string The string used as the preset dictionary.
 ---
@@ -365,135 +372,97 @@ end
 ---
 ---
 --- Empty string and string longer than 32768 bytes are not allowed.
----@param strlen number The length of 'str'. Please pass in this parameter
---- as a hardcoded constant, in order to verify the content of 'str'. The value
---- of this parameter should be known before your program runs.
----@param adler32 number The Adler-32 checksum of 'str'. Please pass in this parameter as a hardcoded constant, in order to verify the content of 'str'.
---- The value of this parameter should be known before your program runs.
 ---@return table: The dictionary used for preset dictionary compression and decompression.
 ---@raise error if 'strlen' does not match the length of 'str',
 --- or if 'adler32' does not match the Adler-32 checksum of 'str'.
-function deflate.CreateDictionary(str, strlen, adler32)
-    if strlen ~= #str then
-        error( string_format( "Usage: deflate.CreateDictionary(str, strlen, adler32): 'strlen' does not match the actual length of 'str'. 'strlen': %u, '#str': %u . Please check if 'str' is modified unintentionally.", strlen, #str ), 2 )
-    end
-
+function deflate.createDictionary( str )
+    local strlen = string_len( str )
     if strlen == 0 then
-        error( "Usage: deflate.CreateDictionary(str, strlen, adler32): 'str' - Empty string is not allowed.", 2 )
+        std.error( "Empty string is not allowed.", 2 )
+    elseif strlen > 32768 then
+        std.error( "String longer than 32768 bytes is not allowed. Got " .. strlen .. " bytes.", 2 )
     end
 
-    if strlen > 32768 then
-        error( string_format( "Usage: deflate.CreateDictionary(str, strlen, adler32): 'str' - string longer than 32768 bytes is not allowed. Got %d bytes.", strlen ), 2 )
-    end
+    local string_table = { string_byte( str, 1, 2 ) }
+    local hash_tables = {}
 
-    local actual_adler32 = adler32( str )
-    if not isEqualAdler32(adler32, actual_adler32) then
-        error( string_format( "Usage: deflate.CreateDictionary(str, strlen, adler32):" ..
-                " 'adler32' does not match the actual adler32 of 'str'." ..
-                " 'adler32': %u, 'adler32(str)': %u ." ..
-                " Please check if 'str' is modified unintentionally.",
-            adler32, actual_adler32 )
-        )
-    end
-
-    local string_table, hash_tables = {}, {}
     local dictionary = {
+        ["adler32"] = calculate_adler32( str ),
         ["string_table"] = string_table,
         ["hash_tables"] = hash_tables,
-        ["adler32"] = adler32,
         ["strlen"] = strlen
     }
 
-    string_table[ 1 ] = string_byte( str, 1, 1 )
-    string_table[ 2 ] = string_byte( str, 2, 2 )
-
     if strlen >= 3 then
         local i = 1
-        local hash = string_table[ 1 ] * 256 + string_table[ 2 ]
+        local hash = string_table[ 1 ] * 0x100 + string_table[ 2 ]
 
         while i <= ( strlen - 5 ) do
             local x1, x2, x3, x4 = string_byte( str, i + 2, i + 5 )
+
             string_table[ i + 2 ] = x1
             string_table[ i + 3 ] = x2
             string_table[ i + 4 ] = x3
             string_table[ i + 5 ] = x4
 
-            hash = ( hash * 256 + x1 ) % 16777216
+            hash = ( hash * 0x100 + x1 ) % 0x1000000
 
             local t = hash_tables[ hash ]
-            if not t then
+            if t == nil then
                 t = {}; hash_tables[ hash ] = t
             end
 
-            t[ #t + 1 ] = i - strlen
+            table_insert( t, i - strlen )
             i = i + 1
 
-            hash = ( hash * 256 + x2 ) % 16777216
+            hash = ( hash * 0x100 + x2 ) % 0x1000000
             t = hash_tables[ hash ]
 
-            if not t then
+            if t == nil then
                 t = {}; hash_tables[ hash ] = t
             end
 
-            t[ #t + 1 ] = i - strlen
+            table_insert( t, i - strlen )
             i = i + 1
 
-            hash = ( hash * 256 + x3 ) % 16777216
+            hash = ( hash * 0x100 + x3 ) % 0x1000000
             t = hash_tables[ hash ]
 
-            if not t then
+            if t == nil then
                 t = {}; hash_tables[ hash ] = t
             end
 
-            t[ #t + 1 ] = i - strlen
+            table_insert( t, i - strlen )
             i = i + 1
 
-            hash = ( hash * 256 + x4 ) % 16777216
+            hash = ( hash * 0x100 + x4 ) % 0x1000000
             t = hash_tables[ hash ]
 
-            if not t then
+            if t == nil then
                 t = {}; hash_tables[ hash ] = t
             end
 
-            t[ #t + 1 ] = i - strlen
+            table_insert( t, i - strlen )
             i = i + 1
         end
 
         while i <= ( strlen - 2 ) do
             local x = string_byte( str, i + 2 )
             string_table[ i + 2 ] = x
-            hash = ( hash * 256 + x ) % 16777216
+
+            hash = ( hash * 0x100 + x ) % 0x1000000
 
             local t = hash_tables[ hash ]
-            if not t then
+            if t == nil then
                 t = {}; hash_tables[ hash ] = t
             end
 
-            t[ #t + 1 ] = i - strlen
+            table_insert( t, i - strlen )
             i = i + 1
         end
     end
 
     return dictionary
-end
-
---- Check if the dictionary is valid.
----@param dictionary table The preset dictionary for compression and decompression.
----@return boolean: true if valid, false if not valid.
----@return string: if not valid, the error message.
-local function isValidDictionary( dictionary )
-    if type( dictionary ) ~= "table" then
-        return false, string_format( "'dictionary' - table expected got '%s'.", type( dictionary ) )
-    end
-
-    if type( dictionary.adler32 ) ~= "number" or type( dictionary.string_table ) ~= "table" or
-        type( dictionary.strlen ) ~= "number" or dictionary.strlen <= 0 or
-        dictionary.strlen > 32768 or dictionary.strlen ~= #dictionary.string_table or
-        type( dictionary.hash_tables ) ~= "table" then
-        return false, string_format( "'dictionary' - corrupted dictionary.", type( dictionary ) )
-    end
-
-    return true, ""
 end
 
 --[[
@@ -549,48 +518,75 @@ local _compression_level_configs = {
     [ 9 ] = { true, 32, 258, 258, 4096 } -- (VERY SLOW) level 9, similar to zlib level 9
 }
 
---- Check if the compression/decompression arguments is valid
----@param str string The input string.
----@param check_dictionary boolean? if true, check if dictionary is valid.
----@param dictionary? table The preset dictionary for compression and decompression.
----@param check_configs boolean? if true, check if config is valid.
----@param configs table | nil The compression configuration table
----@return boolean: true if valid, false if not valid.
----@return string: if not valid, the error message.
-local function isValidArguments( str, check_dictionary, dictionary, check_configs, configs )
-    if type( str ) ~= "string" then
-        return false, string_format( "'str' - string expected got '%s'.", type( str ) )
-    end
+local isValidArguments
+do
 
-    if check_dictionary then
-        ---@diagnostic disable-next-line: param-type-mismatch
-        local dict_valid, dict_err = isValidDictionary( dictionary )
-        if not dict_valid then
-            return false, dict_err
-        end
-    end
+    local istable, isnumber = std.istable, std.isnumber
+    local tostring = std.tostring
 
-    if check_configs then
-        local type_configs = type( configs )
-        if type_configs ~= "nil" and type_configs ~= "table" then
-            return false, string_format( "'configs' - nil or table expected got '%s'.", type( configs ) )
-        end
-
-        if type_configs == "table" then
-            for k, v in pairs( configs ) do
-                if k ~= "level" and k ~= "strategy" then
-                    return false, string_format( "'configs' - unsupported table key in the configs: '%s'.", k )
-                elseif k == "level" and not _compression_level_configs[ v ] then
-                    return false, string_format( "'configs' - unsupported 'level': %s.", tostring( v ) )
-                elseif k == "strategy" and v ~= "fixed" and v ~= "huffman_only" and v ~= "dynamic" then
-                    -- random_block_type is for testing purpose
-                    return false, string_format( "'configs' - unsupported 'strategy': '%s'.", tostring( v ) )
+    --- Check if the compression/decompression arguments is valid
+    ---@param dictionary table | nil The preset dictionary for compression and decompression.
+    ---@param configs table | nil The compression configuration table
+    ---@return nil | string err_msg if not valid, the error message.
+    function isValidArguments( dictionary, configs )
+        if dictionary ~= nil then
+            if istable( dictionary ) then
+                if not isnumber( dictionary.adler32 ) then
+                    return "'dictionary' - missing required field 'adler32'."
                 end
+
+                local string_table = dictionary.string_table
+                if not istable( dictionary.string_table ) then
+                    return "'dictionary' - missing required field 'string_table'."
+                end
+
+                if not isnumber( dictionary.strlen ) then
+                    return "'dictionary' - missing required field 'strlen'."
+                end
+
+                local strlen = dictionary.strlen
+                if strlen <= 0 or strlen > 32768 then
+                    return "'dictionary' - 'strlen' must be between 1 and 32768."
+                end
+
+                if strlen ~= #string_table then
+                    return "'dictionary' - 'strlen' does not match the length of 'string_table'."
+                end
+
+                if not istable( dictionary.hash_tables ) then
+                    return "'dictionary' - missing required field 'hash_tables'."
+                end
+            else
+                return "'dictionary' - table expected got '" .. std.type( dictionary ) .. "'."
+            end
+        end
+
+        if configs ~= nil then
+            if istable( configs ) then
+                local level = configs.level
+                if level == nil then
+                    return "'configs' - missing required field 'level'."
+                end
+
+                if not _compression_level_configs[ level ] then
+                    return "'configs' - unsupported 'level': '" .. tostring( level ) .. "'."
+                end
+
+                local strategy = configs.strategy
+                if strategy == nil then
+                    return "'configs' - missing required field 'strategy'."
+                end
+
+                -- random_block_type is for testing purpose
+                if not ( strategy == "fixed" or strategy == "huffman_only" or strategy == "dynamic" ) then
+                    return "'configs' - unsupported 'strategy': '" .. tostring( strategy ) .. "'."
+                end
+            else
+                return "'configs' - nil or table expected got '" .. std.type( configs ) .. "'."
             end
         end
     end
 
-    return true, ""
 end
 
 -- Compress code --
@@ -622,7 +618,7 @@ local function createWriter()
     local buffer = {}
 
     -- When buffer is big enough, flush into result_buffer to save memory.
-    local result_buffer = {}
+    local result_buffer, result_buffer_size = {}, 0
 
     --- Write bits with value "value" and bit length of "bitlen" into writer.
     ---@param value number The value being written
@@ -635,10 +631,10 @@ local function createWriter()
         -- Only bulk to buffer every 4 bytes. This is quicker.
         if cache_bitlen >= 32 then
             buffer_size = buffer_size + 1
-            buffer[ buffer_size ] = _byte_to_char[ cache % 256 ] ..
-                                    _byte_to_char[ ( cache - cache % 256 ) / 256 % 256 ] ..
-                                    _byte_to_char[ ( cache - cache % 65536 ) / 65536 % 256 ] ..
-                                    _byte_to_char[ ( cache - cache % 16777216 ) / 16777216 % 256 ]
+            buffer[ buffer_size ] = _byte_to_char[ cache % 0x100 ] ..
+                                    _byte_to_char[ ( cache - cache % 0x100 ) / 0x100 % 0x100 ] ..
+                                    _byte_to_char[ ( cache - cache % 0x10000 ) / 0x10000 % 0x100 ] ..
+                                    _byte_to_char[ ( cache - cache % 0x1000000 ) / 0x1000000 % 0x100 ]
 
             local rshift_mask = _pow2[ 32 - cache_bitlen + bitlen ]
             cache = ( value - value % rshift_mask ) / rshift_mask
@@ -652,14 +648,17 @@ local function createWriter()
     local function writeString( str )
         for _ = 1, cache_bitlen, 8 do
             buffer_size = buffer_size + 1
-            buffer[ buffer_size ] = string_char( cache % 256 )
-            cache = ( cache - cache % 256 ) / 256
+            buffer[ buffer_size ] = string_char( cache % 0x100 )
+
+            cache = ( cache - cache % 0x100 ) / 0x100
         end
 
         cache_bitlen = 0
+
         buffer_size = buffer_size + 1
         buffer[ buffer_size ] = str
-        total_bitlen = total_bitlen + #str * 8
+
+        total_bitlen = total_bitlen + string_len( str ) * 8
     end
 
     --- Flush current stuffs in the writer and return it.
@@ -687,8 +686,8 @@ local function createWriter()
 
                 for _ = 1, cache_bitlen, 8 do
                     buffer_size = buffer_size + 1
-                    buffer[ buffer_size ] = _byte_to_char[ cache % 256 ]
-                    cache = ( cache - cache % 256 ) / 256
+                    buffer[ buffer_size ] = _byte_to_char[ cache % 0x100 ]
+                    cache = ( cache - cache % 0x100 ) / 0x100
                 end
 
                 cache = 0
@@ -705,12 +704,18 @@ local function createWriter()
 
         buffer = {}
         buffer_size = 0
-        result_buffer[ #result_buffer + 1 ] = flushed
+
+        result_buffer_size = result_buffer_size + 1
+        result_buffer[ result_buffer_size ] = flushed
 
         if mode == _FLUSH_MODE_MEMORY_CLEANUP then
             return total_bitlen
+        elseif result_buffer_size == 1 then
+            return total_bitlen, result_buffer[ 1 ]
+        elseif result_buffer_size == 2 then
+            return total_bitlen, result_buffer[ 1 ] .. result_buffer[ 2 ]
         else
-            return total_bitlen, table_concat( result_buffer )
+            return total_bitlen, table_concat( result_buffer, "", 1, result_buffer_size )
         end
     end
 
@@ -863,7 +868,7 @@ local function getHuffmanBitlenAndCode( symbol_counts, max_bitlen, max_symbol )
         tree[4]: right child
     --]]
     local number_unique_symbols = 0
-    for symbol, count in pairs( symbol_counts ) do
+    for symbol, count in raw_pairs( symbol_counts ) do
         number_unique_symbols = number_unique_symbols + 1
         leafs[ number_unique_symbols ] = { count, symbol }
     end
@@ -1088,6 +1093,8 @@ local function loadStringToTable( str, t, start, stop, offset )
     return t
 end
 
+-- deflate.loadStringToTable = loadStringToTable
+
 --- Do LZ77 process. This function uses the majority of the CPU time.
 ---@see zlib/deflate.c:deflate_fast(), zlib/deflate.c:deflate_slow()
 ---@see https://github.com/madler/zlib/blob/master/doc/algorithm.txt
@@ -1121,7 +1128,7 @@ end
 ---@param offset number str[index] is stored in string_table[index-offset],
 ---			This offset is mainly an optimization to limit the index
 ---			of string_table, so lua can access this table quicker.
----@param dictionary table See deflate.CreateDictionary
+---@param dictionary table See deflate.createDictionary
 ---@return table: literal/LZ77_length deflate codes.
 ---@return table: the extra bits of literal/LZ77_length deflate codes.
 ---@return table: the count of each literal/LZ77 deflate code.
@@ -1147,31 +1154,31 @@ local function getBlockLZ77Result( level, string_table, hash_tables, block_start
         assert( block_start == 1 )
 
         if block_end >= block_start and dict_string_len >= 2 then
-            hash = dict_string_table[ dict_string_len - 1 ] * 65536 + dict_string_table[ dict_string_len ] * 256 + string_table[ 1 ]
+            hash = dict_string_table[ dict_string_len - 1 ] * 0x10000 + dict_string_table[ dict_string_len ] * 0x100 + string_table[ 1 ]
 
             local t = hash_tables[ hash ]
-            if not t then
+            if t == nil then
                 t = {}; hash_tables[ hash ] = t
             end
 
-            t[ #t + 1 ] = -1
+            table_insert( t, -1 )
         end
 
         if block_end >= block_start + 1 and dict_string_len >= 1 then
-            hash = dict_string_table[ dict_string_len ] * 65536 + string_table[ 1 ] * 256 + string_table[ 2 ]
+            hash = dict_string_table[ dict_string_len ] * 0x10000 + string_table[ 1 ] * 0x100 + string_table[ 2 ]
 
             local t = hash_tables[ hash ]
-            if not t then
+            if t == nil then
                 t = {}; hash_tables[ hash ] = t
             end
 
-            t[ #t + 1 ] = 0
+            table_insert( t, 0 )
         end
     end
 
     local dict_string_len_plus3 = dict_string_len + 3
 
-    hash = ( string_table[ block_start - offset ] or 0 ) * 256 + ( string_table[ block_start + 1 - offset ] or 0 )
+    hash = ( string_table[ block_start - offset ] or 0 ) * 0x100 + ( string_table[ block_start + 1 - offset ] or 0 )
 
     local lcodes = {}
     local lcode_tblsize = 0
@@ -1201,11 +1208,12 @@ local function getBlockLZ77Result( level, string_table, hash_tables, block_start
     while index <= index_end do
         local string_table_index = index - offset
         local offset_minus_three = offset - 3
+
         prev_len = cur_len
         prev_dist = cur_dist
         cur_len = 0
 
-        hash = ( hash * 256 + ( string_table[ string_table_index + 2 ] or 0 ) ) % 16777216
+        hash = ( hash * 0x100 + ( string_table[ string_table_index + 2 ] or 0 ) ) % 0x1000000
 
         local chain_index
         local cur_chain
@@ -1293,12 +1301,12 @@ local function getBlockLZ77Result( level, string_table, hash_tables, block_start
             local length_extra_bits_bitlen = _length_to_deflate_extra_bitlen[ prev_len ]
             local dist_code, dist_extra_bits_bitlen, dist_extra_bits
 
-            if prev_dist <= 256 then -- have cached code for small distance.
+            if prev_dist <= 0x100 then -- have cached code for small distance.
                 dist_code = _dist256_to_deflate_code[prev_dist]
                 dist_extra_bits = _dist256_to_deflate_extra_bits[prev_dist]
                 dist_extra_bits_bitlen = _dist256_to_deflate_extra_bitlen[prev_dist]
             else
-                dist_code = 16
+                dist_code = 0x10
                 dist_extra_bits_bitlen = 7
 
                 local a = 384
@@ -1342,15 +1350,15 @@ local function getBlockLZ77Result( level, string_table, hash_tables, block_start
             end
 
             for i = index + 1, index + prev_len - ( config_use_lazy and 2 or 1 ) do
-                hash = ( hash * 256 + ( string_table[ i - offset + 2 ] or 0 ) ) % 16777216
+                hash = ( hash * 0x100 + ( string_table[ i - offset + 2 ] or 0 ) ) % 0x1000000
 
                 if prev_len <= config_max_insert_length then
                     hash_chain = hash_tables[ hash ]
-                    if not hash_chain then
+                    if hash_chain == nil then
                         hash_chain = {}; hash_tables[hash] = hash_chain
                     end
 
-                    hash_chain[ #hash_chain + 1 ] = i
+                    table_insert( hash_chain, i )
                 end
             end
 
@@ -1370,8 +1378,8 @@ local function getBlockLZ77Result( level, string_table, hash_tables, block_start
 
     -- Write "end of block" symbol
     lcode_tblsize = lcode_tblsize + 1
-    lcodes[ lcode_tblsize ] = 256
-    lcodes_counts[ 256 ] = ( lcodes_counts[ 256 ] or 0 ) + 1
+    lcodes[ lcode_tblsize ] = 0x100
+    lcodes_counts[ 0x100 ] = ( lcodes_counts[ 0x100 ] or 0 ) + 1
 
     return lcodes, lextra_bits, lcodes_counts, dcodes, dextra_bits, dcodes_counts
 end
@@ -1419,8 +1427,7 @@ local function getDynamicHuffmanBlockSize( lcodes, dcodes, HCLEN, rle_codes_huff
     local block_bitlen = 17 -- 1+2+5+5+4
     block_bitlen = block_bitlen + ( HCLEN + 4 ) * 3
 
-    for i = 1, #rle_deflate_codes do
-        local code = rle_deflate_codes[ i ]
+    for _, code in raw_ipairs( rle_deflate_codes ) do
         block_bitlen = block_bitlen + rle_codes_huffman_bitlens[ code ]
 
         if code >= 16 then
@@ -1429,10 +1436,9 @@ local function getDynamicHuffmanBlockSize( lcodes, dcodes, HCLEN, rle_codes_huff
     end
 
     local length_code_count = 0
-    for i = 1, #lcodes do
-        local code = lcodes[ i ]
-        local huffman_bitlen = lcodes_huffman_bitlens[ code ]
-        block_bitlen = block_bitlen + huffman_bitlen
+
+    for _, code in raw_ipairs( lcodes ) do
+        block_bitlen = block_bitlen + lcodes_huffman_bitlens[ code ]
 
         if code > 256 then -- Length code
             length_code_count = length_code_count + 1
@@ -1443,12 +1449,10 @@ local function getDynamicHuffmanBlockSize( lcodes, dcodes, HCLEN, rle_codes_huff
             end
 
             local dist_code = dcodes[ length_code_count ]
-            local dist_huffman_bitlen = dcodes_huffman_bitlens[ dist_code ]
-            block_bitlen = block_bitlen + dist_huffman_bitlen
+            block_bitlen = block_bitlen + dcodes_huffman_bitlens[ dist_code ]
 
             if dist_code > 3 then -- dist code with extra bits
-                local dist_extra_bits_bitlen = (dist_code - dist_code % 2) / 2 - 1
-                block_bitlen = block_bitlen + dist_extra_bits_bitlen
+                block_bitlen = block_bitlen + ( dist_code - dist_code % 2 ) * 0.5 - 1
             end
         end
     end
@@ -1486,14 +1490,14 @@ local function compressDynamicHuffmanBlock( writeBits, is_last_block, lcodes, le
         writeBits( rle_codes_huffman_bitlens[ _rle_codes_huffman_bitlen_order[ i ] ] or 0, 3 )
     end
 
-    local rleExtraBitsIndex = 1
-    for i = 1, #rle_deflate_codes do
-        local code = rle_deflate_codes[ i ]
+    local rleExtraBitsIndex = 0
+
+    for _, code in raw_ipairs( rle_deflate_codes ) do
         writeBits( rle_codes_huffman_codes[ code ], rle_codes_huffman_bitlens[ code ] )
 
         if code >= 16 then
-            writeBits( rle_extra_bits[ rleExtraBitsIndex ], ( code == 16 ) and 2 or ( code == 17 and 3 or 7 ) )
             rleExtraBitsIndex = rleExtraBitsIndex + 1
+            writeBits( rle_extra_bits[ rleExtraBitsIndex ], ( code == 16 ) and 2 or ( code == 17 and 3 or 7 ) )
         end
     end
 
@@ -1501,8 +1505,7 @@ local function compressDynamicHuffmanBlock( writeBits, is_last_block, lcodes, le
     local length_code_with_extra_count = 0
     local dist_code_with_extra_count = 0
 
-    for i = 1, #lcodes do
-        local deflate_codee = lcodes[ i ]
+    for _, deflate_codee in raw_ipairs( lcodes ) do
         writeBits( lcodes_huffman_codes[ deflate_codee ], lcodes_huffman_bitlens[ deflate_codee ] )
 
         if deflate_codee > 256 then -- Length code
@@ -1520,7 +1523,7 @@ local function compressDynamicHuffmanBlock( writeBits, is_last_block, lcodes, le
 
             if dist_deflate_code > 3 then -- dist code with extra bits
                 dist_code_with_extra_count = dist_code_with_extra_count + 1
-                writeBits( dextra_bits[ dist_code_with_extra_count ], ( dist_deflate_code - dist_deflate_code % 2 ) / 2 - 1 )
+                writeBits( dextra_bits[ dist_code_with_extra_count ], ( dist_deflate_code - dist_deflate_code % 2 ) * 0.5 - 1 )
             end
         end
     end
@@ -1534,8 +1537,7 @@ local function getFixedHuffmanBlockSize( lcodes, dcodes )
     local block_bitlen = 3
     local length_code_count = 0
 
-    for i = 1, #lcodes do
-        local code = lcodes[ i ]
+    for _, code in raw_ipairs( lcodes ) do
         block_bitlen = block_bitlen + _fix_block_literal_huffman_bitlen[ code ]
 
         if code > 256 then -- Length code
@@ -1568,8 +1570,7 @@ local function compressFixedHuffmanBlock( writeBits, is_last_block, lcodes, lext
     local length_code_with_extra_count = 0
     local dist_code_with_extra_count = 0
 
-    for i = 1, #lcodes do
-        local deflate_code = lcodes[ i ]
+    for _, deflate_code in raw_ipairs( lcodes ) do
         writeBits( _fix_block_literal_huffman_code[ deflate_code ], _fix_block_literal_huffman_bitlen[ deflate_code ] )
 
         if deflate_code > 256 then -- Length code
@@ -1598,7 +1599,7 @@ end
 ---@param block_end number The end index of the origin input string
 ---@param total_bitlen number bit lens had been written into the compressed result before, because store block needs to shift to byte boundary.
 ---@return number: the bit length of the fixed block
-local function getStoreBlockSize(block_start, block_end, total_bitlen)
+local function getStoreBlockSize( block_start, block_end, total_bitlen )
     assert( block_end - block_start + 1 <= 65535 )
 
     local block_bitlen = 3
@@ -1652,7 +1653,7 @@ local function deflate_fn( configs, writeBits, writeString, flushWriter, str, di
     local block_end
     local bitlen_written
     local total_bitlen = flushWriter(_FLUSH_MODE_NO_FLUSH)
-    local strlen = #str
+    local strlen = string_len( str )
     local offset
 
     local level
@@ -1782,7 +1783,7 @@ local function deflate_fn( configs, writeBits, writeString, flushWriter, str, di
                 j = j + 1
             end
 
-            for k, t in pairs( hash_tables ) do
+            for k, t in raw_pairs( hash_tables ) do
                 local tSize = #t
                 if tSize > 0 and ( block_end + 1 - t[ 1 ] ) > 32768 then
                     if tSize == 1 then
@@ -1847,16 +1848,16 @@ local function compressZlibInternal( str, dictionary, configs )
 
     if FDIST == 1 then
         local adler32 = dictionary.adler32
-        local byte0 = adler32 % 256
+        local byte0 = adler32 % 0x100
 
-        adler32 = ( adler32 - byte0 ) / 256
-        local byte1 = adler32 % 256
+        adler32 = ( adler32 - byte0 ) / 0x100
+        local byte1 = adler32 % 0x100
 
-        adler32 = ( adler32 - byte1 ) / 256
-        local byte2 = adler32 % 256
+        adler32 = ( adler32 - byte1 ) / 0x100
+        local byte2 = adler32 % 0x100
 
-        adler32 = ( adler32 - byte2 ) / 256
-        local byte3 = adler32 % 256
+        adler32 = ( adler32 - byte2 ) / 0x100
+        local byte3 = adler32 % 0x100
 
         writeBits( byte3, 8 )
         writeBits( byte2, 8 )
@@ -1868,17 +1869,17 @@ local function compressZlibInternal( str, dictionary, configs )
     flushWriter( _FLUSH_MODE_BYTE_BOUNDARY )
 
     -- Most significant byte first
-    local adler32 = adler32( str )
-    local byte3 = adler32 % 256
+    local adler32 = calculate_adler32( str )
+    local byte3 = adler32 % 0x100
 
-    adler32 = ( adler32 - byte3 ) / 256
-    local byte2 = adler32 % 256
+    adler32 = ( adler32 - byte3 ) / 0x100
+    local byte2 = adler32 % 0x100
 
-    adler32 = ( adler32 - byte2 ) / 256
-    local byte1 = adler32 % 256
+    adler32 = ( adler32 - byte2 ) / 0x100
+    local byte1 = adler32 % 0x100
 
-    adler32 = ( adler32 - byte1 ) / 256
-    local byte0 = adler32 % 256
+    adler32 = ( adler32 - byte1 ) / 0x100
+    local byte0 = adler32 % 0x100
 
     writeBits( byte0, 8 )
     writeBits( byte1, 8 )
@@ -1904,17 +1905,18 @@ end
 ---@see compression_configs
 ---@see deflate.decompressDeflate
 function deflate.compressDeflate( str, configs )
-    local arg_valid, arg_err = isValidArguments( str, false, nil, true, configs )
-    if not arg_valid then
-        error( "Usage: deflate.compressDeflate(str, configs): " .. arg_err, 2 )
+    local err_msg = isValidArguments( nil, configs )
+    if err_msg == nil then
+        return compressDeflateInternal( str, nil, configs )
+    else
+        std.error( err_msg, 2 )
+        ---@diagnostic disable-next-line: missing-return
     end
-
-    return compressDeflateInternal( str, nil, configs )
 end
 
 --- Compress using the raw deflate format with a preset dictionary.
 ---@param str string The data to be compressed.
----@param dictionary table The preset dictionary produced by deflate.CreateDictionary
+---@param dictionary table The preset dictionary produced by deflate.createDictionary
 ---
 ---@param configs table | nil The configuration table to control the compression.
 --- If nil, use the default configuration.
@@ -1927,15 +1929,16 @@ end
 --- You don't need to use this value unless you want to do some postprocessing
 --- to the compressed data.
 ---@see compression_configs
----@see deflate.CreateDictionary
+---@see deflate.createDictionary
 ---@see deflate.decompressDeflateWithDict
 function deflate.compressDeflateWithDict( str, dictionary, configs )
-    local arg_valid, arg_err = isValidArguments( str, true, dictionary, true, configs )
-    if not arg_valid then
-        error( "Usage: deflate.compressDeflateWithDict(str, dictionary, configs): " .. arg_err, 2 )
+    local err_msg = isValidArguments( dictionary, configs )
+    if err_msg == nil then
+        return compressDeflateInternal( str, dictionary, configs )
+    else
+        std.error( err_msg, 2 )
+        ---@diagnostic disable-next-line: missing-return
     end
-
-    return compressDeflateInternal( str, dictionary, configs )
 end
 
 --- Compress using the zlib format.
@@ -1949,17 +1952,18 @@ end
 ---@see compression_configs
 ---@see deflate.decompressZlib
 function deflate.compressZlib( str, configs )
-    local arg_valid, arg_err = isValidArguments( str, false, nil, true, configs )
-    if not arg_valid then
-        error( "Usage: deflate.compressZlib(str, configs): " .. arg_err, 2 )
+    local err_msg = isValidArguments( nil, configs )
+    if err_msg == nil then
+        return compressZlibInternal( str, nil, configs )
+    else
+        std.error( err_msg, 2 )
+        ---@diagnostic disable-next-line: missing-return
     end
-
-    return compressZlibInternal( str, nil, configs )
 end
 
 --- Compress using the zlib format with a preset dictionary.
 ---@param str string the data to be compressed.
----@param dictionary table A preset dictionary produced by deflate.CreateDictionary()
+---@param dictionary table A preset dictionary produced by deflate.createDictionary()
 ---
 ---@param configs table | nil: The configuration table to control the compression.
 --- If nil, use the default configuration.
@@ -1968,15 +1972,16 @@ end
 --- Should always be 0.
 --- Zlib formatted compressed data never has padding bits at the end.
 ---@see compression_configs
----@see deflate.CreateDictionary
+---@see deflate.createDictionary
 ---@see deflate.decompressZlibWithDict
 function deflate.compressZlibWithDict( str, dictionary, configs )
-    local arg_valid, arg_err = isValidArguments( str, true, dictionary, true, configs )
-    if not arg_valid then
-        error( "Usage: deflate.compressZlibWithDict(str, dictionary, configs): " .. arg_err, 2 )
+    local err_msg = isValidArguments( dictionary, configs )
+    if err_msg == nil then
+        return compressZlibInternal( str, dictionary, configs )
+    else
+        std.error( err_msg, 2 )
+        ---@diagnostic disable-next-line: missing-return
     end
-
-    return compressZlibInternal( str, dictionary, configs )
 end
 
 -- Decompress code --
@@ -1990,9 +1995,8 @@ end
     4. readerBitlenLeft()
     5. skipToByteBoundary()
 --]]
-local function createReader( input_string )
-    local input = input_string
-    local input_strlen = #input_string
+local function createReader( input )
+    local input_strlen = string_len( input )
     local input_next_byte_pos = 1
     local cache_bitlen = 0
     local cache = 0
@@ -2016,11 +2020,12 @@ local function createReader( input_string )
             local byte1, byte2, byte3, byte4 = string_byte( input, input_next_byte_pos, input_next_byte_pos + 3 )
 
             -- This requires lua number to be at least double ()
-            cache = cache + ((byte1 or 0) + (byte2 or 0) * 256 + (byte3 or 0) * 65536 + (byte4 or 0) * 16777216) * lshift_mask
+            cache = cache + ( ( byte1 or 0 ) + ( byte2 or 0 ) * 256 + ( byte3 or 0 ) * 65536 + ( byte4 or 0 ) * 16777216 ) * lshift_mask
             input_next_byte_pos = input_next_byte_pos + 4
             cache_bitlen = cache_bitlen + 32 - bitlen
             code = cache % rshift_mask
-            cache = (cache - code) / rshift_mask
+
+            cache = ( cache - code ) / rshift_mask
         end
 
         return code
@@ -2038,10 +2043,10 @@ local function createReader( input_string )
 
         local byte_from_cache = ( cache_bitlen / 8 < bytelen ) and ( cache_bitlen / 8 ) or bytelen
         for _ = 1, byte_from_cache do
-            local byte = cache % 256
+            local byte = cache % 0x100
             buffer_size = buffer_size + 1
             buffer[ buffer_size ] = string_char( byte )
-            cache = ( cache - byte ) / 256
+            cache = ( cache - byte ) / 0x100
         end
 
         cache_bitlen = cache_bitlen - byte_from_cache * 8
@@ -2083,7 +2088,7 @@ local function createReader( input_string )
                 local byte1, byte2, byte3, byte4 = string_byte( input, input_next_byte_pos, input_next_byte_pos + 3 )
 
                 -- This requires lua number to be at least double ()
-                cache = cache + ((byte1 or 0) + (byte2 or 0) * 256 + (byte3 or 0) * 65536 + (byte4 or 0) * 16777216) * lshift_mask
+                cache = cache + ((byte1 or 0) + (byte2 or 0) * 0x100 + (byte3 or 0) * 0x10000 + (byte4 or 0) * 0x1000000) * lshift_mask
                 input_next_byte_pos = input_next_byte_pos + 4
                 cache_bitlen = cache_bitlen + 32
             end
@@ -2146,7 +2151,7 @@ end
 --- Create a deflate state, so I can pass in less arguments to functions.
 ---@param str string the whole string to be decompressed.
 ---@param dictionary table The preset dictionary. nil if not provided.
---- This dictionary should be produced by deflate.CreateDictionary(str)
+--- This dictionary should be produced by deflate.createDictionary(str)
 ---@return table: The decomrpess state.
 local function createDecompressState( str, dictionary )
     local readBits, readBytes, decode, readerBitlenLeft, skipToByteBoundary = createReader( str )
@@ -2252,10 +2257,10 @@ local function decodeUntilEndOfBlock( state, lcodes_huffman_bitlens, lcodes_huff
             return -10
         elseif symbol < 256 then -- Literal
             buffer_size = buffer_size + 1
-            buffer[buffer_size] = _byte_to_char[symbol]
+            buffer[ buffer_size ] = _byte_to_char[ symbol ]
         elseif symbol > 256 then -- Length code
             symbol = symbol - 256
-            local bitlen = _literal_deflate_code_to_base_len[symbol]
+            local bitlen = _literal_deflate_code_to_base_len[ symbol ]
             bitlen = ( symbol >= 8 ) and ( bitlen + readBits( _literal_deflate_code_to_extra_bitlen[ symbol ] ) ) or bitlen
             symbol = decode( dcodes_huffman_bitlens, dcodes_huffman_symbols, dcodes_huffman_min_bitlen )
 
@@ -2294,7 +2299,7 @@ local function decodeUntilEndOfBlock( state, lcodes_huffman_bitlens, lcodes_huff
         end
 
         if buffer_size >= 65536 then
-            result_buffer[ #result_buffer + 1 ] = table_concat( buffer, "", 1, 32768 )
+            table_insert( result_buffer, table_concat( buffer, "", 1, 32768 ) )
 
             for i = 32769, buffer_size do
                 buffer[ i - 32768 ] = buffer[ i ]
@@ -2346,7 +2351,7 @@ local function decompressStoreBlock( state )
 
     -- memory clean up when there are enough bytes in the buffer.
     if buffer_size >= 65536 then
-        result_buffer[ #result_buffer + 1 ] = table_concat( buffer, "", 1, 32768 )
+        table_insert( result_buffer, table_concat( buffer, "", 1, 32768 ) )
 
         for i = 32769, buffer_size do
             buffer[ i - 32768 ] = buffer[ i ]
@@ -2448,9 +2453,9 @@ local function decompressDynamicBlock( state )
                 symbol = symbol - 1
 
                 if index < nlen then
-                    lcodes_huffman_bitlens[index] = bitlen
+                    lcodes_huffman_bitlens[ index ] = bitlen
                 else
-                    dcodes_huffman_bitlens[index - nlen] = bitlen
+                    dcodes_huffman_bitlens[ index - nlen ] = bitlen
                 end
 
                 index = index + 1
@@ -2459,7 +2464,7 @@ local function decompressDynamicBlock( state )
     end
 
     -- dynamic block code description: missing end-of-block code
-    if (lcodes_huffman_bitlens[256] or 0) == 0 then
+    if ( lcodes_huffman_bitlens[ 0x100 ] or 0 ) == 0 then
         return -9
     end
 
@@ -2513,10 +2518,24 @@ local function inflate( state )
         end
     end
 
-    state.result_buffer[ #state.result_buffer + 1 ] = table_concat( state.buffer, "", 1, state.buffer_size )
-    return table_concat( state.result_buffer )
+    local result_buffer = state.result_buffer
+    return table_concat( result_buffer, "", 1, table_insert( result_buffer, table_concat( state.buffer, "", 1, state.buffer_size ) ) )
 end
 
+--- Decompress a raw deflate compressed data.
+---@param str string The data to be decompressed.
+---@return string | nil: If the decompression succeeds, return the decompressed data.
+--- If the decompression fails, return nil. You should check if this return
+--- value is non-nil to know if the decompression succeeds.
+---@return number | nil: If the decompression succeeds, return the number of
+--- unprocessed bytes in the input compressed data. This return value is a
+--- positive integer if the input data is a valid compressed data appended by an
+--- arbitary non-empty string. This return value is 0 if the input data does not
+--- contain any extra bytes.
+---
+--- If the decompression fails (The first return value of this function is nil),
+--- this return value is undefined.
+---@see deflate.compressDeflate
 ---@see deflate.decompressDeflate(str)
 ---@see deflate.decompressDeflateWithDict(str, dictionary)
 local function decompressDeflateInternal( str, dictionary )
@@ -2531,6 +2550,22 @@ local function decompressDeflateInternal( str, dictionary )
     return result, ( bitlen_left - bitlen_left % 8 ) * 0.125
 end
 
+deflate.decompressDeflate = decompressDeflateInternal
+
+--- Decompress a zlib compressed data.
+---@param str string The data to be decompressed
+---@return string | nil: If the decompression succeeds, return the decompressed data.
+--- If the decompression fails, return nil. You should check if this return
+--- value is non-nil to know if the decompression succeeds.
+---@return number | nil: If the decompression succeeds, return the number of
+--- unprocessed bytes in the input compressed data. This return value is a
+--- positive integer if the input data is a valid compressed data appended by an
+--- arbitary non-empty string. This return value is 0 if the input data does not
+--- contain any extra bytes.
+---
+--- If the decompression fails (The first return value of this function is nil),
+--- this return value is undefined.
+---@see deflate.compressZlib
 ---@see deflate.decompressZlib(str)
 ---@see deflate.decompressZlibWithDict(str)
 local function decompressZlibInternal( str, dictionary )
@@ -2571,7 +2606,7 @@ local function decompressZlibInternal( str, dictionary )
             return nil, -16 -- need dictonary, but dictionary is not provided.
         end
 
-        local actual_adler32 = readBits( 8 ) * 16777216 + readBits( 8 ) * 65536 + readBits( 8 ) * 256 + readBits( 8 )
+        local actual_adler32 = readBits( 8 ) * 0x1000000 + readBits( 8 ) * 0x10000 + readBits( 8 ) * 0x100 + readBits( 8 )
 
         if state.readerBitlenLeft() < 0 then
             return nil, 2 -- available inflate data did not terminate
@@ -2598,9 +2633,9 @@ local function decompressZlibInternal( str, dictionary )
         return nil, 2 -- available inflate data did not terminate
     end
 
-    local adler32_expected = adler_byte0 * 16777216 + adler_byte1 * 65536 + adler_byte2 * 256 + adler_byte3
+    local adler32_expected = adler_byte0 * 0x1000000 + adler_byte1 * 0x10000 + adler_byte2 * 0x100 + adler_byte3
 
-    local adler32_actual = adler32( result )
+    local adler32_actual = calculate_adler32( result )
     if not isEqualAdler32( adler32_expected, adler32_actual ) then
         return nil, -15 -- adler32 checksum does not match
     end
@@ -2609,28 +2644,7 @@ local function decompressZlibInternal( str, dictionary )
     return result, ( bitlen_left - bitlen_left % 8 ) * 0.125
 end
 
---- Decompress a raw deflate compressed data.
----@param str string The data to be decompressed.
----@return string | nil: If the decompression succeeds, return the decompressed data.
---- If the decompression fails, return nil. You should check if this return
---- value is non-nil to know if the decompression succeeds.
----@return number | nil: If the decompression succeeds, return the number of
---- unprocessed bytes in the input compressed data. This return value is a
---- positive integer if the input data is a valid compressed data appended by an
---- arbitary non-empty string. This return value is 0 if the input data does not
---- contain any extra bytes.
----
---- If the decompression fails (The first return value of this function is nil),
---- this return value is undefined.
----@see deflate.compressDeflate
-function deflate.decompressDeflate( str )
-    local arg_valid, arg_err = isValidArguments( str )
-    if not arg_valid then
-        error( "Usage: deflate.decompressDeflate(str): " .. arg_err, 2 )
-    end
-
-    return decompressDeflateInternal( str )
-end
+deflate.decompressZlib = decompressZlibInternal
 
 --- Decompress a raw deflate compressed data with a preset dictionary.
 ---@param str string The data to be decompressed.
@@ -2652,35 +2666,13 @@ end
 --- this return value is undefined.
 ---@see deflate.compressDeflateWithDict
 function deflate.decompressDeflateWithDict( str, dictionary )
-    local arg_valid, arg_err = isValidArguments( str, true, dictionary )
-    if not arg_valid then
-        error( "Usage: deflate.decompressDeflateWithDict(str, dictionary): " .. arg_err, 2 )
+    local err_msg = isValidArguments( dictionary )
+    if err_msg == nil then
+        return decompressDeflateInternal( str, dictionary )
+    else
+        std.error( err_msg, 2 )
+        ---@diagnostic disable-next-line: missing-return
     end
-
-    return decompressDeflateInternal( str, dictionary )
-end
-
---- Decompress a zlib compressed data.
----@param str string The data to be decompressed
----@return string | nil: If the decompression succeeds, return the decompressed data.
---- If the decompression fails, return nil. You should check if this return
---- value is non-nil to know if the decompression succeeds.
----@return number | nil: If the decompression succeeds, return the number of
---- unprocessed bytes in the input compressed data. This return value is a
---- positive integer if the input data is a valid compressed data appended by an
---- arbitary non-empty string. This return value is 0 if the input data does not
---- contain any extra bytes.
----
---- If the decompression fails (The first return value of this function is nil),
---- this return value is undefined.
----@see deflate.compressZlib
-function deflate.decompressZlib( str )
-    local arg_valid, arg_err = isValidArguments( str )
-    if not arg_valid then
-        error( "Usage: deflate.decompressZlib(str): " .. arg_err, 2 )
-    end
-
-    return decompressZlibInternal( str )
 end
 
 --- Decompress a zlib compressed data with a preset dictionary.
@@ -2703,12 +2695,13 @@ end
 --- this return value is undefined.
 ---@see deflate.compressZlibWithDict
 function deflate.decompressZlibWithDict( str, dictionary )
-    local arg_valid, arg_err = isValidArguments( str, true, dictionary )
-    if not arg_valid then
-        error( "Usage: deflate.decompressZlibWithDict(str, dictionary): " .. arg_err, 2 )
+    local err_msg = isValidArguments( dictionary )
+    if err_msg == nil then
+        return decompressZlibInternal( str, dictionary )
+    else
+        std.error( err_msg, 2 )
+        ---@diagnostic disable-next-line: missing-return
     end
-
-    return decompressZlibInternal( str, dictionary )
 end
 
 -- Calculate the huffman code of fixed block
@@ -2751,7 +2744,7 @@ end
 local escape_for_gsub
 do
 
-    local _gsub_escape_table = {
+    local escape_table = {
         ["\000"] = "%z",
         ["("] = "%(",
         [")"] = "%)",
@@ -2768,7 +2761,7 @@ do
     }
 
     function escape_for_gsub( str )
-        return string_gsub( str, "([%z%(%)%.%%%+%-%*%?%[%]%^%$])", _gsub_escape_table )
+        return string_gsub( str, "([%z%(%)%.%%%+%-%*%?%[%]%^%$])", escape_table )
     end
 
 end
@@ -2823,7 +2816,8 @@ function deflate.createCodec( reserved_chars, escape_chars, map_chars )
         return nil, "No escape characters supplied."
     end
 
-    if #reserved_chars < #map_chars then
+    local map_chars_length = string_len( map_chars )
+    if string_len( reserved_chars ) < map_chars_length then
         return nil, "The number of reserved characters must be at least as many as the number of mapped chars."
     end
 
@@ -2832,11 +2826,14 @@ function deflate.createCodec( reserved_chars, escape_chars, map_chars )
     end
 
     local encode_bytes = reserved_chars .. escape_chars .. map_chars
+    local encode_bytes_length = string_len( encode_bytes )
 
     -- build list of bytes not available as a suffix to a prefix byte
+    local encode_bytes_lst = { string_byte( encode_bytes, 1, encode_bytes_length ) }
     local taken = {}
-    for i = 1, #encode_bytes do
-        local byte = string_byte( encode_bytes, i, i )
+
+    for i = 1, encode_bytes_length, 1 do
+        local byte = encode_bytes_lst[ i ]
         if taken[ byte ] then
             return nil, "There must be no duplicate characters in the concatenation of reserved_chars, escape_chars and map_chars."
         end
@@ -2844,31 +2841,34 @@ function deflate.createCodec( reserved_chars, escape_chars, map_chars )
         taken[ byte ] = true
     end
 
-    local decode_patterns = {}
+    local decode_patterns, decode_patterns_count = {}, 0
     local decode_repls = {}
 
     -- the encoding can be a single gsub, but the decoding can require multiple gsubs
-    local encode_search = {}
+    local encode_search, encode_search_size = {}, 0
     local encode_translate = {}
 
     -- map single byte to single byte
-    if #map_chars > 0 then
+    if map_chars_length > 0 then
         local decode_search = {}
         local decode_translate = {}
 
-        for i = 1, #map_chars do
+        for i = 1, map_chars_length, 1 do
             local from = string_sub( reserved_chars, i, i )
             local to = string_sub( map_chars, i, i )
 
             encode_translate[ from ] = to
-            encode_search[ #encode_search + 1 ] = from
+            encode_search_size = encode_search_size + 1
+            encode_search[ encode_search_size ] = from
 
             decode_translate[ to ] = from
-            decode_search[ #decode_search + 1 ] = to
+            table_insert( decode_search, to )
         end
 
-        decode_patterns[ #decode_patterns + 1 ] = "([" .. escape_for_gsub( table_concat( decode_search ) ) .. "])"
-        decode_repls[ #decode_repls + 1 ] = decode_translate
+        decode_patterns_count = decode_patterns_count + 1
+        decode_patterns[ decode_patterns_count ] = "([" .. escape_for_gsub( table_concat( decode_search ) ) .. "])"
+
+        table_insert( decode_repls, decode_translate )
     end
 
     local escape_char_index = 1
@@ -2880,15 +2880,17 @@ function deflate.createCodec( reserved_chars, escape_chars, map_chars )
     local decode_search = {}
     local decode_translate = {}
 
-    for i = 1, #encode_bytes do
-        local c = string_sub( encode_bytes, i, i )
-        if not encode_translate[ c ] then
+    for i = 1, encode_bytes_length, 1 do
+        local char = string_sub( encode_bytes, i, i )
+        if encode_translate[ char ] == nil then
             while r >= 256 or taken[ r ] do
                 r = r + 1
 
                 if r > 255 then -- switch to next escapeChar
-                    decode_patterns[ #decode_patterns + 1 ] = escape_for_gsub( escape_char ) .. "([" .. escape_for_gsub( table_concat( decode_search ) ) .. "])"
-                    decode_repls[ #decode_repls + 1 ] = decode_translate
+                    decode_patterns_count = decode_patterns_count + 1
+                    decode_patterns[ decode_patterns_count ] = escape_for_gsub( escape_char ) .. "([" .. escape_for_gsub( table_concat( decode_search ) ) .. "])"
+
+                    table_insert( decode_repls, decode_translate )
 
                     escape_char_index = escape_char_index + 1
                     escape_char = string_sub( escape_chars, escape_char_index, escape_char_index )
@@ -2908,35 +2910,40 @@ function deflate.createCodec( reserved_chars, escape_chars, map_chars )
             end
 
             local char_r = _byte_to_char[ r ]
-            encode_translate[ c ] = escape_char .. char_r
-            encode_search[ #encode_search + 1 ] = c
-            decode_translate[ char_r ] = c
-            decode_search[ #decode_search + 1 ] = char_r
+
+            encode_translate[ char ] = escape_char .. char_r
+
+            encode_search_size = encode_search_size + 1
+            encode_search[ encode_search_size ] = char
+
+            decode_translate[ char_r ] = char
+            table_insert( decode_search, char_r )
+
             r = r + 1
         end
 
-        if i == #encode_bytes then
-            decode_patterns[ #decode_patterns + 1 ] = escape_for_gsub( escape_char ) .. "([" .. escape_for_gsub( table_concat( decode_search ) ) .. "])"
-            decode_repls[ #decode_repls + 1 ] = decode_translate
+        if i == encode_bytes_length then
+            decode_patterns_count = decode_patterns_count + 1
+            decode_patterns[ decode_patterns_count ] = escape_for_gsub( escape_char ) .. "([" .. escape_for_gsub( table_concat( decode_search ) ) .. "])"
+
+            table_insert( decode_repls, decode_translate )
         end
     end
 
     local codec = {}
 
-    local encode_pattern = "([" .. escape_for_gsub( table_concat( encode_search ) ) .. "])"
-    local encode_repl = encode_translate
+    local encode_pattern = "([" .. escape_for_gsub( table_concat( encode_search, "", 1, encode_search_size ) ) .. "])"
 
     function codec:encode( str )
-        return string_gsub( str, encode_pattern, encode_repl )
+        return string_gsub( str, encode_pattern, encode_translate )
     end
 
-    local decode_tblsize = #decode_patterns
     local decode_fail_pattern = "([" .. escape_for_gsub( reserved_chars ) .. "])"
 
     function codec:decode( str )
         if string_find( str, decode_fail_pattern ) then return nil end
 
-        for i = 1, decode_tblsize do
+        for i = 1, decode_patterns_count, 1 do
             str = string_gsub( str, decode_patterns[ i ], decode_repls[ i ] )
         end
 
@@ -2946,100 +2953,110 @@ function deflate.createCodec( reserved_chars, escape_chars, map_chars )
     return codec
 end
 
-local _addon_channel_codec
----@return table, string
-local function generateWoWAddonChannelCodec()
-    ---@diagnostic disable-next-line: return-type-mismatch
-    return deflate.createCodec( "\000", "\001", "" )
-end
+do
 
---- encode the string to make it ready to be transmitted in World of Warcraft addon channel.
----
----
---- The encoded string is guaranteed to contain no NULL ("\000") character.
----@param str string The string to be encoded.
----@return string result The encoded string.
----@see deflate.decodeForWoWAddonChannel
-function deflate.encodeForWoWAddonChannel( str )
-    if _addon_channel_codec == nil then
-        _addon_channel_codec = generateWoWAddonChannelCodec()
+    local _addon_channel_codec
+    ---@return table, string
+    local function generateWoWAddonChannelCodec()
+        ---@diagnostic disable-next-line: return-type-mismatch
+        return deflate.createCodec( "\000", "\001", "" )
     end
 
-    return _addon_channel_codec:encode( str )
-end
+    --- encode the string to make it ready to be transmitted in World of Warcraft addon channel.
+    ---
+    ---
+    --- The encoded string is guaranteed to contain no NULL ("\000") character.
+    ---@param str string The string to be encoded.
+    ---@return string result The encoded string.
+    ---@see deflate.decodeForWoWAddonChannel
+    function deflate.encodeForWoWAddonChannel( str )
+        if _addon_channel_codec == nil then
+            _addon_channel_codec = generateWoWAddonChannelCodec()
+        end
 
---- Decode the string produced by deflate.encodeForWoWAddonChannel
----@param str string The string to be decoded.
----@return string | nil result The decoded string if succeeds. nil if fails.
----@see deflate.encodeForWoWAddonChannel
-function deflate.decodeForWoWAddonChannel( str )
-    if _addon_channel_codec == nil then
-        _addon_channel_codec = generateWoWAddonChannelCodec()
+        return _addon_channel_codec:encode( str )
     end
 
-    return _addon_channel_codec:decode( str )
-end
+    --- Decode the string produced by deflate.encodeForWoWAddonChannel
+    ---@param str string The string to be decoded.
+    ---@return string | nil result The decoded string if succeeds. nil if fails.
+    ---@see deflate.encodeForWoWAddonChannel
+    function deflate.decodeForWoWAddonChannel( str )
+        if _addon_channel_codec == nil then
+            _addon_channel_codec = generateWoWAddonChannelCodec()
+        end
 
---- For World of Warcraft Chat Channel Encoding
---- Credits to LibCompress.
---- The code has been rewritten by the author of deflate.
----
---- Following byte values are not allowed:
---- \000, s, S, \010, \013, \124, %
---- Because SendChatMessage will error
---- if an UTF8 multibyte character is incomplete,
---- all character values above 127 have to be encoded to avoid this.
---- This costs quite a bit of bandwidth (about 13-14%)
---- Also, because drunken status is unknown for the received,
---- strings used with SendChatMessage should be terminated with
---- an identifying byte value, after which the server MAY add "...hic!"
---- or as much as it can fit(!).
---- Pass the identifying byte as a reserved character to this function
---- to ensure the encoding doesn't contain that value.
---- or use this: local message, match = arg1:gsub("^(.*)\029.-$", "%1")
---- arg1 is message from channel, \029 is the string terminator,
---- but may be used in the encoded datastream as well. :-)
---- This encoding will expand data anywhere from:
---- 0% (average with pure ascii text)
---- 53.5% (average with random data valued zero to 255)
---- 100% (only encoding data that encodes to two bytes)
----@return table, string
-local function generateWoWChatChannelCodec()
-    local r = {}
-    for i = 128, 255 do
-        r[ #r + 1 ] = _byte_to_char[ i ]
+        return _addon_channel_codec:decode( str )
     end
 
-    ---@diagnostic disable-next-line: return-type-mismatch
-    return deflate.createCodec( "sS\000\010\013\124%" .. table_concat( r ) , "\029\031", "\015\020" )
-end
+    --- For World of Warcraft Chat Channel Encoding
+    --- Credits to LibCompress.
+    --- The code has been rewritten by the author of deflate.
+    ---
+    --- Following byte values are not allowed:
+    --- \000, s, S, \010, \013, \124, %
+    --- Because SendChatMessage will error
+    --- if an UTF8 multibyte character is incomplete,
+    --- all character values above 127 have to be encoded to avoid this.
+    --- This costs quite a bit of bandwidth (about 13-14%)
+    --- Also, because drunken status is unknown for the received,
+    --- strings used with SendChatMessage should be terminated with
+    --- an identifying byte value, after which the server MAY add "...hic!"
+    --- or as much as it can fit(!).
+    --- Pass the identifying byte as a reserved character to this function
+    --- to ensure the encoding doesn't contain that value.
+    --- or use this: local message, match = arg1:gsub("^(.*)\029.-$", "%1")
+    --- arg1 is message from channel, \029 is the string terminator,
+    --- but may be used in the encoded datastream as well. :-)
+    --- This encoding will expand data anywhere from:
+    --- 0% (average with pure ascii text)
+    --- 53.5% (average with random data valued zero to 255)
+    --- 100% (only encoding data that encodes to two bytes)
+    ---@return table, string
+    local function generateWoWChatChannelCodec()
+        local r = {}
+        for i = 128, 255 do
+            r[ i - 127 ] = _byte_to_char[ i ]
+        end
 
-local _chat_channel_codec
-
---- encode the string to make it ready to be transmitted in World of Warcraft chat channel.
----
---- See also https://wow.gamepedia.com/ValidChatMessageCharacters
----@param str string The string to be encoded.
----@return string The encoded string.
----@see deflate.decodeForWoWChatChannel
-function deflate.encodeForWoWChatChannel( str )
-    if not _chat_channel_codec then
-        _chat_channel_codec = generateWoWChatChannelCodec()
+        ---@diagnostic disable-next-line: return-type-mismatch
+        return deflate.createCodec( "sS\000\010\013\124%" .. table_concat( r ) , "\029\031", "\015\020" )
     end
 
-    return _chat_channel_codec:encode( str )
-end
+    local _chat_channel_codec
 
---- Decode the string produced by deflate.encodeForWoWChatChannel.
----@param str string The string to be decoded.
----@return string | nil result The decoded string if succeeds. nil if fails.
----@see deflate.encodeForWoWChatChannel
-function deflate.decodeForWoWChatChannel( str )
-    if not _chat_channel_codec then
-        _chat_channel_codec = generateWoWChatChannelCodec()
+    --- encode the string to make it ready to be transmitted in World of Warcraft chat channel.
+    ---
+    --- See also https://wow.gamepedia.com/ValidChatMessageCharacters
+    ---@param str string The string to be encoded.
+    ---@return string The encoded string.
+    ---@see deflate.decodeForWoWChatChannel
+    function deflate.encodeForWoWChatChannel( str )
+        if _chat_channel_codec == nil then
+            _chat_channel_codec = generateWoWChatChannelCodec()
+        end
+
+        return _chat_channel_codec:encode( str )
     end
 
-    return _chat_channel_codec:decode( str )
+    --- Decode the string produced by deflate.encodeForWoWChatChannel.
+    ---@param str string The string to be decoded.
+    ---@return string | nil result The decoded string if succeeds. nil if fails.
+    ---@see deflate.encodeForWoWChatChannel
+    function deflate.decodeForWoWChatChannel( str )
+        if _chat_channel_codec == nil then
+            _chat_channel_codec = generateWoWChatChannelCodec()
+        end
+
+        return _chat_channel_codec:decode( str )
+    end
+
+    --- Clear the cache of the World of Warcraft addon channel codec.
+    function deflate.clearWoWCache()
+        _addon_channel_codec = nil
+        _chat_channel_codec = nil
+    end
+
 end
 
 -- Credits to WeakAuras2 and Galmok for the 6 bit encoding algorithm.
@@ -3195,7 +3212,7 @@ local _6bit_to_byte = {
 ---@param str string The string to be encoded.
 ---@return string result The encoded string.
 function deflate.encodeForPrint( str )
-    local strlen = #str
+    local strlen = string_len( str )
     local strlenMinus2 = strlen - 2
     local i = 1
     local buffer = {}
@@ -3252,8 +3269,10 @@ function deflate.decodeForPrint( str )
     str = string_gsub( str, "^[%c ]+", "" )
     str = string_gsub( str, "[%c ]+$", "" )
 
-    local strlen = #str
-    if strlen == 1 then return nil end
+    local strlen = string_len( str )
+    if strlen == 1 then
+        return nil
+    end
 
     local strlenMinus3 = strlen - 3
     local i = 1
@@ -3271,11 +3290,11 @@ function deflate.decodeForPrint( str )
         i = i + 4
 
         local cache = x1 + x2 * 64 + x3 * 4096 + x4 * 262144
-        local b1 = cache % 256
-        cache = ( cache - b1 ) / 256
+        local b1 = cache % 0x100
+        cache = ( cache - b1 ) / 0x100
 
-        local b2 = cache % 256
-        local b3 = ( cache - b2 ) / 256
+        local b2 = cache % 0x100
+        local b3 = ( cache - b2 ) / 0x100
         buffer_size = buffer_size + 1
         buffer[ buffer_size ] = _byte_to_char[ b1 ] .. _byte_to_char[ b2 ] .. _byte_to_char[ b3 ]
     end
@@ -3293,30 +3312,14 @@ function deflate.decodeForPrint( str )
     end
 
     while cache_bitlen >= 8 do
-        local byte = cache % 256
+        local byte = cache % 0x100
         buffer_size = buffer_size + 1
         buffer[ buffer_size ] = _byte_to_char[ byte ]
-        cache = ( cache - byte ) / 256
+        cache = ( cache - byte ) / 0x100
         cache_bitlen = cache_bitlen - 8
     end
 
     return table_concat( buffer )
 end
-
--- local function InternalClearCache()
---     _chat_channel_codec = nil
---     _addon_channel_codec = nil
--- end
-
--- -- For test. Don't use the functions in this table for real application.
--- -- Stuffs in this table is subject to change.
--- deflate.internals = {
---     ["loadStringToTable"] = loadStringToTable,
---     ["isValidDictionary"] = isValidDictionary,
---     ["isEqualAdler32"] = isEqualAdler32,
---     ["_byte_to_6bit_char"] = _byte_to_6bit_char,
---     ["_6bit_to_byte"] = _6bit_to_byte,
---     ["InternalClearCache"] = InternalClearCache
--- }
 
 return deflate
