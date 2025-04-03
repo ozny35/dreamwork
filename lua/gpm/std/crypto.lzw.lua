@@ -29,19 +29,28 @@ end
 ---
 --- Compresses a string using LZW compression.
 ---@param raw_data string The string to compress.
+---@param forced? boolean If `true`, compression will ignore the excess length of compressed data relative to uncompressed data.
 ---@return string | nil compressed_data The compressed string or `nil` if the compression fails.
 ---@return nil | string error_message The error message or `nil` if the compression succeeds.
-function lzw.compress( raw_data )
+function lzw.compress( raw_data, forced )
     local data_length = string_len( raw_data )
-    if data_length <= 1 then
-        return "u" .. raw_data
+    if data_length == 0 then
+        return nil, "compressed string cannot be empty"
+    elseif data_length == 1 then
+        return nil, "compressed string cannot be so short"
     end
 
     local a, b = 0, 1
     local dictionary = {}
 
-    local parts, part_count = { "c" }, 1
-    local parts_length = 1
+    local parts, part_count = {}, 0
+    forced = forced == true
+
+    local parts_length
+    if not forced then
+        parts_length = 1
+    end
+
     local word = ""
 
     for i = 1, data_length, 1 do
@@ -56,14 +65,16 @@ function lzw.compress( raw_data )
                 return nil, "algorithm error, could not fetch word"
             end
 
-            parts_length = parts_length + string_len( str )
+            if not forced then
+                parts_length = parts_length + string_len( str )
+
+                if data_length <= parts_length then
+                    return nil, "compressed data length exceeds uncompressed"
+                end
+            end
 
             part_count = part_count + 1
             parts[ part_count ] = str
-
-            if data_length <= parts_length then
-                return "u" .. raw_data
-            end
 
             word = char
 
@@ -80,12 +91,17 @@ function lzw.compress( raw_data )
     end
 
     local str = basedictcompress[ word ] or dictionary[ word ]
+
+    if not forced then
+        parts_length = parts_length + string_len( str )
+
+        if data_length <= parts_length then
+            return nil, "compressed data length exceeds or equal to uncompressed"
+        end
+    end
+
     part_count = part_count + 1
     parts[ part_count ] = str
-
-    if data_length <= ( parts_length + string_len( str ) ) then
-        return "u" .. raw_data
-    end
 
     return table_concat( parts, "", 1, part_count )
 end
@@ -97,23 +113,13 @@ end
 ---@return string | nil decompressed_data The decompressed string or `nil` if the decompression fails.
 ---@return nil | string error_message The error message or `nil` if the decompression succeeds.
 function lzw.decompress( encoded_data )
+    if encoded_data == "" then
+        return nil, "compressed string cannot be empty"
+    end
+
     local data_length = string_len( encoded_data )
-    if data_length < 1 then
-        return nil, "invalid input - not a compressed string"
-    end
-
-    local first_byte = string_byte( encoded_data, 1, 1 )
-    if first_byte == 0x75 --[[ u ]] then
-        return string_sub( encoded_data, 2 )
-    elseif first_byte ~= 0x63 --[[ c ]] then
-        return nil, "invalid input - not a compressed string"
-    end
-
-    encoded_data = string_sub( encoded_data, 2 )
-    data_length = data_length - 1
-
     if data_length < 2 then
-        return nil, "invalid input - not a compressed string"
+        return nil, "compressed string cannot be so short"
     end
 
     local dictionary = {}
