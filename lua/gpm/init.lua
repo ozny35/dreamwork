@@ -786,10 +786,12 @@ do
     local crypto = include( "std/crypto.lua" )
     std.crypto = crypto
 
+    crypto.lzw = include( "std/crypto.lzw.lua" )
     crypto.binary = include( "std/crypto.binary.lua" )
+    crypto.deflate = include( "std/crypto.deflate.lua" )
+
     crypto.ByteReader = include( "std/crypto.byte_reader.lua" )
     crypto.ByteWriter = include( "std/crypto.byte_writer.lua" )
-    crypto.deflate = include( "std/crypto.deflate.lua" )
 
 end
 
