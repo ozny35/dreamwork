@@ -27,6 +27,35 @@ end
 
 do
 
+    local clipboard_text = ""
+
+    --- [CLIENT AND MENU]
+    ---
+    --- Returns the contents of the clipboard.
+    ---@return string
+    function input.getClipboardText()
+        return clipboard_text
+    end
+
+    local SetClipboardText = _G.SetClipboardText
+    if SetClipboardText == nil then
+        SetClipboardText = std.debug.fempty
+    end
+
+    --- [CLIENT AND MENU]
+    ---
+    --- Sets the contents of the clipboard.
+    ---@param text string
+    function input.setClipboardText( text )
+        ---@diagnostic disable-next-line: redundant-parameter
+        SetClipboardText( text )
+        clipboard_text = text
+    end
+
+end
+
+do
+
     ---@clas gpm.std.input.keyboard
     local keyboard = {
         KEY_COUNT = 106

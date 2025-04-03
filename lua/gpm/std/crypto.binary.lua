@@ -1,9 +1,15 @@
 local std = _G.gpm.std
-local bit, string, math, table = std.bit, std.string, std.math, std.table
+local string, math, table = std.string, std.math, std.table
 
 local string_byte, string_char, string_len, string_sub, string_rep = string.byte, string.char, string.len, string.sub, string.rep
 local table_unpack = table.unpack
 local math_floor = math.floor
+
+local bit_band, bit_bor, bit_lshift, bit_rshift
+do
+	local bit = std.bit
+	bit_band, bit_bor, bit_lshift, bit_rshift = bit.band, bit.bor, bit.lshift, bit.rshift
+end
 
 --- [SHARED AND MENU]
 ---
@@ -151,41 +157,129 @@ do
 		return string_char( value )
 	end
 
-	--- [SHARED AND MENU]
-	---
-	--- Reads an unsigned short (2 bytes/16 bits) from a binary string.
-	---
-	--- Allowable values from `0` to `65535`.
-	---@param str string The binary string.
-	---@param big_endian? boolean The endianness of the binary string.
-	---@param start_position? integer The start position of the binary string.
-	---@return integer: The unsigned short.
-	function unsigned.readShort( str, big_endian, start_position )
-		if start_position == nil then start_position = 1 end
-		local b1, b2
+	do
 
-		if big_endian then
-			b1, b2 = string_byte( str, start_position, start_position + 1 )
-		else
-			b2, b1 = string_byte( str, start_position, start_position + 1 )
+		--- [SHARED AND MENU]
+		---
+		--- Reads an unsigned short (2 bytes/16 bits) from a binary string.
+		---
+		--- Allowable values from `0` to `65535`.
+		---@param str string The binary string.
+		---@param big_endian? boolean The endianness of the binary string.
+		---@param start_position? integer The start position of the binary string.
+		---@return integer: The unsigned short.
+		local function unsigned_readShort( str, big_endian, start_position )
+			if start_position == nil then start_position = 1 end
+			local b1, b2
+
+			if big_endian then
+				b1, b2 = string_byte( str, start_position, start_position + 1 )
+			else
+				b2, b1 = string_byte( str, start_position, start_position + 1 )
+			end
+
+			return b1 * 0x100 + b2
 		end
 
-		return b1 * 0x100 + b2
+		unsigned.readShort = unsigned_readShort
+
+		--- [SHARED AND MENU]
+		---
+		--- Reads DOS format time from a binary string.
+		---@param str string The binary string.
+		---@param big_endian? boolean The endianness of the binary string.
+		---@param start_position? integer The start position of the binary string.
+		---@return integer hours The number of hours.
+		---@return integer minutes The number of minutes.
+		---@return integer seconds The number of seconds.
+		function binary.readTime( str, big_endian, start_position )
+			local unsigned_short = unsigned_readShort( str, big_endian, start_position )
+			return bit_rshift( bit_band( unsigned_short, 0xF800 ), 11 ),
+				bit_rshift( bit_band( unsigned_short, 0x7E0 ), 5 ),
+				bit_band( unsigned_short, 0x1F ) * 2
+		end
+
+		--- [SHARED AND MENU]
+		---
+		--- Reads DOS format date from a binary string.
+		---@param str string The binary string.
+		---@param big_endian? boolean The endianness of the binary string.
+		---@param start_position? integer The start position of the binary string.
+		---@return integer day The day.
+		---@return integer month The month.
+		---@return integer year The year.
+		function binary.readDate( str, big_endian, start_position )
+			local unsigned_short = unsigned_readShort( str, big_endian, start_position )
+			return bit_band( unsigned_short, 0x1F ),
+				bit_rshift( bit_band( unsigned_short, 0x1E0 ), 5 ),
+				bit_rshift( bit_band( unsigned_short, 0xFE00 ), 9 ) + 1980
+		end
+
 	end
 
-	--- [SHARED AND MENU]
-	---
-	--- Writes an unsigned short (2 bytes/16 bits) to a binary string.
-	---
-	--- Allowable values from `0` to `65535`.
-	---@param value integer The unsigned short.
-	---@param big_endian? boolean The endianness of the binary string.
-	---@return string: The binary string.
-	function unsigned.writeShort( value, big_endian )
-		return string_char(
-			big_endian and math_floor( value / 0x100 ) or ( value % 0x100 ),
-			big_endian and ( value % 0x100 ) or math_floor( value / 0x100 )
-		)
+	do
+
+		--- [SHARED AND MENU]
+		---
+		--- Writes an unsigned short (2 bytes/16 bits) to a binary string.
+		---
+		--- Allowable values from `0` to `65535`.
+		---@param value integer The unsigned short.
+		---@param big_endian? boolean The endianness of the binary string.
+		---@return string: The binary string.
+		local function unsigned_writeShort( value, big_endian )
+			return string_char(
+				big_endian and math_floor( value / 0x100 ) or ( value % 0x100 ),
+				big_endian and ( value % 0x100 ) or math_floor( value / 0x100 )
+			)
+		end
+
+		unsigned.writeShort = unsigned_writeShort
+
+		local math_clamp = math.clamp
+
+		--- [SHARED AND MENU]
+		---
+		--- Writes DOS format time to a binary string.
+		---@param hours? integer The number of hours.
+		---@param minutes? integer The number of minutes.
+		---@param seconds? integer The number of seconds.
+		---@param big_endian? boolean The endianness of the binary string.
+		---@return string: The binary string.
+		function binary.writeTime( hours, minutes, seconds, big_endian )
+			return unsigned_writeShort( bit_bor(
+				---@cast hours integer
+				bit_lshift( hours == nil and 0 or math_clamp( hours, 0, 24 ), 11 ),
+
+				---@cast minutes integer
+				bit_lshift( minutes == nil and 0 or math_clamp( minutes, 0, 60 ), 5 ),
+
+				---@cast seconds integer
+				seconds == nil and 0 or math_floor( math_clamp( seconds, 0, 60 ) * 0.5 )
+			), big_endian )
+		end
+
+		--- [SHARED AND MENU]
+		---
+		--- Writes DOS format date to a binary string.
+		---@param year? integer The year.
+		---@param month? integer The month.
+		---@param day? integer The day.
+		---@param big_endian? boolean The endianness of the binary string.
+		---@return string: The binary string.
+		function binary.writeDate( day, month, year, big_endian )
+			return unsigned_writeShort( bit_bor(
+				---@cast day integer
+				day == nil and 1 or math_clamp( day, 1, 31 ),
+
+				---@cast month integer
+				bit_lshift( month == nil and 1 or math_clamp( month, 1, 12 ), 5 ),
+
+				---@cast year integer
+				bit_lshift( year == nil and 0 or ( math_clamp( year, 1980, 2107 ) - 1980 ), 9 )
+			), big_endian )
+		end
+
 	end
 
 	--- [SHARED AND MENU]
