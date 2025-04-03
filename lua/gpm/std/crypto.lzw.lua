@@ -8,7 +8,7 @@
 local std = _G.gpm.std
 local string = std.string
 
-local string_byte, string_char, string_sub, string_len = string.byte, string.char, string.sub, string.len
+local string_char, string_sub, string_len = string.char, string.sub, string.len
 local table_concat = std.table.concat
 
 --- [SHARED AND MENU]
@@ -95,8 +95,10 @@ function lzw.compress( raw_data, forced )
     if not forced then
         parts_length = parts_length + string_len( str )
 
-        if data_length <= parts_length then
-            return nil, "compressed data length exceeds or equal to uncompressed"
+        if data_length < parts_length then
+            return nil, "compressed data length exceeds uncompressed"
+        elseif data_length == parts_length then
+            return nil, "compressed data length equal to uncompressed"
         end
     end
 
