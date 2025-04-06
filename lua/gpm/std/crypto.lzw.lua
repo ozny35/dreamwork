@@ -40,9 +40,6 @@ function lzw.compress( raw_data, forced )
         return nil, "compressed string cannot be so short"
     end
 
-    local a, b = 0, 1
-    local dictionary = {}
-
     local parts, part_count = {}, 0
     forced = forced == true
 
@@ -51,6 +48,8 @@ function lzw.compress( raw_data, forced )
         parts_length = 1
     end
 
+    local dictionary = {}
+    local a, b = 0, 1
     local word = ""
 
     for i = 1, data_length, 1 do
@@ -124,11 +123,11 @@ function lzw.decompress( encoded_data )
         return nil, "compressed string cannot be so short"
     end
 
-    local dictionary = {}
-    local a, b = 0, 1
-
     local parts, part_count = {}, 0
     local last = string_sub( encoded_data, 1, 2 )
+
+    local dictionary = {}
+    local a, b = 0, 1
 
     part_count = part_count + 1
     parts[ part_count ] = basedictdecompress[ last ] or dictionary[ last ]

@@ -1,27 +1,53 @@
 local _G = _G
 local gpm = _G.gpm
 local std = gpm.std
-local string = std.string
-local path = std.file.path
-local tonumber = std.tonumber
-local glua_render = _G.render
 
 --- [CLIENT AND MENU]
 ---
 --- The game's client library.
 ---@class gpm.std.client
-local client = {
-    openURL = _G.gui.OpenURL,
-    getDXLevel = glua_render.GetDXLevel,
-    isSupportsHDR = glua_render.SupportsHDR,
-    isSupportsPixelShaders14 = glua_render.SupportsPixelShaders_1_4,
-    isSupportsPixelShaders20 = glua_render.SupportsPixelShaders_2_0,
-    isSupportsVertexShaders20 = glua_render.SupportsVertexShaders_2_0
-}
+local client = std.client or {}
+
+if _G.gui ~= nil then
+    client.openURL = _G.gui.OpenURL
+end
+
+if _G.render ~= nil then
+
+    local glua_render = _G.render
+
+    do
+
+        local directx_level = glua_render.GetDXLevel() * 0.1
+        client.SupportedDirectX = directx_level
+        client.SupportsHDR = directx_level >= 8
+
+    end
+
+    client.SupportsPixelShadersV1 = glua_render.SupportsPixelShaders_1_4()
+    client.SupportsPixelShadersV2 = glua_render.SupportsPixelShaders_2_0()
+    client.SupportedVertexShaders = glua_render.SupportsVertexShaders_2_0()
+
+end
 
 if std.CLIENT then
+
     local LocalPlayer = _G.LocalPlayer
-    client.getEntity = LocalPlayer
+
+    std.setmetatable( client, {
+        __index = function( _, key )
+            if key == "Entity" then
+                local entity = LocalPlayer()
+                if entity and entity:IsValid() then
+                    local player = gpm.transducers[ entity ]
+                    client.Entity = player
+                    return player
+                end
+            end
+
+            return nil
+        end
+    } )
 
     -- https://music.youtube.com/watch?v=78PjJ1soEZk (01:00)
     client.screenShake = _G.util.ScreenShake
@@ -34,17 +60,15 @@ if std.CLIENT then
 
         local voice_chat_state = false
 
-        -- TODO: replace with new hook system
-        -- local hook = std.hook
-        -- hook.add( "PlayerStartVoice", "client.getVoiceChat", function( ply )
-        --     if ply ~= LocalPlayer() then return end
-        --     voice_chat_state = true
-        -- end, hook.PRE )
+        gpm.engine.hookCatch( "PlayerStartVoice", function( entity )
+            if entity ~= client.Entity then return end
+            voice_chat_state = true
+        end )
 
-        -- hook.add( "PlayerEndVoice", "client.getVoiceChat", function( ply )
-        --     if ply ~= LocalPlayer() then return end
-        --     voice_chat_state = true
-        -- end, hook.PRE )
+        gpm.engine.hookCatch( "PlayerEndVoice", function( entity )
+            if entity ~= client.Entity then return end
+            voice_chat_state = false
+        end )
 
         function client.getVoiceChat()
             return voice_chat_state
@@ -116,10 +140,10 @@ do
         if last_one == nil then
             count = 0
         else
-            count = ( tonumber( string.sub( path.stripExtension( last_one, false ), #fileName + 2 ), 10 ) or 0 ) + 1
+            count = ( std.tonumber( std.string.sub( std.file.path.stripExtension( last_one, false ), #fileName + 2 ), 10 ) or 0 ) + 1
         end
 
-        fileName = string.format( "%s_%04d", fileName, count )
+        fileName = std.string.format( "%s_%04d", fileName, count )
         command_run( "jpeg", fileName, quality or 90 )
         return true, "/screenshots/" .. fileName .. ".jpg"
     end
