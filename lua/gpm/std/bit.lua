@@ -177,7 +177,7 @@ bit.band = bit_band
 ---@param value integer The value to be manipulated.
 ---@param ... integer?: Values bit or with.
 ---@return integer result The bitwise `or` result between all values.
-bit.bor = bit_lib.bor or function( value, ... )
+local bit_bor = bit_lib.bor or function( value, ... )
     local args = { value, ... }
     local result = 0
 
@@ -196,6 +196,8 @@ bit.bor = bit_lib.bor or function( value, ... )
 
     return bit_tobit( result )
 end
+
+bit.bor = bit_bor
 
 --- [SHARED AND MENU]
 ---
@@ -235,15 +237,7 @@ end
 ---@param shift integer Amounts of bits to rotate left by.
 ---@return integer result The left rotated value.
 bit.rol = bit_lib.rol or function( value, shift )
-    for _ = 1, shift, 1 do
-        value = value * 2
-
-        if value >= 0x100000000 then
-            value = value % 0x100000000 + 1
-        end
-    end
-
-    return bit_tobit( value )
+    return bit_bor( bit_lshift( value, shift ), bit_rshift( value, 32 - shift ) )
 end
 
 --- [SHARED AND MENU]
@@ -253,16 +247,7 @@ end
 ---@param shift integer Amounts of bits to rotate right by.
 ---@return integer result The right rotated value.
 bit.ror = bit_lib.ror or function( value, shift )
-    for _ = 1, shift, 1 do
-        local msb = 0
-        if value % 2 ~= 0 then
-            msb = 0x80000000
-        end
-
-        value = math_floor( value * 0.5 ) + msb
-    end
-
-    return bit_tobit( value )
+    return bit_bor( bit_rshift( value, shift ), bit_lshift( value, 32 - shift ) )
 end
 
 --- [SHARED AND MENU]

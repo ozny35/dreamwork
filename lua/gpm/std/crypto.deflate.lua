@@ -17,16 +17,23 @@ local table_concat, table_insert, table_sort = table.concat, table.insert, table
 local string = std.string
 local string_byte, string_char, string_find, string_gsub, string_sub, string_len = string.byte, string.char, string.find, string.gsub, string.sub, string.len
 
+---@class gpm.std.crypto
+local crypto = std.crypto
+local crypto_adler32 = crypto.adler32
+
 --- [SHARED AND MENU]
 ---
 --- A library for compressing and decompressing data using the deflate algorithm and more.
 ---@class gpm.std.crypto.deflate
-local deflate = {
-    _VERSION = "1.0.2-release",
-    _COPYRIGHT = "LibDeflate " .. _VERSION .. " Copyright (C) 2018-2021 Haoqian He. Licensed under the zlib License",
-    _MAJOR = "LibDeflate",
-    _MINOR = 3
-}
+local deflate = {}
+crypto.deflate = deflate
+
+--- [SHARED AND MENU]
+---
+--- A library for compressing and decompressing data using the zlib algorithm and more.
+---@class gpm.std.crypto.zlib
+local zlib = {}
+crypto.zlib = zlib
 
 -- Converts i to 2^i, (0<=i<=32)
 -- This is used to implement bit left shift and bit right shift.
@@ -286,57 +293,11 @@ do
 
 end
 
---- Calculate the Adler-32 checksum of the string.
----
---- See RFC1950 Page 9 https://tools.ietf.org/html/rfc1950 for the definition of Adler-32 checksum.
----@param str string the input string to calcuate its Adler-32 checksum.
----@return number: The Adler-32 checksum, which is greater or equal to 0, and less than 2^32 (0x100000000).
-local function calculate_adler32( str )
-    -- This function is loop unrolled by better performance.
-    --
-    -- Here is the minimum code:
-    --
-    -- local a = 1
-    -- local b = 0
-    -- for i=1, string_len( str ), 1 do
-    -- 		local s = string.byte( str, i, i )
-    -- 		a = ( a + s ) % 65521
-    -- 		b = ( b + a ) % 65521
-    -- end
-    --
-    -- return b * 0x10000 + a
-
-    local strlen = string_len( str )
-    local i = 1
-    local a = 1
-    local b = 0
-
-    while i <= strlen - 15 do
-        local x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14, x15, x16 = string_byte( str, i, i + 15 )
-        b = ( b + 16 * a + 16 * x1 + 15 * x2 + 14 * x3 + 13 * x4 + 12 * x5 + 11 * x6 + 10 * x7 + 9 * x8 + 8 * x9 + 7 * x10 + 6 * x11 + 5 * x12 + 4 * x13 + 3 * x14 + 2 * x15 + x16 ) % 65521
-        a = ( a + x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8 + x9 + x10 + x11 + x12 + x13 + x14 + x15 + x16 ) % 65521
-        i = i + 16
-    end
-
-    while ( i <= strlen ) do
-        local x = string_byte( str, i, i )
-        a = ( a + x ) % 65521
-        b = ( b + a ) % 65521
-        i = i + 1
-    end
-
-    return ( b * 0x10000 + a ) % 0x100000000
-end
-
-deflate.calculateAdler32 = calculate_adler32
-
 --- Compare adler32 checksum.
 --- adler32 should be compared with a mod to avoid sign problem 4072834167 (unsigned) is the same adler32 as -222133129
 local function isEqualAdler32( actual, expected )
     return ( actual % 0x100000000 ) == ( expected % 0x100000000 )
 end
-
-deflate.isEqualAdler32 = isEqualAdler32
 
 --- Create a preset dictionary.
 ---
@@ -387,7 +348,7 @@ function deflate.createDictionary( str )
     local hash_tables = {}
 
     local dictionary = {
-        ["adler32"] = calculate_adler32( str ),
+        ["adler32"] = crypto_adler32( str ),
         ["string_table"] = string_table,
         ["hash_tables"] = hash_tables,
         ["strlen"] = strlen
@@ -518,72 +479,63 @@ local _compression_level_configs = {
     [ 9 ] = { true, 32, 258, 258, 4096 } -- (VERY SLOW) level 9, similar to zlib level 9
 }
 
-local isValidArguments
+local validate_dictionary, validate_configs
 do
 
     local istable, isnumber = std.istable, std.isnumber
-    local tostring = std.tostring
 
-    --- Check if the compression/decompression arguments is valid
-    ---@param dictionary table | nil The preset dictionary for compression and decompression.
-    ---@param configs table | nil The compression configuration table
-    ---@return nil | string err_msg if not valid, the error message.
-    function isValidArguments( dictionary, configs )
-        if dictionary ~= nil then
-            if istable( dictionary ) then
-                if not isnumber( dictionary.adler32 ) then
-                    return "'dictionary' - missing required field 'adler32'."
-                end
+    function validate_dictionary( dictionary, error_level )
+        if error_level == nil then error_level = 1 end
+        error_level = error_level + 1
 
-                local string_table = dictionary.string_table
-                if not istable( dictionary.string_table ) then
-                    return "'dictionary' - missing required field 'string_table'."
-                end
-
-                if not isnumber( dictionary.strlen ) then
-                    return "'dictionary' - missing required field 'strlen'."
-                end
-
-                local strlen = dictionary.strlen
-                if strlen <= 0 or strlen > 32768 then
-                    return "'dictionary' - 'strlen' must be between 1 and 32768."
-                end
-
-                if strlen ~= #string_table then
-                    return "'dictionary' - 'strlen' does not match the length of 'string_table'."
-                end
-
-                if not istable( dictionary.hash_tables ) then
-                    return "'dictionary' - missing required field 'hash_tables'."
-                end
-            else
-                return "'dictionary' - table expected got '" .. std.type( dictionary ) .. "'."
-            end
+        if not isnumber( dictionary.adler32 ) then
+            std.error( "'dictionary' - missing required field 'adler32'.", error_level )
         end
 
-        if configs ~= nil then
-            if istable( configs ) then
-                local level = configs.level
-                if level == nil then
-                    return "'configs' - missing required field 'level'."
-                end
+        local string_table = dictionary.string_table
+        if not istable( dictionary.string_table ) then
+            std.error( "'dictionary' - missing required field 'string_table'.", error_level )
+        end
 
-                if not _compression_level_configs[ level ] then
-                    return "'configs' - unsupported 'level': '" .. tostring( level ) .. "'."
-                end
+        if not isnumber( dictionary.strlen ) then
+            std.error( "'dictionary' - missing required field 'strlen'.", error_level )
+        end
 
-                local strategy = configs.strategy
-                if strategy == nil then
-                    return "'configs' - missing required field 'strategy'."
-                end
+        local strlen = dictionary.strlen
+        if strlen <= 0 or strlen > 32768 then
+            std.error( "'dictionary' - 'strlen' must be between 1 and 32768.", error_level )
+        end
 
-                -- random_block_type is for testing purpose
-                if not ( strategy == "fixed" or strategy == "huffman_only" or strategy == "dynamic" ) then
-                    return "'configs' - unsupported 'strategy': '" .. tostring( strategy ) .. "'."
-                end
-            else
-                return "'configs' - nil or table expected got '" .. std.type( configs ) .. "'."
-            end
+        if strlen ~= #string_table then
+            std.error( "'dictionary' - 'strlen' does not match the length of 'string_table'.", error_level )
+        end
+
+        if not istable( dictionary.hash_tables ) then
+            std.error( "'dictionary' - missing required field 'hash_tables'.", error_level )
+        end
+    end
+
+    function validate_configs( configs, error_level )
+        if error_level == nil then error_level = 1 end
+        error_level = error_level + 1
+
+        local level = configs.level
+        if level == nil then
+            std.error( "'configs' - missing required field 'level'.", error_level )
+        end
+
+        if not _compression_level_configs[ level ] then
+            std.error( "'configs' - unsupported 'level': '" .. std.tostring( level ) .. "'.", error_level )
+        end
+
+        local strategy = configs.strategy
+        if strategy == nil then
+            std.error( "'configs' - missing required field 'strategy'.", error_level )
+        end
+
+        -- random_block_type is for testing purpose
+        if not ( strategy == "fixed" or strategy == "huffman_only" or strategy == "dynamic" ) then
+            std.error( "'configs' - unsupported 'strategy': '" .. std.tostring( strategy ) .. "'.", error_level )
         end
     end
 
@@ -664,10 +616,10 @@ local function createWriter()
     --- Flush current stuffs in the writer and return it.
     --- This operation will free most of the memory.
     ---@param mode number See the descrtion of the constant and the source code.
-    ---@return number: The total number of bits stored in the writer right now.
+    ---@return integer bit_count The total number of bits stored in the writer right now.
     --- for byte boundary mode, it includes the padding bits.
     --- for output mode, it does not include padding bits.
-    ---@return string?: Return the outputs if mode is output.
+    ---@return string? result Return the outputs if mode is output.
     local function flushWriter( mode )
         if mode == _FLUSH_MODE_NO_FLUSH then
             return total_bitlen
@@ -1817,9 +1769,32 @@ end
 ---@class compression_configs
 ---@field level number The compression level ranged from 0 to 9. 0 is no compression. 9 is the slowest but best compression. Use nil for default level.
 ---@field strategy string The compression strategy. "fixed" to only use fixed deflate compression block. "dynamic" to only use dynamic block. "huffman_only" to do no LZ77 compression. Only do huffman compression.
----@see deflate.compressDeflate(str, configs)
----@see deflate.compressDeflateWithDict(str, dictionary, configs)
-local function compressDeflateInternal( str, dictionary, configs )
+
+
+--- Compress using the raw deflate format.
+---@param str string The data to be compressed.
+---@param configs? table The configuration table to control the compression.
+---@param dictionary? table The dictionary to use.
+--- If nil, use the default configuration.
+---@return string? result The compressed data.
+---@return number bit_count The number of bits padded at the end of output.
+--- 0 <= bits < 8
+---
+--- This means the most significant "bits" of the last byte of the returned
+--- compressed data are padding bits and they don't affect decompression.
+--- You don't need to use this value unless you want to do some postprocessing
+--- to the compressed data.
+---@see compression_configs
+---@see deflate.decompress
+function deflate.compress( str, configs, dictionary )
+    if configs ~= nil then
+        validate_configs( configs, 2 )
+    end
+
+    if dictionary ~= nil then
+        validate_dictionary( dictionary, 2 )
+    end
+
     local writeBits, writeString, flushWriter = createWriter()
     deflate_fn( configs, writeBits, writeString, flushWriter, str, dictionary )
 
@@ -1827,9 +1802,26 @@ local function compressDeflateInternal( str, dictionary, configs )
     return result, ( 8 - total_bitlen % 8 ) % 8
 end
 
----@see deflate.compressZlib
----@see deflate.compressZlibWithDict
-local function compressZlibInternal( str, dictionary, configs )
+--- Compress using the zlib format.
+---@param str string the data to be compressed.
+---@param configs? table The configuration table to control the compression. If `nil`, use the default configuration.
+---@param dictionary? table A preset dictionary produced by deflate.createDictionary()
+---@return string? result The compressed data.
+---@return number bit_count The number of bits padded at the end of output.
+--- Should always be 0.
+--- Zlib formatted compressed data never has padding bits at the end.
+---@see compression_configs
+---@see zlib.compress
+---@see zlib.decompress
+function zlib.compress( str, configs, dictionary )
+    if configs ~= nil then
+        validate_configs( configs, 2 )
+    end
+
+    if dictionary ~= nil then
+        validate_dictionary( dictionary, 2 )
+    end
+
     local writeBits, writeString, flushWriter = createWriter()
 
     local CM = 8 -- Compression method
@@ -1847,6 +1839,7 @@ local function compressZlibInternal( str, dictionary, configs )
     writeBits( FLG, 8 )
 
     if FDIST == 1 then
+        ---@cast dictionary table
         local adler32 = dictionary.adler32
         local byte0 = adler32 % 0x100
 
@@ -1869,7 +1862,7 @@ local function compressZlibInternal( str, dictionary, configs )
     flushWriter( _FLUSH_MODE_BYTE_BOUNDARY )
 
     -- Most significant byte first
-    local adler32 = calculate_adler32( str )
+    local adler32 = crypto_adler32( str )
     local byte3 = adler32 % 0x100
 
     adler32 = ( adler32 - byte3 ) / 0x100
@@ -1888,100 +1881,6 @@ local function compressZlibInternal( str, dictionary, configs )
 
     local total_bitlen, result = flushWriter( _FLUSH_MODE_OUTPUT )
     return result, ( 8 - total_bitlen % 8 ) % 8
-end
-
---- Compress using the raw deflate format.
----@param str string The data to be compressed.
----@param configs table | nil The configuration table to control the compression.
---- If nil, use the default configuration.
----@return string The compressed data.
----@return number The number of bits padded at the end of output.
---- 0 <= bits < 8
----
---- This means the most significant "bits" of the last byte of the returned
---- compressed data are padding bits and they don't affect decompression.
---- You don't need to use this value unless you want to do some postprocessing
---- to the compressed data.
----@see compression_configs
----@see deflate.decompressDeflate
-function deflate.compressDeflate( str, configs )
-    local err_msg = isValidArguments( nil, configs )
-    if err_msg == nil then
-        return compressDeflateInternal( str, nil, configs )
-    else
-        std.error( err_msg, 2 )
-        ---@diagnostic disable-next-line: missing-return
-    end
-end
-
---- Compress using the raw deflate format with a preset dictionary.
----@param str string The data to be compressed.
----@param dictionary table The preset dictionary produced by deflate.createDictionary
----
----@param configs table | nil The configuration table to control the compression.
---- If nil, use the default configuration.
----@return string The compressed data.
----@return number The number of bits padded at the end of output.
---- 0 <= bits < 8
----
---- This means the most significant "bits" of the last byte of the returned
---- compressed data are padding bits and they don't affect decompression.
---- You don't need to use this value unless you want to do some postprocessing
---- to the compressed data.
----@see compression_configs
----@see deflate.createDictionary
----@see deflate.decompressDeflateWithDict
-function deflate.compressDeflateWithDict( str, dictionary, configs )
-    local err_msg = isValidArguments( dictionary, configs )
-    if err_msg == nil then
-        return compressDeflateInternal( str, dictionary, configs )
-    else
-        std.error( err_msg, 2 )
-        ---@diagnostic disable-next-line: missing-return
-    end
-end
-
---- Compress using the zlib format.
----@param str string the data to be compressed.
----@param configs table | nil The configuration table to control the compression.
---- If nil, use the default configuration.
----@return string: The compressed data.
----@return number: The number of bits padded at the end of output.
---- Should always be 0.
---- Zlib formatted compressed data never has padding bits at the end.
----@see compression_configs
----@see deflate.decompressZlib
-function deflate.compressZlib( str, configs )
-    local err_msg = isValidArguments( nil, configs )
-    if err_msg == nil then
-        return compressZlibInternal( str, nil, configs )
-    else
-        std.error( err_msg, 2 )
-        ---@diagnostic disable-next-line: missing-return
-    end
-end
-
---- Compress using the zlib format with a preset dictionary.
----@param str string the data to be compressed.
----@param dictionary table A preset dictionary produced by deflate.createDictionary()
----
----@param configs table | nil: The configuration table to control the compression.
---- If nil, use the default configuration.
----@return string The compressed data.
----@return number The number of bits padded at the end of output.
---- Should always be 0.
---- Zlib formatted compressed data never has padding bits at the end.
----@see compression_configs
----@see deflate.createDictionary
----@see deflate.decompressZlibWithDict
-function deflate.compressZlibWithDict( str, dictionary, configs )
-    local err_msg = isValidArguments( dictionary, configs )
-    if err_msg == nil then
-        return compressZlibInternal( str, dictionary, configs )
-    else
-        std.error( err_msg, 2 )
-        ---@diagnostic disable-next-line: missing-return
-    end
 end
 
 -- Decompress code --
@@ -2150,7 +2049,7 @@ end
 
 --- Create a deflate state, so I can pass in less arguments to functions.
 ---@param str string the whole string to be decompressed.
----@param dictionary table The preset dictionary. nil if not provided.
+---@param dictionary? table The preset dictionary. nil if not provided.
 --- This dictionary should be produced by deflate.createDictionary(str)
 ---@return table: The decomrpess state.
 local function createDecompressState( str, dictionary )
@@ -2524,6 +2423,7 @@ end
 
 --- Decompress a raw deflate compressed data.
 ---@param str string The data to be decompressed.
+---@param dictionary? table The dictionary to be used.
 ---@return string | nil: If the decompression succeeds, return the decompressed data.
 --- If the decompression fails, return nil. You should check if this return
 --- value is non-nil to know if the decompression succeeds.
@@ -2535,10 +2435,13 @@ end
 ---
 --- If the decompression fails (The first return value of this function is nil),
 --- this return value is undefined.
----@see deflate.compressDeflate
----@see deflate.decompressDeflate(str)
----@see deflate.decompressDeflateWithDict(str, dictionary)
-local function decompressDeflateInternal( str, dictionary )
+---@see deflate.compress
+---@see deflate.decompress(str)
+function deflate.decompress( str, dictionary )
+    if dictionary ~= nil then
+        validate_dictionary( dictionary, 2 )
+    end
+
     local state = createDecompressState( str, dictionary )
 
     local result, status = inflate( state )
@@ -2550,10 +2453,9 @@ local function decompressDeflateInternal( str, dictionary )
     return result, ( bitlen_left - bitlen_left % 8 ) * 0.125
 end
 
-deflate.decompressDeflate = decompressDeflateInternal
-
 --- Decompress a zlib compressed data.
 ---@param str string The data to be decompressed
+---@param dictionary? table The dictionary to be used
 ---@return string | nil: If the decompression succeeds, return the decompressed data.
 --- If the decompression fails, return nil. You should check if this return
 --- value is non-nil to know if the decompression succeeds.
@@ -2565,10 +2467,13 @@ deflate.decompressDeflate = decompressDeflateInternal
 ---
 --- If the decompression fails (The first return value of this function is nil),
 --- this return value is undefined.
----@see deflate.compressZlib
----@see deflate.decompressZlib(str)
----@see deflate.decompressZlibWithDict(str)
-local function decompressZlibInternal( str, dictionary )
+---@see zlib.compress
+---@see zlib.decompress(str)
+function zlib.decompress( str, dictionary )
+    if dictionary ~= nil then
+        validate_dictionary( dictionary, 2 )
+    end
+
     local state = createDecompressState( str, dictionary )
     local readBits = state.readBits
 
@@ -2635,73 +2540,13 @@ local function decompressZlibInternal( str, dictionary )
 
     local adler32_expected = adler_byte0 * 0x1000000 + adler_byte1 * 0x10000 + adler_byte2 * 0x100 + adler_byte3
 
-    local adler32_actual = calculate_adler32( result )
+    local adler32_actual = crypto_adler32( result )
     if not isEqualAdler32( adler32_expected, adler32_actual ) then
         return nil, -15 -- adler32 checksum does not match
     end
 
     local bitlen_left = state.readerBitlenLeft()
     return result, ( bitlen_left - bitlen_left % 8 ) * 0.125
-end
-
-deflate.decompressZlib = decompressZlibInternal
-
---- Decompress a raw deflate compressed data with a preset dictionary.
----@param str string The data to be decompressed.
----@param dictionary table The preset dictionary used by
---- deflate.compressDeflateWithDict when the compressed data is produced.
---- Decompression and compression must use the same dictionary.
---- Otherwise wrong decompressed data could be produced without generating any error.
----
----@return string | nil: If the decompression succeeds, return the decompressed data.
---- If the decompression fails, return nil. You should check if this return
---- value is non-nil to know if the decompression succeeds.
----@return number | nil: If the decompression succeeds, return the number of
---- unprocessed bytes in the input compressed data. This return value is a
---- positive integer if the input data is a valid compressed data appended by an
---- arbitary non-empty string. This return value is 0 if the input data does not
---- contain any extra bytes.
----
---- If the decompression fails (The first return value of this function is nil),
---- this return value is undefined.
----@see deflate.compressDeflateWithDict
-function deflate.decompressDeflateWithDict( str, dictionary )
-    local err_msg = isValidArguments( dictionary )
-    if err_msg == nil then
-        return decompressDeflateInternal( str, dictionary )
-    else
-        std.error( err_msg, 2 )
-        ---@diagnostic disable-next-line: missing-return
-    end
-end
-
---- Decompress a zlib compressed data with a preset dictionary.
----@param str string The data to be decompressed
----@param dictionary table The preset dictionary used by
---- deflate.compressDeflateWithDict when the compressed data is produced.
---- Decompression and compression must use the same dictionary.
---- Otherwise wrong decompressed data could be produced without generating any error.
----
----@return string | nil: If the decompression succeeds, return the decompressed data.
---- If the decompression fails, return nil. You should check if this return
---- value is non-nil to know if the decompression succeeds.
----@return number | nil: If the decompression succeeds, return the number of
---- unprocessed bytes in the input compressed data. This return value is a
---- positive integer if the input data is a valid compressed data appended by an
---- arbitary non-empty string. This return value is 0 if the input data does not
---- contain any extra bytes.
----
---- If the decompression fails (The first return value of this function is nil),
---- this return value is undefined.
----@see deflate.compressZlibWithDict
-function deflate.decompressZlibWithDict( str, dictionary )
-    local err_msg = isValidArguments( dictionary )
-    if err_msg == nil then
-        return decompressZlibInternal( str, dictionary )
-    else
-        std.error( err_msg, 2 )
-        ---@diagnostic disable-next-line: missing-return
-    end
 end
 
 -- Calculate the huffman code of fixed block
@@ -3321,5 +3166,3 @@ function deflate.decodeForPrint( str )
 
     return table_concat( buffer )
 end
-
-return deflate

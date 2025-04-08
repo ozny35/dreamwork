@@ -1,15 +1,25 @@
 -- Semver lua parser. Based on https://github.com/kikito/semver.lua
 -- https://github.com/Pika-Software/gpm_legacy/blob/main/lua/gpm/sh_semver.lua
 
+--[[
 
+	Version Structure:
+		[ 0 ] - full string
+		[ 1 ] - major
+		[ 2 ] - minor
+		[ 3 ] - patch
+		[ 4 ] - pre_release
+		[ 5 ] - build
 
--- TODO: rewrite to class system
-
+--]]
 
 local _G = _G
+
+---@class gpm.std
 local std = _G.gpm.std
+
 local table_sort = std.table.sort
-local error, tonumber, raw_get = std.error, std.tonumber, std.raw.get
+local tostring, tonumber, raw_get = std.tostring, std.tonumber, std.raw.get
 
 local bit_band, bit_bor, bit_lshift, bit_rshift
 do
@@ -18,12 +28,7 @@ do
 end
 
 local isstring, isnumber = std.isstring, std.isnumber
-
-local math_isuint, math_max
-do
-	local math = std.math
-	math_isuint, math_max = math.isuint, math.max
-end
+local math_isuint, math_max = std.math.isuint, std.math.max
 
 local string = std.string
 local string_match, string_gsub, string_find, string_sub = string.match, string.gsub, string.find, string.sub
@@ -83,45 +88,60 @@ do
 
 end
 
-local function parsePreRelease( str )
+---@param str? string
+---@return string? pre_release
+local function parse_pre_release( str, error_level )
 	if str == nil or str == "" then return end
 
 	local pre_release = string_match( str, "^-(%w[%.%w-]*)$" )
 	if not pre_release or string_match( pre_release, "%.%." ) then
-		error( "the pre-release '" .. str .. "' is not valid" )
+		if error_level == nil then error_level = 1 end
+		error_level = error_level + 1
+
+		std.error( "the pre-release '" .. str .. "' is not valid", error_level )
 	end
 
 	return pre_release
 end
 
-local function parseBuild( str )
+---@param str? string
+---@return string? build
+local function parse_build( str, error_level )
 	if str == nil or str == "" then return end
 
 	local build = string_match( str, "^%+(%w[%.%w-]*)$" )
 	if not build or string_match( build, "%.%." ) then
-		error( "the build '" .. str .. "' is not valid" )
+		if error_level == nil then error_level = 1 end
+		error_level = error_level + 1
+
+		std.error( "the build '" .. str .. "' is not valid", error_level )
 	end
 
 	return build
 end
 
-local parsePreReleaseAndBuild
+local parse_pre_release_and_build
 do
 
 	local string_byte = string.byte
 
-	function parsePreReleaseAndBuild( str )
+	---@param str? string
+	---@return string? pre_release
+	---@return string? build
+	function parse_pre_release_and_build( str, error_level )
+		if error_level == nil then error_level = 1 end
 		if str == nil or str == "" then return end
+		error_level = error_level + 1
 
 		local pre_release, build = string_match( str, "^(%-[^+]+)(%+.+)$" )
 		if pre_release == nil or build == nil then
 			local byte = string_byte( str, 1 )
 			if byte == 0x2D --[[ - ]] then
-				pre_release = parsePreRelease( str )
+				pre_release = parse_pre_release( str, error_level )
 			elseif byte == 0x2B --[[ + ]] then
-				build = parseBuild( str )
+				build = parse_build( str, error_level )
 			else
-				error( "the parameter '" .. str .. "' must begin with + or - to denote a pre-release or a build", 3 )
+				std.error( "the parameter '" .. str .. "' must begin with + or - to denote a pre-release or a build", error_level )
 			end
 		end
 
@@ -130,6 +150,12 @@ do
 
 end
 
+---@param major integer
+---@param minor integer
+---@param patch integer
+---@param pre_release string?
+---@param build string?
+---@return string
 local function numbersToString( major, minor, patch, pre_release, build )
 	if pre_release and build then
 		return major .. "." .. minor .. "." .. patch .. "-" .. pre_release .. "+" .. build
@@ -142,127 +168,205 @@ local function numbersToString( major, minor, patch, pre_release, build )
 	end
 end
 
-local function parse( major, minor, patch, pre_release, build )
+--- [SHARED AND MENU]
+---
+---
+---@param major integer | string
+---@param minor? integer
+---@param patch? integer
+---@param pre_release? string | integer
+---@param build? string
+---@return integer major
+---@return integer minor
+---@return integer patch
+---@return string pre_release
+---@return string build
+local function parse( major, minor, patch, pre_release, build, error_level )
+	if error_level == nil then error_level = 1 end
+	error_level = error_level + 1
+
 	if major == nil then
-		error( "at least one parameter is needed", 2 )
+		std.error( "at least one parameter is needed", error_level )
 	end
 
 	if isnumber( major ) then
+		---@cast major number
+
 		if not math_isuint( major ) then
-			error( "major version must be unsigned integer", 2 )
+			std.error( "major version must be unsigned integer", error_level )
 		end
+
+		---@cast major integer
 
 		if minor == nil then
 			minor = 0
 		elseif not ( isnumber( minor ) and math_isuint( minor ) ) then
-			error( "minor version must be unsigned integer number", 2 )
-			error( "minor version must be a number", 2 )
+			std.error( "minor version must be unsigned integer number", error_level )
+			std.error( "minor version must be a number", error_level )
 		end
+
+		---@cast minor integer
 
 		if patch == nil then
 			patch = 0
 		elseif not ( isnumber( patch ) and math_isuint( patch ) ) then
-			error( "patch version must be unsigned integer number", 2 )
+			std.error( "patch version must be unsigned integer number", error_level )
 		end
 
+		---@cast patch integer
+
 		if isstring( build ) then
+			---@cast build string
+
 			if isstring( pre_release ) then
-				pre_release = parsePreRelease( pre_release )
+				---@cast pre_release string
+				pre_release = parse_pre_release( pre_release, error_level )
 			end
 
-			build = parseBuild( build )
+			build = parse_build( build )
 		elseif isnumber( pre_release ) then
-			pre_release, build = parsePreReleaseAndBuild( pre_release )
+			---@cast pre_release number
+
+			pre_release, build = parse_pre_release_and_build( tostring( pre_release ), error_level )
+			---@cast pre_release string?
+			---@cast build string?
 		end
 	else
 		local extra
 		major, minor, patch, extra = string_match( tostring( major ), "^(%d+)%.?(%d*)%.?(%d*)(.-)$" )
-		if major == nil then error( "the major version is missing", 2 ) end
+
+		if major == nil then
+			std.error( "the major version is missing", 2 )
+		end
 
 		major = tonumber( major, 10 )
-		if minor == "" then minor = "0" end
+		---@cast major integer
 
-		minor = tonumber( minor, 10 )
-		if patch == "" then patch = "0" end
+		if minor == nil or minor == "" then
+			minor = 0
+		else
+			minor = tonumber( minor, 10 )
+		end
 
-		patch = tonumber( patch, 10 )
-		pre_release, build = parsePreReleaseAndBuild( extra )
+		---@cast minor integer
+
+		if patch == nil or patch == "" then
+			patch = 0
+		else
+			patch = tonumber( patch, 10 )
+		end
+
+		---@cast patch integer
+
+		pre_release, build = parse_pre_release_and_build( extra, error_level )
+		---@cast pre_release string?
 	end
 
 	if major > 0x3ff or minor > 0x7ff or patch > 0x7ff then
-		error( "version is too large (max 1023.2047.2047)", 2 )
+		std.error( "version is too large (max 1023.2047.2047)", 2 )
 	elseif major < 0 or minor < 0 or patch < 0 then
-		error( "version is too small (min 0.0.0)", 2 )
+		std.error( "version is too small (min 0.0.0)", 2 )
 	end
 
-	return major, minor, patch, pre_release, build
+	return major, minor, patch, pre_release or "", build or ""
 end
 
 local VersionClass
 
-local function nextMajor( self )
-	return VersionClass( self[ 1 ] + 1, 0, 0 )
-end
-
-local function nextMinor( self )
-	return VersionClass( self[ 1 ], self[ 2 ] + 1, 0 )
-end
-
-local function nextPatch( self )
-	return VersionClass( self[ 1 ], self[ 2 ], self[ 3 ] + 1 )
-end
-
+--- [SHARED AND MENU]
+---
+--- The Version object.
 ---@alias Version gpm.std.Version
 ---@class gpm.std.Version: gpm.std.Object
 ---@field __class gpm.std.VersionClass
 local Version = std.class.base( "Version" )
 
+--- [SHARED AND MENU]
+---
+--- Returns the next major version.
+---@return gpm.std.Version object The next major version.
+local function nextMajor( self )
+	return VersionClass( self[ 1 ] + 1, 0, 0 )
+end
+
 Version.nextMajor = nextMajor
+
+--- [SHARED AND MENU]
+---
+--- Returns the next minor version.
+---@return gpm.std.Version object The next minor version.
+local function nextMinor( self )
+	return VersionClass( self[ 1 ], self[ 2 ] + 1, 0 )
+end
+
 Version.nextMinor = nextMinor
+
+--- [SHARED AND MENU]
+---
+--- Returns the next patch version.
+---@return gpm.std.Version object The next patch version.
+local function nextPatch( self )
+	return VersionClass( self[ 1 ], self[ 2 ], self[ 3 ] + 1 )
+end
+
 Version.nextPatch = nextPatch
 
-function Version:toNumber()
+---@protected
+function Version:__tonumber()
 	local major = tonumber( self[ 1 ], 10 )
 	if major > 0x3ff then
-		error( "major version is too large (max 1023)", 2 )
+		std.error( "major version is too large (max 1023)", 2 )
 	end
 
 	local minor = tonumber( self[ 2 ], 10 )
 	if minor > 0x7ff then
-		error( "minor version is too large (max 2047)", 2 )
+		std.error( "minor version is too large (max 2047)", 2 )
 	end
 
 	local patch = tonumber( self[ 3 ], 10 )
 	if patch > 0x7ff then
-		error( "patch version is too large (max 2047)", 2 )
+		std.error( "patch version is too large (max 2047)", 2 )
 	end
 
 	return bit_bor( bit_lshift( patch, 21 ), bit_lshift( minor, 10 ), major )
 end
 
-local keys = {}
-setmetatable( keys, { __mode = "kv" } )
+do
 
-function Version:unpack()
-	local values = raw_get( keys, self )
-	return values[ 1 ], values[ 2 ], values[ 3 ], values[ 4 ], values[ 5 ]
+	local key2index = {
+		name = 0,
+		major = 1,
+		minor = 2,
+		patch = 3,
+		prerelease = 4,
+		build = 5
+	}
+
+	---@protected
+	function Version:__index( key )
+		local index = key2index[ key ]
+		if index == nil then
+			return raw_get( Version, key )
+		else
+			return raw_get( self, index )
+		end
+	end
+
+	Version.__newindex = std.debug.fempty
+
 end
 
-function Version:__index( key )
-	return raw_get( raw_get( keys, self ), key ) or raw_get( Version, key )
-end
-
-local names = {}
-setmetatable( names, { __mode = "kv" } )
-
+---@protected
 function Version:__tostring()
-	return names[ self ] or "unknown"
+	return self[ 0 ]
 end
 
+---@protected
 function Version:__eq( other )
-	return names[ self ] == names[ other ]
+	return self[ 0 ] == other[ 0 ]
 end
 
+---@protected
 function Version:__lt( other )
 	if self[ 1 ] ~= other[ 1 ] then
 		return self[ 1 ] < other[ 1 ]
@@ -275,10 +379,12 @@ function Version:__lt( other )
 	end
 end
 
+---@protected
 function Version:__le( other )
 	return self == other or self < other
 end
 
+---@protected
 function Version:__pow( other )
 	if self[ 1 ] == 0 then
 		return self == other
@@ -436,8 +542,10 @@ do
 
 		local pos = string_find( str, "%d" )
 		if pos == nil then
-			error( "Version range must starts with number: " .. str, 2 )
+			std.error( "Version range must starts with number: " .. str, 2 )
 		end
+
+		---@cast pos integer
 
 		-- X-Ranges 1.2.x 1.X 1.2.*
 		-- Any of X, x, or * may be used to 'stand in' for one of the numeric values in the [major, minor, patch] tuple.
@@ -458,7 +566,7 @@ do
 
 		local fn = operators[ operator ]
 		if fn == nil then
-			error( "Invaild operator: '" .. operator .. "'", 2 )
+			std.error( "Invaild operator: '" .. operator .. "'", 2 )
 		else
 			return fn( self, VersionClass( name ), xrange )
 		end
@@ -468,52 +576,35 @@ end
 
 do
 
-	local debug_setmetatable = std.debug.setmetatable
-	local debug_newproxy = std.debug.newproxy
+	local debug_getmetatable = std.debug.getmetatable
+	local setmetatable = std.setmetatable
 
-	local keys_metatable
-	do
+	local versions = {}
 
-		local string_lower = string.lower
-
-		local key2key = {
-			major = 1,
-			minor = 2,
-			patch = 3,
-			prerelease = 4,
-			build = 5
-		}
-
-		keys_metatable = {
-			__index = function( tbl, key )
-				return raw_get( tbl, raw_get( key2key, string_lower( key ) ) or -1 )
-			end
-		}
-
-	end
-
-	local cache = {}
-
-	setmetatable( cache, { __mode = "kv" } )
+	setmetatable( versions, { __mode = "v" } )
 
 	---@protected
 	function Version:__new( major, minor, patch, pre_release, build )
-		if getmetatable( major ) == Version then return major end
+		if debug_getmetatable( major ) == Version then return major end
 
 		major, minor, patch, pre_release, build = parse( major, minor, patch, pre_release, build )
+
 		local name = numbersToString( major, minor, patch, pre_release, build )
+		---@cast name string
 
-		local object = cache[ name ]
+		local object = versions[ name ]
 		if object == nil then
-			object = debug_newproxy()
-			cache[ name ] = object
+			object = {
+				[ 0 ] = name,
+				[ 1 ] = major,
+				[ 2 ] = minor,
+				[ 3 ] = patch,
+				[ 4 ] = pre_release,
+				[ 5 ] = build
+			}
 
-			if not debug_setmetatable( object, Version ) then
-				error( "failed to set metatable", 2 )
-			end
-
-			keys[ object ] = setmetatable( { major, minor, patch, pre_release, build }, keys_metatable )
-			names[ object ] = name
+			setmetatable( object, Version )
+			versions[ name ] = object
 		end
 
 		return object
@@ -521,17 +612,34 @@ do
 
 end
 
+--- [SHARED AND MENU]
+---
+--- The Version class.
 ---@class gpm.std.VersionClass: gpm.std.Version
 ---@field __base gpm.std.Version
 ---@overload fun( major: string | number | Version, minor: number?, patch: number?, pre_release: string?, build: string? ): Version
 VersionClass = std.class.create( Version )
-VersionClass.parse = parse
+std.Version = VersionClass
 
-function VersionClass.toString( major, minor, patch, pre_release, build )
+--- [SHARED AND MENU]
+---
+--- Converts `major`, `minor`, `patch`, `pre_release`, and `build` to a string.
+---@param major number The major version.
+---@param minor? number The minor version.
+---@param patch? number The patch version.
+---@param pre_release? string The pre-release version.
+---@param build? string The build version.
+---@return string version The version string.
+function VersionClass.asString( major, minor, patch, pre_release, build )
 	return numbersToString( parse( major, minor, patch, pre_release, build ) )
 end
 
-function VersionClass.fromNumber( uint )
+--- [SHARED AND MENU]
+---
+--- Creates a Version object from an unsigned long.
+---@param uint integer The unsigned long.
+---@return gpm.std.Version object The Version object.
+function VersionClass.fromULong( uint )
 	return VersionClass( bit_band( uint, 0x3ff ), bit_band( bit_rshift( uint, 10 ), 0x7ff ), bit_band( bit_rshift( uint, 21 ), 0x7ff ) )
 end
 
@@ -539,11 +647,13 @@ do
 
 	local function sort_fn( a, b ) return a > b end
 
+	--- [SHARED AND MENU]
+	---
 	--- Selects the first version in `tbl` that matches `target`.
 	---@param target string The version selector.
 	---@param tbl table<string|gpm.std.Version>: The table to search.
-	---@return gpm.std.Version?: The first version that matches `target`.
-	---@return integer: The index of the version in `tbl`.
+	---@return gpm.std.Version? version The first version that matches `target`.
+	---@return integer index The index of the version in `tbl`.
 	function VersionClass.select( target, tbl )
 		table_sort( tbl, sort_fn )
 
@@ -557,4 +667,3 @@ do
 
 end
 
-return VersionClass

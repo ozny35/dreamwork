@@ -139,20 +139,20 @@ do
 
     --- [SHARED AND MENU]
     ---
-    --- Returns the value at the front of the queue or the back if inverse is `true`.
-    ---@param inverse? boolean If `true`, returns the value at the back of the queue.
+    --- Returns the value at the front of the queue or the back if `fromBack` is `true`.
+    ---@param fromBack? boolean If `true`, returns the value at the back of the queue.
     ---@return any
-    function Queue:peek( inverse )
-        return self[ inverse and ( self.back + 1 ) or self.front ]
+    function Queue:peek( fromBack )
+        return self[ fromBack and ( self.back + 1 ) or self.front ]
     end
 
     --- [SHARED AND MENU]
     ---
-    --- Appends a value to the end of the queue or the front if inverse is `true`.
+    --- Appends a value to the end of the queue or the front if `toFront` is `true`.
     ---@param value any The value to append.
-    ---@param inverse? boolean If `true`, appends the value to the front of the queue.
-    function Queue:push( value, inverse )
-        if inverse then
+    ---@param toFront? boolean If `true`, appends the value to the front of the queue.
+    function Queue:push( value, toFront )
+        if toFront then
             local back = self.back
             self[ back ] = value
             self.back = back - 1
@@ -165,16 +165,16 @@ do
 
     --- [SHARED AND MENU]
     ---
-    --- Removes and returns the value at the back of the queue or the front if inverse is `true`.
-    ---@param inverse? boolean If `true`, removes and returns the value at the front of the queue.
-    ---@return any value The value at the back of the queue or the front if inverse is `true`.
-    function Queue:pop( inverse )
+    --- Removes and returns the value at the back of the queue or the front if `fromBack` is `true`.
+    ---@param fromBack? boolean If `true`, removes and returns the value at the front of the queue.
+    ---@return any value The value at the back of the queue or the front if `fromBack` is `true`.
+    function Queue:pop( fromBack )
         local back, front = self.back, self.front
         if back == front then return nil end
 
         local value
 
-        if inverse then
+        if fromBack then
 
             value = self[ front ]
             self[ front ] = nil -- unreference the value
@@ -204,12 +204,12 @@ do
     --- [SHARED AND MENU]
     ---
     --- Returns an iterator for the queue.
-    ---@param inverse? boolean If `true`, returns an iterator for the back of the queue.
+    ---@param fromBack? boolean If `true`, returns an iterator for the back of the queue.
     ---@return function iterator The iterator function.
     ---@return Queue queue The queue being iterated over.
-    ---@return boolean inverse If `true`, returns an iterator for the back of the queue.
-    function Queue:iterator( inverse )
-        return self.pop, self, inverse == true
+    ---@return boolean fromBack `true` if the iterator is for the back of the queue.
+    function Queue:iterator( fromBack )
+        return self.pop, self, fromBack == true
     end
 
     --- [SHARED AND MENU]
