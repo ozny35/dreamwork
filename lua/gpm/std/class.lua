@@ -4,10 +4,10 @@ local std = _G.gpm.std
 local debug = std.debug
 local string = std.string
 
-local raw_get = std.raw.get
 local string_format = string.format
 local setmetatable = std.setmetatable
 local debug_getmetatable = debug.getmetatable
+local raw_get, raw_pairs = std.raw.get, std.raw.pairs
 
 --- [SHARED AND MENU]
 ---
@@ -38,7 +38,6 @@ end
 do
 
     local string_sub = string.sub
-    local pairs = std.pairs
 
     ---@param obj Object The object to convert to a string.
     ---@return string str The string representation of the object.
@@ -71,7 +70,7 @@ do
             setmetatable( base, { __index = parent_base } )
 
             -- copy metamethods from parent
-            for key, value in pairs( parent_base ) do
+            for key, value in raw_pairs( parent_base ) do
                 if string_sub( key, 1, 2 ) == "__" and not ( key == "__index" and value == parent_base ) and key ~= "__type" then
                     base[ key ] = value
                 end
@@ -84,6 +83,8 @@ do
 end
 
 do
+
+    local debug_newproxy = debug.newproxy
 
     local class__call
     do
@@ -117,15 +118,32 @@ do
 
             ---@cast base gpm.std.Object
 
-            local new_fn, obj = find_rawkey( base, "__new" )
-            if new_fn ~= nil then
-                obj = new_fn( base, ... )
+            local obj
+
+            if raw_get( self, "__private" ) then
+
+                local template = raw_get( self, "__template" )
+                if template == nil then
+                    std.error( "template is missing, class creation failed.", 2 )
+                end
+
+                obj = debug_newproxy( template )
+
+            else
+
+                local new_fn = find_rawkey( base, "__new" )
+                if new_fn ~= nil then
+                    obj = new_fn( base, ... )
+                end
+
+                if obj == nil then
+                    obj = {}
+                    setmetatable( obj, base )
+                end
+
             end
 
-            if obj == nil then
-                obj = {}
-                setmetatable( obj, base )
-            end
+            ---@cast obj gpm.std.Object
 
             local init_fn = find_rawkey( base, "__init" )
             if init_fn ~= nil then
@@ -149,8 +167,9 @@ do
     ---
     --- Creates a new class from the given base.
     ---@param base Object The base object, aka metatable.
+    ---@param private? boolean If the class should be private.
     ---@return Class | unknown cls The class.
-    function class.create( base )
+    function class.create( base, private )
         local cls = {
             __base = base
         }
@@ -171,12 +190,31 @@ do
             end
         end
 
+        if private == true then
+            cls.__private = true
+
+            local template = debug_newproxy( true )
+            cls.__template = template
+
+            local metatable = debug_getmetatable( template )
+
+            for key, value in raw_pairs( base ) do
+                metatable[ key ] = value
+            end
+
+            setmetatable( metatable, debug_getmetatable( base ) )
+        else
+            cls.__private = false
+        end
+
         setmetatable( cls, {
             __index = base,
             __call = class__call,
             __tostring = class__tostring,
             __type = raw_get( base, "__type" ) .. "Class"
-        } ) ---@cast cls -Object
+        } )
+
+        ---@cast cls gpm.std.Object
 
         raw_set( base, "__class", cls )
         return cls
