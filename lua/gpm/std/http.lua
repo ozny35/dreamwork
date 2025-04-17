@@ -1,19 +1,18 @@
 local _G = _G
+
 local gpm = _G.gpm
+local Logger = gpm.Logger
 
 ---@class gpm.std
 local std = gpm.std
 
-local Logger = gpm.Logger
-local Future, tostring, tonumber, HTTPClientError, Timer_wait = std.Future, std.tostring, std.tonumber, std.HTTPClientError, std.Timer.wait
-
-local string_gmatch, string_upper
-do
-    local string = std.string
-    string_gmatch, string_upper = string.gmatch, string.upper
-end
-
+local tonumber = std.tonumber
+local Timer_wait = std.Timer.wait
+local string_gmatch = std.string.gmatch
 local isnumber, isstring, istable = std.isnumber, std.isstring, std.istable
+
+local Future = std.Future
+local HTTPClientError = std.HTTPClientError
 
 local http_client, client_name
 if std.SERVER and std.loadbinary( "reqwest" ) then
@@ -122,58 +121,116 @@ local function isValidCache( data )
     return ( SysTime() - data.start ) < data.age
 end
 
+local int2method = {
+    [ 0 ] = "HEAD",
+    [ 1 ] = "GET",
+    [ 2 ] = "POST",
+    [ 3 ] = "PUT",
+    [ 4 ] = "PATCH",
+    [ 5 ] = "DELETE",
+    [ 6 ] = "OPTIONS"
+}
+
 --- Executes an asynchronous http request with the given parameters.
----@param parameters HTTPRequest The request parameters. See `HTTPRequest` structure.
----@return HTTPResponse
+---@see gpm.std.http.Request structure.
+---@param tbl gpm.std.http.Request The request parameters.
+---@return gpm.std.http.Response data The response.
 ---@async
-local function request( parameters )
-    local url = parameters.url
-    if not isstring( url ) then
-        url = tostring( url )
+local function request( tbl )
+    local search_parameters = tbl.parameters
+    if std.isURLSearchParams( search_parameters ) then
+        ---@cast search_parameters gpm.std.URLSearchParams
+
+        local parameters = {}
+
+        for key, value in search_parameters:iterator() do
+            local old_value = parameters[ key ]
+            if old_value == nil then
+                parameters[ key ] = value
+            elseif istable( old_value ) then
+                old_value[ #old_value + 1 ] = value
+            else
+                parameters[ key ] = { old_value, value }
+            end
+        end
+
+        tbl.parameters = parameters
+    elseif not istable( search_parameters ) then
+        tbl.parameters = nil
     end
 
-    local method = parameters.method
-    if isstring( method ) then
-        ---@cast method string
-        method = string_upper( method )
-    else
-        method = "GET"
+    local url = tbl.url
+    if url == nil then
+        std.error( "URL is nil", 2 )
+    elseif not isstring( url ) then
+        ---@cast url URL
+
+        local url_search_parameters = url.searchParams
+        if url_search_parameters ~= nil then
+            ---@cast url_search_parameters gpm.std.URLSearchParams
+
+            local parameters = tbl.parameters
+            if parameters == nil then
+                ---@diagnostic disable-next-line: missing-fields
+                parameters = {}; tbl.parameters = parameters
+                ---@cast parameters table
+            end
+
+            for key, value in url_search_parameters:iterator() do
+                local old_value = parameters[ key ]
+                if old_value == nil then
+                    parameters[ key ] = value
+                elseif istable( old_value ) then
+                    old_value[ #old_value + 1 ] = value
+                else
+                    parameters[ key ] = { old_value, value }
+                end
+            end
+        end
+
+        url = url.origin .. url.pathname
     end
 
-    parameters.method = method
+    ---@cast url string
 
-    local timeout = parameters.timeout
-    if not isnumber( timeout ) then
+    local method = int2method[ tbl.method ] or "GET"
+
+    ---@diagnostic disable-next-line: assign-type-mismatch
+    tbl.method = method
+
+    local timeout = tbl.timeout
+    if timeout == nil or not isnumber( timeout ) then
         ---@diagnostic disable-next-line: cast-local-type
         timeout = gpm_http_timeout:get()
         ---@cast timeout number
-        parameters.timeout = timeout
     end
 
+    tbl.timeout = timeout
+
     -- TODO: add package logger searching
-    Logger:debug( "%s HTTP request to '%s', using '%s', with timeout %d seconds.", method, url, client_name, timeout )
+    Logger:debug( "%s HTTP request to '%s', using '%s', with timeout %f seconds.", method, url, client_name, timeout )
 
     local f = Future()
 
     ---@diagnostic disable-next-line: inject-field
-    function parameters.success( status, body, headers )
-        f:setResult( { status = status, body = body, headers = headers } )
+    function tbl.success( status, body, headers )
+        return f:setResult( { status = status, body = body, headers = headers } )
     end
 
     ---@diagnostic disable-next-line: inject-field
-    function parameters.failed( msg )
-        f:setError( HTTPClientError( msg ) )
+    function tbl.failed( msg )
+        return f:setError( HTTPClientError( msg ) )
     end
 
-    -- Cache
-    if parameters.cache then
-        parameters.cache = nil
+    -- Cache extension
+    if tbl.cache then
+        tbl.cache = nil
 
         local identifier = json_serialize( {
             url = url,
             method = method,
-            parameters = parameters.parameters,
-            headers = parameters.headers
+            parameters = tbl.parameters,
+            headers = tbl.headers
         }, false )
 
         local data = session_cache[ identifier ]
@@ -181,8 +238,8 @@ local function request( parameters )
             return data[ 1 ]
         end
 
-        local lifetime = parameters.lifetime
-        parameters.lifetime = nil
+        local lifetime = tbl.lifetime
+        tbl.lifetime = nil
 
         if not isnumber( lifetime ) then
             lifetime = gpm_http_lifetime:get() * 60
@@ -192,10 +249,10 @@ local function request( parameters )
         data = { f, SysTime(), lifetime }
         session_cache[ identifier ] = data
 
-        local success = parameters.success
+        local success = tbl.success
 
         ---@diagnostic disable-next-line: inject-field
-        function parameters.success( status, body, headers )
+        function tbl.success( status, body, headers )
             local cache_control = headers["cache-control"]
             if cache_control then
                 local options = {}
@@ -213,34 +270,34 @@ local function request( parameters )
             success( status, body, headers )
         end
 
-        local failed = parameters.failed
+        local failed = tbl.failed
 
         ---@diagnostic disable-next-line: inject-field
-        function parameters.failed( msg )
+        function tbl.failed( msg )
             session_cache[ identifier ] = nil
             failed( msg )
         end
     end
 
     -- ETag extension
-    if parameters.etag then
-        parameters.etag = nil
+    if tbl.etag then
+        tbl.etag = nil
 
         local data = http_cache_get( url )
         if data then
-            local headers = parameters.headers
+            local headers = tbl.headers
             if istable( headers ) then
                 headers[ "If-None-Match" ] = data.etag
             else
                 headers = { [ "If-None-Match" ] = data.etag }
-                parameters.headers = headers
+                tbl.headers = headers
             end
         end
 
-        local success = parameters.success
+        local success = tbl.success
 
         ---@diagnostic disable-next-line: inject-field
-        function parameters.success( status, body, headers )
+        function tbl.success( status, body, headers )
             if status == 304 then
                 status, body = 200, data and data.content or ""
             elseif status == 200 and headers.etag then
@@ -251,8 +308,8 @@ local function request( parameters )
         end
     end
 
-    if not make_request( parameters ) then
-        parameters.failed( "failed to connect to http client" )
+    if not make_request( tbl ) then
+        tbl.failed( "failed to connect to http client" )
     end
 
     return f:await()
@@ -265,9 +322,11 @@ if std.MENU then
     local json_deserialize = std.crypto.json.deserialize
     local GetAPIManifest = _G.GetAPIManifest
 
+    --- [MENU]
+    ---
     --- Gets miscellaneous information from Facepunches API.
-    ---@param timeout number?: The timeout in seconds.
-    ---@return table data: The data returned from the API.
+    ---@param timeout number? The timeout in seconds.
+    ---@return table data The data returned from the API.
     ---@async
     function http.getFacepunchManifest( timeout )
         local f = Future()
