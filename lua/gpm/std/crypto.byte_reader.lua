@@ -62,7 +62,7 @@ do
 	--- Sets the current position of the reader.
 	---@param position? integer The position to set.
 	---@return integer new_position The new position.
-	function ByteReader:shift( position )
+	function ByteReader:seek( position )
 		if position == nil then
 			position = 0
 		else
@@ -82,7 +82,7 @@ end
 ---@param offset integer The offset to skip.
 ---@return integer position The new position.
 function ByteReader:skip( offset )
-	return self:shift( self[ 2 ] + offset )
+	return self:seek( self[ 2 ] + offset )
 end
 
 do

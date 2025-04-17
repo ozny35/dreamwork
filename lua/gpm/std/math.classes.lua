@@ -60,42 +60,57 @@ local math_lerp = math.lerp
 local math_min, math_max = math.min, math.max
 
 
+--- [SHARED AND MENU]
+---
+--- A 2D vector object.
 ---@alias Vector2 gpm.std.Vector2
 ---@class gpm.std.Vector2: gpm.std.Object
 ---@field __class gpm.std.Vector2Class
----@operator add: Vector2
----@operator sub: Vector2
----@operator mul: Vector2
----@operator div: Vector2
----@operator unm: Vector2
+---@operator add( gpm.std.Vector2 ): gpm.std.Vector2
+---@operator sub( gpm.std.Vector2 ): gpm.std.Vector2
+---@operator mul( gpm.std.Vector2 | number ): gpm.std.Vector2
+---@operator div( gpm.std.Vector2 | number ): gpm.std.Vector2
+---@operator unm: gpm.std.Vector2
 local Vector2 = class.base( "Vector2" )
 
+--- [SHARED AND MENU]
+---
+--- A 2D vector class.
 ---@class gpm.std.Vector2Class: gpm.std.Vector2
 ---@field __base gpm.std.Vector2
----@overload fun( x: number, y: number ): Vector2
+---@overload fun( x: number, y: number ): gpm.std.Vector2
 local Vector2Class = class.create( Vector2 )
 std.Vector2 = Vector2Class
 
+--- [SHARED AND MENU]
+---
+--- A 3D vector object.
 ---@alias Vector3 gpm.std.Vector3
 ---@class gpm.std.Vector3: gpm.std.Object
 ---@field __class gpm.std.Vector3Class
----@operator add: Vector3
----@operator sub: Vector3
----@operator mul: Vector3
----@operator div: Vector3
----@operator unm: Vector3
+---@operator add( gpm.std.Vector3 ): gpm.std.Vector3
+---@operator sub( gpm.std.Vector3 ): gpm.std.Vector3
+---@operator mul( gpm.std.Vector3 | number ): gpm.std.Vector3
+---@operator div( gpm.std.Vector3 | number ): gpm.std.Vector3
+---@operator unm: gpm.std.Vector3
 ---@field x number
 ---@field y number
 ---@field z number
 local Vector3 = class.base( "Vector3" )
 
+--- [SHARED AND MENU]
+---
+--- A 3D vector class.
 ---@class gpm.std.Vector3Class: gpm.std.Vector3
 ---@field __base gpm.std.Vector3
----@overload fun( x: number, y: number, z: number ): Vector3
+---@overload fun( x: number, y: number, z: number ): gpm.std.Vector3
 local Vector3Class = class.create( Vector3 )
 Vector3Class.origin = setmetatable( { 0, 0, 0 }, Vector3 )
 std.Vector3 = Vector3Class
 
+--- [SHARED AND MENU]
+---
+--- A 3D angle object.
 ---@alias Angle3 gpm.std.Angle3
 ---@class gpm.std.Angle3: gpm.std.Object
 ---@field __class gpm.std.Angle3Class
@@ -106,6 +121,9 @@ std.Vector3 = Vector3Class
 ---@operator unm: Angle3
 local Angle3 = class.base( "Angle3" )
 
+--- [SHARED AND MENU]
+---
+--- A 3D angle class.
 ---@class gpm.std.Angle3Class: gpm.std.Angle3
 ---@field __base gpm.std.Angle3
 ---@overload fun( pitch: number?, yaw: number?, roll: number? ): Angle3
@@ -113,12 +131,18 @@ local Angle3Class = class.create( Angle3 )
 Angle3Class.zero = setmetatable( { 0, 0, 0 }, Angle3 )
 std.Angle = Angle3Class
 
+--- [SHARED AND MENU]
+---
+--- A 4x4 matrix object.
 ---@diagnostic disable-next-line: duplicate-doc-alias
 ---@alias VMatrix gpm.std.VMatrix
 ---@class gpm.std.VMatrix: gpm.std.Object
 ---@field __class gpm.std.VMatrixClass
 local VMatrix = class.base( "VMatrix" )
 
+--- [SHARED AND MENU]
+---
+--- A 4x4 matrix class.
 ---@class gpm.std.VMatrixClass: gpm.std.VMatrix
 ---@field __base gpm.std.VMatrix
 ---@overload fun( ...: number? ): VMatrix
@@ -255,7 +279,6 @@ do
 
 end
 
----@return Vector2
 ---@protected
 function Vector2:__new( x, y )
     return setmetatable( { x or 0, y or 0 }, Vector2 )
@@ -283,7 +306,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Creates a copy of the vector.
----@return Vector2: The copy of the vector.
+---@return gpm.std.Vector2: The copy of the vector.
 function Vector2:copy()
     return setmetatable( { self[ 1 ], self[ 2 ] }, Vector2 )
 end
@@ -292,7 +315,7 @@ end
 ---
 --- Scales the vector.
 ---@param scale number The scale factor.
----@return Vector2: The scaled vector.
+---@return gpm.std.Vector2: The scaled vector.
 function Vector2:scale( scale )
     if scale == 0 or scale ~= scale then
         self[ 1 ] = 0
@@ -312,7 +335,7 @@ end
 ---
 --- Returns a scaled copy of the vector.
 ---@param scale number The scale factor.
----@return Vector2: The scaled copy of the vector.
+---@return gpm.std.Vector2: The scaled copy of the vector.
 function Vector2:getScaled( scale )
     return self:copy():scale( scale )
 end
@@ -320,8 +343,8 @@ end
 --- [SHARED AND MENU]
 ---
 --- Adds the vector to another vector.
----@param vector Vector2 The other vector.
----@return Vector2: The sum of the two vectors.
+---@param vector gpm.std.Vector2 The other vector.
+---@return gpm.std.Vector2: The sum of the two vectors.
 function Vector2:add( vector )
     self[ 1 ] = self[ 1 ] + vector[ 1 ]
     self[ 2 ] = self[ 2 ] + vector[ 2 ]
@@ -331,8 +354,8 @@ end
 --- [SHARED AND MENU]
 ---
 --- Subtracts the vector from another vector.
----@param other Vector2 The other vector.
----@return Vector2: The difference of the two vectors.
+---@param other gpm.std.Vector2 The other vector.
+---@return gpm.std.Vector2: The difference of the two vectors.
 function Vector2:sub( other )
     self[ 1 ] = self[ 1 ] - other[ 1 ]
     self[ 2 ] = self[ 2 ] - other[ 2 ]
@@ -342,14 +365,14 @@ end
 --- [SHARED AND MENU]
 ---
 --- Multiplies the vector by another vector or a number.
----@param other Vector2 | number: The other vector or a number.
----@return Vector2: The product of the two vectors or the vector multiplied by a number.
+---@param other gpm.std.Vector2 | number: The other vector or a number.
+---@return gpm.std.Vector2: The product of the two vectors or the vector multiplied by a number.
 function Vector2:mul( other )
     if isnumber( other ) then
         ---@cast other number
         return self:scale( other )
     else
-        ---@cast other Vector2
+        ---@cast other gpm.std.Vector2
         self[ 1 ] = self[ 1 ] * other[ 1 ]
         self[ 2 ] = self[ 2 ] * other[ 2 ]
     end
@@ -360,14 +383,14 @@ end
 --- [SHARED AND MENU]
 ---
 --- Divides the vector by another vector or a number.
----@param other Vector2 | number: The other vector or a number.
----@return Vector2: The quotient of the two vectors or the vector divided by a number.
+---@param other gpm.std.Vector2 | number: The other vector or a number.
+---@return gpm.std.Vector2: The quotient of the two vectors or the vector divided by a number.
 function Vector2:div( other )
     if isnumber( other ) then
         ---@cast other number
         return self:scale( 1 / other )
     else
-        ---@cast other Vector2
+        ---@cast other gpm.std.Vector2
         self[ 1 ] = self[ 1 ] / other[ 1 ]
         self[ 2 ] = self[ 2 ] / other[ 2 ]
     end
@@ -378,42 +401,34 @@ end
 --- [SHARED AND MENU]
 ---
 --- Negates the vector.
----@return Vector2
+---@return gpm.std.Vector2
 function Vector2:negate()
     self[ 1 ] = -self[ 1 ]
     self[ 2 ] = -self[ 2 ]
     return self
 end
 
----@param other Vector2 The other vector.
----@return Vector2: The sum of the two vectors.
 ---@protected
 function Vector2:__add( other )
     return self:copy():add( other )
 end
 
----@param other Vector2
----@return Vector2
 ---@protected
 function Vector2:__sub( other )
     return self:copy():sub( other )
 end
 
----@param other Vector2 | number
----@return Vector2
 ---@protected
 function Vector2:__mul( other )
     if isnumber( other ) then
         ---@cast other number
         return setmetatable( { self[ 1 ] * other, self[ 2 ] * other }, Vector2 )
     else
-        ---@cast other Vector2
+        ---@cast other gpm.std.Vector2
         return setmetatable( { self[ 1 ] * other[ 1 ], self[ 2 ] * other[ 2 ] }, Vector2 )
     end
 end
 
----@param other Vector2 | number
----@return Vector2
 ---@protected
 function Vector2:__div( other )
     if isnumber( other ) then
@@ -421,19 +436,16 @@ function Vector2:__div( other )
         local multiplier = 1 / other
         return setmetatable( { self[ 1 ] * multiplier, self[ 2 ] * multiplier }, Vector2 )
     else
-        ---@cast other Vector2
+        ---@cast other gpm.std.Vector2
         return setmetatable( { self[ 1 ] / other[ 1 ], self[ 2 ] / other[ 2 ] }, Vector2 )
     end
 end
 
----@return Vector3
 ---@protected
 function Vector2:__unm()
     return setmetatable( { -self[ 1 ], -self[ 2 ] }, Vector2 )
 end
 
----@param vector Vector2
----@return boolean
 ---@protected
 function Vector2:__eq( vector )
     return self[ 1 ] == vector[ 1 ] and self[ 2 ] == vector[ 2 ]
@@ -458,7 +470,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Calculates the distance between two vectors.
----@param vector Vector2 The other vector.
+---@param vector gpm.std.Vector2 The other vector.
 ---@return number: The distance between the two vectors.
 function Vector2:getDistance( vector )
     return math_sqrt( ( vector[ 1 ] - self[ 1 ] ) ^ 2 + ( vector[ 2 ] - self[ 2 ] ) ^ 2 )
@@ -467,7 +479,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Normalizes the vector.
----@return Vector2: The normalized vector.
+---@return gpm.std.Vector2: The normalized vector.
 function Vector2:normalize()
     local length = self:getLength()
     return length == 0 and self or self:scale( 1 / length )
@@ -476,7 +488,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Returns a normalized copy of the vector.
----@return Vector2: The normalized copy of the vector.
+---@return gpm.std.Vector2: The normalized copy of the vector.
 function Vector2:getNormalized()
     return self:copy():normalize()
 end
@@ -493,7 +505,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Sets the vector to zero.
----@return Vector2: The zero vector.
+---@return gpm.std.Vector2: The zero vector.
 function Vector2:zero()
     self[ 1 ] = 0
     self[ 2 ] = 0
@@ -503,7 +515,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Calculates the dot product of two vectors.
----@param vector Vector2 The other vector.
+---@param vector gpm.std.Vector2 The other vector.
 ---@return number: The dot product of two vectors.
 function Vector2:dot( vector )
     return self[ 1 ] * vector[ 1 ] + self[ 2 ] * vector[ 2 ]
@@ -512,7 +524,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Calculates the cross product of two vectors.
----@param vector Vector2 The other vector.
+---@param vector gpm.std.Vector2 The other vector.
 ---@return number: The cross product of two vectors.
 function Vector2:cross( vector )
     return self[ 1 ] * vector[ 2 ] - self[ 2 ] * vector[ 1 ]
@@ -521,7 +533,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Returns the angle of the vector.
----@param up? Vector2: The direction of the angle.
+---@param up? gpm.std.Vector2: The direction of the angle.
 ---@return number: The angle of the vector.
 function Vector2:getAngle( up )
     if up then
@@ -535,7 +547,7 @@ end
 ---@param x number?
 ---@param y number?
 ---@param z number?
----@return Vector3
+---@return gpm.std.Vector3
 function Vector3:__new( x, y, z )
     return setmetatable( { x or 0, y or 0, z or 0 }, Vector3 )
 end
@@ -551,8 +563,6 @@ do
         r = 3
     }
 
-    ---@param key string | number
-    ---@return number | function | nil
     ---@protected
     function Angle3:__index( key )
         if isnumber( key ) then
@@ -581,8 +591,6 @@ do
         z = 3
     }
 
-    ---@param key string | number
-    ---@return number | function | nil
     ---@protected
     function Vector3:__index( key )
         if isnumber( key ) then
@@ -628,7 +636,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Creates a copy of the vector.
----@return Vector3: The copy of the vector.
+---@return gpm.std.Vector3: The copy of the vector.
 function Vector3:copy()
     return setmetatable( { self[ 1 ], self[ 2 ], self[ 3 ] }, Vector3 )
 end
@@ -641,7 +649,7 @@ do
     ---
     --- Scales the vector.
     ---@param scale number The scale factor.
-    ---@return Vector3: The scaled vector.
+    ---@return gpm.std.Vector3: The scaled vector.
     function Vector3:scale( scale )
         if scale == 0 or scale ~= scale then
             self[ 1 ] = 0
@@ -666,7 +674,7 @@ end
 ---
 --- Returns a scaled copy of the vector.
 ---@param scale number The scale factor.
----@return Vector3: The scaled copy of the vector.
+---@return gpm.std.Vector3: The scaled copy of the vector.
 function Vector3:getScaled( scale )
     return self:copy():scale( scale )
 end
@@ -674,8 +682,8 @@ end
 --- [SHARED AND MENU]
 ---
 --- Adds the vector to another vector.
----@param vector Vector3 The other vector.
----@return Vector3: The sum of the two vectors.
+---@param vector gpm.std.Vector3 The other vector.
+---@return gpm.std.Vector3: The sum of the two vectors.
 function Vector3:add( vector )
     self[ 1 ] = self[ 1 ] + vector[ 1 ]
     self[ 2 ] = self[ 2 ] + vector[ 2 ]
@@ -686,8 +694,8 @@ end
 --- [SHARED AND MENU]
 ---
 --- Subtracts the vector from another vector.
----@param vector Vector3 The other vector.
----@return Vector3: The difference of the two vectors.
+---@param vector gpm.std.Vector3 The other vector.
+---@return gpm.std.Vector3: The difference of the two vectors.
 function Vector3:sub( vector )
     self[ 1 ] = self[ 1 ] - vector[ 1 ]
     self[ 2 ] = self[ 2 ] - vector[ 2 ]
@@ -698,15 +706,15 @@ end
 --- [SHARED AND MENU]
 ---
 --- Multiplies the vector by another vector or a number.
----@param value Vector3 | number: The other vector or a number.
----@return Vector3: The product of the two vectors or the vector multiplied by a number.
+---@param value gpm.std.Vector3 | number: The other vector or a number.
+---@return gpm.std.Vector3: The product of the two vectors or the vector multiplied by a number.
 function Vector3:mul( value )
     if isnumber( value ) then
         ---@cast value number
         return self:scale( value )
     end
 
-    ---@cast value Vector3
+    ---@cast value gpm.std.Vector3
     self[ 1 ] = self[ 1 ] * value[ 1 ]
     self[ 2 ] = self[ 2 ] * value[ 2 ]
     self[ 3 ] = self[ 3 ] * value[ 3 ]
@@ -716,15 +724,15 @@ end
 --- [SHARED AND MENU]
 ---
 --- Divides the vector by another vector or a number.
----@param value Vector3 | number: The other vector or a number.
----@return Vector3: The quotient of the two vectors or the vector divided by a number.
+---@param value gpm.std.Vector3 | number: The other vector or a number.
+---@return gpm.std.Vector3: The quotient of the two vectors or the vector divided by a number.
 function Vector3:div( value )
     if isnumber( value ) then
         ---@cast value number
         return self:scale( 1 / value )
     end
 
-    ---@cast value Vector3
+    ---@cast value gpm.std.Vector3
     self[ 1 ] = self[ 1 ] / value[ 1 ]
     self[ 2 ] = self[ 2 ] / value[ 2 ]
     self[ 3 ] = self[ 3 ] / value[ 3 ]
@@ -734,7 +742,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Negates the vector.
----@return Vector3
+---@return gpm.std.Vector3
 function Vector3:negate()
     self[ 1 ] = -self[ 1 ]
     self[ 2 ] = -self[ 2 ]
@@ -742,42 +750,31 @@ function Vector3:negate()
     return self
 end
 
----@param vector Vector3
----@return Vector3
 ---@protected
 function Vector3:__add( vector )
     return self:copy():add( vector )
 end
 
----@param vector Vector3
----@return Vector3
 ---@protected
 function Vector3:__sub( vector )
     return self:copy():sub( vector )
 end
 
----@param value Vector3 | number
----@return Vector3
 ---@protected
 function Vector3:__mul( value )
     return self:copy():mul( value )
 end
 
----@param value Vector3 | number
----@return Vector3
 ---@protected
 function Vector3:__div( value )
     return self:copy():div( value )
 end
 
----@return Vector3
 ---@protected
 function Vector3:__unm()
     return setmetatable( { -self[ 1 ], -self[ 2 ], -self[ 3 ] }, Vector3 )
 end
 
----@param vector Vector3
----@return boolean
 ---@protected
 function Vector3:__eq( vector )
     return self[ 1 ] == vector[ 1 ] and self[ 2 ] == vector[ 2 ] and self[ 3 ] == vector[ 3 ]
@@ -1043,43 +1040,6 @@ function Vector3Class.order( mins, maxs )
     return mins, maxs
 end
 
--- Color class extension
-do
-
-    ---@class gpm.std.ColorClass
-    local ColorClass = std.Color
-
-    ---@class gpm.std.Color
-    local Color = ColorClass.__base
-
-    --- [SHARED AND MENU]
-    ---
-    --- Creates a color object from vector.
-    ---@param vector Vector3 The vector.
-    ---@return Color: The color object.
-    function ColorClass.fromVector3( vector )
-        return setmetatable( {
-            vector[ 1 ] * 255,
-            vector[ 2 ] * 255,
-            vector[ 3 ] * 255,
-            255
-        }, Color )
-    end
-
-    --- [SHARED AND MENU]
-    ---
-    --- Returns the color as vector.
-    ---@return Vector: The vector.
-    function Color:toVector3()
-        return setmetatable( {
-            self[ 1 ] / 255,
-            self[ 2 ] / 255,
-            self[ 3 ] / 255
-        }, Vector3 )
-    end
-
-end
-
 --- [SHARED AND MENU]
 ---
 --- Unpacks the angle.
@@ -1192,42 +1152,31 @@ function Angle3:negate()
     return self
 end
 
----@param angle Angle3
----@return Angle3
 ---@protected
 function Angle3:__add( angle )
     return self:copy():add( angle )
 end
 
----@param angle Angle3
----@return Angle3
 ---@protected
 function Angle3:__sub( angle )
     return self:copy():sub( angle )
 end
 
----@param angle number | Angle3
----@return Angle3
 ---@protected
 function Angle3:__mul( angle )
     return self:copy():mul( angle )
 end
 
----@param angle number | Angle3
----@return Angle3
 ---@protected
 function Angle3:__div( angle )
     return self:copy():div( angle )
 end
 
----@return Angle3
 ---@protected
 function Angle3:__unm()
     return setmetatable( { -self[ 1 ], -self[ 2 ], -self[ 3 ] }, Angle3 )
 end
 
----@param angle Angle3
----@return boolean
 ---@protected
 function Angle3:__eq( angle )
     return self[ 1 ] == angle[ 1 ] and self[ 2 ] == angle[ 2 ] and self[ 3 ] == angle[ 3 ]
@@ -1429,13 +1378,11 @@ do
     local string_format = std.string.format
 
     ---@protected
-    ---@return string
     function Vector3:__tostring()
         return string_format( "Vector3: %p [%f, %f, %f]", self, self:unpack() )
     end
 
     ---@protected
-    ---@return string
     function Angle3:__tostring()
         return string_format( "Angle3: %p [%f, %f, %f]", self, self:unpack() )
     end

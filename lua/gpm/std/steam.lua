@@ -1,25 +1,27 @@
 local _G = _G
 local gpm = _G.gpm
+local steamworks = _G.steamworks
 
 ---@class gpm.std
 local std = gpm.std
 
-local steamworks = _G.steamworks
-local Future, isstring, tonumber, Timer_wait = std.Future, std.isstring, std.tonumber, std.Timer.wait
-
-local string_byte, string_sub
-do
-    local string = std.string
-    string_byte, string_sub = string.byte, string.sub
-end
+local Future = std.Future
+local isstring = std.isstring
+local tonumber = std.tonumber
+local Timer_wait = std.Timer.wait
+local string_byte, string_sub = std.string.byte, std.string.sub
 
 --- [SHARED AND MENU]
 ---
 --- Steam library.
 ---@class gpm.std.steam
 local steam = {}
+std.steam = steam
 
 steam.getTime = _G.system and _G.system.SteamTime
+
+include( "steam.identifier.lua" )
+include( "steam.workshop_item.lua" )
 
 if steamworks ~= nil then
 

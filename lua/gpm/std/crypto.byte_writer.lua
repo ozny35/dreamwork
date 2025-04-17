@@ -2,7 +2,8 @@ local std = _G.gpm.std
 
 local binary = std.crypto.binary
 local string = std.string
-local math = std.math
+
+local string_len = string.len
 
 --- [SHARED AND MENU]
 ---
@@ -17,80 +18,74 @@ function ByteWriter:__tostring()
 	return string.format( "ByteWriter: %p [%d/%d]", self, self[ 2 ], self[ 0 ] )
 end
 
+---@protected
+function ByteWriter:__init( base )
+	if base == nil then
+		self[ 0 ], self[ 1 ], self[ 2 ] = 0, "", 0
+	else
+		local size = string_len( base )
+		self[ 0 ], self[ 1 ], self[ 2 ] = size, base, size
+	end
+
+	self[ 3 ], self[ 4 ] = {}, 0
+end
+
 do
 
-	local string_len = string.len
-
-	---@protected
-	function ByteWriter:__init( base )
-		if base == nil then
-			self[ 0 ], self[ 1 ], self[ 2 ] = 0, "", 0
-		else
-			local size = string_len( base )
-			self[ 0 ], self[ 1 ], self[ 2 ] = size, base, size
-		end
-
-		self[ 3 ], self[ 4 ] = {}, 0
-	end
+	local string_rep = string.rep
 
 	do
 
-		local string_rep = string.rep
-
-		do
-
-			local table_concat = std.table.concat
-			local string_sub = string.sub
-
-			--- [SHARED AND MENU]
-			---
-			--- Flushes the writer.
-			---@return string data The bynary data.
-			---@return integer size The size of the data.
-			function ByteWriter:flush()
-				local buffer_size = self[ 4 ]
-				self[ 4 ] = 0
-
-				if buffer_size == 0 then
-					return self[ 1 ], self[ 0 ]
-				end
-
-				local old_data, size, pointer = self[ 1 ], self[ 0 ], self[ 2 ]
-				if pointer > size then
-					old_data, size = old_data .. string_rep( "\0", pointer - size ), pointer
-				end
-
-				local content = table_concat( self[ 3 ], "", 1, buffer_size )
-				local content_size = string_len( content )
-				self[ 3 ] = {}
-
-				local new_data = string_sub( old_data, 1, pointer ) .. content .. string_sub( old_data, pointer + content_size + 1, size )
-				local new_size = string_len( new_data )
-
-				self[ 1 ], self[ 0 ] = new_data, new_size
-				self[ 2 ] = pointer + content_size
-
-				return new_data, new_size
-			end
-
-		end
+		local table_concat = std.table.concat
+		local string_sub = string.sub
 
 		--- [SHARED AND MENU]
 		---
-		--- Skips the specified number of bytes.
-		---@param offset integer The number of bytes to skip.
-		---@return integer position The new position.
-		function ByteWriter:skip( offset )
-			local pointer, size = self[ 2 ], self[ 0 ]
-			local new_position = pointer + offset
+		--- Flushes the writer.
+		---@return string data The bynary data.
+		---@return integer size The size of the data.
+		function ByteWriter:flush()
+			local buffer_size = self[ 4 ]
+			self[ 4 ] = 0
 
-			if new_position > size then
-				self:write( string_rep( "\0", new_position - size ) )
+			if buffer_size == 0 then
+				return self[ 1 ], self[ 0 ]
 			end
 
-			return self:shift( new_position )
+			local old_data, size, pointer = self[ 1 ], self[ 0 ], self[ 2 ]
+			if pointer > size then
+				old_data, size = old_data .. string_rep( "\0", pointer - size ), pointer
+			end
+
+			local content = table_concat( self[ 3 ], "", 1, buffer_size )
+			local content_size = string_len( content )
+			self[ 3 ] = {}
+
+			local new_data = string_sub( old_data, 1, pointer ) .. content .. string_sub( old_data, pointer + content_size + 1, size )
+			local new_size = string_len( new_data )
+
+			self[ 1 ], self[ 0 ] = new_data, new_size
+			self[ 2 ] = pointer + content_size
+
+			return new_data, new_size
 		end
 
+	end
+
+	--- [SHARED AND MENU]
+	---
+	--- Skips the specified number of bytes.
+	---@param offset integer The number of bytes to skip.
+	---@return integer position The new position.
+	function ByteWriter:skip( offset )
+		local pointer, size = self[ 2 ], self[ 0 ]
+		local new_position = pointer + offset
+
+		if new_position > size then
+			self:write( string_rep( "\0", new_position - size ) )
+		end
+
+		return self:seek( new_position )
 	end
 
 end
@@ -118,7 +113,7 @@ end
 --- Sets the current position of the writer.
 ---@param position? integer The position to set.
 ---@return integer new_position The new position.
-function ByteWriter:shift( position )
+function ByteWriter:seek( position )
 	self:flush()
 
 	if position == nil then

@@ -18,6 +18,19 @@ local Package = class.base( "Package" )
 
 local cache = {}
 
+--[[
+
+    Package: {
+        name: string
+        prefix: string
+        version: Version
+        environment: table ( _ENV )
+    }
+
+    https://stackoverflow.com/questions/12021461/lua-setfenv-vs-env
+
+]]
+
 ---@param name string
 ---@param version string | Version
 ---@protected

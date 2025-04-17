@@ -749,7 +749,7 @@ BigInt.isOne = is_one
 --- Negates a big integer object.
 ---@param object gpm.std.BigInt
 ---@return gpm.std.BigInt
-local function unm( object )
+local function negate( object )
     local sign = object[ 0 ]
     if sign ~= 0 then
         object[ 0 ] = -object[ 0 ]
@@ -758,12 +758,12 @@ local function unm( object )
     return object
 end
 
-BigInt.unm = unm
+BigInt.negate = negate
 
 ---@return gpm.std.BigInt
 ---@protected
 function BigInt:__unm()
-    return unm( copy( self ) )
+    return negate( copy( self ) )
 end
 
 --- [SHARED AND MENU]
@@ -1393,7 +1393,7 @@ end
 ---@param value any
 ---@return gpm.std.BigInt
 local function sub( object, value )
-    return add( object, unm( tobigint( value ) ) )
+    return add( object, negate( tobigint( value ) ) )
 end
 
 BigInt.sub = sub
@@ -1431,7 +1431,7 @@ local function mul( object, value )
     -- multiplication by 1
     if is_one( object ) then
         if object[ 0 ] == -1 then
-            unm( other )
+            negate( other )
         end
 
         return other
@@ -1439,7 +1439,7 @@ local function mul( object, value )
 
     if is_one( other ) then
         if other[ 0 ] == -1 then
-            unm( object )
+            negate( object )
         end
 
         return object
@@ -1531,7 +1531,7 @@ do
         -- division by 1
         if is_one( other ) then
             if other[ 0 ] == -1 then
-                unm( object )
+                negate( object )
             end
 
             return object, new()

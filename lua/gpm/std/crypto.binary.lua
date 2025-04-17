@@ -1040,20 +1040,35 @@ end
 ---@param str string The binary string.
 ---@param big_endian? boolean The endianness of the binary string.
 ---@return fun(): integer?, boolean? reader A reader function that returns the bit position and the bit (boolean) value or `nil` if there are no more bits.
-function binary.reader( str, big_endian )
-	local bytes = { string_byte( str, 1, string_len( str ) ) }
-	local i, j = big_endian and 1 or #bytes, 8
-	local byte = bytes[ i ]
+function binary.bitReader( str, big_endian )
+	local byte_count = string_len( str )
+	local byte_index = big_endian and 1 or byte_count
+	local bytes = { string_byte( str, 1, byte_count ) }
+	local byte = bytes[ byte_index ]
+	local bit_index = 8
 
-	return function()
-		if j == 0 then
-			i, j = big_endian and ( i + 1 ) or ( i - 1 ), 8
-			byte = bytes[ i ]
-			if byte == nil then return nil end
+	if big_endian then
+		return function()
+			if bit_index == 0 then
+				byte_index, bit_index = byte_index + 1, 8
+				byte = bytes[ byte_index ]
+				if byte == nil then return nil end
+			end
+
+			bit_index = bit_index - 1
+			return ( byte_index - 1 ) * 8 + bit_index + 1, math_floor( byte / ( 2 ^ bit_index ) ) % 2 == 1
 		end
+	else
+		return function()
+			if bit_index == 0 then
+				byte_index, bit_index = byte_index - 1, 8
+				byte = bytes[ byte_index ]
+				if byte == nil then return nil end
+			end
 
-		j = j - 1
-		return ( i - 1 ) * 8 + j + 1, math_floor( byte / ( 2 ^ j ) ) % 2 == 1
+			bit_index = bit_index - 1
+			return ( byte_index - 1 ) * 8 + bit_index + 1, math_floor( byte / ( 2 ^ bit_index ) ) % 2 == 1
+		end
 	end
 end
 
@@ -1061,32 +1076,162 @@ end
 ---
 --- Writes a stream of bits to a binary string.
 ---
----@param bytes integer[] The stream of bits.
----@param byte_count integer The number of bytes to write.
+---@param byte_count? integer The number of bytes to write.
 ---@param big_endian? boolean The endianness of the binary string.
 ---@return fun( bit: boolean ): integer? writer A write function that writes a bit to a binary string and returns the position of the written bit or `nil` if the binary string is full.
-function binary.writer( bytes, byte_count, big_endian )
+---@return integer[] bytes The stream of bits.
+function binary.bitWriter( byte_count, big_endian )
+	if byte_count == nil then
+		if not big_endian then
+			std.error( "byte count must be specified for little endian", 2 )
+		end
+
+		local bytes, byte_index = {}, 1
+		local bit_index = 7
+
+		return function( value )
+
+			if value then
+				bytes[ byte_index ] = bytes[ byte_index ] + ( 2 ^ bit_index )
+			end
+
+			bit_index = ( bit_index - 1 ) % 8
+
+			if bit_index == 7 then
+				byte_index = byte_index + 1
+			end
+
+			return byte_index * 8 - ( 6 - bit_index )
+		end, bytes
+	end
+
+	local bit_index = 7
+	local bytes = {}
+
 	for i = 1, byte_count, 1 do
 		bytes[ i ] = 0
 	end
 
-	local i = big_endian and 1 or byte_count
-	local j = 7
+	if big_endian then
+		local byte_index = 1
 
-	return function( value )
-		if i > byte_count or i == 0 then return nil end
+		return function( value )
+			if byte_index > byte_count then return nil end
 
-		if value then
-			bytes[ i ] = bytes[ i ] + ( 2 ^ j )
+			if value then
+				bytes[ byte_index ] = bytes[ byte_index ] + ( 2 ^ bit_index )
+			end
+
+			bit_index = ( bit_index - 1 ) % 8
+
+			if bit_index == 7 then
+				byte_index = byte_index + 1
+			end
+
+			return byte_index * 8 - ( 6 - bit_index )
+		end, bytes
+	else
+
+		local byte_index = byte_count
+
+		return function( value )
+			if byte_index == 0 then return nil end
+
+			if value then
+				bytes[ byte_index ] = bytes[ byte_index ] + ( 2 ^ bit_index )
+			end
+
+			bit_index = ( bit_index - 1 ) % 8
+
+			if bit_index == 7 then
+				byte_index = byte_index - 1
+			end
+
+			return byte_index * 8 - ( 6 - bit_index )
+		end, bytes
+	end
+end
+
+--- [SHARED AND MENU]
+---
+--- Reads a binary string as a stream of bytes.
+---
+--- Can be used as iterator in for loops.
+---
+---@param str string The binary string.
+---@param big_endian? boolean The endianness of the binary string.
+---@return fun(): integer?, integer? reader A reader function that returns the byte position and the byte value or `nil` if there are no more bytes.
+function binary.byteReader( str, big_endian )
+	local byte_count = string_len( str )
+	local byte_index = big_endian and 1 or byte_count
+	local bytes = { string_byte( str, 1, byte_count ) }
+
+	if big_endian then
+		return function()
+			if byte_index > byte_count then return nil end
+
+			local value = bytes[ byte_index ]
+			byte_index = byte_index + 1
+			return byte_index, value
+		end
+	else
+		return function()
+			if byte_index == 0 then return nil end
+
+			local value = bytes[ byte_index ]
+			byte_index = byte_index - 1
+			return byte_index, value
+		end
+	end
+end
+
+--- [SHARED AND MENU]
+---
+--- Writes a stream of bytes to a binary string.
+---
+---@param byte_count? integer The number of bytes to write.
+---@param big_endian? boolean The endianness of the binary string.
+---@return fun( byte: integer ): integer? writer A write function that writes a byte to a binary string and returns the position of the written byte or `nil` if the binary string is full.
+---@return integer[] bytes The stream of bytes.
+function binary.byteWriter( byte_count, big_endian )
+	if byte_count == nil then
+		if not big_endian then
+			std.error( "byte count must be specified for little endian", 2 )
 		end
 
-		j = ( j - 1 ) % 8
+		local bytes, byte_index = {}, 1
 
-		if j == 7 then
-			i = big_endian and ( i + 1 ) or ( i - 1 )
-		end
+		return function( value )
+			bytes[ byte_index ] = value
+			byte_index = byte_index + 1
+			return byte_index
+		end, bytes
+	end
 
-		return i * 8 - ( 6 - j )
+	local bytes = {}
+
+	for i = 1, byte_count, 1 do
+		bytes[ i ] = 0
+	end
+
+	if big_endian then
+		local byte_index = 1
+
+		return function( value )
+			if byte_index > byte_count then return nil end
+			bytes[ byte_index ] = value
+			byte_index = byte_index + 1
+			return byte_index
+		end, bytes
+	else
+		local byte_index = byte_count
+
+		return function( value )
+			if byte_index == 0 then return nil end
+			bytes[ byte_index ] = value
+			byte_index = byte_index - 1
+			return byte_index
+		end, bytes
 	end
 end
 

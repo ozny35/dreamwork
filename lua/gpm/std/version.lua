@@ -171,16 +171,16 @@ end
 --- [SHARED AND MENU]
 ---
 ---
----@param major integer | string
----@param minor? integer
----@param patch? integer
----@param pre_release? string | integer
----@param build? string
----@return integer major
----@return integer minor
----@return integer patch
----@return string pre_release
----@return string build
+---@param major integer | string The major version number.
+---@param minor? integer The minor version number.
+---@param patch? integer The patch version number.
+---@param pre_release? string | integer The pre-release version number.
+---@param build? string The build version number.
+---@return integer major The major version.
+---@return integer minor The minor version.
+---@return integer patch The patch version.
+---@return string pre_release The pre-release version.
+---@return string build The build version.
 local function parse( major, minor, patch, pre_release, build, error_level )
 	if error_level == nil then error_level = 1 end
 	error_level = error_level + 1

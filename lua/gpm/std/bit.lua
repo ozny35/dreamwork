@@ -1,5 +1,8 @@
 local _G = _G
-local std, bit_lib = _G.gpm.std, _G.bit
+local glua_bit = _G.bit
+
+---@class gpm.std
+local std = _G.gpm.std
 local math_floor = std.math.floor
 
 -- Based on https://gist.github.com/x4fx77x4f/5b97e803825d3dc16f6e9c5227ec6a04
@@ -9,6 +12,7 @@ local math_floor = std.math.floor
 --- The bit library.
 ---@class gpm.std.bit
 local bit = std.bit or {}
+std.bit = bit
 
 do
 
@@ -44,7 +48,7 @@ do
     ---@param value integer The value to be converted.
     ---@param length integer?: The number of digits. Defaults to 8.
     ---@return string str The hexadecimal representation.
-    bit.tohex = bit_lib.tohex or function( value, length )
+    bit.tohex = glua_bit.tohex or function( value, length )
         return string_format( "%0" .. ( length or 8 ) .. "X", value )
     end
 
@@ -55,7 +59,7 @@ end
 --- Normalizes the specified value and clamps it in the range of a signed 32bit integer.
 ---@param value integer The value to be normalized.
 ---@return integer result The normalized value.
-local bit_tobit = bit_lib.tobit or function( value )
+local bit_tobit = glua_bit.tobit or function( value )
     value = value % 0x100000000
     return ( value >= 0x80000000 ) and ( value - 0x100000000 ) or value
 end
@@ -70,7 +74,7 @@ local bit_lshift, bit_rshift
 ---@param value integer The value to be manipulated.
 ---@param shift integer Amounts of bits to shift left by.
 ---@return integer result The left shifted value.
-bit_lshift = bit_lib.lshift or function( value, shift )
+bit_lshift = glua_bit.lshift or function( value, shift )
     if shift < 0 then
         return bit_rshift( value, -shift )
     else
@@ -90,7 +94,7 @@ bit.lshift = bit_lshift
 ---@param value integer The value to be manipulated.
 ---@param shift integer Amounts of bits to shift right by.
 ---@return integer result The right shifted value.
-bit_rshift = bit_lib.rshift or function( value, shift )
+bit_rshift = glua_bit.rshift or function( value, shift )
     if shift < 0 then
         return bit_lshift( value, -shift )
     else
@@ -110,7 +114,7 @@ bit.rshift = bit_rshift
 ---@param value integer The value to be manipulated.
 ---@param shift integer Amounts of bits to shift.
 ---@return integer result The arithmetically shifted value.
-bit.arshift = bit_lib.arshift or function( value, shift )
+bit.arshift = glua_bit.arshift or function( value, shift )
     return bit_tobit( math_floor( value / ( 2 ^ shift ) ) * ( value >= 0x80000000 and -1 or 1 ) )
 end
 
@@ -119,7 +123,7 @@ end
 --- Swaps the byte order of a 32-bit integer.
 ---@param value integer The 32-bit integer to be byte-swapped.
 ---@return integer result The byte-swapped value.
-bit.bswap = bit_lib.bswap or function( value )
+bit.bswap = glua_bit.bswap or function( value )
     return bit_tobit( ( ( value % 0x100 ) * 0x1000000 ) + ( ( math_floor( value / 0x100 ) % 0x100 ) * 0x10000 ) + ( ( math_floor( value / 0x10000 ) % 0x100 ) * 0x100 ) + ( math_floor( value / 0x1000000 ) % 0x100 ) )
 end
 
@@ -128,7 +132,7 @@ end
 --- Returns the bitwise `not` of the value.
 ---@param value integer The value to be manipulated.
 ---@return integer result The bitwise `not` of the value.
-local bit_bnot = bit_lib.bnot or function( value )
+local bit_bnot = glua_bit.bnot or function( value )
     local result = 0
     for i = 0, 31, 1 do
         if value % 2 == 0 then
@@ -149,7 +153,7 @@ bit.bnot = bit_bnot
 ---@param value integer The value to be manipulated.
 ---@param ... integer?: Values bit and with.
 ---@return integer result The bitwise `and` result between all values.
-local bit_band = bit_lib.band or function( value, ... )
+local bit_band = glua_bit.band or function( value, ... )
     local args = { value, ... }
     local result = 0xFFFFFFFF
 
@@ -177,7 +181,7 @@ bit.band = bit_band
 ---@param value integer The value to be manipulated.
 ---@param ... integer?: Values bit or with.
 ---@return integer result The bitwise `or` result between all values.
-local bit_bor = bit_lib.bor or function( value, ... )
+local bit_bor = glua_bit.bor or function( value, ... )
     local args = { value, ... }
     local result = 0
 
@@ -205,7 +209,7 @@ bit.bor = bit_bor
 ---@param value integer The value to be manipulated.
 ---@param ... integer?: Values bit xor with.
 ---@return integer result Result of bitwise `xor` operation.
-bit.bxor = bit_lib.bxor or function( value, ... )
+bit.bxor = glua_bit.bxor or function( value, ... )
     local args = { value, ... }
 
     local bits = {}
@@ -236,7 +240,7 @@ end
 ---@param value integer The value to be manipulated.
 ---@param shift integer Amounts of bits to rotate left by.
 ---@return integer result The left rotated value.
-bit.rol = bit_lib.rol or function( value, shift )
+bit.rol = glua_bit.rol or function( value, shift )
     return bit_bor( bit_lshift( value, shift ), bit_rshift( value, 32 - shift ) )
 end
 
@@ -246,7 +250,7 @@ end
 ---@param value integer The value to be manipulated.
 ---@param shift integer Amounts of bits to rotate right by.
 ---@return integer result The right rotated value.
-bit.ror = bit_lib.ror or function( value, shift )
+bit.ror = glua_bit.ror or function( value, shift )
     return bit_bor( bit_rshift( value, shift ), bit_lshift( value, 32 - shift ) )
 end
 

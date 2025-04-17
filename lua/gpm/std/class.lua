@@ -1,11 +1,20 @@
+---@class gpm.std
 local std = _G.gpm.std
-local raw_get, getmetatable, setmetatable, string_format = std.raw.get, std.getmetatable, std.setmetatable, std.string.format
+
+local debug = std.debug
+local string = std.string
+
+local raw_get = std.raw.get
+local string_format = string.format
+local setmetatable = std.setmetatable
+local debug_getmetatable = debug.getmetatable
 
 --- [SHARED AND MENU]
 ---
 --- The class library.
 ---@class gpm.std.class
 local class = {}
+std.class = class
 
 ---@class gpm.std.Object
 ---@field __type string The name of object type.
@@ -23,18 +32,18 @@ local class = {}
 ---@param key string The key to search for.
 local function find_rawkey( obj, key )
     if obj == nil then return nil end
-    return raw_get( obj, key ) or find_rawkey( getmetatable( obj ), key )
+    return raw_get( obj, key ) or find_rawkey( debug_getmetatable( obj ), key )
 end
 
 do
 
-    local string_sub = std.string.sub
+    local string_sub = string.sub
     local pairs = std.pairs
 
     ---@param obj Object The object to convert to a string.
     ---@return string str The string representation of the object.
     local function base__tostring( obj )
-        return string_format( "%s: %p", raw_get( getmetatable( obj ), "__type" ), obj )
+        return string_format( "%s: %p", raw_get( debug_getmetatable( obj ), "__type" ), obj )
     end
 
     --- [SHARED AND MENU]
@@ -174,5 +183,3 @@ do
     end
 
 end
-
-return class

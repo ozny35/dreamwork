@@ -456,10 +456,15 @@ end
 ---@return table: The sliced table.
 ---@return integer: The length of the sliced table.
 function table.slice( tbl, from, to, step )
-    from = from or 1
-
     local length = #tbl
-    to = to or length
+
+    if from == nil then
+        from = 1
+    end
+
+    if to == nil then
+        to = length
+    end
 
     if from > to then
         return {}, 0
@@ -482,6 +487,79 @@ function table.slice( tbl, from, to, step )
     end
 
     return slice, length
+end
+
+--- [SHARED AND MENU]
+---
+--- Returns a truncated table.
+---@param tbl table The table to truncate.
+---@param length integer The length of the truncated table.
+---@param no_copy? boolean Whether to copy the table.
+---@return table: The truncated table.
+function table.truncate( tbl, length, no_copy )
+    if no_copy then
+        for index = length + 1, #tbl, 1 do
+            tbl[ index ] = nil
+        end
+
+        return tbl
+    end
+
+    local result = {}
+
+    for index = 1, length, 1 do
+        result[ index ] = tbl[ index ]
+    end
+
+    return result
+end
+
+--- [SHARED AND MENU]
+---
+--- Returns a table with values substituted.
+---@param tbl table The table to substitute.
+---@param sbox table The substitution box.
+---@return table: The substituted table.
+function table.substitute( tbl, sbox, no_copy )
+    if no_copy then
+        for key, value in pairs( tbl ) do
+            tbl[ key ] = sbox[ value ]
+        end
+
+        return tbl
+    end
+
+    local result = {}
+
+    for key, value in pairs( tbl ) do
+        result[ key ] = sbox[ value ]
+    end
+
+    return result
+end
+
+--- [SHARED AND MENU]
+---
+--- Returns a permuted table.
+---@param tbl table The table to permute.
+---@param pbox table The permutation box.
+---@return table: The permuted table.
+function table.permute( tbl, pbox, no_copy )
+    if no_copy then
+        for key, value in pairs( pbox ) do
+            tbl[ key ], tbl[ value ] = tbl[ value ], nil
+        end
+
+        return tbl
+    end
+
+    local result = {}
+
+    for key, value in pairs( pbox ) do
+        result[ key ] = tbl[ value ]
+    end
+
+    return result
 end
 
 --- [SHARED AND MENU]

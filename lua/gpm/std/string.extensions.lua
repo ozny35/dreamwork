@@ -224,20 +224,6 @@ do
 
 end
 
---- Checks if a string is a URL.
----@param str string The string.
----@return boolean
-function string.isURL( str )
-    return string_match( str, "^%l[%l+-.]+%:[^%z\x01-\x20\x7F-\xFF\"<>^`:{-}]*$" ) ~= nil
-end
-
---- Checks if a string is a SteamID.
----@param str string The string.
----@return boolean
-function string.isSteamID( str )
-    return string_match( str, "^STEAM_[0-5]:[01]:%d+$" ) ~= nil
-end
-
 local isDomain
 do
 

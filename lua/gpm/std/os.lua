@@ -1,5 +1,8 @@
 local _G = _G
-local std, glua_os = _G.gpm.std, _G.os
+local glua_os = _G.os
+
+---@class gpm.std
+local std = _G.gpm.std
 
 --- [SHARED AND MENU]
 ---
@@ -13,6 +16,8 @@ local os = {
     clock = glua_os.clock,
     difftime = glua_os.difftime
 }
+
+std.os = os
 
 do
 

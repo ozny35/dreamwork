@@ -13,11 +13,11 @@ do
 	bit_band, bit_bor, bit_lshift, bit_rshift = bit.band, bit.bor, bit.lshift, bit.rshift
 end
 
-local string_char, string_byte, string_sub, string_gsub, string_gmatch, string_len
-do
-	local string = std.string
-	string_char, string_byte, string_sub, string_gsub, string_gmatch, string_len = string.char, string.byte, string.sub, string.gsub, string.gmatch, string.len
-end
+-- TODO: Rewrite this library
+
+---@class gpm.std.string
+local string = std.string
+local string_char, string_byte, string_sub, string_gsub, string_gmatch, string_len = string.char, string.byte, string.sub, string.gsub, string.gmatch, string.len
 
 local table_concat, table_unpack, table_flip
 do
@@ -115,7 +115,10 @@ local function codepoint( str, stringStart, stringEnd )
 
 	repeat
 		local sequenceStart, sequenceEnd, codePoint = decode( str, stringStart, stringLength )
-		if sequenceStart == nil then error( "invalid UTF-8 code", 2 ) end
+		if sequenceStart == nil then
+			std.error( "invalid UTF-8 code", 2 )
+		end
+
 		stringStart = sequenceEnd + 1
 
 		length = length + 1
@@ -173,7 +176,7 @@ local function offset_fn( str, offset, stringStart )
 	end
 
 	if decode( str, position, stringLength ) == nil then
-		error( "initial position is a continuation byte", 2 )
+		std.error( "initial position is a continuation byte", 2 )
 	end
 
 	if offset < 0 then
@@ -1205,15 +1208,17 @@ end
 ---@class gpm.string.utf8
 ---@field charpattern string This is NOT a function, it's a pattern (a string, not a function) which matches exactly one UTF-8 byte sequence, assuming that the subject is a valid UTF-8 string.
 local utf8 = {
-	["charpattern"] = charpattern,
-	["codepoint"] = codepoint,
-	["byte2char"] = byte2char,
-	["hex2char"] = hex2char,
-	["offset"] = offset_fn,
-	["char"] = char_fn,
-	["len"] = len,
-	["get"] = get,
+	charpattern = charpattern,
+	codepoint = codepoint,
+	byte2char = byte2char,
+	hex2char = hex2char,
+	offset = offset_fn,
+	char = char_fn,
+	len = len,
+	get = get
 }
+
+string.utf8 = utf8
 
 --- TODO
 ---@param str string
@@ -1243,7 +1248,9 @@ function utf8.codes( str )
 		if index > stringLength then return nil end
 
 		local stringStart, stringEnd, codePoint = decode( str, index, stringLength )
-		if stringStart == nil then error( "invalid UTF-8 code", 2 ) end
+		if stringStart == nil then
+			std.error( "invalid UTF-8 code", 2 )
+		end
 
 		index = stringEnd + 1
 		return stringStart, codePoint
@@ -1354,4 +1361,3 @@ end
 
 -- TODO: Add more functions
 
-return utf8

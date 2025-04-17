@@ -2,12 +2,14 @@ local _G = _G
 local gpm = _G.gpm
 local steamworks = _G.steamworks
 
----@class gpm.std
 local std = gpm.std
 local Future = std.Future
 
-local Timer_wait = std.Timer.wait
+---@class gpm.std.steam
+local steam = std.steam
+
 local isstring = std.isstring
+local Timer_wait = std.Timer.wait
 
 
 ---@alias gpm.std.steam.WorkshopItem.ContentType
@@ -59,7 +61,7 @@ local isstring = std.isstring
 ---| `"scenes"`
 ---| `"other"`
 
----@alias gpm.std.steam.WorkshopItem.Workshop
+---@alias gpm.std.steam.WorkshopItem.SearchType
 ---| string # The workshop search types.
 ---| `"friendfavorite"` # A favorite publication of the client's friends.
 ---| `"subscribed"` # The addons to which the client is subscribed.
@@ -80,6 +82,7 @@ local WorkshopItem = std.class.base( "WorkshopItem" )
 ---@field __base gpm.std.steam.WorkshopItem
 ---@overload fun( wsid: string ): WorkshopItem
 local WorkshopItemClass = std.class.create( WorkshopItem )
+steam.WorkshopItem = WorkshopItemClass
 
 local findWorkshopItem
 do
@@ -789,7 +792,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- Performs a search for publications.
-    ---@param params WorkshopSearchParams The search parameters.
+    ---@param params gpm.std.steam.WorkshopItem.SearchParams The search parameters.
     ---@async
     function WorkshopItemClass.search( params )
         local f = Future()
@@ -818,7 +821,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- Performs a quick search for publications.
-    ---@param wtype gpm.std.steam.WorkshopItem.Workshop: The type of the search.
+    ---@param wtype gpm.std.steam.WorkshopItem.SearchType: The type of the search.
     ---@param wtags string[]?: The tags of the search.
     ---@param woffset integer?: The offset of the search.
     ---@param timeout number?: The timeout in seconds of the search.
@@ -854,7 +857,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- Returns a list of publications published by the client.
-    ---@param wtype gpm.std.steam.WorkshopItem.Workshop: The type of the search.
+    ---@param wtype gpm.std.steam.WorkshopItem.SearchType: The type of the search.
     ---@param wtags string[]?: The tags of the search.
     ---@param woffset integer?: The offset of the search.
     ---@param timeout number?: The timeout in seconds of the search.
@@ -888,5 +891,3 @@ do
     end
 
 end
-
-return WorkshopItemClass

@@ -1930,9 +1930,10 @@ function URLSearchParams:values()
 end
 
 local function isURLSearchParams( any )
-	local metatable = getmetatable( any )
-	return metatable == URLSearchParams
+	return getmetatable( any ) == URLSearchParams
 end
+
+std.isURLSearchParams = isURLSearchParams
 
 local URLSearchParamsClass = std.class.create( URLSearchParams )
 

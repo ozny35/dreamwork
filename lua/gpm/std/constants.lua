@@ -2041,10 +2041,6 @@ if CLIENT then
     }
 end
 
--- TODO: https://stackoverflow.com/questions/12021461/lua-setfenv-vs-env
--- TODO: https://lua.org/manual/5.4/manual.html#2.2
-
-constants._ENV = constants
 constants._G = constants
 
 return constants

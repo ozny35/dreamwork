@@ -45,36 +45,14 @@ if std.CLIENT_MENU then
 
 end
 
--- GM:GameDetails( server_name, loading_url, map_name, max_players, player_steamid64, gamemode_name )
 if std.MENU then
 
     --- [MENU]
     ---
     --- Called when the game details are updated.
-    local GameDetailsHook = std.GameDetailsHook or std.Hook( "GameDetails" )
-    std.GameDetailsHook = GameDetailsHook
-
-    -- TODO: replace with gpm.engine
-
-    -- local function gameDetails( server_name, loading_url, map_name, max_players, player_steamid64, gamemode_name )
-    --     GameDetailsHook:call( {
-    --         server_name = server_name,
-    --         loading_url = loading_url,
-    --         map_name = map_name,
-    --         max_players = max_players,
-    --         player_steamid64 = player_steamid64,
-    --         gamemode_name = gamemode_name
-    --     } )
-    -- end
-
-    -- if std.isfunction( _G.GameDetails ) then
-    --     _G.GameDetails = gpm.detour.attach( _G.GameDetails, function( fn, ... )
-    --         gameDetails( ... )
-    --         return fn( ... )
-    --     end )
-    -- else
-    --     _G.GameDetails = gameDetails
-    -- end
+    local GameDetails = std.Hook( "server.GameDetails" )
+    engine_hookCatch( "GameDetails", GameDetails )
+    server.GameDetails = GameDetails
 
 end
 
@@ -352,18 +330,18 @@ if std.MENU then
         ---
         --- Queries a server for its information/ping.
         ---@param address string The address of the server. ( IP:Port like `127.0.0.1:27015` )
-        ---@param timeout number?: The timeout in seconds. Set to `false` to disable the timeout.
-        ---@return ServerInfo: The server information.
+        ---@param timeout number? The timeout in seconds. Set to `false` to disable the timeout.
+        ---@return gpm.std.server.Info info The server information.
         ---@async
         function server.ping( address, timeout )
             local f = Future()
 
-            serverlist_PingServer( address, function( server_ping, server_name, gamemode_title, map_name, player_count, player_limit, bot_count, has_password, last_played_time, server_address, gamemode_name, gamemode_workshopid, is_anonymous_server, gmod_version, server_localization, gamemode_category )
+            serverlist_PingServer( address, function( server_ping, server_name, gamemode_title, level_name, player_count, player_limit, bot_count, has_password, last_played_time, server_address, gamemode_name, gamemode_workshopid, is_anonymous_server, gmod_version, server_localization, gamemode_category )
                 f:setResult( {
                     ping = server_ping,
                     name = server_name,
-                    map_name = map_name,
                     version = gmod_version,
+                    level_name = level_name,
                     address = server_address,
                     country = server_localization,
                     last_played_time = last_played_time,
@@ -430,23 +408,29 @@ if std.MENU then
     --- [MENU]
     ---
     --- Queries the master server for server list.
-    ---@param data ServerQueryData The query data to send to the master server.
+    ---@param data gpm.std.server.QueryData The query data to send to the master server.
     function server.getAll( data )
+        ---@diagnostic disable-next-line: inject-field
         data.GameDir = data.directory
         data.directory = nil
 
+        ---@diagnostic disable-next-line: inject-field
         data.Type = data.type
         data.type = nil
 
+        ---@diagnostic disable-next-line: inject-field
         data.AppID = data.appid
         data.appid = nil
 
+        ---@diagnostic disable-next-line: inject-field
         data.Callback = data.server_queried
         data.server_queried = nil
 
+        ---@diagnostic disable-next-line: inject-field
         data.CallbackFailed = data.query_failed
         data.query_failed = nil
 
+        ---@diagnostic disable-next-line: inject-field
         data.Finished = data.finished
         data.finished = nil
 

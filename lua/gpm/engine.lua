@@ -1,4 +1,6 @@
 local _G = _G
+
+---@class gpm
 local gpm = _G.gpm
 
 local std = gpm.std
@@ -15,6 +17,7 @@ local transducers = gpm.transducers
 --- Source engine events library
 ---@class gpm.engine
 local engine = gpm.engine or {}
+gpm.engine = engine
 
 if engine.hookCatch == nil then
 
@@ -537,5 +540,3 @@ do
     update_mounted()
 
 end
-
-return engine

@@ -416,7 +416,7 @@ do
     ---@param color gpm.std.Color The color to lerp.
     ---@param frac number?: The fraction to lerp [0, 1].
     ---@param withAlpha boolean?: Whether to lerp alpha channel.
-    ---@return Color
+    ---@return gpm.std.Color
     function Color:lerp( color, frac, withAlpha )
         frac = frac and math_min( math_max( frac, 0 ), 1 ) or 0.5
 
@@ -945,6 +945,7 @@ do
 
     local metatable = {}
 
+    ---@protected
     function metatable:__tostring()
         return string_format( "Color Scheme: %p", self )
     end
@@ -954,7 +955,7 @@ do
     do
 
         local debug_getmetatable = std.debug.getmetatable
-        local raw_set = std.raw_set
+        local raw_set = std.raw.set
 
         --- [SHARED AND MENU]
         ---

@@ -1,29 +1,36 @@
 local _G = _G
-local std, slib = _G.gpm.std, _G.string
+local glua_string = _G.string
 
+---@class gpm.std
+local std = _G.gpm.std
 local math = std.math
 
-local string_byte, string_sub, string_len, string_find, string_match, string_gsub, string_rep = slib.byte, slib.sub, slib.len, slib.find, slib.match, slib.gsub, slib.rep
+local string_byte, string_sub, string_len, string_find, string_rep = glua_string.byte, glua_string.sub, glua_string.len, glua_string.find, glua_string.rep
 
+--- [SHARED AND MENU]
+---
+--- A collection of functions for working with strings.
 ---@class gpm.std.string
 local string = {
     -- Lua 5.1
-    byte = slib.byte,
-    char = slib.char,
-    dump = slib.dump,
+    byte = glua_string.byte,
+    char = glua_string.char,
+    dump = glua_string.dump,
     find = string_find,
-    format = slib.format,
-    gmatch = slib.gmatch,
-    gsub = string_gsub,
+    format = glua_string.format,
+    gmatch = glua_string.gmatch,
+    gsub = glua_string.gsub,
     len = string_len,
-    lower = slib.lower,
-    match = string_match,
-    rep = slib.rep,
-    reverse = slib.reverse,
+    lower = glua_string.lower,
+    match = glua_string.match,
+    rep = glua_string.rep,
+    reverse = glua_string.reverse,
     sub = string_sub,
-    upper = slib.upper,
+    upper = glua_string.upper,
     slice = string_sub
 }
+
+std.string = string
 
 --- Cuts the string into two.
 ---@param str string The input string.
@@ -361,25 +368,31 @@ do
 
 end
 
---- Replaces all matches of a string.
----@param str string The input string.
----@param searchable string The pattern to search for.
----@param replaceable string The string to replace.
----@param with_pattern? boolean: Whether to use pattern or not.
----@return string str: The replaced string.
-function string.replace( str, searchable, replaceable, with_pattern )
-    if with_pattern then
-        ---@diagnostic disable-next-line: redundant-return-value
-        return string_gsub( str, searchable, replaceable ), nil
-    else
-        local startPos, endPos = string_find( str, searchable, 1, true )
-        while startPos ~= nil do
-            str = string_sub( str, 1, startPos - 1 ) .. replaceable .. string_sub( str, endPos + 1 )
-            startPos, endPos = string_find( str, searchable, endPos + 1, true )
-        end
+do
 
-        return str
+    local string_gsub = string.gsub
+
+    --- Replaces all matches of a string.
+    ---@param str string The input string.
+    ---@param searchable string The pattern to search for.
+    ---@param replaceable string The string to replace.
+    ---@param with_pattern? boolean: Whether to use pattern or not.
+    ---@return string str: The replaced string.
+    function string.replace( str, searchable, replaceable, with_pattern )
+        if with_pattern then
+            ---@diagnostic disable-next-line: redundant-return-value
+            return string_gsub( str, searchable, replaceable ), nil
+        else
+            local startPos, endPos = string_find( str, searchable, 1, true )
+            while startPos ~= nil do
+                str = string_sub( str, 1, startPos - 1 ) .. replaceable .. string_sub( str, endPos + 1 )
+                startPos, endPos = string_find( str, searchable, endPos + 1, true )
+            end
+
+            return str
+        end
     end
+
 end
 
 do
@@ -403,4 +416,15 @@ do
 
 end
 
-return string
+do
+
+    local string_match = string.match
+
+    --- Checks if a string is a URL.
+    ---@param str string The string.
+    ---@return boolean
+    function string.isURL( str )
+        return string_match( str, "^%l[%l+-.]+%:[^%z\x01-\x20\x7F-\xFF\"<>^`:{-}]*$" ) ~= nil
+    end
+
+end

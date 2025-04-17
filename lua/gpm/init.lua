@@ -518,45 +518,41 @@ do
 
 end
 
---- [SHARED AND MENU]
----
---- string library
----@class gpm.std.string
-local string = include( "std/string.lua" )
-std.string = string
+include( "std/string.lua" )
 
-local string_format = string.format
-local string_len = string.len
+local string = std.string
 
-function STRING.__bitcount( value )
-    return string_len( value ) * 8
+do
+    local string_len = string.len
+
+    function STRING.__bitcount( value )
+        return string_len( value ) * 8
+    end
+
 end
 
 local print = std.print or _G.print
 std.print = print
 
---- [SHARED AND MENU]
----
---- Prints a formatted string to the console.
----
---- Basically the same as `print( string.format( str, ... ) )`
----@param str any
----@param ... any
-function std.printf( str, ... )
-    return print( string_format( str, ... ) )
+do
+
+    local string_format = string.format
+
+    --- [SHARED AND MENU]
+    ---
+    --- Prints a formatted string to the console.
+    ---
+    --- Basically the same as `print( string.format( str, ... ) )`
+    ---@param str any
+    ---@param ... any
+    function std.printf( str, ... )
+        return print( string_format( str, ... ) )
+    end
+
 end
 
---- [SHARED AND MENU]
----
---- bit library
-std.bit = include( "std/bit.lua" )
-
---- [SHARED AND MENU]
----
---- os library
----@class gpm.std.os
-local os = include( "std/os.lua" )
-std.os = os
+include( "std/bit.lua" )
+include( "std/os.lua" )
 
 -- TODO: remove me later or rewrite
 do
@@ -650,6 +646,8 @@ do
 
 end
 
+include( "std/class.lua" )
+
 local type
 do
 
@@ -686,18 +684,16 @@ do
         if got == expected_type or expected_type == "any" then
             return true, nil
         else
-            return false, string_format( "bad argument #%d to \'%s\' ('%s' expected, got '%s')", arg_num, debug_getinfo( 2, "n" ).name or "unknown", expected_type, got )
+            return false, string.format( "bad argument #%d to \'%s\' ('%s' expected, got '%s')", arg_num, debug_getinfo( 2, "n" ).name or "unknown", expected_type, got )
         end
     end
 
 end
 
-string.utf8 = include( "std/string.utf8.lua" )
-gpm.engine = include( "engine.lua" )
+include( "std/string.utf8.lua" )
+include( "engine.lua" )
 
-local class = include( "std/class.lua" )
-std.class = class
-
+include( "std/math.classes.lua" )
 include( "std/structures.lua" )
 
 -- symbol class
@@ -722,15 +718,15 @@ do
         ---@class gpm.std.Symbol
         local obj = debug_newproxy( true )
         local metatable = debug_getmetatable( obj )
-        metatable.__type = string_format( "Symbol: %p ['%s']", obj, name )
+        metatable.__type = string.format( "Symbol: %p ['%s']", obj, name )
         metatable.__tostring = __tostring
         return obj
     end
 
 end
 
-include( "std/hook.lua" )
 std.Timer = include( "std/timer.lua" )
+include( "std/hook.lua" )
 
 include( "package/init.lua" )
 
@@ -739,10 +735,36 @@ include( "std/file.lua" )
 local Color = include( "std/color.lua" )
 std.Color = Color
 
---- [SHARED AND MENU]
----
---- The white color object (255, 255, 255, 255).
-std.color_white = Color( 255, 255, 255, 255 )
+do
+
+    local scheme = Color.scheme
+
+    scheme.white = Color( 255, 255, 255, 255 )
+    scheme.black = Color( 0, 0, 0, 255 )
+
+    scheme.red = Color( 255, 0, 0, 255 )
+    scheme.green = Color( 0, 255, 0, 255 )
+    scheme.blue = Color( 0, 0, 255, 255 )
+
+    scheme.yellow = Color( 255, 255, 0, 255 )
+    scheme.cyan = Color( 0, 255, 255, 255 )
+    scheme.magenta = Color( 255, 0, 255, 255 )
+
+    scheme.gray = Color( 128, 128, 128, 255 )
+
+    scheme.info = Color( 70, 135, 255 )
+    scheme.warn = Color( 255, 130, 90 )
+    scheme.error = Color( 250, 55, 40 )
+    scheme.debug = Color( 0, 200, 150 )
+
+    scheme.text_primary = Color( 200 )
+    scheme.text_secondary = Color( 150 )
+
+    scheme.realm_menu = Color( 75, 175, 80 )
+    scheme.realm_client = Color( 225, 170, 10 )
+    scheme.realm_server = Color( 5, 170, 250 )
+
+end
 
 local futures = include( "std/futures.lua" )
 std.futures = futures
@@ -990,15 +1012,6 @@ end
 include( "std/game.lua" )
 include( "std/level.lua" )
 
-include( "std/math.classes.lua" )
-
-if std.CLIENT_SERVER then
-    include( "std/physics.lua" )
-    include( "std/entity.lua" )
-    include( "std/player.lua" )
-    -- std.net = include( "std/net.lua" )
-end
-
 do
 
     local developer = console.Variable.get( "developer", "number" )
@@ -1124,17 +1137,7 @@ do
 
 end
 
-do
-
-    ---@class gpm.std.steam
-    local steam = include( "std/steam.lua" )
-    std.steam = steam
-
-    steam.Identifier = steam.Identifier or include( "std/steam.identifier.lua" )
-    steam.WorkshopItem = steam.WorkshopItem or include( "std/steam.workshop_item.lua" )
-
-end
-
+include( "std/steam.lua" )
 include( "std/addon.lua" )
 
 if std.CLIENT_MENU then
@@ -1157,6 +1160,13 @@ if std.CLIENT_MENU then
 end
 
 std.server = include( "std/server.lua" )
+
+if std.CLIENT_SERVER then
+    include( "std/physics.lua" )
+    include( "std/entity.lua" )
+    include( "std/player.lua" )
+    -- std.net = include( "std/net.lua" )
+end
 
 if std.TYPE.COUNT ~= 44 then
     logger:warn( "Global TYPE_COUNT mismatch, data corruption suspected. (" .. std.tostring( _G.TYPE_COUNT or "missing" ) .. " ~= 44)"  )

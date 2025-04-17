@@ -2,6 +2,9 @@ local std = _G.gpm.std
 local tonumber = std.tonumber
 local setmetatable = std.setmetatable
 
+---@class gpm.std.steam
+local steam = std.steam
+
 ---@alias gpm.std.steam.Identifier.Type
 ---| string # Steam Account Type ( https://developer.valvesoftware.com/wiki/SteamID#Types_of_Steam_Accounts )
 ---| `"Invalid"`
@@ -71,12 +74,25 @@ local letter2int = {
 ---@field type gpm.std.steam.Identifier.Type Specifies the entity type (e.g., individual user, group, game server).
 ---@field instance integer Differentiates between multiple instances of the same type within a universe. For individual user accounts, this is typically set to 1, representing the desktop instance.
 ---@field id integer The unique account number.
+---@operator add( integer ): gpm.std.steam.Identifier
+---@operator sub( integer ): gpm.std.steam.Identifier
 local Identifier = std.class.base( "Identifier" )
 
 ---@class gpm.std.steam.IdentifierClass: gpm.std.steam.Identifier
 ---@field __base gpm.std.steam.Identifier
 ---@overload fun( universe?: gpm.std.steam.Identifier.Universe, type?: gpm.std.steam.Identifier.Type, id?: integer, instance?: boolean ): gpm.std.steam.Identifier
 local IdentifierClass = std.class.create( Identifier )
+steam.Identifier = IdentifierClass
+
+--[[
+
+    SteamID ( 64 bit ):
+        1 - universe ( 8 bit )
+        2 - type ( 4 bit )
+        3 - instance ( 20 bit )
+        4 - id ( 32 bit )
+
+--]]
 
 do
 
@@ -112,12 +128,28 @@ do
         end
     end
 
+    ---@protected
+    function Identifier:__add( int )
+        return setmetatable( {
+            self[ 1 ],
+            self[ 2 ],
+            self[ 3 ],
+            self[ 4 ] + int
+        }, Identifier )
+    end
+
+    ---@protected
+    function Identifier:__sub( int )
+        return setmetatable( {
+            self[ 1 ],
+            self[ 2 ],
+            self[ 3 ],
+            self[ 4 ] - int
+        }, Identifier )
+    end
+
 end
 
----@param universe? gpm.std.steam.Identifier.Universe
----@param type? gpm.std.steam.Identifier.Type
----@param id? integer
----@param instance? boolean
 ---@protected
 function Identifier:__new( id, universe, type, instance )
     return setmetatable( {
@@ -162,7 +194,12 @@ do
     --- Converts a SteamID object to a Steam3 identifier.
     ---@return string
     function Identifier:toSteam3()
-        return string_format( "[%s:%d:%d]", int2letter[ self[ 2 ] ], self[ 1 ], self[ 4 ] )
+        return string_format( "[%s:%d:%d]", int2letter[ self[ 2 ] ] or "I", self[ 1 ], self[ 4 ] )
+    end
+
+    ---@protected
+    function Identifier:__tostring()
+        return string_format( "Steam Identifier: %p [%s:%d:%d]", self, int2letter[ self[ 2 ] ] or "I", self[ 1 ], self[ 4 ] )
     end
 
 end
@@ -347,5 +384,3 @@ do
     end
 
 end
-
-return IdentifierClass

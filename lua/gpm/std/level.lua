@@ -6,11 +6,18 @@ local gpm = _G.gpm
 ---@class gpm.std
 local std = gpm.std
 
----@class gpm.std.console
 local console = std.console
 local console_Variable = console.Variable
 
+--- [SHARED AND MENU]
+---
+--- The game-level library.
+---
+--- BSP: `maps/{name}.bsp`
+--- AI navigation: `maps/{name}.ain`
+--- Navigation Mesh: `maps/{name}.nav`
 ---@class gpm.std.level
+---@field name string The name of the current loaded level.
 local level = std.level or {}
 std.level = level
 
@@ -41,6 +48,8 @@ if std.CLIENT then
     level.redownloadLightmaps = level.redownloadLightmaps or _G.render.RedownloadAllLightmaps
 end
 
+--- [SHARED AND MENU]
+---
 --- Checks if a map/level exists.
 ---@param name string The map/level name in maps/*.bsp folder.
 ---@param gamePath? string An optional argument specifying the search location, as an example for addon searches.
@@ -122,6 +131,8 @@ if std.SERVER then
             } )
         }
 
+        --- [SHARED AND MENU]
+        ---
         --- Checks if a map/level navmesh exists.
         ---@param name string The map/level name in maps/*.nav folder.
         ---@param gamePath? string An optional argument specifying the search location, as an example for addon searches.
@@ -138,6 +149,8 @@ if std.SERVER then
 
         local command_run = console.Command.run
 
+        --- [SHARED AND MENU]
+        ---
         --- It will end the current game, load the specified map and start a new game on it. Players are not kicked from the server.
         ---@param name string
         ---@return boolean isSuccessful
@@ -152,6 +165,8 @@ if std.SERVER then
 
     end
 
+    --- [SHARED AND MENU]
+    ---
     --- Sets the gravity of the current level.
     ---@param value integer The value to set. Default: 600
     function level.setGravity( value )
@@ -160,6 +175,8 @@ if std.SERVER then
 
 end
 
+--- [SHARED AND MENU]
+---
 --- Returns the gravity of the current level.
 ---@return integer: The gravity of the current level.
 function level.getGravity()
@@ -168,14 +185,16 @@ end
 
 do
 
+    --- [SHARED AND MENU]
+    ---
     ---@class gpm.std.level.save
     local save = {}
+    level.save = save
 
     if std.MENU then
         save.getFileDetails = _G.GetSaveFileDetails
     end
 
     -- TODO: https://wiki.facepunch.com/gmod/engine.WriteSave
-    level.save = save
 
 end

@@ -566,7 +566,7 @@ end
 
 --- Parse a file path into [root, dir, basename, ext, name].
 ---@param file_path string The file path.
----@return ParsedFilePath: The parsed file path.
+---@return gpm.std.file.path.Data data The parsed file path data.
 function path.parse( file_path )
     local isAbs, dir, base = splitPath( file_path )
     if isAbs then dir = "/" .. dir end
