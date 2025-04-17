@@ -1041,9 +1041,10 @@ do
 
 end
 
-std.Logger = include( "std/logger.lua" )
+include( "std/logger.lua" )
 
-local logger = std.Logger( gpm.PREFIX, {
+local logger = std.Logger( {
+    title = gpm.PREFIX,
     color = Color( 180, 180, 255 ),
     interpolation = false
 } )
