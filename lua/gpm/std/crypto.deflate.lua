@@ -5,11 +5,9 @@
     Edit by Unknown Developer
 --]]
 
-local _G = _G
-
 local std = _G.gpm.std
 local assert = std.assert
-local raw_pairs, raw_ipairs = std.raw.pairs, std.raw.ipairs
+local raw_pairs = std.raw.pairs
 
 local table = std.table
 local table_concat, table_insert, table_sort = table.concat, table.insert, table.sort
@@ -1379,7 +1377,8 @@ local function getDynamicHuffmanBlockSize( lcodes, dcodes, HCLEN, rle_codes_huff
     local block_bitlen = 17 -- 1+2+5+5+4
     block_bitlen = block_bitlen + ( HCLEN + 4 ) * 3
 
-    for _, code in raw_ipairs( rle_deflate_codes ) do
+    for i = 1, #rle_deflate_codes, 1 do
+        local code = rle_deflate_codes[ i ]
         block_bitlen = block_bitlen + rle_codes_huffman_bitlens[ code ]
 
         if code >= 16 then
@@ -1389,7 +1388,8 @@ local function getDynamicHuffmanBlockSize( lcodes, dcodes, HCLEN, rle_codes_huff
 
     local length_code_count = 0
 
-    for _, code in raw_ipairs( lcodes ) do
+    for i = 1, #lcodes, 1 do
+        local code = lcodes[ i ]
         block_bitlen = block_bitlen + lcodes_huffman_bitlens[ code ]
 
         if code > 256 then -- Length code
@@ -1444,7 +1444,8 @@ local function compressDynamicHuffmanBlock( writeBits, is_last_block, lcodes, le
 
     local rleExtraBitsIndex = 0
 
-    for _, code in raw_ipairs( rle_deflate_codes ) do
+    for i = 1, #rle_deflate_codes, 1 do
+        local code = rle_deflate_codes[ i ]
         writeBits( rle_codes_huffman_codes[ code ], rle_codes_huffman_bitlens[ code ] )
 
         if code >= 16 then
@@ -1457,7 +1458,8 @@ local function compressDynamicHuffmanBlock( writeBits, is_last_block, lcodes, le
     local length_code_with_extra_count = 0
     local dist_code_with_extra_count = 0
 
-    for _, deflate_codee in raw_ipairs( lcodes ) do
+    for i = 1, #lcodes, 1 do
+        local deflate_codee = lcodes[ i ]
         writeBits( lcodes_huffman_codes[ deflate_codee ], lcodes_huffman_bitlens[ deflate_codee ] )
 
         if deflate_codee > 256 then -- Length code
@@ -1489,7 +1491,9 @@ local function getFixedHuffmanBlockSize( lcodes, dcodes )
     local block_bitlen = 3
     local length_code_count = 0
 
-    for _, code in raw_ipairs( lcodes ) do
+    for i = 1, #lcodes, 1 do
+        local code = lcodes[ i ]
+
         block_bitlen = block_bitlen + _fix_block_literal_huffman_bitlen[ code ]
 
         if code > 256 then -- Length code
@@ -1522,7 +1526,9 @@ local function compressFixedHuffmanBlock( writeBits, is_last_block, lcodes, lext
     local length_code_with_extra_count = 0
     local dist_code_with_extra_count = 0
 
-    for _, deflate_code in raw_ipairs( lcodes ) do
+    for i = 1, #lcodes, 1 do
+        local deflate_code = lcodes[ i ]
+
         writeBits( _fix_block_literal_huffman_code[ deflate_code ], _fix_block_literal_huffman_bitlen[ deflate_code ] )
 
         if deflate_code > 256 then -- Length code

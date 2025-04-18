@@ -7,10 +7,8 @@ local glua_file = _G.file
 
 ---@class gpm.std
 local std = _G.gpm.std
-
-local CLIENT, SERVER, MENU = std.CLIENT, std.SERVER, std.MENU
-local raw_ipairs = std.raw.ipairs
 local string = std.string
+local CLIENT, SERVER, MENU = std.CLIENT, std.SERVER, std.MENU
 
 --- [SHARED AND MENU]
 ---
@@ -209,19 +207,21 @@ do
         local file_count = offset
 
         if searchable == nil then
-            for _, file_name in raw_ipairs( files ) do
+            for i = 1, #files, 1 do
                 file_count = file_count + 1
-                lst[ file_count ] = local_path .. file_name
+                lst[ file_count ] = local_path .. files[ i ]
             end
         elseif plain then
-            for _, file_name in raw_ipairs( files ) do
+            for i = 1, #files, 1 do
+                local file_name = files[ i ]
                 if file_name == searchable then
                     file_count = file_count + 1
                     lst[ file_count ] = local_path .. file_name
                 end
             end
         else
-            for _, file_name in raw_ipairs( files ) do
+            for i = 1, #files, 1 do
+                local file_name = files[ i ]
                 if string.match( file_name, searchable ) ~= nil then
                     file_count = file_count + 1
                     lst[ file_count ] = local_path .. file_name
@@ -229,8 +229,8 @@ do
             end
         end
 
-        for _, directory_name in raw_ipairs( directories ) do
-            file_count = file_count + search( local_path .. directory_name .. "/", game_path, searchable, plain, lst, file_count )
+        for i = 1, #directories, 1 do
+            file_count = file_count + search( local_path .. directories[ i ] .. "/", game_path, searchable, plain, lst, file_count )
         end
 
         return file_count - offset
@@ -258,12 +258,12 @@ local function directory_Size( local_path, game_path )
     local files, directories = file_Find( local_path .. "*", game_path )
     local size = 0
 
-    for _, file_name in raw_ipairs( files ) do
-        size = size + file_Size( local_path .. file_name, game_path )
+    for i = 1, #files, 1 do
+        size = size + file_Size( local_path .. files[ i ], game_path )
     end
 
-    for _, directory_name in raw_ipairs( directories ) do
-        size = size + directory_Size( local_path .. directory_name .. "/", game_path )
+    for i = 1, #directories, 1 do
+        size = size + directory_Size( local_path .. directories[ i ] .. "/", game_path )
     end
 
     return size
@@ -290,12 +290,12 @@ local file_Delete, file_CreateDir = glua_file.Delete, glua_file.CreateDir
 local function directory_Delete( local_path, game_path )
     local files, directories = file_Find( local_path .. "*", game_path )
 
-    for _, file_name in raw_ipairs( files ) do
-        file_Delete( local_path .. file_name, game_path )
+    for i = 1, #files, 1 do
+        file_Delete( local_path .. files[ i ], game_path )
     end
 
-    for _, directory_name in raw_ipairs( directories ) do
-        directory_Delete( local_path .. directory_name .. "/", game_path )
+    for i = 1, #directories, 1 do
+        directory_Delete( local_path .. directories[ i ] .. "/", game_path )
     end
 
     file_Delete( local_path, game_path )
@@ -398,11 +398,13 @@ local function directory_Copy( source_local_path, source_game_path, target_local
 
     local files, directories = file_Find( source_local_path .. "*", source_game_path )
 
-    for _, file_name in raw_ipairs( files ) do
+    for i = 1, #files, 1 do
+        local file_name = files[ i ]
         file_Copy( source_local_path .. file_name, source_game_path, target_local_path .. file_name, target_game_path, error_level )
     end
 
-    for _, directory_name in raw_ipairs( directories ) do
+    for i = 1, #directories, 1 do
+        local directory_name = directories[ i ]
         directory_Copy( source_local_path .. directory_name .. "/", source_game_path, target_local_path .. directory_name .. "/", target_game_path, error_level )
     end
 end

@@ -176,7 +176,7 @@ end
 do
 
     local debug_getmetavalue = debug.getmetavalue
-    local raw_ipairs = raw.ipairs
+    local inext = std.inext
 
     --- [SHARED AND MENU]
     ---
@@ -190,7 +190,7 @@ do
     ---@return number index The origin index =0.
     function std.ipairs( tbl )
         if debug_getmetavalue( tbl, "__index" ) == nil then
-            return raw_ipairs( tbl )
+            return inext, tbl, 0
         else
             local index = 0
             return function()
@@ -1166,7 +1166,7 @@ if std.CLIENT_SERVER then
     include( "std/physics.lua" )
     include( "std/entity.lua" )
     include( "std/player.lua" )
-    -- std.net = include( "std/net.lua" )
+    -- include( "std/net.lua" )
 end
 
 if std.TYPE.COUNT ~= 44 then

@@ -104,7 +104,11 @@ do
         ---@return any | nil value The value.
         function debug.getmetavalue( value, key )
             local metatable = debug_getmetatable( value )
-            return metatable and raw_get( metatable, key )
+            if metatable == nil then
+                return nil
+            else
+                return raw_get( metatable, key )
+            end
         end
 
     end

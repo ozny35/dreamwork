@@ -14,8 +14,8 @@ local table = std.table
 local string = std.string
 
 local select = std.select
-local table_reverse = table.reverse
 local setmetatable = std.setmetatable
+local table_reverse, table_unpack = table.reverse, table.unpack
 local math_floor, math_max, math_clamp = math.floor, math.max, math.clamp
 
 
@@ -74,16 +74,47 @@ BigIntClass.bit = bit
 ---@param object gpm.std.BigInt
 ---@return gpm.std.BigInt
 local function copy( object )
-    local object_copy = {
-        [ 0 ] = object[ 0 ]
-    }
+    local length = #object
+    if length < 5 then
+        return setmetatable( {
+            [ 0 ] = object[ 0 ],
+            object[ 1 ], object[ 2 ], object[ 3 ], object[ 4 ]
+        }, BigInt )
+    elseif length < 9 then
+        return setmetatable( {
+            [ 0 ] = object[ 0 ],
+            object[ 1 ], object[ 2 ], object[ 3 ], object[ 4 ],
+            object[ 5 ], object[ 6 ], object[ 7 ], object[ 8 ]
+        }, BigInt )
+    elseif length < 17 then
+        return setmetatable( {
+            [ 0 ] = object[ 0 ],
+            object[ 1 ], object[ 2 ], object[ 3 ], object[ 4 ],
+            object[ 5 ], object[ 6 ], object[ 7 ], object[ 8 ],
+            object[ 9 ], object[ 10 ], object[ 11 ], object[ 12 ],
+            object[ 13 ], object[ 14 ], object[ 15 ], object[ 16 ]
+        }, BigInt )
 
-    for index, value in ipairs( object ) do
-        object_copy[ index ] = value
+    elseif length < 33 then
+        return setmetatable( {
+            [ 0 ] = object[ 0 ],
+            object[ 1 ], object[ 2 ], object[ 3 ], object[ 4 ],
+            object[ 5 ], object[ 6 ], object[ 7 ], object[ 8 ],
+            object[ 9 ], object[ 10 ], object[ 11 ], object[ 12 ],
+            object[ 13 ], object[ 14 ], object[ 15 ], object[ 16 ],
+            object[ 17 ], object[ 18 ], object[ 19 ], object[ 20 ],
+            object[ 21 ], object[ 22 ], object[ 23 ], object[ 24 ],
+            object[ 25 ], object[ 26 ], object[ 27 ], object[ 28 ],
+            object[ 29 ], object[ 30 ], object[ 31 ], object[ 32 ]
+        }, BigInt )
+    else
+        return setmetatable( {
+            [ 0 ] = object[ 0 ],
+            table_unpack( object, 1, length )
+        }, BigInt )
     end
-
-    return setmetatable( object_copy, BigInt )
 end
+
 
 BigInt.copy = copy
 
@@ -247,7 +278,6 @@ do
     do
 
         local string_reverse, string_rep = string.reverse, string.rep
-        local table_unpack = table.unpack
 
         do
 
