@@ -798,41 +798,7 @@ do
 
 end
 
-local futures = include( "std/futures.lua" )
-std.futures = futures
-
-do
-
-    local futures_running = futures.running
-    local Timer_wait = std.Timer.wait
-
-    --- Puts current thread to sleep for given amount of seconds.
-    ---
-    ---@see gpm.std.futures.pending
-    ---@see gpm.std.futures.wakeup
-    ---@async
-    ---@param seconds number
-    ---@return nil
-    function std.sleep( seconds )
-        local co = futures_running()
-        if co == nil then
-            std.error( "sleep cannot be called from main thread", 2 )
-        else
-            Timer_wait( function()
-                futures.wakeup( co )
-            end, seconds )
-
-            return futures.pending()
-        end
-    end
-
-end
-
-std.apairs = futures.apairs
-std.yield = futures.yield
-
-std.Future = futures.Future
-std.Task = futures.Task
+include( "std/futures.lua" )
 
 include( "std/crypto.lua" )
 include( "std/crypto.lzw.lua" )
