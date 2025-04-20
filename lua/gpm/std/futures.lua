@@ -25,9 +25,9 @@ local futures = std.futures or {}
 --[[
 
     Results:
-        [ 0 ] = RESULT_YIELD
-        [ 1 ] = RESULT_ERROR
-        [ 2 ] = RESULT_END
+        0 = RESULT_YIELD
+        1 = RESULT_ERROR
+        2 = RESULT_END
 
 --]]
 
@@ -237,7 +237,7 @@ function futures.transfer( co, ... )
     if status == "suspended" then
         return coroutine.resume( co, ... )
     elseif status == "normal" then
-        return true, coroutine.yield(...)
+        return true, coroutine.yield( ... )
     elseif status == "running" then
         return false, "cannot transfer to a running coroutine"
     else
@@ -652,14 +652,17 @@ do
     ---@async
     ---@return any
     function Future:await()
-        local is_finished = self:isFinished()
-        if not is_finished then
+        if not self:isFinished() then
             local co = futures.running()
-            self:addCallback( function() futures.wakeup( co ) end )
+
+            self:addCallback( function()
+                futures.wakeup( co )
+            end )
+
             futures.pending()
         end
 
-        if is_finished then
+        if self:isFinished() then
             return self:result()
         else
             std.error( "future hasn't changed it's state wtf???" )
