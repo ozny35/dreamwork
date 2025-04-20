@@ -1,8 +1,8 @@
-local _G = _G
 local std = _G.gpm.std
 local string, table = std.string, std.table
-local string_byte, string_sub, string_len, string_match, string_byteSplit, string_byteTrim, string_isURL = string.byte, string.sub, string.len, string.match, string.byteSplit, string.byteTrim, string.isURL
+
 local table_concat = table.concat
+local string_byte, string_sub, string_len, string_match, string_byteSplit, string_byteTrim, string_isURL = string.byte, string.sub, string.len, string.match, string.byteSplit, string.byteTrim, string.isURL
 
 -- References: https://github.com/luvit/luvit/blob/master/deps/path/base.lua
 
@@ -14,8 +14,15 @@ end
 
 local getfenv, raw_get, select = std.getfenv, std.raw.get, std.select
 
+---@class gpm.std.file
+local file = std.file
+
+--- [SHARED AND MENU]
+---
+--- The game's file path library.
 ---@class gpm.std.file.path
 local path = {}
+file.path = path
 
 --- Get the file name with extension from file_path.
 ---@param file_path string The file path.
@@ -581,5 +588,3 @@ function path.parse( file_path )
 
     return { root = isAbs and "/" or "", dir = dir, base = base, ext = ext, name = name, abs = isAbs }
 end
-
-return path

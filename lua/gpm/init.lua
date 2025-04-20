@@ -176,67 +176,87 @@ end
 do
 
     local debug_getmetavalue = debug.getmetavalue
-    local inext = std.inext
+
+    do
+
+        local inext = std.inext
+
+        --- [SHARED AND MENU]
+        ---
+        --- Returns a [Stateless Iterator](https://www.lua.org/pil/7.3.html) for a [Generic For Loops](https://www.lua.org/pil/4.3.5.html), to return ordered key-value pairs from a table.
+        ---
+        --- This will only iterate though <b>numerical keys</b>, and these must also be sequential; starting at 1 with no gaps.
+        ---
+        ---@param tbl table The table to iterate over.
+        ---@return function iter The iterator function.
+        ---@return table lst The table being iterated over.
+        ---@return number index The origin index =0.
+        function std.ipairs( tbl )
+            if debug_getmetavalue( tbl, "__index" ) == nil then
+                return inext, tbl, 0
+            else
+                local index = 0
+                return function()
+                    index = index + 1
+                    local value = tbl[ index ]
+                    if value == nil then return end
+                    return index, value
+                end, tbl, index
+            end
+        end
+
+    end
 
     --- [SHARED AND MENU]
     ---
-    --- Returns a [Stateless Iterator](https://www.lua.org/pil/7.3.html) for a [Generic For Loops](https://www.lua.org/pil/4.3.5.html), to return ordered key-value pairs from a table.
-    ---
-    --- This will only iterate though <b>numerical keys</b>, and these must also be sequential; starting at 1 with no gaps.
-    ---
-    ---@param tbl table The table to iterate over.
-    ---@return function iter The iterator function.
-    ---@return table lst The table being iterated over.
-    ---@return number index The origin index =0.
-    function std.ipairs( tbl )
-        if debug_getmetavalue( tbl, "__index" ) == nil then
-            return inext, tbl, 0
+    --- Attempts to convert the value to a number.
+    ---@param value any The value to convert.
+    ---@param base? integer The base used in the string. Can be any integer between 2 and 36, inclusive. (Default: 10)
+    ---@return number result The numeric representation of the value with the given base, or `0` if the conversion failed or not possible.
+    function std.tonumber( value, base )
+        local fn = debug_getmetavalue( value, "__tonumber" )
+        if fn == nil then
+            return 0
         else
-            local index = 0
-            return function()
-                index = index + 1
-                local value = tbl[ index ]
-                if value == nil then return end
-                return index, value
-            end, tbl, index
+            return fn( value, base or 10 )
         end
     end
 
-end
+    --- [SHARED AND MENU]
+    ---
+    --- Attempts to convert the value to a boolean.
+    ---@param value any The value to convert.
+    ---@return boolean bool The boolean representation of the value, or `false` if the conversion failed.
+    function std.toboolean( value )
+        if value == nil or value == false then
+            return false
+        end
 
---- [SHARED AND MENU]
----
---- Attempts to convert the value to a number.
----@param value any The value to convert.
----@param base? integer The base used in the string. Can be any integer between 2 and 36, inclusive. (Default: 10)
----@return number num The numeric representation of the value with the given base, or `nil` if the conversion failed.
-function std.tonumber( value, base )
-    local metatable = debug_getmetatable( value )
-    return metatable ~= nil and metatable.__tonumber( value, base ) or 0
-end
+        local fn = debug_getmetavalue( value, "__toboolean" )
+        if fn == nil then
+            return true
+        else
+            return fn( value )
+        end
+    end
 
---- [SHARED AND MENU]
----
---- Attempts to convert the value to a boolean.
----@param value any The value to convert.
----@return boolean bool The boolean representation of the value, or `false` if the conversion failed.
-function std.toboolean( value )
-    if value == nil or value == false then return false end
+    -- Alias for lazy developers
+    std.tobool = std.toboolean
 
-    local metatable = debug_getmetatable( value )
-    return metatable ~= nil and metatable.__tobool( value ) or true
-end
+    --- [SHARED AND MENU]
+    ---
+    --- Checks if the value is valid.
+    ---@param value any The value to check.
+    ---@return boolean is_valid Returns `true` if the value is valid, otherwise `false`.
+    function std.isvalid( value )
+        local fn = debug_getmetavalue( value, "__isvalid" )
+        if fn == nil then
+            return false
+        else
+            return fn( value )
+        end
+    end
 
-std.tobool = std.toboolean
-
---- [SHARED AND MENU]
----
---- Checks if the value is valid.
----@param value any The value to check.
----@return boolean is_valid Returns `true` if the value is valid, otherwise `false`.
-function std.isvalid( value )
-    local metatable = debug_getmetatable( value )
-    return ( metatable and metatable.__isvalid and metatable.__isvalid( value ) ) == true
 end
 
 --- [SHARED AND MENU]
@@ -531,10 +551,10 @@ do
 
 end
 
-local print = std.print or _G.print
-std.print = print
-
 do
+
+    local print = std.print or _G.print
+    std.print = print
 
     local string_format = string.format
 
@@ -595,7 +615,7 @@ do
     local raw_error = raw.error
 
     ---@diagnostic disable-next-line: undefined-field
-    local ErrorNoHalt = _G.ErrorNoHalt or print
+    local ErrorNoHalt = _G.ErrorNoHalt or std.print
 
     ---@diagnostic disable-next-line: undefined-field
     local ErrorNoHaltWithStack = _G.ErrorNoHaltWithStack
@@ -725,11 +745,23 @@ do
 
 end
 
-std.Timer = include( "std/timer.lua" )
 include( "std/hook.lua" )
+include( "std/timer.lua" )
 
 include( "package/init.lua" )
 
+do
+
+    --- [SHARED AND MENU]
+    ---
+    --- The game's file library.
+    ---@class gpm.std.file
+    local file = std.file or {}
+    std.file = file
+
+end
+
+include( "std/file.path.lua" )
 include( "std/file.lua" )
 
 local Color = include( "std/color.lua" )
@@ -802,29 +834,23 @@ std.yield = futures.yield
 std.Future = futures.Future
 std.Task = futures.Task
 
-do
+include( "std/crypto.lua" )
+include( "std/crypto.lzw.lua" )
+include( "std/crypto.xtea.lua" )
+include( "std/crypto.binary.lua" )
 
-    ---@class gpm.std.crypto
-    local crypto = include( "std/crypto.lua" )
-    std.crypto = crypto
+include( "std/crypto.deflate.lua" )
+-- include( "std/crypto.hmac.lua" )
+include( "std/crypto.aes.lua" )
 
-    crypto.binary = include( "std/crypto.binary.lua" )
-
-    crypto.lzw = include( "std/crypto.lzw.lua" )
-    include( "std/crypto.deflate.lua" )
-
-    crypto.ByteReader = include( "std/crypto.byte_reader.lua" )
-    crypto.ByteWriter = include( "std/crypto.byte_writer.lua" )
-
-end
+include( "std/crypto.byte_reader.lua" )
+include( "std/crypto.byte_writer.lua" )
 
 include( "std/bigint.lua" )
 
--- Extensions for string library.
 include( "std/string.extensions.lua" )
-include( "std/version.lua" )
 
--- URL and URLSearchParams classes
+include( "std/version.lua" )
 include( "std/url.lua" )
 
 -- Additional `file.path` function
@@ -856,9 +882,7 @@ do
 
 end
 
-local console = include( "std/console.lua" )
-std.console = console
-
+include( "std/console.lua" )
 include( "std/error.lua" )
 
 -- Welcome message
@@ -866,7 +890,7 @@ do
 
     local name
 
-    local cvar = console.Variable.get( SERVER and "hostname" or "name", "string" )
+    local cvar = std.console.Variable.get( SERVER and "hostname" or "name", "string" )
     if cvar == nil then
         name = "stranger"
     else
@@ -1014,7 +1038,7 @@ include( "std/level.lua" )
 
 do
 
-    local developer = console.Variable.get( "developer", "number" )
+    local developer = std.console.Variable.get( "developer", "number" )
 
     local getDeveloper
     if developer == nil then
@@ -1093,14 +1117,13 @@ do
 
     std.lookupbinary = lookupbinary
 
-    local sv_allowcslua = SERVER and console.Variable.get( "sv_allowcslua", "boolean" )
+    local sv_allowcslua = SERVER and std.console.Variable.get( "sv_allowcslua", "boolean" )
 
     --- [SHARED AND MENU]
     ---
     --- Loads a binary module
     ---@param name string The binary module name, for example: "chttp"
     ---@return boolean success true if the binary module is installed
-    ---@return table? module the binary module table
     ---@protected
     function loadbinary( name )
         if lookupbinary( name ) then
@@ -1109,10 +1132,10 @@ do
             end
 
             require( name )
-            return true, _G[ name ]
-        else
-            return false, nil
+            return true
         end
+
+        return false
     end
 
     std.loadbinary = loadbinary
@@ -1128,22 +1151,27 @@ end
 -- https://github.com/willox/gmbc
 loadbinary( "gmbc" )
 
+include( "std/http.lua" )
+include( "std/http.github.lua" )
+
 do
 
-    ---@class gpm.std.http
-    local http = include( "std/http.lua" )
-    std.http = http
-
-    http.github = include( "std/http.github.lua" )
+    --- [SHARED AND MENU]
+    ---
+    --- Steam library.
+    ---@class gpm.std.steam
+    local steam = {}
+    std.steam = steam
 
 end
 
+include( "std/steam.identifier.lua" )
+include( "std/steam.workshop_item.lua" )
 include( "std/steam.lua" )
 include( "std/addon.lua" )
 
 if std.CLIENT_MENU then
 
-    std.input = include( "std/input.lua" )
     std.menu = include( "std/menu.lua" )
 
     do
@@ -1168,6 +1196,8 @@ if std.CLIENT_SERVER then
     include( "std/player.lua" )
     -- include( "std/net.lua" )
 end
+
+include( "std/input.lua" )
 
 if std.TYPE.COUNT ~= 44 then
     logger:warn( "Global TYPE_COUNT mismatch, data corruption suspected. (" .. std.tostring( _G.TYPE_COUNT or "missing" ) .. " ~= 44)"  )

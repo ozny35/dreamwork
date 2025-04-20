@@ -4,23 +4,17 @@ local _G = _G
 -- TODO: https://wiki.facepunch.com/gmod/Global.AddCSLuaFile
 
 local glua_file = _G.file
-
----@class gpm.std
 local std = _G.gpm.std
-local string = std.string
+
 local CLIENT, SERVER, MENU = std.CLIENT, std.SERVER, std.MENU
 
---- [SHARED AND MENU]
----
---- The game's file library.
 ---@class gpm.std.file
-local file = std.file or {}
-std.file = file
+local file = std.file
 
-local path = include( "file.path.lua" )
-file.path = path
+local path = file.path
 
 local debug = std.debug
+local string = std.string
 
 local function resolve_path( resolving_path  )
     if not resolving_path or resolving_path == "" or resolving_path == "." then

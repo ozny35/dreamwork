@@ -3,6 +3,7 @@ if timer == nil then
     _G.gpm.Logger:error( "gpm.std.Timer: timer library not found" )
 end
 
+---@class gpm.std
 local std = _G.gpm.std
 
 --- [SHARED AND MENU]
@@ -20,6 +21,9 @@ local Timer = std.class.base( "Timer" )
 ---@field __base gpm.std.Timer
 ---@overload fun( name: string, delay: number?, repetitions: integer? ): Timer
 local TimerClass = std.class.create( Timer )
+std.Timer = TimerClass
+
+-- TODO: simplify
 
 do
 
@@ -433,5 +437,3 @@ do
     end
 
 end
-
-return TimerClass

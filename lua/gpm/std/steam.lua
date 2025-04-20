@@ -2,7 +2,6 @@ local _G = _G
 local gpm = _G.gpm
 local steamworks = _G.steamworks
 
----@class gpm.std
 local std = gpm.std
 
 local Future = std.Future
@@ -11,43 +10,36 @@ local tonumber = std.tonumber
 local Timer_wait = std.Timer.wait
 local string_byte, string_sub = std.string.byte, std.string.sub
 
---- [SHARED AND MENU]
----
---- Steam library.
 ---@class gpm.std.steam
-local steam = {}
-std.steam = steam
+local steam = std.steam
 
 steam.getTime = _G.system and _G.system.SteamTime
-
-include( "steam.identifier.lua" )
-include( "steam.workshop_item.lua" )
 
 if steamworks ~= nil then
 
     local steamworks_RequestPlayerInfo = steamworks.RequestPlayerInfo
 
     --- Returns the name of the player with the given Steam ID.
-    ---@param sid64 string The SteamID64 of the player.
+    ---@param identifier gpm.std.steam.Identifier The SteamID64 of the player.
     ---@param timeout number | false | nil: The timeout in seconds. Set to `false` to disable the timeout.
     ---@return string: The name of the player.
     ---@async
-    function steam.getPlayerName( sid64, timeout )
+    function steam.getPlayerName( identifier, timeout )
         local f = Future()
 
-        steamworks_RequestPlayerInfo( sid64, function( name )
+        steamworks_RequestPlayerInfo( identifier:to64(), function( name )
             if isstring( name ) then
                 ---@cast name string
                 f:setResult( name )
             else
-                f:setError( "failed to get player name for '" .. sid64 .. "', unknown error" )
+                f:setError( "failed to get player name for '" .. identifier:toSteam3() .. "', unknown error" )
             end
         end )
 
         if timeout ~= false then
             Timer_wait( function()
                 if f:isPending() then
-                    f:setError( "failed to get player name for '" .. sid64 .. "', timed out" )
+                    f:setError( "failed to get player name for '" .. identifier:toSteam3() .. "', timed out" )
                 end
             end, timeout or 30 )
         end

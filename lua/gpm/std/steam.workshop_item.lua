@@ -3,6 +3,7 @@ local gpm = _G.gpm
 local steamworks = _G.steamworks
 
 local std = gpm.std
+local string = std.string
 local Future = std.Future
 
 ---@class gpm.std.steam
@@ -76,7 +77,7 @@ local Timer_wait = std.Timer.wait
 ---@class gpm.std.steam.WorkshopItem: gpm.std.Object
 ---@field __class gpm.std.steam.WorkshopItemClass
 ---@field wsid string The workshop ID of the addon.
-local WorkshopItem = std.class.base( "WorkshopItem" )
+local WorkshopItem = std.class.base( "steam.WorkshopItem" )
 
 ---@class gpm.std.steam.WorkshopItemClass: gpm.std.steam.WorkshopItem
 ---@field __base gpm.std.steam.WorkshopItem
@@ -132,25 +133,19 @@ do
 
 end
 
-do
-
-    local string_format = std.string.format
-
-    ---@protected
-    function WorkshopItem:__tostring()
-        local title = self:getTitle()
-        if title == nil then
-            return string_format( "WorkshopItem [%s]", self:getWorkshopID() )
+---@protected
+function WorkshopItem:__tostring()
+    local title = self:getTitle()
+    if title == nil then
+        return string.format( "steam.WorkshopItem [%s]", self:getWorkshopID() )
+    else
+        local size = self:getSize()
+        if size == nil then
+            return string.format( "steam.WorkshopItem [%s][%s]", self:getWorkshopID(), title )
         else
-            local size = self:getSize()
-            if size == nil then
-                return string_format( "WorkshopItem [%s][%s]", self:getWorkshopID(), title )
-            else
-                return string_format( "WorkshopItem [%s][%s][%.1fMB]", self:getWorkshopID(), title, size / 1024 / 1024 )
-            end
+            return string.format( "steam.WorkshopItem [%s][%s][%.1fMB]", self:getWorkshopID(), title, size / 1024 / 1024 )
         end
     end
-
 end
 
 do
@@ -160,7 +155,7 @@ do
     ---@param wsid string The workshop ID of the addon.
     ---@protected
     function WorkshopItem:__init( wsid )
-        self.wsid = wsid
+        self[ 0 ] = wsid
         cache[ wsid ] = self
     end
 
@@ -176,7 +171,7 @@ end
 --- Returns the workshop ID of the publication.
 ---@return string: The workshop ID of the publication.
 function WorkshopItem:getWorkshopID()
-    return self.wsid
+    return self[ 0 ]
 end
 
 do
@@ -208,7 +203,7 @@ do
     --- Returns the title of the publication.
     ---@return string?: The title of the publication.
     function WorkshopItem:getTitle()
-        return getTitle( self.wsid )
+        return getTitle( self[ 0 ] )
     end
 
     WorkshopItemClass.getTitle = getTitle
@@ -237,7 +232,7 @@ do
     --- Returns the absolute file path of the addon `.gma`.
     ---@return string?: The absolute file path of the publication `.gma`.
     function WorkshopItem:getFilePath()
-        return getFilePath( self.wsid )
+        return getFilePath( self[ 0 ] )
     end
 
     WorkshopItemClass.getFilePath = getFilePath
@@ -262,7 +257,7 @@ do
     --- Checks if the addon is mounted.
     ---@return boolean: `true` if the addon is mounted, `false` otherwise.
     function WorkshopItem:isMounted()
-        return isMounted( self.wsid )
+        return isMounted( self[ 0 ] )
     end
 
     WorkshopItemClass.isMounted = isMounted
@@ -287,7 +282,7 @@ do
     --- Checks if the addon is downloaded.
     ---@return boolean: `true` if the addon is downloaded, `false` otherwise.
     function WorkshopItem:isDownloaded()
-        return isDownloaded( self.wsid )
+        return isDownloaded( self[ 0 ] )
     end
 
     WorkshopItemClass.isDownloaded = isDownloaded
@@ -296,7 +291,6 @@ end
 
 do
 
-    local string = std.string
     local string_lower = string.lower
     local table_remove = std.table.remove
     local string_byteSplit = string.byteSplit
@@ -340,7 +334,7 @@ do
         --- Returns the type of the publication.
         ---@return gpm.std.steam.WorkshopItem.Type?: The type of the publication.
         function WorkshopItem:getType()
-            return getType( self.wsid )
+            return getType( self[ 0 ] )
         end
 
         WorkshopItemClass.getType = getType
@@ -391,7 +385,7 @@ do
         --- Returns the tags of the addon.
         ---@return string[]?: The tags of the addon.
         function WorkshopItem:getTags()
-            return getTags( self.wsid )
+            return getTags( self[ 0 ] )
         end
 
         WorkshopItemClass.getTags = getTags
@@ -418,7 +412,7 @@ do
     --- Returns the last time the publication was updated.
     ---@return integer?: The last time the publication was updated in UNIX time.
     function WorkshopItem:getUpdateTime()
-        return getUpdateTime( self.wsid )
+        return getUpdateTime( self[ 0 ] )
     end
 
     WorkshopItemClass.getUpdateTime = getUpdateTime
@@ -443,7 +437,7 @@ do
     --- Returns the creation time of the publication.
     ---@return integer?: The creation time of the publication in UNIX time.
     function WorkshopItem:getCreationTime()
-        return getCreationTime( self.wsid )
+        return getCreationTime( self[ 0 ] )
     end
 
     WorkshopItemClass.getCreationTime = getCreationTime
@@ -468,7 +462,7 @@ do
     --- Returns the size of the publication.
     ---@return integer?: The size of the publication in bytes.
     function WorkshopItem:getSize()
-        return getSize( self.wsid )
+        return getSize( self[ 0 ] )
     end
 
     WorkshopItemClass.getSize = getSize
@@ -484,7 +478,7 @@ do
     --- Returns whether the addon should be mounted.
     ---@return boolean?: Whether the addon should be mounted.
     function WorkshopItem:isShouldMount()
-        return steamworks_ShouldMountAddon( self.wsid )
+        return steamworks_ShouldMountAddon( self[ 0 ] )
     end
 
     WorkshopItemClass.isShouldMount = steamworks_ShouldMountAddon
@@ -498,9 +492,9 @@ do
     --- [SHARED AND MENU]
     ---
     --- Sets whether the addon should be mounted.
-    ---@param shouldMount boolean Whether the addon should be mounted.
-    function WorkshopItem:setShouldMount( shouldMount )
-        steamworks_SetShouldMountAddon( self.wsid, shouldMount )
+    ---@param should_mount boolean Whether the addon should be mounted.
+    function WorkshopItem:setShouldMount( should_mount )
+        steamworks_SetShouldMountAddon( self[ 0 ], should_mount )
     end
 
     WorkshopItemClass.setShouldMount = steamworks_SetShouldMountAddon
@@ -515,7 +509,7 @@ do
     ---
     --- Marks the publication as played.
     function WorkshopItem:markAsPlayed()
-        steamworks_SetFilePlayed( self.wsid )
+        steamworks_SetFilePlayed( self[ 0 ] )
     end
 
     WorkshopItemClass.markAsPlayed = steamworks_SetFilePlayed
@@ -530,7 +524,7 @@ do
     ---
     --- Marks the publication as completed.
     function WorkshopItem:markAsCompleted()
-        steamworks_SetFileCompleted( self.wsid )
+        steamworks_SetFileCompleted( self[ 0 ] )
     end
 
     WorkshopItemClass.markAsCompleted = steamworks_SetFileCompleted
@@ -546,7 +540,7 @@ do
     --- Checks if the publication is subscribed.
     ---@return boolean: `true` if the publication is subscribed, `false` otherwise.
     function WorkshopItem:isSubscribed()
-        return steamworks_IsSubscribed( self.wsid )
+        return steamworks_IsSubscribed( self[ 0 ] )
     end
 
     WorkshopItemClass.isSubscribed = steamworks_IsSubscribed
@@ -575,7 +569,7 @@ do
     --- Subscribes or unsubscribes the publication.
     ---@param subscribed boolean `true` to subscribe, `false` to unsubscribe.
     function WorkshopItem:setSubscribed( subscribed )
-        setSubscribed( self.wsid, subscribed )
+        setSubscribed( self[ 0 ], subscribed )
     end
 
     WorkshopItemClass.setSubscribed = setSubscribed
@@ -589,9 +583,9 @@ do
     --- [SHARED AND MENU]
     ---
     --- Votes for or against the publication.
-    ---@param upOrDown boolean `true` to vote for, `false` to vote against.
-    function WorkshopItem:vote( upOrDown )
-        steamworks_Vote( self.wsid, upOrDown )
+    ---@param up_or_down boolean `true` to vote for, `false` to vote against.
+    function WorkshopItem:vote( up_or_down )
+        steamworks_Vote( self[ 0 ], up_or_down )
     end
 
     WorkshopItemClass.vote = steamworks_Vote
@@ -606,7 +600,7 @@ do
     ---
     --- Opens the workshop page of the publication.
     function WorkshopItem:openWorkshopPage()
-        steamworks_ViewFile( self.wsid )
+        steamworks_ViewFile( self[ 0 ] )
     end
 
     WorkshopItem.openWorkshopPage = steamworks_ViewFile
@@ -653,7 +647,7 @@ do
     ---@return string: The absolute path to the icon file.
     ---@async
     function WorkshopItem:downloadIcon( uncompress )
-        return downloadIcon( self.wsid, uncompress )
+        return downloadIcon( self[ 0 ], uncompress )
     end
 
     WorkshopItemClass.downloadIcon = downloadIcon
@@ -706,7 +700,7 @@ do
     ---@return string: The absolute path to the `.gma` file.
     ---@async
     function WorkshopItem:download( timeout )
-        return download( self.wsid, timeout )
+        return download( self[ 0 ], timeout )
     end
 
     WorkshopItemClass.download = download
@@ -722,15 +716,15 @@ do
     ---
     --- Fetches the info of the publication from Steam Workshop.
     ---@param wsid string The workshop ID of the publication.
-    ---@param timeout number | nil | false: The timeout in seconds. Set to `false` to disable the timeout.
-    ---@return UGCFileInfo: The info of the publication.
+    ---@param timeout number | nil | false The timeout in seconds. Set to `false` to disable the timeout.
+    ---@return gpm.std.steam.WorkshopItem.Info info The info of the publication.
     ---@async
     local function fetchInfo( wsid, timeout )
         local f = Future()
 
         steamworks_FileInfo( wsid, function( info )
             if istable( info ) then
-                ---@cast info UGCFileInfo
+                ---@cast info gpm.std.steam.WorkshopItem.Info
                 f:setResult( info )
             else
                 f:setError( "failed to fetch info for addon '" .. wsid .. "', unknown error." )
@@ -751,11 +745,11 @@ do
     --- [SHARED AND MENU]
     ---
     --- Fetches the info of the publication from Steam Workshop.
-    ---@param timeout number | nil | false: The timeout in seconds. Set to `false` to disable the timeout.
-    ---@return UGCFileInfo: The info of the publication.
+    ---@param timeout number | nil | false The timeout in seconds. Set to `false` to disable the timeout.
+    ---@return gpm.std.steam.WorkshopItem.Info info The info of the publication.
     ---@async
     function WorkshopItem:fetchInfo( timeout )
-        return fetchInfo( self.wsid, timeout )
+        return fetchInfo( self[ 0 ], timeout )
     end
 
     WorkshopItemClass.fetchInfo = fetchInfo
@@ -787,7 +781,11 @@ do
         friendfavorite = "friend_favs"
     }
 
-    setmetatable( type2type, { __index = function( _, key ) return key end } )
+    setmetatable( type2type, {
+        __index = function( _, key )
+            return key
+        end
+    } )
 
     --- [SHARED AND MENU]
     ---
@@ -821,13 +819,13 @@ do
     --- [SHARED AND MENU]
     ---
     --- Performs a quick search for publications.
-    ---@param wtype gpm.std.steam.WorkshopItem.SearchType: The type of the search.
-    ---@param wtags string[]?: The tags of the search.
-    ---@param woffset integer?: The offset of the search.
-    ---@param timeout number?: The timeout in seconds of the search.
-    ---@return WorkshopItem[]: The found publications.
-    ---@return integer: The length of the publications found array (`#publications`).
-    ---@return integer: The total number of publications found.
+    ---@param wtype gpm.std.steam.WorkshopItem.SearchType The type of the search.
+    ---@param wtags string[]? The tags of the search.
+    ---@param woffset integer? The offset of the search.
+    ---@param timeout number? The timeout in seconds of the search.
+    ---@return WorkshopItem[] items The found publications.
+    ---@return integer item_count The length of the publications found array (`#publications`).
+    ---@return integer total The total number of publications found.
     ---@async
     function WorkshopItemClass.qickSearch( wtype, wtags, woffset, timeout )
         local f = Future()
@@ -857,13 +855,13 @@ do
     --- [SHARED AND MENU]
     ---
     --- Returns a list of publications published by the client.
-    ---@param wtype gpm.std.steam.WorkshopItem.SearchType: The type of the search.
-    ---@param wtags string[]?: The tags of the search.
-    ---@param woffset integer?: The offset of the search.
-    ---@param timeout number?: The timeout in seconds of the search.
-    ---@return WorkshopItem[]: The found publications.
-    ---@return integer: The length of the publications found array (`#publications`).
-    ---@return integer: The total number of publications found.
+    ---@param wtype gpm.std.steam.WorkshopItem.SearchType The type of the search.
+    ---@param wtags string[]? The tags of the search.
+    ---@param woffset integer? The offset of the search.
+    ---@param timeout number? The timeout in seconds of the search.
+    ---@return WorkshopItem[] items The found publications.
+    ---@return integer item_count The length of the publications found array (`#publications`).
+    ---@return integer total The total number of publications found.
     ---@async
     function WorkshopItemClass.getPublished( wtype, wtags, woffset, timeout )
         local f = Future()

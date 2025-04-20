@@ -1,19 +1,26 @@
 local _G = _G
+
+local glua_gui = _G.gui
+local glua_vgui = _G.vgui
+local glua_input = _G.input
+
+---@class gpm.std
 local std = _G.gpm.std
-local glua_input, glua_gui, glua_vgui = _G.input, _G.gui, _G.vgui
 
+--- [SHARED AND MENU]
+---
+--- The input library allows you to manipulate the client's input devices (mouse & keyboard), such as the cursor position and whether a key is pressed or not.
 ---@class gpm.std.input
-local input = {}
+local input = std.input or {}
+std.input = input
 
--- TODO: https://wiki.facepunch.com/gmod/input
--- TODO: https://wiki.facepunch.com/gmod/motionsensor
--- TODO: https://wiki.facepunch.com/gmod/gui
--- TODO: https://wiki.facepunch.com/gmod/input.SelectWeapon
+if std.CLIENT_MENU then
 
-do
-
+    --- [CLIENT AND MENU]
+    ---
+    --- The cursor module allows you to manipulate the client's cursor.
     ---@clas gpm.std.input.cursor
-    local cursor = {
+    local cursor = input.cursor or {
         isVisible = glua_vgui.CursorVisible,
         setVisible = glua_gui.EnableScreenClicker or std.debug.fempty,
         isHoveringWorld = glua_vgui.IsHoveringWorld,
@@ -25,15 +32,22 @@ do
 
 end
 
-do
+if std.CLIENT_MENU then
 
-    local clipboard_text = ""
+    --- [CLIENT AND MENU]
+    ---
+    --- The clipboard module allows you to manipulate the client's clipboard.
+    ---@class gpm.std.input.clipboard
+    local clipboard = input.clipboard or {}
+    input.clipboard = clipboard
+
+    local clipboard_text = clipboard.getText and clipboard.getText() or ""
 
     --- [CLIENT AND MENU]
     ---
     --- Returns the contents of the clipboard.
     ---@return string
-    function input.getClipboardText()
+    function clipboard.getText()
         return clipboard_text
     end
 
@@ -46,20 +60,70 @@ do
     ---
     --- Sets the contents of the clipboard.
     ---@param text string
-    function input.setClipboardText( text )
+    function clipboard.setText( text )
         ---@diagnostic disable-next-line: redundant-parameter
         SetClipboardText( text )
         clipboard_text = text
     end
 
+    --- [CLIENT AND MENU]
+    ---
+    --- Adds text to the clipboard.
+    ---@param text string
+    function clipboard.addText( text )
+        clipboard_text = clipboard_text .. text
+        ---@diagnostic disable-next-line: redundant-parameter
+        SetClipboardText( text )
+    end
+
+    --- [CLIENT AND MENU]
+    ---
+    --- Clears the clipboard.
+    function clipboard.clear()
+        clipboard_text = ""
+        ---@diagnostic disable-next-line: redundant-parameter
+        SetClipboardText( clipboard_text )
+    end
+
 end
 
-do
+if std.CLIENT_MENU then
 
-    ---@clas gpm.std.input.keyboard
-    local keyboard = {
+    --- [CLIENT AND MENU]
+    ---
+    --- The key module allows you to manipulate the client's keys.
+    ---@class gpm.std.input.key
+    local key = input.key or {
         KEY_COUNT = 106
     }
+
+    input.key = key
+
+    do
+
+        local input_StartKeyTrapping = glua_input.StartKeyTrapping
+        local input_CheckKeyTrapping = glua_input.CheckKeyTrapping
+        local input_IsKeyTrapping = glua_input.IsKeyTrapping
+        local futures_yield = std.futures.yield
+
+        --- [CLIENT AND MENU]
+        ---
+        --- Starts a key capture and returns the key code of the key that was pressed.
+        ---
+        --- The captured key will not be pressed and committed to the game engine.
+        ---@return integer key_code The key code of the key that was pressed.
+        ---@async
+        function key.capture()
+            input_StartKeyTrapping()
+
+            while input_IsKeyTrapping() do
+                futures_yield( input_CheckKeyTrapping() )
+            end
+
+            return -1
+        end
+
+    end
 
     do
 
@@ -176,10 +240,10 @@ do
         --- [CLIENT AND MENU]
         ---
         --- Get the name of a key.
-        ---@param key integer The key code.
+        ---@param key_code integer The key code of the key.
         ---@return string: The name of the key.
-        function keyboard.getKeyName( key )
-            return key2name[ key ] or "unknown"
+        function key.getName( key_code )
+            return key2name[ key_code ] or "unknown"
         end
 
         local name2key = std.table.flip( key2name )
@@ -188,22 +252,23 @@ do
         ---
         --- Get the key code of a name.
         ---@param name string The name of the key.
-        ---@return integer: The key code.
-        ---@see keyboard.getKeyName
-        function keyboard.getKeyCode( name )
+        ---@return integer key_code The key code of the key.
+        ---@see key.getName as a reverse lookup
+        function key.getCode( name )
             return name2key[ name ] or 0
         end
 
     end
 
-    input.keyboard = keyboard
-
 end
 
-do
+if std.CLIENT_MENU then
 
+    --- [CLIENT AND MENU]
+    ---
+    --- The controller module allows you to manipulate the client's controllers.
     ---@class gpm.std.input.controller
-    local controller = {
+    local controller = input.controller or {
 
     }
 
@@ -211,4 +276,68 @@ do
 
 end
 
-return input
+if std.CLIENT then
+
+    local console = std.console
+    local Command_run = console.Command.run
+
+    --- [CLIENT]
+    ---
+    --- The weapon module allows you to manipulate the client's weapons.
+    ---@class gpm.std.input.weapon
+    local weapon = input.weapon or {
+        select = glua_input.SelectWeapon
+    }
+
+    input.weapon = weapon
+
+    --- [CLIENT]
+    ---
+    --- Selects the previously selected weapon.
+    ---
+    --- Instantly sets the player's past weapons as active.
+    function weapon.last()
+        return Command_run( "lastinv" )
+    end
+
+    --- [CLIENT]
+    ---
+    --- Selects the next weapon in the inventory.
+    ---
+    --- Weapons will most likely not be selected immediately because often players do not use `hud_fastswitch`, so they will just have their inventory with the selected weapon displayed in the next slot.
+    function weapon.next()
+        return Command_run( "invnext" )
+    end
+
+    --- [CLIENT]
+    ---
+    --- Selects the previous weapon in the inventory.
+    ---
+    --- Weapons will most likely not be selected immediately because often players do not use `hud_fastswitch`, so they will just have their inventory with the selected weapon displayed in the next slot.
+    function weapon.previous()
+        return Command_run( "invprev" )
+    end
+
+end
+
+if std.CLIENT_SERVER then
+
+    --- [CLIENT AND SERVER]
+    ---
+    --- The kinect module allows you to manipulate the client's kinect.
+    ---
+    --- Highly recommended to use with https://github.com/WilliamVenner/gmcl_rekinect
+    ---@class gpm.std.input.kinect
+    local kinect = input.kinect or {}
+    input.kinect = kinect
+
+    -- TODO: gmcl_rekinect support ( net library required )
+
+    if std.CLIENT and std.loadbinary( "rekinect" ) then
+    end
+
+end
+
+-- TODO: https://wiki.facepunch.com/gmod/input
+-- TODO: https://wiki.facepunch.com/gmod/motionsensor
+-- TODO: https://wiki.facepunch.com/gmod/gui

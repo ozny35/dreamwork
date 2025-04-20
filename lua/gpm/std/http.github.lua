@@ -1,11 +1,19 @@
 
 local _G = _G
 local gpm = _G.gpm
+
 local std = gpm.std
-local error, tonumber, tostring, HTTPClientError = std.error, std.tonumber, std.tostring, std.HTTPClientError
+
+local tonumber, tostring = std.tonumber, std.tostring
+local HTTPClientError = std.HTTPClientError
+
 local game_getSystemTime = std.game.getSystemTime
-local futures_sleep = std.futures.sleep
-local http_request = std.http.request
+
+---@class gpm.std.http
+local http = std.http
+
+local http_request = http.request
+local futures_sleep = std.sleep
 local os_time = std.os.time
 
 local base64_decode, json_deserialize
@@ -15,14 +23,10 @@ do
     json_deserialize = crypto.json.deserialize
 end
 
-local string_upper, string_gsub, string_isURL
-do
-    local string = std.string
-    string_upper, string_gsub, string_isURL = string.upper, string.gsub, string.isURL
-end
+local string_gsub = std.string.gsub
 
 local api_token
-if SERVER then
+if std.SERVER then
     local gpm_github_token = std.console.Variable( {
         name = "gpm.github.token",
         description = "https://github.com/settings/tokens",
@@ -36,61 +40,70 @@ else
     api_token = ""
 end
 
---- Github API library
+--- [SHARED AND MENU]
+---
+--- The Github API library.
 ---@class gpm.std.http.github
-local github = {}
+local github = http.github or {}
+http.github = github
 
 -- https://docs.github.com/en/rest/overview/resources-in-the-rest-api#rate-limiting
-local mutationNextTime = 0
-local rateLimitReset = 0
+local next_mutation_time = 0
+local ratelimit_reset_time = 0
 
---- TODO
----@param method any TODO
----@param url any TODO
----@param headers any TODO
----@param body any TODO
----@param cache any TODO
----@return HTTPResponse: TODO
+--- [SHARED AND MENU]
+---
+--- Sends a request to the Github API.
+---@param method gpm.std.http.Request.Method The request method.
+---@param pathname string The path to send the request to.
+---@param headers? table The headers to send with the request.
+---@param body? string The body to send with the request.
+---@param do_cache? boolean Whether to cache the response.
+---@return gpm.std.http.Response response The response.
 ---@async
-local function request( method, url, headers, body, cache )
-    if not string_isURL( url ) then
-        url = "https://api.github.com" .. url
+local function request( method, pathname, headers, body, do_cache )
+    local url = std.URL( pathname, "https://api.github.com" )
+
+    if headers == nil then
+        headers = {
+            ["Authorization"] = "Bearer " .. api_token,
+            ["Accept"] = "application/vnd.github+json",
+            ["X-GitHub-Api-Version"] = "2022-11-28"
+        }
+    else
+
+        if headers["Authorization"] == nil and api_token ~= "" then
+            headers["Authorization"] = "Bearer " .. api_token
+        end
+
+        if headers["Accept"] == nil then
+            headers["Accept"] = "application/vnd.github+json"
+        end
+
+        if headers["X-GitHub-Api-Version"] == nil then
+            headers["X-GitHub-Api-Version"] = "2022-11-28"
+        end
+
     end
 
-    headers = headers or {}
-
-    if headers["Authorization"] == nil and api_token ~= "" then
-        headers["Authorization"] = "Bearer " .. api_token
-    end
-
-    if headers["Accept"] == nil then
-        headers["Accept"] = "application/vnd.github+json"
-    end
-
-    if headers["X-GitHub-Api-Version"] == nil then
-        headers["X-GitHub-Api-Version"] = "2022-11-28"
-    end
-
-    local currentTime = os_time()
-    if rateLimitReset > currentTime then
-        local diff = rateLimitReset - currentTime
+    local current_time = os_time()
+    if ratelimit_reset_time > current_time then
+        local diff = ratelimit_reset_time - current_time
         if diff < 30 then
             futures_sleep( diff )
         else
-            error( HTTPClientError( "Github API rate limit exceeded (" .. tostring( url ) .. ")" ) )
+            std.error( HTTPClientError( "Github API rate limit exceeded (" .. url.href .. ")" ) )
         end
     end
 
-    method = string_upper( method )
-
     -- Rate limit mutative requests
-    if method == "POST" or method == "PATCH" or method == "PUT" or method == "DELETE" then
-        local diff = mutationNextTime - game_getSystemTime()
+    if method > 1 and method < 6 then
+        local diff = next_mutation_time - game_getSystemTime()
         if diff > 0 then
-            mutationNextTime = mutationNextTime + 1000
+            next_mutation_time = next_mutation_time + 1000
             futures_sleep( diff )
         else
-            mutationNextTime = game_getSystemTime() + 1000
+            next_mutation_time = game_getSystemTime() + 1000
         end
     end
 
@@ -101,17 +114,17 @@ local function request( method, url, headers, body, cache )
         method = method,
         headers = headers,
         body = body,
-        etag = cache ~= false,
-        cache = cache ~= false
+        etag = do_cache ~= false,
+        cache = do_cache ~= false
     } )
 
     if ( result.status == 429 or result.status == 403 ) and headers["x-ratelimit-remaining"] == "0" then
-        local reset = tonumber( headers["x-ratelimit-reset"], 10 )
-        if reset then
-            rateLimitReset = reset
+        local ratelimit_reset = tonumber( headers["x-ratelimit-reset"], 10 )
+        if ratelimit_reset == nil then
+            std.error( HTTPClientError( "Github API rate limit exceeded (" .. tostring( result.status ) .. ") (" .. tostring( url ) .. ")" ) )
+        else
+            ratelimit_reset_time = ratelimit_reset
         end
-
-        error( HTTPClientError( "Github API rate limit exceeded (" .. tostring( result.status ) .. ") (" .. tostring( url ) .. ")" ) )
     end
 
     return result
@@ -119,23 +132,25 @@ end
 
 github.request = request
 
---- TODO
----@param method any TODO
----@param pathname any TODO
----@param headers any TODO
----@param body any TODO
----@param cache any TODO
----@return table: TODO
+--- [SHARED AND MENU]
+---
+--- Makes a request to the Github API.
+---@param method gpm.std.http.Request.Method The request method.
+---@param pathname string The path to send the request to.
+---@param headers? table The headers to send with the request.
+---@param body? string The body to send with the request.
+---@param do_cache? boolean Whether to cache the response.
+---@return table data The data returned from the API.
 ---@async
-local function apiRequest( method, pathname, headers, body, cache )
-    local result = request( method, pathname, headers, body, cache )
+local function apiRequest( method, pathname, headers, body, do_cache )
+    local result = request( method, pathname, headers, body, do_cache )
     if not ( result.status >= 200 and result.status < 300 ) then
-        error( HTTPClientError( "Failed to fetch data from Github API (" .. tostring( result.status ) .. ") (" .. tostring( pathname ) .. ")" ) )
+        std.error( HTTPClientError( "Failed to fetch data from Github API (" .. tostring( result.status ) .. ") (" .. tostring( pathname ) .. ")" ) )
     end
 
     local data = json_deserialize( result.body, true, true )
     if not data then
-        error( HTTPClientError( "Failed to parse JSON response from Github API (" .. tostring( result.status ) .. ") (" .. tostring( pathname ) .. ")" ) )
+        std.error( HTTPClientError( "Failed to parse JSON response from Github API (" .. tostring( result.status ) .. ") (" .. tostring( pathname ) .. ")" ) )
     end
 
     return data
@@ -143,56 +158,66 @@ end
 
 github.apiRequest = apiRequest
 
---- TODO
----@param pathname any TODO
----@param data any TODO
----@return unknown: TODO
-local function template( pathname, data )
+--- [SHARED AND MENU]
+---
+--- Replaces all occurrences of `{name}` in `pathname` with `tbl[name]`.
+---@param pathname string The path to replace placeholders in.
+---@param tbl string<any> The table to replace placeholders with.
+---@return string pathname The path with placeholders replaced.
+local function template( pathname, tbl )
     return string_gsub( pathname, "{([%w_-]-)}", function( str )
-        return tostring( data[ str ] )
+        return tostring( tbl[ str ] )
         ---@diagnostic disable-next-line: redundant-return-value
     end ), nil
 end
 
 github.template = template
 
---- TODO
----@param method any TODO
----@param pathname any TODO
----@param data any TODO
----@return table: TODO
+--- [SHARED AND MENU]
+---
+--- Replaces all occurrences of `{name}` in `pathname` with `tbl[name]` and makes a request to the Github API.
+---@param method gpm.std.http.Request.Method The request method.
+---@param pathname string The path to send the request to.
+---@param tbl string<any> The table to replace placeholders with.
+---@return table data The data returned from the API.
 ---@async
-local function templateRequest( method, pathname, data )
-    return apiRequest( method, template( pathname, data ) )
+local function templateRequest( method, pathname, tbl )
+    return apiRequest( method, template( pathname, tbl ) )
 end
 
 github.templateRequest = templateRequest
 
---- TODO
+--- [SHARED AND MENU]
+---
+---
 ---@param owner string The owner of the repository.
 ---@param repo string The name of the repository.
----@return table: TODO
+---@return table data The repository data.
 ---@async
 function github.getRepository( owner, repo )
-    return templateRequest( "GET", "/repos/{owner}/{repo}", {
+    return templateRequest( 1, "/repos/{owner}/{repo}", {
         owner = owner,
         repo = repo
     } )
 end
 
---- TODO
+--- [SHARED AND MENU]
+---
+---
 ---@param owner string The owner of the repository.
 ---@param repo string The name of the repository.
 ---@return table: TODO
 ---@async
 function github.getRepositoryTags( owner, repo )
     -- TODO: implement pagination? - yes
-    return templateRequest( "GET", "/repos/{owner}/{repo}/tags?per_page=100", {
+    return templateRequest( 1, "/repos/{owner}/{repo}/tags?per_page=100", {
         owner = owner,
         repo = repo
     } )
 end
 
+--- [SHARED AND MENU]
+---
 --- TODO
 ---@param owner string The owner of the repository.
 ---@param repo string The name of the repository.
@@ -201,7 +226,7 @@ end
 ---@return table: TODO
 ---@async
 function github.getTree( owner, repo, tree_sha, recursive )
-    return templateRequest( "GET", "/repos/{owner}/{repo}/git/trees/{tree_sha}?recursive={recursive}", {
+    return templateRequest( 1, "/repos/{owner}/{repo}/git/trees/{tree_sha}?recursive={recursive}", {
         owner = owner,
         repo = repo,
         tree_sha = tree_sha,
@@ -209,14 +234,16 @@ function github.getTree( owner, repo, tree_sha, recursive )
     } )
 end
 
+--- [SHARED AND MENU]
+---
 --- TODO
 ---@param owner string The owner of the repository.
 ---@param repo string The name of the repository.
 ---@param file_sha any TODO
----@return table: TODO
+---@return table blob The blob.
 ---@async
 function github.getBlob( owner, repo, file_sha )
-    local result = templateRequest( "GET", "/repos/{owner}/{repo}/git/blobs/{file_sha}", {
+    local result = templateRequest( 1, "/repos/{owner}/{repo}/git/blobs/{file_sha}", {
         owner = owner,
         repo = repo,
         file_sha = file_sha
@@ -230,19 +257,19 @@ function github.getBlob( owner, repo, file_sha )
     return result
 end
 
---- TODO
+--- [SHARED AND MENU]
+---
+--- Fetches a zipball from a repository.
 ---@param owner string The owner of the repository.
 ---@param repo string The name of the repository.
 ---@param ref string The reference to fetch.
----@return string: TODO
+---@return string body The body of the zipball.
 ---@async
 function github.fetchZip( owner, repo, ref )
-    local result = request( "GET", "/repos/" .. tostring( owner ) .. "/" .. tostring( repo ) .. "/zipball/" .. tostring( ref ) )
+    local result = request( 1, "/repos/" .. tostring( owner ) .. "/" .. tostring( repo ) .. "/zipball/" .. tostring( ref ) )
     if result.status ~= 200 then
-        error( HTTPClientError( "Failed to fetch zipball (" .. tostring( owner ) .. "/" .. tostring( repo ) .. "/" .. tostring( ref ) .. ") from Github API (" .. tostring( result.status ) .. ")" ) )
+        std.error( HTTPClientError( "Failed to fetch zipball (" .. tostring( owner ) .. "/" .. tostring( repo ) .. "/" .. tostring( ref ) .. ") from Github API (" .. tostring( result.status ) .. ")" ) )
     end
 
     return result.body
 end
-
-return github

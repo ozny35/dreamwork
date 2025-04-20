@@ -6,6 +6,7 @@ local std = gpm.std
 ---
 --- The game's client library.
 ---@class gpm.std.client
+---@field entity gpm.std.Player | nil The local player entity object that is associated with the client.
 local client = std.client or {}
 
 if _G.gui ~= nil then
@@ -32,22 +33,28 @@ end
 
 if std.CLIENT then
 
-    local LocalPlayer = _G.LocalPlayer
+    do
 
-    std.setmetatable( client, {
-        __index = function( _, key )
-            if key == "Entity" then
-                local entity = LocalPlayer()
-                if entity and entity:IsValid() then
-                    local player = gpm.transducers[ entity ]
-                    client.Entity = player
-                    return player
+        local ENTITY = std.debug.findmetatable( "Entity" ) ---@cast ENTITY Entity
+        local ENTITY_IsValid = ENTITY.IsValid
+        local LocalPlayer = _G.LocalPlayer
+
+        std.setmetatable( client, {
+            __index = function( _, key )
+                if key == "entity" then
+                    local entity = LocalPlayer()
+                    if entity and ENTITY_IsValid( entity ) then
+                        local player = gpm.transducers[ entity ]
+                        client.entity = player
+                        return player
+                    end
                 end
-            end
 
-            return nil
-        end
-    } )
+                return nil
+            end
+        } )
+
+    end
 
     -- https://music.youtube.com/watch?v=78PjJ1soEZk (01:00)
     client.screenShake = _G.util.ScreenShake
@@ -61,12 +68,12 @@ if std.CLIENT then
         local voice_chat_state = false
 
         gpm.engine.hookCatch( "PlayerStartVoice", function( entity )
-            if entity ~= client.Entity then return end
+            if entity ~= client.entity then return end
             voice_chat_state = true
         end )
 
         gpm.engine.hookCatch( "PlayerEndVoice", function( entity )
-            if entity ~= client.Entity then return end
+            if entity ~= client.entity then return end
             voice_chat_state = false
         end )
 

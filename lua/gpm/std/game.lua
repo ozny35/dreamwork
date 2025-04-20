@@ -15,15 +15,14 @@ local glua_engine, glua_game, glua_util, system_IsWindowed = _G.engine, _G.game,
 ---
 --- The game library.
 ---@class gpm.std.game
-local game = std.game or {
-    getSystemTime = _G.SysTime,
-    addDebugInfo = _G.DebugInfo,
-    getFrameTime = _G.FrameTime,
-    getTickCount = glua_engine.TickCount,
-    getTickInterval = glua_engine.TickInterval
-}
-
+local game = std.game or {}
 std.game = game
+
+game.getSystemTime = game.getSystemTime or _G.SysTime
+game.addDebugInfo = game.addDebugInfo or _G.DebugInfo
+game.getFrameTime = game.getFrameTime or _G.FrameTime
+game.getTickCount = game.getTickCount or glua_engine.TickCount
+game.getTickInterval = game.getTickInterval or glua_engine.TickInterval
 
 do
 

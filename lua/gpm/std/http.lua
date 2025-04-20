@@ -80,7 +80,8 @@ end
 ---
 --- http library
 ---@class gpm.std.http
-local http = {}
+local http = std.http or {}
+std.http = http
 
 local gpm_http_timeout, gpm_http_lifetime
 do
@@ -139,7 +140,7 @@ local int2method = {
 local function request( tbl )
     local search_parameters = tbl.parameters
     if std.isURLSearchParams( search_parameters ) then
-        ---@cast search_parameters gpm.std.URLSearchParams
+        ---@cast search_parameters gpm.std.URL.SearchParams
 
         local parameters = {}
 
@@ -163,32 +164,9 @@ local function request( tbl )
     if url == nil then
         std.error( "URL is nil", 2 )
     elseif not isstring( url ) then
-        ---@cast url URL
-
-        local url_search_parameters = url.searchParams
-        if url_search_parameters ~= nil then
-            ---@cast url_search_parameters gpm.std.URLSearchParams
-
-            local parameters = tbl.parameters
-            if parameters == nil then
-                ---@diagnostic disable-next-line: missing-fields
-                parameters = {}; tbl.parameters = parameters
-                ---@cast parameters table
-            end
-
-            for key, value in url_search_parameters:iterator() do
-                local old_value = parameters[ key ]
-                if old_value == nil then
-                    parameters[ key ] = value
-                elseif istable( old_value ) then
-                    old_value[ #old_value + 1 ] = value
-                else
-                    parameters[ key ] = { old_value, value }
-                end
-            end
-        end
-
-        url = url.origin .. url.pathname
+        ---@cast url gpm.std.URL
+        url = url.href
+        tbl.url = url
     end
 
     ---@cast url string
@@ -214,12 +192,12 @@ local function request( tbl )
 
     ---@diagnostic disable-next-line: inject-field
     function tbl.success( status, body, headers )
-        return f:setResult( { status = status, body = body, headers = headers } )
+        f:setResult( { status = status, body = body, headers = headers } )
     end
 
     ---@diagnostic disable-next-line: inject-field
     function tbl.failed( msg )
-        return f:setError( HTTPClientError( msg ) )
+        f:setError( HTTPClientError( msg ) )
     end
 
     -- Cache extension
@@ -309,7 +287,7 @@ local function request( tbl )
     end
 
     if not make_request( tbl ) then
-        tbl.failed( "failed to connect to http client" )
+        tbl.failed( "failed to connect to '" .. client_name .. "' http client for '" .. url .. "'" )
     end
 
     return f:await()
@@ -353,5 +331,3 @@ if std.MENU then
     end
 
 end
-
-return http

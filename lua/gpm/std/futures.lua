@@ -719,7 +719,7 @@ do
 
     ---@class gpm.std.futures.TaskClass : gpm.std.futures.Task
     ---@field __base gpm.std.futures.Task
-    ---@overload fun(fn: (async fun(...): any), ...: any): gpm.std.futures.Task
+    ---@overload fun( fn: ( async fun(...): any ), ...: any ): gpm.std.futures.Task
     futures.Task = class.create( Task )
 
 end

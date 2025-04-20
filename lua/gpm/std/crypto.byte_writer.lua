@@ -1,6 +1,9 @@
 local std = _G.gpm.std
 
-local binary = std.crypto.binary
+---@class gpm.std.crypto
+local crypto = std.crypto
+
+local binary = crypto.binary
 local string = std.string
 
 local string_len = string.len
@@ -464,5 +467,4 @@ end
 ---@field __base gpm.std.crypto.ByteWriter
 ---@overload fun( base?: string ): gpm.std.crypto.ByteWriter
 local ByteWriterClass = std.class.create( ByteWriter )
-
-return ByteWriterClass
+crypto.ByteWriter = ByteWriterClass

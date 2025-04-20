@@ -11,11 +11,15 @@ do
 	bit_band, bit_bor, bit_lshift, bit_rshift = bit.band, bit.bor, bit.lshift, bit.rshift
 end
 
+---@class gpm.std.crypto
+local crypto = std.crypto
+
 --- [SHARED AND MENU]
 ---
 --- A binary library.
 ---@class gpm.std.crypto.binary
 local binary = {}
+crypto.binary = binary
 
 local unsigned, unsigned_implode, unsigned_explode, unsigned_readInteger, unsigned_writeInteger
 do
@@ -1234,5 +1238,3 @@ function binary.byteWriter( byte_count, big_endian )
 		end, bytes
 	end
 end
-
-return binary

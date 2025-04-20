@@ -1,6 +1,9 @@
 local std = _G.gpm.std
 
-local binary = std.crypto.binary
+---@class gpm.std.crypto
+local crypto = std.crypto
+
+local binary = crypto.binary
 local string = std.string
 local math = std.math
 
@@ -532,5 +535,4 @@ end
 ---@field __base gpm.std.crypto.ByteReader
 ---@overload fun( data: string ): gpm.std.crypto.ByteReader
 local ByteReaderClass = std.class.create( ByteReader )
-
-return ByteReaderClass
+crypto.ByteReader = ByteReaderClass

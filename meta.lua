@@ -76,7 +76,7 @@ do
     ---
     --- This is only applicable to the following request methods:
     --- (0 = HEAD, 1 = GET, 2 = POST)
-    ---@type gpm.std.URLSearchParams | table | nil
+    ---@type gpm.std.URL.SearchParams | table | nil
     request.parameters = nil
 
     --- Body string for POST data.
@@ -405,6 +405,118 @@ do
     --- Response time, after which the function will be terminated with an error (default 30)
     ---@type number?
     search_params.timeout = 30
+
+end
+
+do
+
+    --- [SHARED AND MENU]
+    ---
+    --- The result table of fetching workshop item info.
+    ---@class gpm.std.steam.WorkshopItem.Info
+    local item_info = {}
+
+    --- The Workshop item ID
+    ---@type number
+    item_info.id = nil
+
+    --- The title of the Workshop item
+    ---@type string
+    item_info.title = nil
+
+    --- The description of the Workshop item
+    ---@type string
+    item_info.description = nil
+
+    --- The internal File ID of the workshop item, if any
+    ---@type number
+    item_info.fileid = nil
+
+    --- The internal File ID of the workshop item preview, if any
+    ---@type number
+    item_info.previewid = nil
+
+    --- A URL to the preview image of the workshop item
+    ---@type string
+    item_info.previewurl = nil
+
+    --- The SteamID64 of the original uploader of the addon
+    ---@type number
+    item_info.owner = nil
+
+    --- Unix timestamp of when the item was created
+    ---@type number
+    item_info.created = nil
+
+    --- Unix timestamp of when the file was last updated
+    ---@type number
+    item_info.updated = nil
+
+    --- Whether the file is banned or not
+    ---@type boolean
+    item_info.banned = nil
+
+    --- Comma (,) separated list of tags, may be truncated to some length
+    ---@type string
+    item_info.tags = nil
+
+    --- File size of the workshop item contents
+    ---@type number
+    item_info.size = nil
+
+    --- Filesize of the preview file
+    ---@type number
+    item_info.previewsize = nil
+
+    --- If the addon is subscribed, this value represents whether it is installed on the client and its files are accessible, false otherwise.
+    ---@type boolean
+    item_info.installed = nil
+
+    --- If the addon is subscribed, this value represents whether it is disabled on the client, false otherwise.
+    ---@type boolean
+    item_info.disabled = nil
+
+    --- A list of child Workshop Items for this item.
+    ---
+    --- For collections this will be sub-collections, for workshop items this will be the items they depend on.
+    ---@type table
+    item_info.children = nil
+
+    --- We advise against using this. It may be changed or removed in a future update.
+    ---
+    --- The "nice" name of the Uploader, or "Unnammed Player" if we failed to get the data for some reason.
+    ---
+    --- Do not use this field as it will most likely not be updated in time. Use steamworks.RequestPlayerInfo instead.
+    ---@type string
+    item_info.ownername = nil
+
+    --- If this key is set, no other data will be present in the response.
+    ---
+    --- Values above 0 represent Steam Error codes, values below 0 mean the following:
+    --- * -1 means Failed to create query
+    --- * -2 means Failed to send query
+    --- * -3 means Received 0 or more than 1 result
+    --- * -4 means Failed to get item data from the response
+    --- * -5 means Workshop item ID in the response is invalid
+    --- * -6 means Workshop item ID in response is mismatching the requested file ID
+    ---@type number
+    item_info.error = nil
+
+    --- Number of "up" votes for this item.
+    ---@type number
+    item_info.up = nil
+
+    --- Number of "down" votes for this item.
+    ---@type number
+    item_info.down = nil
+
+    --- Number of total votes (up and down) for this item. This is NOT `up - down`.
+    ---@type number
+    item_info.total = nil
+
+    --- The up down vote ratio for this item, i.e. `1` is when every vote is `up`, `0.5` is when half of the total votes are the up votes, etc.
+    ---@type number
+    item_info.score = nil
 
 end
 
