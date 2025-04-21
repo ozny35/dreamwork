@@ -512,15 +512,15 @@ do
 
 end
 
----@class gpm.std.math
-local math = include( "std/math.lua" )
-std.math = math
+include( "std/math.lua" )
+include( "std/math.ease.lua" )
 
-math.ease = include( "std/math.ease.lua" )
+local math = std.math
 
 do
 
-    local math_ceil, math_log, math_ln2, math_isfinite = math.ceil, math.log, math.ln2, math.isfinite
+    local math_ceil, math_log, math_isfinite = math.ceil, math.log, math.isfinite
+    local math_ln2 = math.ln2
 
     function NUMBER.__bitcount( value )
         if math_isfinite( value ) then
@@ -1041,7 +1041,10 @@ local logger = std.Logger( {
 
 gpm.Logger = logger
 
-std.sqlite = include( "std/sqlite.lua" )
+math.randomseed = std.os.time()
+logger:info( "Random seed was synchronized with unix time." )
+
+include( "std/sqlite.lua" )
 include( "database.lua" )
 
 local loadbinary
@@ -1137,24 +1140,13 @@ include( "std/steam.lua" )
 include( "std/addon.lua" )
 
 if std.CLIENT_MENU then
-
-    std.menu = include( "std/menu.lua" )
-
-    do
-
-        ---@class gpm.std.client
-        local client = include( "std/client.lua" )
-        std.client = client
-
-        client.window = include( "std/client.window.lua" )
-
-    end
-
-    std.render = include( "std/render.lua" )
-
+    include( "std/os.window.lua" )
+    include( "std/menu.lua" )
+    include( "std/client.lua" )
+    include( "std/render.lua" )
 end
 
-std.server = include( "std/server.lua" )
+include( "std/server.lua" )
 
 if std.CLIENT_SERVER then
     include( "std/physics.lua" )

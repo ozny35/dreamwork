@@ -1,13 +1,17 @@
 local _G = _G
 local gpm = _G.gpm
+
+---@class gpm.std
 local std = gpm.std
 
 --- [CLIENT AND MENU]
 ---
 --- The game's client library.
+---
 ---@class gpm.std.client
 ---@field entity gpm.std.Player | nil The local player entity object that is associated with the client.
 local client = std.client or {}
+std.client = client
 
 if _G.gui ~= nil then
     client.openURL = _G.gui.OpenURL
@@ -166,5 +170,3 @@ do
     end
 
 end
-
-return client

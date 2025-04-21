@@ -1,5 +1,6 @@
 local _G = _G
 
+---@class gpm.std
 local std = _G.gpm.std
 local error, string = std.error, std.string
 
@@ -9,7 +10,8 @@ local glua_sql = _G.sql
 ---
 --- The local SQLite library.
 ---@class gpm.std.sqlite
-local sqlite = {}
+local sqlite = std.sqlite or {}
+std.sqlite = sqlite
 
 --- [SHARED AND MENU]
 ---

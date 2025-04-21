@@ -1,30 +1,5 @@
-local _G = _G
-local glua_math, std = _G.math, _G.gpm.std
-local math_abs, math_atan, math_ceil, math_min, math_max, math_random, math_sqrt, math_floor, math_log, math_deg, math_pi = glua_math.abs, glua_math.atan, glua_math.ceil, glua_math.min, glua_math.max, glua_math.random, glua_math.sqrt, glua_math.floor, glua_math.log, glua_math.deg, glua_math.pi
-
-local e = glua_math.exp( 1 )
-local ln2 = math_log( 2 )
-
-local huge = glua_math.huge
-local tiny = -huge
-
---- [SHARED AND MENU]
----
---- Returns the arc tangent of y/x.
----@param y number The y coordinate.
----@param x number The x coordinate.
----@return number: The arc tangent of y/x.
-local function atan( y, x )
-    if x == nil then
-        return math_atan( y )
-    elseif y == 0 then
-      return 0.0
-    elseif x == 0 then
-        return math_pi * 0.5
-    end
-
-    return math_atan( y / x )
-end
+---@class gpm.std
+local std = _G.gpm.std
 
 --- [SHARED AND MENU]
 ---
@@ -41,76 +16,172 @@ end
 ---@field log2e number A variable containing the mathematical constant logarithm of 2 to the base e. (1.4426950408889)
 ---@field sqrt2 number A variable containing the mathematical constant square root of 2. (1.4142135623731)
 ---@field sqrt1_2 number A variable containing the mathematical constant square root of 1/2. (0.70710678118655)
-local math = {
-    e = e,
-    ln2 = ln2,
-    huge = huge,
-    tiny = tiny,
-    nan = 0 / 0,
-    pi = math_pi,
-    ln10 = math_log( 10.0 ),
-    log10e = math_log( e, 10.0 ),
-    log2e = math_log( e, 2.0 ),
-    sqrt2 = math_sqrt( 2.0 ),
-    sqrt1_2 = math_sqrt( 0.5 ),
+---@field randomseed number A variable containing the current random seed and can be changed to set a new seed.
+local math = std.math or {}
+std.math = math
 
-    -- Lua 5.1 functions
-    abs = math_abs,
-    exp = glua_math.exp,
-    fmod = glua_math.fmod,
-    modf = glua_math.modf,
-    sqrt = math_sqrt,
+local glua_math = _G.math
 
-    sin = glua_math.sin,
-    cos = glua_math.cos,
-    tan = glua_math.tan,
+math.huge = math.huge or glua_math.huge
+math.tiny = math.tiny or -math.huge
+math.pi = math.pi or glua_math.pi
+math.nan = 0 / 0
 
-    asin = glua_math.asin,
-    acos = glua_math.acos,
-    atan = atan,
+math.abs = math.abs or glua_math.abs
+math.exp = math.exp or glua_math.exp
+math.fmod = math.fmod or glua_math.fmod
+math.modf = math.modf or glua_math.modf
+math.sqrt = math.sqrt or glua_math.sqrt
 
-    atan2 = glua_math.atan2, -- deprecated in Lua 5.3
-    sinh = glua_math.sinh, -- deprecated in Lua 5.3
-    cosh = glua_math.cosh, -- deprecated in Lua 5.3
-    tanh = glua_math.tanh, -- deprecated in Lua 5.3
+math.sin = math.sin or glua_math.sin
+math.asin = math.asin or glua_math.asin
+math.sinh = math.sinh or glua_math.sinh
 
-    min = math_min,
-    max = math_max,
-    ceil = math_ceil,
-    floor = math_floor,
+math.cos = math.cos or glua_math.cos
+math.acos = math.acos or glua_math.acos
+math.cosh = math.cosh or glua_math.cosh
 
-    log = math_log,
-    log10 = glua_math.log10, -- deprecated in Lua 5.3
+math.tan = math.tan or glua_math.tan
+math.atan2 = math.atan2 or glua_math.atan2
+math.atan51 = math.atan51 or glua_math.atan
+math.tanh = math.tanh or glua_math.tanh
 
-    deg = math_deg,
-    rad = glua_math.rad,
+if math.atan == nil then
 
-    random = math_random,
-    randomseed = glua_math.randomseed,
+    local math_atan51 = math.atan51
+    local math_pi = math.pi
 
-    frexp = glua_math.frexp or function( x )
-        if x == 0 then
-            return 0.0, 0.0
+    --- [SHARED AND MENU]
+    ---
+    --- Returns the arc tangent of y/x.
+    ---@param y number The y coordinate.
+    ---@param x number The x coordinate.
+    ---@return number: The arc tangent of y/x.
+    function math.atan( y, x )
+        if x == nil then
+            return math_atan51( y )
+        elseif y == 0 then
+            return 0.0
+        elseif x == 0 then
+            return math_pi * 0.5
         end
 
-        local exponent = math_floor( math_log( math_abs( x ) ) / ln2 )
-        if exponent > 0.0 then
-            x = x * ( 2.0 ^ -exponent )
-        else
-            x = x / ( 2.0 ^ exponent )
-        end
-
-        if math_abs( x ) >= 1.0 then
-            return x / 2.0, exponent + 1
-        else
-            return x, exponent
-        end
-    end,
-
-    ldexp = glua_math.ldexp or function( x, exponent )
-        return x * 2.0 ^ exponent
+        return math_atan51( y / x )
     end
-}
+
+end
+
+math.min = math.min or glua_math.min
+math.max = math.max or glua_math.max
+
+math.ceil = math.ceil or glua_math.ceil
+math.floor = math.floor or glua_math.floor
+
+math.log = math.log or glua_math.log
+math.log10 = math.log10 or glua_math.log10
+
+math.deg = math.deg or glua_math.deg
+math.rad = math.rad or glua_math.rad
+
+math.random = math.random or glua_math.random
+
+local math_ceil, math_floor = math.ceil, math.floor
+local math_tiny, math_huge = math.tiny, math.huge
+local math_sqrt, math_log = math.sqrt, math.log
+local math_min, math_max = math.min, math.max
+local math_abs = math.abs
+
+math.e = math.e or math.exp( 1 )
+math.ln2 = math.ln2 or math_log( 2 )
+math.ln10 = math.ln10 or math_log( 10.0 )
+math.log10e = math.log10e or math_log( math.e, 10.0 )
+math.log2e = math.log2e or math_log( math.e, 2.0 )
+math.sqrt2 = math.sqrt2 or math_sqrt( 2.0 )
+math.sqrt1_2 = math.sqrt1_2 or math_sqrt( 0.5 )
+
+local math_ln2 = math.ln2
+
+if math.frexp == nil then
+    if glua_math.frexp == nil then
+        --- [SHARED AND MENU]
+        ---
+        --- Returns `m` and `e` such that `x = m2e`, `e` is an integer and the absolute value of `m` is in the range ((0.5, 1) (or zero when x is zero).
+        ---
+        --- Used to split the number value into a normalized fraction and an exponent.
+        --- Two values are returned: the first is a multiplier in the range
+        --- `1/2` (inclusive) to `1` (exclusive) and the second is an integer exponent.
+        ---
+        --- The result is such that `x = m*2^e`.
+        ---
+        ---@param x number The number to split.
+        ---@return number m The normalized fraction.
+        ---@return number e The exponent.
+        function math.frexp( x )
+            if x == 0 then
+                return 0.0, 0.0
+            end
+
+            local exponent = math_floor( math_log( math_abs( x ) ) / math_ln2 )
+            if exponent > 0.0 then
+                x = x * ( 2.0 ^ -exponent )
+            else
+                x = x / ( 2.0 ^ exponent )
+            end
+
+            if math_abs( x ) >= 1.0 then
+                return x / 2.0, exponent + 1
+            else
+                return x, exponent
+            end
+        end
+    else
+        math.frexp = glua_math.frexp
+    end
+end
+
+if math.ldexp == nil then
+    if glua_math.ldexp == nil then
+        --- [SHARED AND MENU]
+        ---
+        --- Takes a normalised number and returns the floating point representation.
+        ---
+        --- Effectively it returns the result of `normalizedFraction * 2.0 ^ exponent`.
+        ---
+        ---@see gpm.std.math.frexp opposite function
+        ---@param x number The base value.
+        ---@param exponent number The exponent.
+        ---@return number
+        function math.ldexp( x, exponent )
+            return x * 2.0 ^ exponent
+        end
+    else
+        math.ldexp = glua_math.ldexp
+    end
+end
+
+do
+
+    local math_randomseed = glua_math.randomseed
+    local raw_set = std.raw.set
+    local seed = 0
+
+    std.setmetatable( math, {
+        __index = function( _, key )
+            if key == "randomseed" then
+                return seed
+            end
+        end,
+        __newindex = function( self, key, value )
+            if key == "randomseed" then
+                math_randomseed( value )
+                seed = value
+            else
+                raw_set( self, key, value )
+            end
+        end
+    } )
+
+end
 
 --- [SHARED AND MENU]
 ---
@@ -216,7 +287,7 @@ end
 ---@param x number The number to check.
 ---@return boolean: `true` if the number is positive or negative infinity, otherwise `false`.
 function math.isinf( x )
-    return x == huge or x == tiny
+    return x == math_huge or x == math_tiny
 end
 
 --- [SHARED AND MENU]
@@ -234,7 +305,7 @@ end
 ---@param x number The number to check.
 ---@return boolean: `true` if the number is finite, otherwise `false`.
 function math.isfinite( x )
-    return x ~= huge and x ~= tiny and x == x
+    return x ~= math_huge and x ~= math_tiny and x == x
 end
 
 --- [SHARED AND MENU]
@@ -291,7 +362,7 @@ end
 ---@param x number The number to check.
 ---@return boolean: `true` if the number is positive, otherwise `false`.
 function math.ispositive( x )
-    return x > 0 or ( 1 / x ) == huge
+    return x > 0 or ( 1 / x ) == math_huge
 end
 
 --- [SHARED AND MENU]
@@ -300,7 +371,7 @@ end
 ---@param x number The number to check.
 ---@return boolean: `true` if the number is negative, otherwise `false`.
 function math.isnegative( x )
-    return x < 0 or ( 1 / x ) == tiny
+    return x < 0 or ( 1 / x ) == math_tiny
 end
 
 --- [SHARED AND MENU]
@@ -379,17 +450,23 @@ end
 ---@param x number The number to calculate the logarithm of.
 ---@return number: The base 2 logarithm of the number.
 function math.log2( x )
-    return math_log( x ) / ln2
+    return math_log( x ) / math_ln2
 end
 
---- [SHARED AND MENU]
----
---- Returns a random floating point number in the range [a, b).
----@param a number The minimum value.
----@param b number The maximum value.
----@return number: The random floating point number.
-function math.randomf( a, b )
-    return a + ( b - a ) * math_random()
+do
+
+    local math_random = math.random
+
+    --- [SHARED AND MENU]
+    ---
+    --- Returns a random floating point number in the range [a, b).
+    ---@param a number The minimum value.
+    ---@param b number The maximum value.
+    ---@return number: The random floating point number.
+    function math.randomf( a, b )
+        return a + ( b - a ) * math_random()
+    end
+
 end
 
 --- [SHARED AND MENU]
@@ -593,16 +670,23 @@ do
 
 end
 
---- [SHARED AND MENU]
----
---- Calculates the angle between two points.
----@param x1 number The x coordinate of the first point.
----@param y1 number The y coordinate of the first point.
----@param x2 number The x coordinate of the second point.
----@param y2 number The y coordinate of the second point.
----@return number: The angle between the two points.
-function math.angle( x1, y1, x2, y2 )
-    return math_deg( atan( y2 - y1, x2 - x1 ) )
+do
+
+    local math_atan = math.atan
+    local math_deg = math.deg
+
+    --- [SHARED AND MENU]
+    ---
+    --- Calculates the angle between two points.
+    ---@param x1 number The x coordinate of the first point.
+    ---@param y1 number The y coordinate of the first point.
+    ---@param x2 number The x coordinate of the second point.
+    ---@param y2 number The y coordinate of the second point.
+    ---@return number: The angle between the two points.
+    function math.angle( x1, y1, x2, y2 )
+        return math_deg( math_atan( y2 - y1, x2 - x1 ) )
+    end
+
 end
 
 --- [SHARED AND MENU]
@@ -727,5 +811,3 @@ function math.variance( lst, mean )
 
     return summary / length
 end
-
-return math

@@ -13,6 +13,7 @@ local Hook = std.Hook
 --- The game's server library.
 ---@class gpm.std.server
 local server = std.server or {}
+std.server = server
 
 do
 
@@ -500,5 +501,3 @@ if std.MENU then
     end
 
 end
-
-return server

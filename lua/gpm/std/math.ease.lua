@@ -1,3 +1,4 @@
+---@class gpm.std.math
 local math = _G.gpm.std.math
 
 -- Source code of functions
@@ -21,12 +22,15 @@ local d1 = 2.75
 --- [SHARED AND MENU]
 ---
 --- The math easing functions.
+---
 ---@class gpm.std.math.ease
-local ease = {}
+local ease = math.ease or {}
+math.ease = ease
 
 --- [SHARED AND MENU]
 ---
 --- Eases in using `math.sin`.
+---
 ---@param fraction number Fraction of the progress to ease, from 0 to 1.
 ---@return number eased The eased number.
 function ease.sineIn( fraction )
@@ -36,6 +40,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Eases out using `math.sin`.
+---
 ---@param fraction number Fraction of the progress to ease, from 0 to 1.
 ---@return number eased The eased number.
 function ease.sineOut( fraction )
@@ -45,6 +50,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Eases in and out using `math.sin`.
+---
 ---@param fraction number Fraction of the progress to ease, from 0 to 1.
 ---@return number eased The eased number.
 function ease.sineInOut( fraction )
@@ -54,6 +60,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Eases in by squaring the fraction.
+---
 ---@param fraction number Fraction of the progress to ease, from 0 to 1.
 ---@return number eased The eased number.
 function ease.quadIn( fraction )
@@ -63,6 +70,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Eases out by squaring the fraction.
+---
 ---@param fraction number Fraction of the progress to ease, from 0 to 1.
 ---@return number eased The eased number.
 function ease.quadOut( fraction )
@@ -72,6 +80,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Eases in and out by squaring the fraction.
+---
 ---@param fraction number Fraction of the progress to ease, from 0 to 1.
 ---@return number eased The eased number.
 function ease.quadInOut( fraction )
@@ -82,6 +91,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Eases in by cubing the fraction.
+---
 ---@param fraction number Fraction of the progress to ease, from 0 to 1.
 ---@return number eased The eased number.
 function ease.cubicIn( fraction )
@@ -91,6 +101,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Eases out by cubing the fraction.
+---
 ---@param fraction number Fraction of the progress to ease, from 0 to 1.
 ---@return number eased The eased number.
 function ease.cubicOut( fraction )
@@ -100,6 +111,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Eases in and out by cubing the fraction.
+---
 ---@param fraction number Fraction of the progress to ease, from 0 to 1.
 ---@return number eased The eased number.
 function ease.cubicInOut( fraction )
@@ -110,6 +122,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Eases in by raising the fraction to the power of 4.
+---
 ---@param fraction number Fraction of the progress to ease, from 0 to 1.
 ---@return number eased The eased number.
 function ease.quartIn( fraction )
@@ -119,6 +132,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Eases out by raising the fraction to the power of 4.
+---
 ---@param fraction number Fraction of the progress to ease, from 0 to 1.
 ---@return number eased The eased number.
 function ease.quartOut( fraction )
@@ -128,6 +142,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Eases in and out by raising the fraction to the power of 4.
+---
 ---@param fraction number Fraction of the progress to ease, from 0 to 1.
 ---@return number eased The eased number.
 function ease.quartInOut( fraction )
@@ -138,6 +153,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Eases in by raising the fraction to the power of 5.
+---
 ---@param fraction number Fraction of the progress to ease, from 0 to 1.
 ---@return number eased The eased number.
 function ease.quintIn( fraction )
@@ -147,6 +163,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Eases out by raising the fraction to the power of 5.
+---
 ---@param fraction number Fraction of the progress to ease, from 0 to 1.
 ---@return number eased The eased number.
 function ease.quintOut( fraction )
@@ -156,6 +173,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Eases in and out by raising the fraction to the power of 5.
+---
 ---@param fraction number Fraction of the progress to ease, from 0 to 1.
 ---@return number eased The eased number.
 function ease.quintInOut( fraction )
@@ -166,6 +184,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Eases in using an exponential equation with a base of 2 and where the fraction is used in the exponent.
+---
 ---@param fraction number Fraction of the progress to ease, from 0 to 1.
 ---@return number eased The eased number.
 function ease.expoIn( fraction )
@@ -175,6 +194,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Eases out using an exponential equation with a base of 2 and where the fraction is used in the exponent.
+---
 ---@param fraction number Fraction of the progress to ease, from 0 to 1.
 ---@return number eased The eased number.
 function ease.expoOut( fraction )
@@ -184,6 +204,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Eases in and out using an exponential equation with a base of 2 and where the fraction is used in the exponent.
+---
 ---@param fraction number Fraction of the progress to ease, from 0 to 1.
 ---@return number eased The eased number.
 function ease.expoInOut( fraction )
@@ -195,6 +216,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Eases in using a circular function.
+---
 ---@param fraction number Fraction of the progress to ease, from 0 to 1.
 ---@return number eased The eased number.
 function ease.circIn( fraction )
@@ -204,6 +226,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Eases out using a circular function.
+---
 ---@param fraction number Fraction of the progress to ease, from 0 to 1.
 ---@return number eased The eased number.
 function ease.circOut( fraction )
@@ -213,6 +236,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Eases in and out using a circular function.
+---
 ---@param fraction number Fraction of the progress to ease, from 0 to 1.
 ---@return number eased The eased number.
 function ease.circInOut( fraction )
@@ -223,6 +247,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Eases in by reversing the direction of the ease slightly before returning.
+---
 ---@param fraction number Fraction of the progress to ease, from 0 to 1.
 ---@return number eased The eased number.
 function ease.backIn( fraction )
@@ -232,6 +257,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Eases out by reversing the direction of the ease slightly before finishing.
+---
 ---@param fraction number Fraction of the progress to ease, from 0 to 1.
 ---@return number eased The eased number.
 function ease.backOut( fraction )
@@ -241,6 +267,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Eases in and out by reversing the direction of the ease slightly before returning on both ends.
+---
 ---@param fraction number Fraction of the progress to ease, from 0 to 1.
 ---@return number eased The eased number.
 function ease.backInOut( fraction )
@@ -251,6 +278,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Eases in like a rubber band.
+---
 ---@param fraction number Fraction of the progress to ease, from 0 to 1.
 ---@return number eased The eased number.
 function ease.elasticIn( fraction )
@@ -262,6 +290,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Eases out like a rubber band.
+---
 ---@param fraction number Fraction of the progress to ease, from 0 to 1.
 ---@return number eased The eased number.
 function ease.elasticOut( fraction )
@@ -272,6 +301,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Eases in and out like a rubber band.
+---
 ---@param fraction number Fraction of the progress to ease, from 0 to 1.
 ---@return number eased The eased number.
 function ease.elasticInOut( fraction )
@@ -283,6 +313,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Eases out like a bouncy ball.
+---
 ---@param fraction number Fraction of the progress to ease, from 0 to 1.
 ---@return number eased The eased number.
 local function ease_bounceOut( fraction )
@@ -303,6 +334,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Eases in like a bouncy ball.
+---
 ---@param fraction number Fraction of the progress to ease, from 0 to 1.
 ---@return number eased The eased number.
 function ease.bounceIn( fraction )
@@ -314,6 +346,7 @@ ease.bounceOut = ease_bounceOut
 --- [SHARED AND MENU]
 ---
 --- Eases in and out like a bouncy ball.
+---
 ---@param fraction number Fraction of the progress to ease, from 0 to 1.
 ---@return number eased The eased number.
 function ease.bounceInOut( fraction )
