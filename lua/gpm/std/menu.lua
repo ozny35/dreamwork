@@ -443,5 +443,3 @@ do
     menu.options = options
 
 end
-
-PrintTable( menu )
