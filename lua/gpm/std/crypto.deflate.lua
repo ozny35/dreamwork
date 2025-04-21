@@ -2132,8 +2132,12 @@ end
 --- and block type identifer.
 ---@see puff.c:codes()
 ---@param state table decompression state that will be modified by this function.
----@see createDecompressState
----@vararg any: Read the source code
+---@param lcodes_huffman_bitlens table The huffman bit length of literal codes.
+---@param lcodes_huffman_symbols table The huffman symbol of literal codes.
+---@param lcodes_huffman_min_bitlen number The minimum huffman bit length of literal codes.
+---@param dcodes_huffman_bitlens table The huffman bit length of distance codes.
+---@param dcodes_huffman_symbols table The huffman symbol of distance codes.
+---@param dcodes_huffman_min_bitlen number The minimum huffman bit length of distance codes.
 ---@return number: 0 on success, other value on failure.
 local function decodeUntilEndOfBlock( state, lcodes_huffman_bitlens, lcodes_huffman_symbols, lcodes_huffman_min_bitlen, dcodes_huffman_bitlens, dcodes_huffman_symbols, dcodes_huffman_min_bitlen )
     local buffer, buffer_size, readBits, decode, readerBitlenLeft, result_buffer = state.buffer, state.buffer_size, state.readBits, state.decode, state.readerBitlenLeft, state.result_buffer

@@ -1,11 +1,12 @@
 local _G = _G
 
+local gpm = _G.gpm
 local glua_gui = _G.gui
 local glua_vgui = _G.vgui
 local glua_input = _G.input
 
 ---@class gpm.std
-local std = _G.gpm.std
+local std = gpm.std
 
 --- [SHARED AND MENU]
 ---
@@ -104,7 +105,22 @@ if std.CLIENT_MENU then
         local input_StartKeyTrapping = glua_input.StartKeyTrapping
         local input_CheckKeyTrapping = glua_input.CheckKeyTrapping
         local input_IsKeyTrapping = glua_input.IsKeyTrapping
-        local futures_yield = std.futures.yield
+        local Future = std.Future
+
+        local captures = std.Stack()
+
+        gpm.engine.hookCatch( "Tick", function()
+            if captures:isEmpty() then return end
+
+            if not input_IsKeyTrapping() then
+                input_StartKeyTrapping()
+            end
+
+            local key_code = input_CheckKeyTrapping()
+            if key_code == nil then return end
+
+            captures:pop():setResult( key_code )
+        end )
 
         --- [CLIENT AND MENU]
         ---
@@ -114,13 +130,9 @@ if std.CLIENT_MENU then
         ---@return integer key_code The key code of the key that was pressed.
         ---@async
         function key.capture()
-            input_StartKeyTrapping()
-
-            while input_IsKeyTrapping() do
-                futures_yield( input_CheckKeyTrapping() )
-            end
-
-            return -1
+            local f = Future()
+            captures:push( f )
+            return f:await()
         end
 
     end

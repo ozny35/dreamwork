@@ -643,7 +643,7 @@ do
     --- Creates a new table, filled with the given value and size.
     ---
     ---@param value any The value to fill the table with.
-    ---@vararg integer The sizes of the table.
+    ---@param ... integer The sizes of the table.
     ---@return table tbl The created table.
     local function create( value, size, ... )
         if size == nil then
@@ -704,7 +704,7 @@ end
 ---@param tbl table The table.
 ---@param start integer? The start position.
 ---@param delete_count integer? The number of values to remove.
----@vararg any The values to remove.
+---@param ... any The values to remove.
 ---@return table removed The table with removed values.
 ---@return integer removed_length The length of the removed table.
 function table.splice( tbl, start, delete_count, ... )

@@ -5,7 +5,6 @@ local RunConsoleCommand = _G.RunConsoleCommand
 ---@class gpm.std
 local std = gpm.std
 
-local class = std.class
 local debug = std.debug
 local Future = std.Future
 local string_format = std.string.format
@@ -94,7 +93,7 @@ do
     ---@field name string The name of the console command.
     ---@field description string The help text of the console command.
     ---@field flags integer The flags of the console command.
-    local Command = class.base( "ConsoleCommand" )
+    local Command = std.class.base( "ConsoleCommand" )
 
     local commands = {}
 
@@ -135,7 +134,7 @@ do
     ---@class gpm.std.console.CommandClass: gpm.std.console.Command
     ---@field __base gpm.std.console.Command
     ---@overload fun( name: string, description: string?, ...: gpm.std.FCVAR? ): gpm.std.console.Command
-    local CommandClass = class.create( Command )
+    local CommandClass = std.class.create( Command )
     console.Command = CommandClass
 
     --- [SHARED AND MENU]
@@ -144,6 +143,10 @@ do
     ---@return gpm.std.console.Command? obj The console command with the given name, or `nil` if it does not exist.
     function CommandClass.get( name )
         return commands[ name ]
+    end
+
+    if std.CLIENT_MENU and _G.input ~= nil then
+        CommandClass.translateAlias = _G.input.TranslateAlias or debug.fempty
     end
 
     CommandClass.run = RunConsoleCommand
@@ -268,7 +271,7 @@ do
     ---@field protected object ConVar: The `ConVar` object.
     ---@field protected type gpm.std.console.Variable.Type: The type of the console variable.
     ---@field name string The name of the console variable.
-    local Variable = class.base( "ConsoleVariable" )
+    local Variable = std.class.base( "ConsoleVariable" )
 
     local variables = {}
 
@@ -355,7 +358,7 @@ do
     ---@class gpm.std.console.VariableClass: gpm.std.console.Variable
     ---@field __base gpm.std.console.Variable
     ---@overload fun( data: gpm.std.console.Variable.Data ): gpm.std.console.Variable
-    local VariableClass = class.create( Variable )
+    local VariableClass = std.class.create( Variable )
     console.Variable = VariableClass
 
     VariableClass.exists = ConVarExists

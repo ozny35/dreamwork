@@ -113,7 +113,7 @@ do
     ---@param color Color The log level color.
     ---@param level string The log level name.
     ---@param str string The log message.
-    ---@vararg any The log message arguments to format/interpolate.
+    ---@param ... any The log message arguments to format/interpolate.
     function write_log( object, color, level, str, ... )
         if object[ 4 ] then
             local args = { ... }

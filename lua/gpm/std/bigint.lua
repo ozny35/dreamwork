@@ -470,7 +470,7 @@ do
             ---
             --- Creates a new big integer object from an byte array and a sign.
             ---@param sign gpm.std.BigInt.Sign
-            ---@vararg integer
+            ---@param ... integer
             ---@return BigInt
             function BigIntClass.fromBytes( sign, ... )
                 return setmetatable( { [ 0 ] = sign or 0, ... }, BigInt )
@@ -481,7 +481,7 @@ do
             --- Sets a big integer object from an byte array and a sign.
             ---@param object gpm.std.BigInt
             ---@param sing gpm.std.BigInt.Sign
-            ---@vararg integer
+            ---@param ... integer
             ---@return BigInt
             local function fromBytes( object, sing, ... )
                 object[ 0 ] = sing
@@ -1007,7 +1007,7 @@ do
     ---
     --- Creates a new big integer object that is the result of a bitwise OR operation between two big integer objects.
     ---@param value gpm.std.BigInt
-    ---@vararg any
+    ---@param ... any
     ---@return gpm.std.BigInt
     function bit.bor( value, ... )
         local object = copy( value )
@@ -1080,7 +1080,7 @@ do
     ---
     --- Creates a new big integer object that is the result of a bitwise AND operation between two big integer objects.
     ---@param value gpm.std.BigInt
-    ---@vararg any
+    ---@param ... any
     ---@return gpm.std.BigInt
     function bit.band( value, ... )
         local object = copy( value )
@@ -1144,7 +1144,7 @@ do
     ---
     --- Creates a new big integer object that is the result of a bitwise XOR operation between two big integer objects.
     ---@param value gpm.std.BigInt
-    ---@vararg any
+    ---@param ... any
     ---@return gpm.std.BigInt
     function bit.bxor( value, ... )
         local object = copy( value )
@@ -1241,7 +1241,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Sets `true` of one or more bits in a big integer object.
----@vararg integer
+---@param ... integer
 ---@return gpm.std.BigInt
 function BigInt:setBits( ... )
     local arg_count = select( "#", ... )
@@ -1282,7 +1282,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Unsets `false` of one or more bits in a big integer object.
----@vararg integer
+---@param ... integer
 ---@return gpm.std.BigInt
 function BigInt:unsetBits( ... )
     if self[ 0 ] == 0 then return self end
