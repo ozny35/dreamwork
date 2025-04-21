@@ -31,6 +31,8 @@ do
 	unsigned = {}
 	binary.unsigned = unsigned
 
+	--- [SHARED AND MENU]
+	---
 	--- Implodes a table of booleans (bits) into a number.
 	---@param bits boolean[] The table of bits.
 	---@param bit_count? integer The size of the table.
@@ -56,6 +58,8 @@ do
 
 	unsigned.implode = unsigned_implode
 
+	--- [SHARED AND MENU]
+	---
 	--- Explodes a integer into a table of booleans (bits).
 	---@param value integer The number to explode.
 	---@param max_size? integer The maximum size of the table.

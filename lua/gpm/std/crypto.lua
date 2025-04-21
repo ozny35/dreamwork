@@ -15,7 +15,7 @@ local crypto = {}
 std.crypto = crypto
 
 ---@class gpm.std.crypto.lzma
----@field PROPS_SIZE number The size of the lzma properties.
+---@field PROPS_SIZE number The size of the lzma properties in bytes.
 local lzma = {
     decompress = glua_util.Decompress,
     compress = glua_util.Compress,

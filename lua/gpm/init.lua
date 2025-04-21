@@ -211,7 +211,7 @@ do
     ---
     --- Attempts to convert the value to a number.
     ---@param value any The value to convert.
-    ---@param base? integer The base used in the string. Can be any integer between 2 and 36, inclusive. (Default: 10)
+    ---@param base? integer The base used in the value. Can be any integer between 2 and 36, inclusive. (Default: 10)
     ---@return number result The numeric representation of the value with the given base, or `0` if the conversion failed or not possible.
     function std.tonumber( value, base )
         local fn = debug_getmetavalue( value, "__tonumber" )
