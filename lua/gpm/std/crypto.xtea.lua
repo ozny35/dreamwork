@@ -112,6 +112,7 @@ end
 ---@param data string The block of data to encrypt, must be 8 bytes.
 ---@param start_position? integer The start position of the block of data.
 ---@param big_endian? boolean Whether the block of data is big-endian.
+---@param num_rounds? integer The number of rounds to encrypt the block of data.
 ---@return string encrypted The encrypted block of data.
 function xtea.encrypt( key, data, start_position, big_endian, num_rounds )
     local y, z = data2word( data, start_position, true )
@@ -146,6 +147,7 @@ end
 ---@param data string The block of data to decrypt, must be 8 bytes.
 ---@param start_position? integer The start position of the block of data.
 ---@param big_endian? boolean Whether the block of data is big-endian.
+---@param num_rounds? integer The number of rounds to decrypt the block of data.
 ---@return string decrypted The decrypted block of data.
 function xtea.decrypt( key, data, start_position, big_endian, num_rounds )
     local y, z = data2word( data, start_position, big_endian )

@@ -15,7 +15,7 @@ local string = std.string
 
 local select = std.select
 local setmetatable = std.setmetatable
-local table_reverse, table_unpack = table.reverse, table.unpack
+local table_reversed, table_unpack = table.reversed, table.unpack
 local math_floor, math_max, math_clamp = math.floor, math.max, math.clamp
 
 
@@ -1656,7 +1656,7 @@ do
 
         b2[ 0 ] = sign1 * sign2
 
-        local reversed, length = table_reverse( result )
+        local reversed, length = table_reversed( result )
 
         for index = 1, length, 1 do
             b2[ index ] = reversed[ index ]

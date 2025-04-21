@@ -1,41 +1,31 @@
 local _G = _G
-local std, tlib = _G.gpm.std, _G.table
-local math = std.math
+local std, glua_table = _G.gpm.std, _G.table
 
-local select, pairs, setmetatable, next = std.select, std.pairs, std.setmetatable, std.next
-local debug_getmetatable = std.debug.getmetatable
+local string_sub, string_find, string_len = std.string.sub, std.string.find, std.string.len
 local raw_get, raw_set = std.raw.get, std.raw.set
-local table_remove = tlib.remove
-
-local string_sub, string_find, string_len, string_lower
-do
-    local string = std.string
-    string_sub, string_find, string_len, string_lower = string.sub, string.find, string.len, string.lower
-end
-
-local istable = std.istable
+local table_remove = glua_table.remove
+local raw_pairs = std.raw.pairs
+local select = std.select
 
 --- [SHARED AND MENU]
 ---
 --- A collection of functions for working with tables.
+---
 ---@class gpm.std.table
 local table = {
     -- Lua 5.1
-    concat = tlib.concat,
-    insert = tlib.insert,
-    maxn = tlib.maxn, -- removed in Lua 5.2
+    concat = glua_table.concat,
+    insert = glua_table.insert,
+    maxn = glua_table.maxn, -- removed in Lua 5.2
     remove = table_remove,
-    sort = tlib.sort,
+    sort = glua_table.sort,
 
     -- Lua 5.2
-    pack = tlib.pack or function( ... ) return { n = select( "#", ... ), ... } end,
-    unpack = tlib.unpack or _G.unpack,
-
-    ---@diagnostic disable-next-line: undefined-field
-    len = tlib.len,
+    pack = glua_table.pack or function( ... ) return { n = select( "#", ... ), ... } end,
+    unpack = glua_table.unpack or _G.unpack,
 
     -- Lua 5.3
-    move = tlib.move or function( source, first, last, offset, destination )
+    move = glua_table.move or function( source, first, last, offset, destination )
         if destination == nil then destination = source end
 
         for index = 0, last - first, 1 do
@@ -46,415 +36,15 @@ local table = {
     end
 }
 
-do
-
-    local function deep_copy_with_keys_and_meta( source, lookup_table )
-        local copy = {}
-        lookup_table[ source ] = copy
-
-        local metatable = debug_getmetatable( source )
-        if metatable ~= nil and raw_get( metatable, "__type" ) == nil then
-            setmetatable( copy, metatable )
-        end
-
-        for key, value in pairs( source ) do
-            local key_copy
-            if istable( key ) then
-                ---@cast key table
-                key_copy = lookup_table[ key ] or deep_copy_with_keys_and_meta( key, lookup_table )
-            end
-
-            if istable( value ) then
-                ---@cast key table
-                copy[ key_copy or key ] = lookup_table[ value ] or deep_copy_with_keys_and_meta( value, lookup_table )
-            else
-                copy[ key_copy or key ] = value
-            end
-        end
-
-        return copy
-    end
-
-    local function deep_copy_with_keys( source, lookup_table )
-        local copy = {}
-        lookup_table[ source ] = copy
-
-        for key, value in pairs( source ) do
-            local key_copy
-            if istable( key ) then
-                ---@cast key table
-                key_copy = lookup_table[ key ] or deep_copy_with_keys( key, lookup_table )
-            end
-
-            if istable( value ) then
-                ---@cast value table
-                copy[ key_copy or key ] = lookup_table[ value ] or deep_copy_with_keys( value, lookup_table )
-            else
-                copy[ key_copy or key ] = value
-            end
-        end
-
-        return copy
-    end
-
-    local function deep_copy_with_meta( source, lookup_table )
-        local copy = {}
-
-        local metatable = debug_getmetatable( source )
-        if metatable ~= nil and raw_get( metatable, "__type" ) == nil then
-            setmetatable( copy, metatable )
-        end
-
-        for key, value in pairs( source ) do
-            if istable( key ) then
-                ---@cast key table
-                lookup_table = lookup_table or {}
-                lookup_table[ source ] = copy
-                copy[ key ] = lookup_table[ value ] or deep_copy_with_meta( value, lookup_table )
-            else
-                copy[ key ] = value
-            end
-        end
-
-        return copy
-    end
-
-    local function deep_copy( source, lookup_table )
-        local copy = {}
-
-        for key, value in pairs( source ) do
-            if istable( value ) then
-                ---@cast value table
-                lookup_table = lookup_table or {}
-                lookup_table[ source ] = copy
-                copy[ key ] = lookup_table[ value ] or deep_copy( value, lookup_table )
-            else
-                copy[ key ] = value
-            end
-        end
-
-        return copy
-    end
-
-    --- [SHARED AND MENU]
-    ---
-    --- Copies a table.
-    ---@param source table The table to copy.
-    ---@param deepCopy boolean?: Whether to deep copy the table.
-    ---@param copyKeys boolean?: Whether to copy the keys.
-    ---@param copyMetatables boolean?: Whether to copy the metatables.
-    ---@return table: The copied table.
-    function table.copy( source, deepCopy, copyKeys, copyMetatables )
-        local copy
-        if deepCopy then
-            if copyKeys then
-                if copyMetatables then
-                    copy = deep_copy_with_keys_and_meta( source, {} )
-                else
-                    copy = deep_copy_with_keys( source, {} )
-                end
-            elseif copyMetatables then
-                copy = deep_copy_with_meta( source )
-            else
-                copy = deep_copy( source )
-            end
-        else
-            copy = {}
-            for key, value in pairs( source ) do
-                raw_set( copy, key, value )
-            end
-        end
-
-        return copy
-    end
-
-    --- [SHARED AND MENU]
-    ---
-    --- Copies a sequential table.
-    ---@param source table The table to copy.
-    ---@param deepCopy boolean?: Whether to deep copy the table.
-    ---@param copyKeys boolean?: Whether to copy the keys.
-    ---@param copyMetatables boolean?: Whether to copy the metatables.
-    ---@param from integer?: The start index.
-    ---@param to integer?: The end index.
-    ---@return table: The copied table.
-    function table.copySequential( source, deepCopy, copyKeys, copyMetatables, from, to )
-        from, to = from or 1, to or #source
-        local copy = {}
-
-        if deepCopy then
-            if copyMetatables then
-                local metatable = debug_getmetatable( source )
-                if metatable ~= nil and raw_get( metatable, "__type" ) == nil then
-                    setmetatable( copy, metatable )
-                end
-            end
-
-            if copyKeys then
-                for index = from, to, 1 do
-                    local value = raw_get( source, index )
-                    if istable( value ) then
-                        ---@cast value table
-
-                        if copyMetatables then
-                            copy[ index ] = deep_copy_with_keys_and_meta( source, {} )
-                        else
-                            copy[ index ] = deep_copy_with_keys( source, {} )
-                        end
-                    else
-                        copy[ index ] = value
-                    end
-                end
-            else
-                for index = from, to, 1 do
-                    local value = raw_get( source, index )
-                    if istable( value ) then
-                        ---@cast value table
-
-                        if copyMetatables then
-                            copy[ index ] = deep_copy_with_meta( source )
-                        else
-                            copy[ index ] = deep_copy( source )
-                        end
-                    else
-                        copy[ index ] = value
-                    end
-                end
-            end
-        else
-            copy = {}
-            for index = from, to, 1 do
-                copy[ index ] = raw_get( source, index )
-            end
-        end
-
-        return copy
-    end
-
-end
-
-do
-
-    --- [SHARED AND MENU]
-    ---
-    --- Checks if two tables are equal.
-    ---@param a table The first table to check.
-    ---@param b table The second table to check.
-    ---@return boolean
-    local function equal( a, b )
-        if a == b then
-            return true
-        end
-
-        for key, value in pairs( a ) do
-            local alt = raw_get( b, key )
-            if alt == nil then
-                return false
-            end
-
-            if not ( debug_getmetatable( value ) or debug_getmetatable( alt ) ) and istable( value ) and istable( alt ) then
-                ---@cast value table
-                ---@cast alt table
-
-                return equal( value, alt )
-            end
-
-            if value ~= alt then
-                return false
-            end
-        end
-
-        for key, value in pairs( b ) do
-            local alt = raw_get( a, key )
-            if alt == nil then
-                return false
-            end
-
-            if not ( debug_getmetatable( value ) or debug_getmetatable( alt ) ) and istable( value ) and istable( alt ) then
-                ---@cast value table
-                ---@cast alt table
-
-                return equal( value, alt )
-            end
-
-            if value ~= alt then
-                return false
-            end
-        end
-
-        return true
-    end
-
-    table.equal = equal
-
-end
-
-do
-
-    --- [SHARED AND MENU]
-    ---
-    --- Returns the difference between two tables as a list of keys.
-    ---@param a table The first table.
-    ---@param b table The second table.
-    ---@return table: The list of keys.
-    ---@return integer: The length of the list.
-    local function diffKeys( a, b, result, length )
-        if result == nil then result = {} end
-        if length == nil then length = 0 end
-        if a == b then return {}, 0 end
-
-        for key, value in pairs( a ) do
-            local alt = raw_get( b, key )
-            if alt == nil then
-                length = length + 1
-                result[ length ] = key
-            end
-
-            if not ( debug_getmetatable( value ) or debug_getmetatable( alt ) ) and istable( value ) and istable( alt ) then
-                ---@cast value table
-                ---@cast alt table
-
-                result, length = diffKeys( value, alt, result, length )
-            end
-
-            if value ~= alt then
-                length = length + 1
-                result[ length ] = key
-            end
-        end
-
-        for key, value in pairs( b ) do
-            local alt = raw_get( a, key )
-            if alt == nil then
-                length = length + 1
-                result[ length ] = key
-            end
-
-            if not ( debug_getmetatable( value ) or debug_getmetatable( alt ) ) and istable( value ) and istable( alt ) then
-                ---@cast value table
-                ---@cast alt table
-
-                result, length = diffKeys( value, alt, result, length )
-            end
-
-            if value ~= alt then
-                length = length + 1
-                result[ length ] = key
-            end
-        end
-
-        return result, length
-    end
-
-    table.diffKeys = diffKeys
-
-end
-
-do
-
-    --- [SHARED AND MENU]
-    ---
-    --- Returns the difference between two tables as a table with differences.
-    ---@param a table The first table.
-    ---@param b table The second table.
-    ---@return table
-    local function diff( a, b )
-    local result = {}
-
-    for key, value in pairs( a ) do
-            local alt = raw_get( b, key )
-            if alt == nil then
-                result[ key ] = { value, alt }
-            end
-
-            if not ( debug_getmetatable( value ) or debug_getmetatable( alt ) ) and istable( value ) and istable( alt ) then
-                ---@cast value table
-                ---@cast alt table
-
-                result[ key ] = diff( value, alt )
-            end
-
-            if value ~= alt then
-                result[ key ] = { value, alt }
-            end
-        end
-
-        for key, value in pairs( b ) do
-            if result[ key ] == nil then
-                local alt = raw_get( a, key )
-                if alt == nil then
-                    result[ key ] = { value, alt }
-                end
-
-                if not ( debug_getmetatable( value ) or debug_getmetatable( alt ) ) and istable( value ) and istable( alt ) then
-                    ---@cast value table
-                    ---@cast alt table
-
-                    result[ key ] = diff( value, alt )
-                end
-
-                if value ~= alt then
-                    result[ key ] = { value, alt }
-                end
-            end
-        end
-
-        return result
-    end
-
-    table.diff = diff
-
-end
-
-do
-
-    local isstring = std.isstring
-
-    --- [SHARED AND MENU]
-    ---
-    --- Converts a table to lowercase.
-    ---@param tbl table The table to convert.
-    ---@param lowerKeys? boolean Whether to convert keys to lowercase.
-    ---@param lowerValues? boolean Whether to convert values to lowercase.
-    ---@return table tbl
-    local function lower( tbl, lowerKeys, lowerValues )
-        for key, value in pairs( tbl ) do
-            if istable( key ) then
-                ---@cast key table
-                lower( key, lowerKeys, lowerValues )
-            elseif lowerKeys and isstring( key ) then
-                ---@cast key string
-                tbl[ key ] = nil
-                key = string_lower( key )
-            end
-
-            if istable( value ) then
-                ---@cast value table
-                lower( value, lowerKeys, lowerValues )
-            elseif lowerValues and isstring( value ) then
-                ---@cast value string
-                value = string_lower( value )
-            end
-
-            tbl[ key ] = value
-        end
-
-        return tbl
-    end
-
-    table.lower = lower
-
-end
-
 --- [SHARED AND MENU]
 ---
 --- Returns a slice of the given table.
 ---@param tbl table The table to slice.
----@param to? integer: The start position.
----@param from? integer: The end position.
----@param step? integer: The step.
----@return table: The sliced table.
----@return integer: The length of the sliced table.
+---@param to? integer The start position.
+---@param from? integer The end position.
+---@param step? integer The step.
+---@return table slice The sliced table.
+---@return integer length The length of the sliced table.
 function table.slice( tbl, from, to, step )
     local length = #tbl
 
@@ -491,20 +81,32 @@ end
 
 --- [SHARED AND MENU]
 ---
---- Returns a truncated table.
+--- Truncates the given table.
+---
+--- The original table is modified.
+---
+--- The truncated table is a shallow copy of the original table.
+---
 ---@param tbl table The table to truncate.
 ---@param length integer The length of the truncated table.
----@param no_copy? boolean Whether to copy the table.
----@return table: The truncated table.
-function table.truncate( tbl, length, no_copy )
-    if no_copy then
-        for index = length + 1, #tbl, 1 do
-            tbl[ index ] = nil
-        end
-
-        return tbl
+function table.truncate( tbl, length )
+    for index = length + 1, #tbl, 1 do
+        tbl[ index ] = nil
     end
+end
 
+--- [SHARED AND MENU]
+---
+--- Creates a truncated copy of the given table.
+---
+--- The original table is not modified.
+---
+--- The returned table is a shallow copy of the original table.
+---
+---@param tbl table The table to truncate.
+---@param length integer The length of the truncated table.
+---@return table result The truncated table.
+function table.truncated( tbl, length )
     local result = {}
 
     for index = 1, length, 1 do
@@ -517,12 +119,12 @@ end
 --- [SHARED AND MENU]
 ---
 --- Injects values from one table to another.
+---
 ---@param destination table The destination table.
 ---@param source table The source table.
----@param position? integer: The position to inject.
----@param from? integer: The start position.
----@param to? integer: The end position.
----@return table: The destination table.
+---@param position? integer The position to inject.
+---@param from? integer The start position.
+---@param to? integer The end position.
 function table.inject( destination, source, position, from, to )
     if position == nil then
         -- if position, from and to are nil then just append to the end ( aka table.append )
@@ -533,7 +135,7 @@ function table.inject( destination, source, position, from, to )
                 destination[ length + index ] = source[ index ]
             end
 
-            return destination
+            return
         end
 
         position = #destination + 1
@@ -544,29 +146,26 @@ function table.inject( destination, source, position, from, to )
     if from == nil then from = 1 end
     if to == nil then to = #source end
 
-    if from > to then
-        return destination
-    end
+    if from <= to then
+        local steps = to - from
+        for i = #destination, position, -1 do
+            destination[ steps + i + 1 ] = destination[ i ]
+        end
 
-    local steps = to - from
-    for i = #destination, position, -1 do
-        destination[ steps + i + 1 ] = destination[ i ]
+        for i = 0, steps, 1 do
+            destination[ position + i ] = source[ from + i ]
+        end
     end
-
-    for i = 0, steps, 1 do
-        destination[ position + i ] = source[ from + i ]
-    end
-
-    return destination
 end
 
 --- [SHARED AND MENU]
 ---
 --- Remove all occurrences of the given value.
+---
 ---@param tbl table The table to remove from.
 ---@param value any The value to remove.
----@param no_copy? boolean: Don't copy the table.
----@param length? integer: The length of the table.
+---@param no_copy? boolean Don't copy the table.
+---@param length? integer The length of the table.
 ---@return table tbl Table without the given value/'s.
 ---@return integer length New length of the table.
 function table.removeByValue( tbl, value, no_copy, length )
@@ -600,32 +199,23 @@ end
 --- [SHARED AND MENU]
 ---
 --- Removes a range of values from the given table.
+---
 ---@param tbl table The table to remove from.
----@param from? integer: The start position.
----@param to? integer: The end position.
----@return table: The removed values.
----@return integer: The length of the removed values table.
+---@param from? integer The start position.
+---@param to? integer The end position.
 function table.eject( tbl, from, to )
-    local ejected, ejected_length = {}, 0
     local length = #tbl
 
     if from == nil then
-        if to == nil then
-            return ejected, ejected_length
-        end
-
+        if to == nil then return end
         from = 1
     elseif to == nil then
         to = length
     end
 
-    if from > to then
-        return ejected, ejected_length
-    end
+    if from > to then return end
 
     for index = from, to, 1 do
-        ejected_length = ejected_length + 1
-        ejected[ ejected_length ] = tbl[ index ]
         tbl[ index ] = nil
     end
 
@@ -633,36 +223,28 @@ function table.eject( tbl, from, to )
     for index = to + 1, length, 1 do
         tbl[ index - distance ], tbl[ index ] = tbl[ index ], nil
     end
-
-    return ejected, ejected_length
-end
-
---- [SHARED AND MENU]
----
---- Returns true if the given list (table) contains the given value.
----@param tbl table The table to check.
----@param value any The value to check.
----@return boolean: `true` if the table contains the value, `false` otherwise.
-function table.contains( tbl, value )
-    for index = #tbl, 1, -1 do
-        if tbl[ index ] == value then
-            return true
-        end
-    end
-
-    return false
 end
 
 --- [SHARED AND MENU]
 ---
 --- Returns true if the given table contains the given value.
----@param tbl table The table.
----@param value any The value.
----@return boolean
-function table.hasValue( tbl, value )
-    for _, v in pairs( tbl ) do
-        if v == value then
-            return true
+---
+---@param tbl table The table to check.
+---@param value any The value to check.
+---@param is_sequential? boolean If the table is sequential.
+---@return boolean result `true` if the table contains the value, `false` otherwise.
+function table.contains( tbl, value, is_sequential )
+    if is_sequential then
+        for index = #tbl, 1, -1 do
+            if tbl[ index ] == value then
+                return true
+            end
+        end
+    else
+        for _, v in raw_pairs( tbl ) do
+            if v == value then
+                return true
+            end
         end
     end
 
@@ -673,11 +255,11 @@ end
 ---
 --- Returns list (table) of keys and length of this list.
 ---@param tbl table The table.
----@return any[]: The list of keys.
----@return integer: The length of the list.
-function table.getKeys( tbl )
+---@return any[] key_lst The list of keys.
+---@return integer key_count The length of the list.
+function table.keys( tbl )
     local keys, length = {}, 0
-    for key in pairs( tbl ) do
+    for key in raw_pairs( tbl ) do
         length = length + 1
         keys[ length ] = key
     end
@@ -689,11 +271,11 @@ end
 ---
 --- Returns list (table) of values and length of this list.
 ---@param tbl table The table.
----@return any[]: The list of values.
----@return integer: The length of the list.
-function table.getValues( tbl )
+---@return any[] value_lst The list of values.
+---@return integer value_count The length of the list.
+function table.values( tbl )
     local values, length = {}, 0
-    for _, value in pairs( tbl ) do
+    for _, value in raw_pairs( tbl ) do
         length = length + 1
         values[ length ] = value
     end
@@ -705,10 +287,10 @@ end
 ---
 --- Returns the count of keys in the given table.
 ---@param tbl table The table.
----@return integer: The count of keys.
-function table.count( tbl )
+---@return integer key_count The count of keys.
+function table.size( tbl )
     local count = 0
-    for _ in pairs( tbl ) do
+    for _ in raw_pairs( tbl ) do
         count = count + 1
     end
 
@@ -718,43 +300,55 @@ end
 --- [SHARED AND MENU]
 ---
 --- Flips the keys with values in the given list (table).
+---
+--- The original table is modified.
+---
+--- The keys are now the values and the values are now the keys.
+---
 ---@param tbl table The table to flip.
----@param no_copy? boolean: Do not copy the table.
----@return table: The flipped table.
-function table.flip( tbl, no_copy )
-    if no_copy then
-        local keys, length = {}, 0
-        for key in pairs( tbl ) do
-            length = length + 1
-            keys[ length ] = key
-        end
+function table.flip( tbl )
+    local keys, length = {}, 0
+    for key in raw_pairs( tbl ) do
+        length = length + 1
+        keys[ length ] = key
+    end
 
-        for i = 1, length, 1 do
-            local key = keys[ i ]
-            tbl[ tbl[ key ] ] = key
-            tbl[ key ] = nil
-        end
-
-        return tbl
-    else
-        local result = {}
-        for key, value in pairs( tbl ) do
-            result[ value ] = key
-        end
-
-        return result
+    for i = 1, length, 1 do
+        local key = keys[ i ]
+        tbl[ tbl[ key ] ] = key
+        tbl[ key ] = nil
     end
 end
 
 --- [SHARED AND MENU]
 ---
+--- Creates a flipped version of the given table.
+---
+--- The original table is not modified.
+---
+--- The flipped table has the values as keys and the keys as values.
+---
+---@param tbl table The table to flip.
+---@return table result The flipped table.
+function table.flipped( tbl )
+    local result = {}
+    for key, value in raw_pairs( tbl ) do
+        result[ value ] = key
+    end
+
+    return result
+end
+
+--- [SHARED AND MENU]
+---
 --- Returns the list (table) of key/value pairs and length of this list.
----@param tbl table The key/value table.
----@return table: The list.
----@return integer: The length of the list.
-function table.getPairs( tbl )
+---
+---@param tbl table The table.
+---@return table result The list of key/value pairs ( sequential table ).
+---@return integer length The length of the list.
+function table.pairs( tbl )
     local result, length = {}, 0
-    for key, value in pairs( tbl ) do
+    for key, value in raw_pairs( tbl ) do
         length = length + 1
         result[ length ] = { key, value }
     end
@@ -765,9 +359,18 @@ end
 --- [SHARED AND MENU]
 ---
 --- Returns the value of the given key path.
+---
+--- If the key path does not exist, returns `nil`.
+---
+--- Example:
+---
+--- ```lua
+---     local t = { a = { b = { c = { d = { e = "e value!" } } } } }
+---     print( table.get( t, "a.b.c.d.e" ) ) -- e value!
+--- ```
 ---@param tbl table The table to get the value from.
 ---@param str string The key path to get.
----@return any: The value of the key path.
+---@return any value The value of the key path.
 function table.get( tbl, str )
     local pointer = 1
 
@@ -788,43 +391,63 @@ function table.get( tbl, str )
     return tbl[ string_sub( str, pointer ) ]
 end
 
---- [SHARED AND MENU]
----
---- Sets the value of the given key path.
----@param tbl table The table to set the value in.
----@param str string The key path.
----@param value any The value to set.
-function table.set( tbl, str, value )
-    local pointer = 1
+do
 
-    for _ = 1, string_len( str ), 1 do
-        local startPos = string_find( str, ".", pointer, true )
-        if startPos == nil then
-            break
-        else
-            local key = string_sub( str, pointer, startPos - 1 )
-            pointer = startPos + 1
+    local istable = std.istable
 
-            local tbl_value = raw_get( tbl, key )
-            if istable( tbl_value ) then
-                tbl = tbl_value
+    --- [SHARED AND MENU]
+    ---
+    --- Sets the value of the given key path.
+    ---
+    --- Tables are created if they do not exist.
+    ---
+    --- Example:
+    ---
+    --- ```lua
+    ---     local t = {}
+    ---     table.set( t, "a.b.c.d.e", "e value!" )
+    ---     print( t.a.b.c.d.e ) -- e value!
+    --- ```
+    ---
+    ---@param tbl table The table to set the value in.
+    ---@param str string The key path.
+    ---@param value any The value to set.
+    function table.set( tbl, str, value )
+        local pointer = 1
+
+        for _ = 1, string_len( str ), 1 do
+            local startPos = string_find( str, ".", pointer, true )
+            if startPos == nil then
+                break
             else
-                raw_set( tbl, key, {} )
+                local key = string_sub( str, pointer, startPos - 1 )
+                pointer = startPos + 1
+
+
+                local tbl_value = raw_get( tbl, key )
+                if tbl_value and istable( tbl_value ) then
+                    tbl = tbl_value
+                else
+                    local new_tbl = {}
+                    raw_set( tbl, key, new_tbl )
+                    tbl = new_tbl
+                end
             end
         end
+
+        tbl[ string_sub( str, pointer ) ] = value
     end
 
-    tbl[ string_sub( str, pointer ) ] = value
 end
 
 --- [SHARED AND MENU]
 ---
 --- Returns true if the given table is sequential.
 ---@param tbl table The table to check.
----@return boolean: `true` if the table is sequential, `false` otherwise.
+---@return boolean result `true` if the table is sequential, `false` otherwise.
 function table.isSequential( tbl )
     local index = 1
-    for _ in pairs( tbl ) do
+    for _ in raw_pairs( tbl ) do
         if tbl[ index ] == nil then
             return false
         else
@@ -835,28 +458,35 @@ function table.isSequential( tbl )
     return true
 end
 
---- [SHARED AND MENU]
----
---- Returns true if the given table is empty.
----@param tbl table The table to check.
----@return boolean: `true` if the table is empty, `false` otherwise.
-function table.isEmpty( tbl )
-    return next( tbl ) == nil
+do
+
+    local next = std.next
+
+    --- [SHARED AND MENU]
+    ---
+    --- Returns true if the given table is empty.
+    ---@param tbl table The table to check.
+    ---@return boolean result `true` if the table is empty, `false` otherwise.
+    function table.isEmpty( tbl )
+        return next( tbl ) == nil
+    end
+
 end
 
 --- [SHARED AND MENU]
 ---
 --- Empties the given table.
+---
 ---@param tbl table The table to empty.
----@param isSequential? boolean: If the table is sequential.
----@return table: The empty table.
-function table.empty( tbl, isSequential )
-    if isSequential then
+---@param is_sequential? boolean If the table is sequential.
+---@return table tbl The empty table.
+function table.empty( tbl, is_sequential )
+    if is_sequential then
         for index = 1, #tbl, 1 do
             tbl[ index ] = nil
         end
     else
-        for key in pairs( tbl ) do
+        for key in raw_pairs( tbl ) do
             tbl[ key ] = nil
         end
     end
@@ -867,11 +497,11 @@ end
 --- [SHARED AND MENU]
 ---
 --- Fills the given table with the given value.
+---
 ---@param tbl table The table to fill.
 ---@param value any The value to fill the table with.
----@param from? integer: The start position.
----@param to? integer: The end position.
----@return table: The filled table.
+---@param from? integer The start position.
+---@param to? integer The end position.
 function table.fill( tbl, value, from, to )
     if from or to then
         from = from or 1
@@ -888,40 +518,37 @@ function table.fill( tbl, value, from, to )
             tbl[ index ] = value
         end
     else
-        for key in pairs( tbl ) do
+        for key in raw_pairs( tbl ) do
             tbl[ key ] = value
         end
     end
-
-    return tbl
 end
 
 do
 
-    local math_random = math.random
+    local math_random = std.math.random
 
     --- [SHARED AND MENU]
     ---
     --- Shuffles the given table.
+    ---
     ---@param tbl table The table.
-    ---@return table: The shuffled table.
     function table.shuffle( tbl )
         local j, length = 0, #tbl
         for i = length, 1, -1 do
             j = math_random( 1, length )
             tbl[ i ], tbl[ j ] = tbl[ j ], tbl[ i ]
         end
-
-        return tbl
     end
 
     --- [SHARED AND MENU]
     ---
-    --- Returns a random value from the given list (table).
-    ---@param tbl table The table.
-    ---@return any: The value.
-    ---@return integer: The index of the value.
-    function table.random( tbl )
+    --- Returns a random value and index from the given sequential table.
+    ---
+    ---@param tbl table The sequential table.
+    ---@return any value The random value.
+    ---@return integer index The index of the value.
+    function table.randomVI( tbl )
         local length = #tbl
         if length == 0 then
             return nil, -1
@@ -933,32 +560,71 @@ do
         end
     end
 
+    --- [SHARED AND MENU]
+    ---
+    --- Returns a random value and key from the given table.
+    ---
+    ---@param tbl table The key-value table.
+    ---@return any value The random value.
+    ---@return any key The key of the value.
+    function table.randomVK( tbl )
+        local count = 0
+        for _ in pairs( tbl ) do
+            count = count + 1
+        end
+
+        local i = math_random( 1, count )
+
+        for key, value in pairs( tbl ) do
+            if i == 1 then
+                return value, key
+            else
+                i = i - 1
+            end
+        end
+    end
+
 end
 
 do
 
-    local math_fmul = math.fmul
+    local math_fmul = std.math.fmul
 
     --- [SHARED AND MENU]
     ---
-    --- Reverses the given list (table).
+    --- Reverses the given table.
+    ---
+    --- The original table is modified.
+    ---
     ---@param tbl table The table to reverse.
-    ---@param no_copy? boolean: If `true`, the table will not be copied.
-    ---@param length? integer: The length of the table.
-    ---@return table: The reversed table.
-    ---@return integer: The length of the reversed table.
-    function table.reverse( tbl, no_copy, length )
+    ---@param length? integer The length of the table.
+    ---@return table tbl The reversed table.
+    ---@return integer length The length of the reversed table.
+    function table.reverse( tbl, length )
         if length == nil then length = #tbl end
         length = length + 1
 
-        if no_copy then
-            for i = 1, math_fmul( length - 1, 0.5 ), 1 do
-                local j = length - i
-                tbl[ i ], tbl[ j ] = tbl[ j ], tbl[ i ]
-            end
-
-            return tbl, length - 1
+        for i = 1, math_fmul( length - 1, 0.5 ), 1 do
+            local j = length - i
+            tbl[ i ], tbl[ j ] = tbl[ j ], tbl[ i ]
         end
+
+        return tbl, length - 1
+    end
+
+    --- [SHARED AND MENU]
+    ---
+    --- Creates a reversed version of the given table.
+    ---
+    --- The original table is not modified.
+    ---
+    ---@param tbl table The table to reverse.
+    ---@param length? integer The length of the table.
+    ---@return table tbl The reversed table.
+    ---@return integer length The length of the reversed table.
+    function table.reversed( tbl, length )
+        if length == nil then length = #tbl end
+        length = length + 1
 
         local reversed = {}
         for index = length - 1, 1, -1 do
@@ -975,34 +641,36 @@ do
     --- [SHARED AND MENU]
     ---
     --- Creates a new table, filled with the given value and size.
+    ---
     ---@param value any The value to fill the table with.
-    ---@param ... integer: The sizes of the table.
-    ---@return table: The created table.
-    local function create_table( value, size, ... )
+    ---@vararg integer The sizes of the table.
+    ---@return table tbl The created table.
+    local function create( value, size, ... )
         if size == nil then
             return value
         else
             local tbl = {}
             for i = 1, size, 1 do
-                tbl[ i ] = create_table( value, ... )
+                tbl[ i ] = create( value, ... )
             end
 
             return tbl
         end
     end
 
-    table.create = create_table
+    table.create = create
 
 end
 
 --- [SHARED AND MENU]
 ---
 --- Extracts selected range of values from the table.
+---
 ---@param tbl table The table.
----@param from integer: The start position.
----@param to integer: The end position.
----@return table: Extracted values.
----@return integer: The length of the extracted values.
+---@param from? integer The start position.
+---@param to? integer The end position.
+---@return table values The extracted values.
+---@return integer length The length of the extracted values.
 function table.extract( tbl, from, to )
     local extracted, extracted_length = {}, 0
     local length = #tbl
@@ -1032,13 +700,18 @@ end
 --- [SHARED AND MENU]
 ---
 --- Removes values from the table.
+---
 ---@param tbl table The table.
----@param start integer?: The start position.
----@param delete_count integer?: The number of values to remove.
----@param ... any: The values to remove.
----@return table: The table with removed values.
+---@param start integer? The start position.
+---@param delete_count integer? The number of values to remove.
+---@vararg any The values to remove.
+---@return table removed The table with removed values.
+---@return integer removed_length The length of the removed table.
 function table.splice( tbl, start, delete_count, ... )
-    if start == nil then return {} end
+    if start == nil then
+        return {}, 0
+    end
+
     local tbl_length = #tbl
 
     if start < 0 then
@@ -1080,7 +753,7 @@ function table.splice( tbl, start, delete_count, ... )
         end
     end
 
-    return removed
+    return removed, removed_length
 end
 
 return table

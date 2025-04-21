@@ -246,7 +246,7 @@ if std.CLIENT_MENU then
             return key2name[ key_code ] or "unknown"
         end
 
-        local name2key = std.table.flip( key2name )
+        local name2key = std.table.flipped( key2name )
 
         --- [CLIENT AND MENU]
         ---

@@ -19,11 +19,8 @@ end
 local string = std.string
 local string_char, string_byte, string_sub, string_gsub, string_gmatch, string_len = string.char, string.byte, string.sub, string.gsub, string.gmatch, string.len
 
-local table_concat, table_unpack, table_flip
-do
-	local table = std.table
-	table_concat, table_unpack, table_flip = table.concat, table.unpack, table.flip
-end
+local table = std.table
+local table_concat, table_unpack = table.concat, table.unpack
 
 local charpattern = "[%z\x01-\x7F\xC2-\xF4][\x80-\xBF]*"
 
@@ -1146,7 +1143,7 @@ local lower2upper = {
 	["𐑏"] = "𐐧"
 }
 
-local upper2lower = table_flip( lower2upper, true )
+local upper2lower = table.flipped( lower2upper )
 
 do
 	local metatable = { __index = function( _, key ) return key end }

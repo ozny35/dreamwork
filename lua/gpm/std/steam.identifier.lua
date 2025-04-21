@@ -96,8 +96,8 @@ steam.Identifier = IdentifierClass
 
 do
 
-    local int2universe = std.table.flip( universe2int )
-    local int2type = std.table.flip( type2int )
+    local int2universe = std.table.flipped( universe2int )
+    local int2type = std.table.flipped( type2int )
     local raw_get = std.raw.get
 
     ---@protected

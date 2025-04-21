@@ -823,7 +823,7 @@ include( "std/url.lua" )
 do
 
     local string_byteSplit, string_lower = string.byteSplit, string.lower
-    local table_flip = table.flip
+    local table_flipped = table.flipped
     local is_url = std.isurl
     local URL = std.URL
 
@@ -843,7 +843,7 @@ do
 
         ---@cast url URL
 
-        return url.scheme .. "/" .. ( ( url.hostname and url.hostname ~= "" ) and table_concat( table_flip( string_byteSplit( string_lower( url.hostname ), 0x2E --[[ . ]] ) ), "/" ) or "" ) .. string_lower( url.pathname )
+        return url.scheme .. "/" .. ( ( url.hostname and url.hostname ~= "" ) and table_concat( table_flipped( string_byteSplit( string_lower( url.hostname ), 0x2E --[[ . ]] ) ), "/" ) or "" ) .. string_lower( url.pathname )
     end
 
 end
