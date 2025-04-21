@@ -307,3 +307,120 @@ function string.isEmail( str )
 
     return isDomain( string_sub( str, last_at, string_len( str ) ) )
 end
+
+do
+
+    local table_insert = std.table.insert
+    local math_random = std.math.random
+
+    local lowercase_alphabet = {}
+    local uppercase_alphabet = {}
+    local numberic_alphabet = {}
+    local symbol_alphabet = {}
+    local extended_ascii_alphabet = {}
+
+    do
+
+        local string_char = string.char
+
+        for i = 97, 122, 1 do
+            table_insert( lowercase_alphabet, string_char( i ) )
+        end
+
+        lowercase_alphabet[ 0 ] = #lowercase_alphabet
+
+        for i = 65, 90, 1 do
+            table_insert( uppercase_alphabet, string_char( i ) )
+        end
+
+        uppercase_alphabet[ 0 ] = #uppercase_alphabet
+
+        for i = 48, 57, 1 do
+            table_insert( numberic_alphabet, string_char( i ) )
+        end
+
+        numberic_alphabet[ 0 ] = #numberic_alphabet
+
+        for i = 33, 47, 1 do
+            table_insert( symbol_alphabet, string_char( i ) )
+        end
+
+        for i = 58, 64, 1 do
+            table_insert( symbol_alphabet, string_char( i ) )
+        end
+
+        for i = 91, 96, 1 do
+            table_insert( symbol_alphabet, string_char( i ) )
+        end
+
+        for i = 123, 126, 1 do
+            table_insert( symbol_alphabet, string_char( i ) )
+        end
+
+        symbol_alphabet[ 0 ] = #symbol_alphabet
+
+        for i = 128, 255, 1 do
+            table_insert( extended_ascii_alphabet, string_char( i ) )
+        end
+
+        extended_ascii_alphabet[ 0 ] = #extended_ascii_alphabet
+
+    end
+
+    --- [SHARED AND MENU]
+    ---
+    --- Generates a random string.
+    ---
+    --- Can be used to generate a password/key/secret.
+    ---
+    --- The length of the string is 8 by default.
+    ---
+    ---@param length? integer The length of the string, defaults to 8.
+    ---@param lowercase? boolean Whether to include lowercase letters.
+    ---@param uppercase? boolean Whether to include uppercase letters.
+    ---@param numbers? boolean Whether to include numbers.
+    ---@param symbols? boolean Whether to include symbols.
+    ---@param extended_ascii? boolean Whether to include extended ASCII characters.
+    ---@return string
+    function string.random( length, lowercase, uppercase, numbers, symbols, extended_ascii )
+        if length == nil then
+            length = 8
+        elseif length == 0 then
+            return ""
+        end
+
+        local alphabets = {}
+
+        if lowercase ~= false then
+            table_insert( alphabets, lowercase_alphabet )
+        end
+
+        if uppercase then
+            table_insert( alphabets, uppercase_alphabet )
+        end
+
+        if numbers ~= false then
+            table_insert( alphabets, numberic_alphabet )
+        end
+
+        if symbols then
+            table_insert( alphabets, symbol_alphabet )
+        end
+
+        if extended_ascii then
+            table_insert( alphabets, extended_ascii_alphabet )
+        end
+
+        local alphabet_count = #alphabets
+        local buffer, buffer_size = {}, 0
+
+        for _ = 1, length, 1 do
+            buffer_size = buffer_size + 1
+            local alphabet = alphabets[ math_random( 1, alphabet_count ) ]
+            buffer[ buffer_size ] = alphabet[ math_random( 1, alphabet[ 0 ] ) ]
+        end
+
+        return table_concat( buffer, "", 1, buffer_size )
+    end
+
+end
