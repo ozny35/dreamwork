@@ -123,7 +123,7 @@ function xtea.encrypt( key, data, start_position, big_endian, num_rounds )
         num_rounds = 32
     end
 
-    for _ = 1, num_rounds do
+    for _ = 1, num_rounds, 1 do
         y = bit_band( y + bit_bxor( bit_bxor( bit_lshift( z, 4 ), bit_rshift( z, 5 ) ) + z, sum + k[ bit_band( sum, 3 ) ] ), 0xFFFFFFFF )
         sum = bit_band( sum + 0x9e3779b9, 0xFFFFFFFF )
         z = bit_band( z + bit_bxor( bit_bxor( bit_lshift( y, 4 ), bit_rshift( y, 5 ) ) + y, sum + k[ bit_band( bit_rshift( sum, 11 ), 3 ) ] ), 0xFFFFFFFF )
@@ -159,7 +159,7 @@ function xtea.decrypt( key, data, start_position, big_endian, num_rounds )
 
     local sum = bit_band( 0x9e3779b9 * num_rounds, 0xFFFFFFFF )
 
-    for _ = 1, num_rounds do
+    for _ = 1, num_rounds, 1 do
         z = bit_band( z + 0x100000000 - bit_bxor( bit_bxor( bit_lshift( y, 4 ), bit_rshift( y, 5 ) ) + y, sum + k[ bit_band( bit_rshift( sum, 11 ), 3 ) ] ), 0xFFFFFFFF )
         sum = bit_band( sum + 0x100000000 - 0x9e3779b9, 0xFFFFFFFF )
         y = bit_band( y + 0x100000000 - bit_bxor( bit_bxor( bit_lshift( z, 4 ), bit_rshift( z, 5 ) ) + z, sum + k[ bit_band( sum, 3 ) ] ), 0xFFFFFFFF )

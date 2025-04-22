@@ -11,11 +11,16 @@ local string = std.string
 local string_char, string_sub, string_len = string.char, string.sub, string.len
 local table_concat = std.table.concat
 
+---@class gpm.std.crypto
+local crypto = std.crypto
+
 --- [SHARED AND MENU]
 ---
 --- A lzw library.
+---
 ---@class gpm.std.crypto.lzw
-local lzw = {}
+local lzw = crypto.lzw or {}
+crypto.lzw = lzw
 
 local basedictcompress = {}
 local basedictdecompress = {}
@@ -28,6 +33,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Compresses a string using LZW compression.
+---
 ---@param raw_data string The string to compress.
 ---@param forced? boolean If `true`, compression will ignore the excess length of compressed data relative to uncompressed data.
 ---@return string | nil compressed_data The compressed string or `nil` if the compression fails.
@@ -110,6 +116,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Decompresses a string using LZW compression.
+---
 ---@param encoded_data string The string to decompress.
 ---@return string | nil decompressed_data The decompressed string or `nil` if the decompression fails.
 ---@return nil | string error_message The error message or `nil` if the decompression succeeds.
@@ -168,5 +175,3 @@ function lzw.decompress( encoded_data )
 
     return table_concat( parts, "", 1, part_count )
 end
-
-return lzw
