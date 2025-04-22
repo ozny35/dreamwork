@@ -317,10 +317,24 @@ if std.CLIENT_SERVER then
     local kinect = input.kinect or {}
     input.kinect = kinect
 
-    -- TODO: gmcl_rekinect support ( net library required )
+    if std.CLIENT then
+        local available
+        if std.loadbinary( "rekinect" ) then
+            gpm.Logger:info( "'rekinect' was connected as KinectAPI." )
+            available = true
+        elseif motionsensor ~= nil then
+            gpm.Logger:info( "'Garry's Mod' was connected as KinectAPI." )
+            available = true
+        else
+            gpm.Logger:warn( "KinectAPI was not connected." )
+        end
 
-    if std.CLIENT and std.loadbinary( "rekinect" ) then
+        if available and motionsensor.IsAvailable() then
+            gpm.Logger:info( "Supported Kinect sensor was detected." )
+        end
     end
+
+    -- TODO: gmcl_rekinect support ( net library required )
 
 end
 

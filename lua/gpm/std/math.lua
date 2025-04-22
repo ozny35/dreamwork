@@ -159,7 +159,7 @@ if math.ldexp == nil then
     end
 end
 
-do
+if std.debug.getmetatable( math ) == nil then
 
     local math_randomseed = glua_math.randomseed
     local raw_set = std.raw.set

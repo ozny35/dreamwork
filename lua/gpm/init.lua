@@ -1041,8 +1041,10 @@ local logger = std.Logger( {
 
 gpm.Logger = logger
 
-math.randomseed = std.os.time()
-logger:info( "Random seed was synchronized with unix time." )
+if math.randomseed == 0 then
+    math.randomseed = std.os.time()
+    logger:info( "Random seed was re-synchronized with unix time." )
+end
 
 include( "std/sqlite.lua" )
 include( "database.lua" )
