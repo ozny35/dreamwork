@@ -42,6 +42,8 @@ gpm.PREFIX = "gpm@" .. version
 
 dofile( "detour.lua" )
 
+-- TODO: make direct functions for transducers instead of metatable checks
+
 --- object transducers
 ---@class gpm.transducers
 local transducers = {}
