@@ -1006,29 +1006,3 @@ function futures.any( futureList )
     cancelList( futureList )
     return fut:result()
 end
-
-do
-
-    local Timer_wait = std.Timer.wait
-
-    --- Puts current thread to sleep for given amount of seconds.
-    ---
-    ---@see gpm.std.futures.pending
-    ---@see gpm.std.futures.wakeup
-    ---@async
-    ---@param seconds number
-    ---@return nil
-    function std.sleep( seconds )
-        local co = coroutine_running()
-        if co == nil then
-            std.error( "sleep cannot be called from main thread", 2 )
-        else
-            Timer_wait( function()
-                coroutine_resume( co )
-            end, seconds )
-
-            return futures_pending()
-        end
-    end
-
-end

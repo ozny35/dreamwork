@@ -1,22 +1,35 @@
+---@class gpm
+local gpm = _G.gpm
+
+if gpm.detour ~= nil then return end
+
 -- https://github.com/unknown-gd/safety-lite/blob/main/src/detour.lua
 local functions = {}
 
 --- [SHARED AND MENU]
 ---
 --- The detour library.
+---
 ---@class gpm.detour
-local detour = {}
+local detour = gpm.detour or {}
+gpm.detour = detour
 
 --- [SHARED AND MENU]
 ---
 --- Returns a function that calls the `new_fn` instead of the `old_fn`.
----@param old_fn function The original function.
+---@param in_fn function The original function.
 ---@param new_fn fun(hook: function, ...: any): ... Function to replace.
 ---@return function hooked Hooked function that calls `new_fn` instead of `old_fn`.
-function detour.attach( old_fn, new_fn )
-    old_fn = functions[ old_fn ] or old_fn
+function detour.attach( in_fn, new_fn )
+    local old_fn = functions[ in_fn ]
+    if old_fn == nil then
+        old_fn = in_fn
+    end
 
-    local fn = function( ... ) return new_fn( old_fn, ... ) end
+    local function fn( ... )
+        return new_fn( old_fn, ... )
+    end
+
     functions[ fn ] = old_fn
     return fn
 end
@@ -51,5 +64,3 @@ function detour.shadow( fn )
         return old_fn, true
     end
 end
-
-return detour

@@ -13,6 +13,7 @@ local DIV255_CONST = 1 / 255
 --- [SHARED AND MENU]
 ---
 --- The color object.
+---
 ---@diagnostic disable-next-line: duplicate-doc-alias
 ---@alias Color gpm.std.Color
 ---@class gpm.std.Color : gpm.std.Object
@@ -31,10 +32,12 @@ local Color = std.class.base( "Color" )
 --- [SHARED AND MENU]
 ---
 --- The color class.
+---
 ---@class gpm.std.ColorClass : gpm.std.Color
 ---@field __base gpm.std.Color
----@overload fun(r: integer?, g: integer?, b: integer?, a: integer?): gpm.std.Color
+---@overload fun( r: integer?, g: integer?, b: integer?, a: integer? ): gpm.std.Color
 local ColorClass = std.class.create( Color )
+std.Color = ColorClass
 
 do
 
@@ -1016,5 +1019,3 @@ do
     end
 
 end
-
-return ColorClass

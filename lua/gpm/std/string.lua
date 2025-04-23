@@ -1,38 +1,52 @@
-local _G = _G
-local glua_string = _G.string
-
 ---@class gpm.std
 local std = _G.gpm.std
-local math = std.math
-
-local string_byte, string_sub, string_len, string_find, string_rep = glua_string.byte, glua_string.sub, glua_string.len, glua_string.find, glua_string.rep
 
 --- [SHARED AND MENU]
 ---
---- A collection of functions for working with strings.
+--- The string type is a sequence of characters.
+---
+--- The string library is a standard Lua library which provides functions for the manipulation of strings.
+---
+--- In gpm string library contains additional functions.
+---
 ---@class gpm.std.string
-local string = {
-    -- Lua 5.1
-    byte = glua_string.byte,
-    char = glua_string.char,
-    dump = glua_string.dump,
-    find = string_find,
-    format = glua_string.format,
-    gmatch = glua_string.gmatch,
-    gsub = glua_string.gsub,
-    len = string_len,
-    lower = glua_string.lower,
-    match = glua_string.match,
-    rep = glua_string.rep,
-    reverse = glua_string.reverse,
-    sub = string_sub,
-    upper = glua_string.upper,
-    slice = string_sub
-}
-
+local string = std.string or {}
 std.string = string
 
+do
+
+    local glua_string = _G.string
+
+    -- Lua 5.1
+    string.byte = string.byte or glua_string.byte
+    string.char = string.char or glua_string.char
+    string.dump = string.dump or glua_string.dump
+    string.find = string.find or glua_string.find
+    string.format = string.format or glua_string.format
+    string.gmatch = string.gmatch or glua_string.gmatch
+    string.gsub = string.gsub or glua_string.gsub
+    string.len = string.len or glua_string.len
+    string.lower = string.lower or glua_string.lower
+    string.match = string.match or glua_string.match
+    string.rep = string.rep or glua_string.rep
+    string.reverse = string.reverse or glua_string.reverse
+    string.sub = string.sub or glua_string.sub
+    string.upper = string.upper or glua_string.upper
+
+end
+
+string.slice = string.sub
+
+local string_byte = string.byte
+local string_sub = string.sub
+local string_len = string.len
+local string_find = string.find
+local string_rep = string.rep
+
+--- [SHARED AND MENU]
+---
 --- Cuts the string into two.
+---
 ---@param str string The input string.
 ---@param index number String cutting index.
 ---@return string, string: The first part of the string, the second part of the string.
@@ -40,7 +54,10 @@ function string.cut( str, index )
     return string_sub( str, 1, index - 1 ), string_sub( str, index, string_len( str ) )
 end
 
+--- [SHARED AND MENU]
+---
 --- Divides the string by the pattern.
+---
 ---@param str string The input string.
 ---@param pattern string The pattern to divide by.
 ---@param from number? The start index.
@@ -55,7 +72,10 @@ function string.divide( str, pattern, from, with_pattern )
     end
 end
 
+--- [SHARED AND MENU]
+---
 --- Inserts a value into the string.
+---
 ---@param str string The input string.
 ---@param index number The string insertion index.
 ---@param value string The string value to insert.
@@ -68,7 +88,10 @@ function string.insert( str, index, value )
     end
 end
 
+--- [SHARED AND MENU]
+---
 --- Removes a character from the string by index.
+---
 ---@param str string The input string.
 ---@param from number The start index.
 ---@param to number The end index.
@@ -79,7 +102,10 @@ function string.remove( str, from, to )
     return string_sub( str, 1, from - 1 ) .. string_sub( str, to + 1, string_len( str ) )
 end
 
+--- [SHARED AND MENU]
+---
 --- Checks if the string starts with the start string.
+---
 ---@param str string The input string.
 ---@param startStr string The start string.
 ---@return boolean: `true` if the string starts with the start string, otherwise `false`.
@@ -87,7 +113,10 @@ function string.startsWith( str, startStr )
     return str == startStr or string_sub( str, 1, string_len( startStr ) ) == startStr
 end
 
+--- [SHARED AND MENU]
+---
 --- Checks if the string ends with the end string.
+---
 ---@param str string The input string.
 ---@param endStr string The end string.
 ---@return boolean: `true` if the string ends with the end string, otherwise `false`.
@@ -102,9 +131,12 @@ end
 
 do
 
-    local math_max = math.max
+    local math_max = std.math.max
 
+    --- [SHARED AND MENU]
+    ---
     --- Checks if the string contains the searchable string.
+    ---
     ---@param str string The input string.
     ---@param searchable string The searchable string.
     ---@param position? number: The position to start from.
@@ -125,7 +157,10 @@ do
         end
     end
 
+    --- [SHARED AND MENU]
+    ---
     --- Pads the string.
+    ---
     ---@param str string The string to pad.
     ---@param length integer The desired length of the string.
     ---@param char? string The padding compensation symbol. Space by default.
@@ -158,7 +193,10 @@ do
 
 end
 
+--- [SHARED AND MENU]
+---
 --- Splits the string.
+---
 ---@param str string The input string.
 ---@param pattern? string: The pattern to split by.
 ---@param with_pattern? boolean: If the pattern is used.
@@ -195,7 +233,10 @@ function string.split( str, pattern, with_pattern )
     return result, length
 end
 
+--- [SHARED AND MENU]
+---
 --- Extracts the string.
+---
 ---@param str string The input string.
 ---@param pattern string The pattern to extract by.
 ---@param default? string: The default value.
@@ -209,7 +250,10 @@ function string.extract( str, pattern, default )
     end
 end
 
+--- [SHARED AND MENU]
+---
 --- Returns the number of matches of a string.
+---
 ---@param str string The input string.
 ---@param pattern? string: The pattern to count by.
 ---@param with_pattern? boolean: If the pattern is used.
@@ -237,7 +281,10 @@ function string.count( str, pattern, with_pattern )
     return length
 end
 
+--- [SHARED AND MENU]
+---
 --- Splits a string by a byte.
+---
 ---@param str string The input string.
 ---@param byte? number: The byte to split by.
 ---@return string[] result: The split string.
@@ -268,7 +315,10 @@ function string.byteSplit( str, byte )
     return result, length
 end
 
+--- [SHARED AND MENU]
+---
 --- Returns the number of occurrences of a byte.
+---
 ---@param str string The input string.
 ---@param byte? number: The byte to count.
 ---@return number: The number of occurrences.
@@ -285,7 +335,10 @@ function string.byteCount( str, byte )
     return count
 end
 
+--- [SHARED AND MENU]
+---
 --- Trims a string by a byte.
+---
 ---@param str string The input string.
 ---@param byte? number: The byte to trim by.
 ---@param direction? number: The direction to trim. `1` for left, `-1` for right, `0` for both.
@@ -311,7 +364,10 @@ function string.byteTrim( str, byte, direction )
     return string_sub( str, startPos, endPos ), endPos - startPos + 1
 end
 
+--- [SHARED AND MENU]
+---
 --- Returns a character from the string by index.
+---
 ---@param str string The input string.
 ---@param index number The character index.
 ---@return string: The character.
@@ -319,7 +375,10 @@ function string.get( str, index )
     return string_sub( str, index, index )
 end
 
+--- [SHARED AND MENU]
+---
 --- Sets a character in the string by index.
+---
 ---@param str string The input string.
 ---@param index number The character index.
 ---@param value string The character.
@@ -343,7 +402,10 @@ do
         [ 0x39 ] = true  -- 9
     }
 
+    --- [SHARED AND MENU]
+    ---
     --- Checks if a string is a number.
+    ---
     ---@param str string The string.
     ---@param from? number: The start position.
     ---@param to? number: The end position.
@@ -372,7 +434,10 @@ do
 
     local string_gsub = string.gsub
 
+    --- [SHARED AND MENU]
+    ---
     --- Replaces all matches of a string.
+    ---
     ---@param str string The input string.
     ---@param searchable string The pattern to search for.
     ---@param replaceable string The string to replace.
@@ -397,7 +462,10 @@ end
 
 do
 
+    --- [SHARED AND MENU]
+    ---
     --- Unpacks a string into characters.
+    ---
     ---@param str string The input string.
     ---@param from? number The start position.
     ---@param to? number The end position.
@@ -420,11 +488,35 @@ do
 
     local string_match = string.match
 
+    --- [SHARED AND MENU]
+    ---
     --- Checks if a string is a URL.
+    ---
     ---@param str string The string.
-    ---@return boolean
+    ---@return boolean result `true` if the string is a URL, otherwise `false`.
     function string.isURL( str )
         return string_match( str, "^%l[%l+-.]+%:[^%z\x01-\x20\x7F-\xFF\"<>^`:{-}]*$" ) ~= nil
+    end
+
+    local jit_version = ( {
+        [ "200" ] = 0x01,
+        [ "201" ] = 0x02
+    } )[ string_sub( std.tostring( std.jit.version_num ), 1, 3 ) ]
+
+    --- [SHARED AND MENU]
+    ---
+    --- Checks if a string is bytecode.
+    ---
+    ---@param str string The string.
+    ---@param start_position? integer The start position of the string.
+    ---@return boolean result `true` if the string is bytecode, otherwise `false`.
+    function string.isBytecode( str, start_position )
+        if start_position == nil then
+            start_position = 1
+        end
+
+        local b1, b2, b3, b4 = string_byte( str, start_position, start_position + 3 )
+        return b1 == 0x1B and b2 == 0x4C and b3 == 0x4A and b4 == jit_version
     end
 
 end

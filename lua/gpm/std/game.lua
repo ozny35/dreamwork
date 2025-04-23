@@ -94,17 +94,6 @@ end
 
 do
 
-    local UnPredictedCurTime = _G.UnPredictedCurTime
-    local CurTime = _G.CurTime
-
-    function game.getCurrentTime( ignorePrediction )
-        return ignorePrediction and UnPredictedCurTime() or CurTime()
-    end
-
-end
-
-do
-
     local fnName, fn = debug.getupvalue( _G.Material, 1 )
     if fnName ~= "C_Material" then fn = nil end
     game.Material = fn

@@ -10,6 +10,9 @@ if collectgarbage == nil then
     end
 end
 
+---@class gpm.std.debug
+local debug = _G.gpm.std.debug
+
 --- [SHARED AND MENU]
 ---
 --- Lua manages memory automatically by running a garbage collector to collect all dead objects (that is, objects that are no longer accessible from Lua).
@@ -18,6 +21,8 @@ end
 ---
 ---@class gpm.std.debug.gc
 local gc = {}
+debug.gc = gc
+
 
 --- [SHARED AND MENU]
 ---

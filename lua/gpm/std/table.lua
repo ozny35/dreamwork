@@ -1,40 +1,63 @@
 local _G = _G
-local std, glua_table = _G.gpm.std, _G.table
 
-local string_sub, string_find, string_len = std.string.sub, std.string.find, std.string.len
-local raw_get, raw_set = std.raw.get, std.raw.set
-local table_remove = glua_table.remove
-local raw_pairs = std.raw.pairs
+---@class gpm.std
+local std = _G.gpm.std
+
 local select = std.select
+local raw_get, raw_set, raw_pairs = std.raw.get, std.raw.set, std.raw.pairs
+local string_sub, string_find, string_len = std.string.sub, std.string.find, std.string.len
 
 --- [SHARED AND MENU]
 ---
---- A collection of functions for working with tables.
+--- The table library is a standard Lua library which provides functions to manipulate tables.
 ---
 ---@class gpm.std.table
-local table = {
+local table = std.table or {}
+std.table = table
+
+do
+
+    local glua_table = _G.table
+
     -- Lua 5.1
-    concat = glua_table.concat,
-    insert = glua_table.insert,
-    maxn = glua_table.maxn, -- removed in Lua 5.2
-    remove = table_remove,
-    sort = glua_table.sort,
+    table.concat = table.concat or glua_table.concat
+    table.insert = table.insert or glua_table.insert
+    table.remove = table.remove or glua_table.remove
+    table.sort = table.sort or glua_table.sort
+
+    table.maxn = table.maxn or glua_table.maxn -- removed in Lua 5.2
 
     -- Lua 5.2
-    pack = glua_table.pack or function( ... ) return { n = select( "#", ... ), ... } end,
-    unpack = glua_table.unpack or _G.unpack,
+    table.pack = table.pack or glua_table.pack
+
+    if table.pack == nil then
+        function table.pack( ... )
+            return { n = select( "#", ... ), ... }
+        end
+    end
+
+    table.unpack = table.unpack or glua_table.unpack or _G.unpack
 
     -- Lua 5.3
-    move = glua_table.move or function( source, first, last, offset, destination )
-        if destination == nil then destination = source end
+    table.move = table.move or glua_table.move
 
-        for index = 0, last - first, 1 do
-            destination[ offset + index ] = source[ first + index ]
+    if table.move == nil then
+        function table.move( source, first, last, offset, destination )
+            if destination == nil then
+                destination = source
+            end
+
+            for index = 0, last - first, 1 do
+                raw_set( destination, offset + index, raw_get( source, first + index ) )
+            end
+
+            return destination
         end
-
-        return destination
     end
-}
+
+end
+
+local table_remove = table.remove
 
 --- [SHARED AND MENU]
 ---
@@ -755,5 +778,3 @@ function table.splice( tbl, start, delete_count, ... )
 
     return removed, removed_length
 end
-
-return table

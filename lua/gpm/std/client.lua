@@ -13,6 +13,8 @@ local std = gpm.std
 local client = std.client or {}
 std.client = client
 
+client.getServerTime = client.getServerTime or _G.CurTime or function() return 0 end
+
 if _G.gui ~= nil then
     client.openURL = _G.gui.OpenURL
 end

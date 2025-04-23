@@ -13,7 +13,22 @@ local string_byte, string_sub = std.string.byte, std.string.sub
 ---@class gpm.std.steam
 local steam = std.steam
 
-steam.getTime = _G.system and _G.system.SteamTime
+do
+
+    local placeholder_fn = function() return 0 end
+
+    if _G.system == nil then
+        steam.time = steam.time or placeholder_fn
+        steam.getAwayTime = steam.getAwayTime or placeholder_fn
+        steam.getAppTime = steam.getAppTime or placeholder_fn
+    else
+        local system = _G.system
+        steam.time = steam.time or system.SteamTime or placeholder_fn
+        steam.getAwayTime = steam.getAwayTime or system.UpTime or placeholder_fn
+        steam.getAppTime = steam.getAppTime or system.AppTime or placeholder_fn
+    end
+
+end
 
 if steamworks ~= nil then
 

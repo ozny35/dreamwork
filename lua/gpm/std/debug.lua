@@ -1,46 +1,85 @@
 local _G = _G
-local std, glua_debug = _G.gpm.std, _G.debug
-local debug_getinfo, glua_string = glua_debug.getinfo, _G.string
+local glua_string = _G.string
+
+---@class gpm.std
+local std = _G.gpm.std
 
 --- [SHARED AND MENU]
 ---
---- Just empty function, do nothing.
-local function fempty() end
-
+--- The debug library is intended to help you debug your scripts,
+--- however it also has several other powerful uses.
+---
+--- In gpm this library has additional functions.
+---
 ---@class gpm.std.debug
-local debug = {
+local debug = std.debug or {}
+std.debug = debug
+
+local fempty = debug.fempty
+if fempty == nil then
+
+    --- [SHARED AND MENU]
+    ---
+    --- Just empty function, do nothing.
+    ---
+    --- Sometimes makes jit happy :>
+    ---
+    function fempty()
+        -- yep, it's literally empty
+    end
+
+    debug.fempty = fempty
+
+end
+
+do
+
+    local glua_debug = _G.debug
+
     -- LuaJIT
-    newproxy = _G.newproxy,
+    debug.newproxy = debug.newproxy or _G.newproxy
 
     -- Lua 5.1
-    debug = glua_debug.debug,
-    getfenv = glua_debug.getfenv,
-    gethook = glua_debug.gethook,
-    getinfo = debug_getinfo,
-    getlocal = glua_debug.getlocal,
-    getmetatable = glua_debug.getmetatable,
-    getregistry = glua_debug.getregistry,
-    getupvalue = glua_debug.getupvalue or fempty, -- fucked up in menu
-    setfenv = glua_debug.setfenv,
-    sethook = glua_debug.sethook,
-    setlocal = glua_debug.setlocal,
-    setmetatable = glua_debug.setmetatable,
-    setupvalue = glua_debug.setupvalue or fempty, -- fucked up in menu
-    traceback = glua_debug.traceback,
+    debug.debug = debug.debug or glua_debug.debug or fempty
+    debug.getinfo = debug.getinfo or glua_debug.getinfo or fempty
+    debug.getregistry = debug.getregistry or glua_debug.getregistry or fempty
+    debug.traceback = debug.traceback or glua_debug.traceback or fempty
+
+    debug.getlocal = debug.getlocal or glua_debug.getlocal or fempty
+    debug.setlocal = debug.setlocal or glua_debug.setlocal or fempty
+
+    debug.getmetatable = debug.getmetatable or glua_debug.getmetatable or std.getmetatable or fempty
+    debug.setmetatable = debug.setmetatable or glua_debug.setmetatable or std.setmetatable or fempty
+
+    debug.getupvalue = debug.getupvalue or glua_debug.getupvalue or fempty -- fucked up in menu
+    debug.setupvalue = debug.setupvalue or glua_debug.setupvalue or fempty -- fucked up in menu
+
+    debug.getfenv = debug.getfenv or glua_debug.getfenv or std.getfenv or fempty
+    debug.setfenv = debug.setfenv or glua_debug.setfenv or std.setfenv or fempty
+
+    debug.gethook = debug.gethook or glua_debug.gethook or fempty
+    debug.sethook = debug.sethook or glua_debug.sethook or fempty
 
     -- Lua 5.2
-    getuservalue = glua_debug.getuservalue or fempty, -- fucked up in menu
-    setuservalue = glua_debug.setuservalue or fempty, -- fucked up in menu
-    upvalueid = glua_debug.upvalueid or fempty, -- fucked up in menu
-    upvaluejoin = glua_debug.upvaluejoin or fempty, -- fucked up in menu
+    debug.upvalueid = debug.upvalueid or glua_debug.upvalueid or fempty -- fucked up in menu
+    debug.upvaluejoin = debug.upvaluejoin or glua_debug.upvaluejoin or fempty -- fucked up in menu
 
-    -- Custom
-    fempty = fempty
-}
+    debug.getuservalue = debug.getuservalue or glua_debug.getuservalue or fempty -- fucked up in menu
+    debug.setuservalue = debug.setuservalue or glua_debug.setuservalue or fempty -- fucked up in menu
+
+end
+
+if debug.getmetatable == fempty or debug.setmetatable == fempty then
+    error( "I tried my best, but it's over." )
+end
+
+local debug_getinfo = debug.getinfo
+
 
 --- [SHARED AND MENU]
 ---
 --- Call function with given arguments.
+---
 ---@param func function The function to call.
 ---@param ... any: Arguments to be passed to the function.
 ---@return any ... The return values of the function.
@@ -60,6 +99,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- Returns the metatable of the given name or `nil` if not found.
+    ---
     ---@param name string The name of the metatable.
     ---@return table | nil meta The metatable.
     function debug.findmetatable( name )
@@ -82,23 +122,29 @@ do
         local debug_getmetatable = debug.getmetatable
         local raw_get = std.raw.get
 
-        -- in case the game gets killed ( p.s. rubat and garry wants this )
+        -- in case the game gets killed (thanks Garry)
         if debug_getmetatable( fempty ) == nil then
+
             local type = _G.type
 
             --- [SHARED AND MENU]
             ---
             --- Returns the metatable of the given value or `nil` if not found.
+            ---
             ---@param value any The value.
             ---@return table | nil meta The metatable.
             function debug.getmetatable( value )
                 return debug_getmetatable( value ) or registry[ type( value ) ]
             end
+
+            std.print( "at any cost, but it will work..." )
+
         end
 
         --- [SHARED AND MENU]
         ---
         --- Returns the value of the given key in the metatable of the given value or `nil` if not found.
+        ---
         ---@param value any The value.
         ---@param key string The key.
         ---@return any | nil value The value.
@@ -118,6 +164,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- Registers the metatable of the given name and table.
+    ---
     ---@param name string The name of the metatable.
     ---@param tbl table The metatable.
     ---@param do_full_register? boolean: If true, the metatable will be registered.
@@ -139,6 +186,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Returns current stack trace as a table with strings.
+---
 ---@param startPos? integer: The start position of the stack trace.
 ---@return table stack The stack trace.
 ---@return integer length The length of the stack trace.
@@ -161,6 +209,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Returns the function within which the call was made or `nil` if not found.
+---
 ---@return function | nil fn The function within which the call was made or `nil` if not found.
 function debug.getfmain()
     for location = 2, 16, 1 do
@@ -185,6 +234,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- Returns the path to the file in which it was called or an empty string if it could not be found.
+    ---
     ---@param location function | integer: The function or location to get the path from.
     ---@return string path The path to the file in which it was called or an [b]empty string[/b] if it could not be found.
     function debug.getfpath( location )
@@ -207,6 +257,7 @@ if std.jit then
     --- [SHARED AND MENU]
     ---
     --- Checks if the function is jit compilable.
+    ---
     ---@param fn function The function to check.
     ---@return boolean bool `true` if the function is jit compilable, otherwise `false`.
     function debug.isjitcompilable( fn )
@@ -230,6 +281,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- Returns the memory address of the value.
+    ---
     ---@param value any The value to get the memory address of.
     ---@return integer | nil address The memory address or `nil` if not found.
     function debug.getpointer( value )
@@ -245,6 +297,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- Returns the function package or `nil` if not found.
+    ---
     ---@param location function | integer: The function or stack level.
     ---@return Package? pkg The function package or `nil` if not found.
     function debug.getfpackage( location )
@@ -262,6 +315,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- Sets the function package.
+    ---
     ---@param location function | integer: The function or stack level.
     ---@param package Package The package to set.
     function debug.setfpackage( location, package )
@@ -270,5 +324,3 @@ do
     end
 
 end
-
-return debug

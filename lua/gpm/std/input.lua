@@ -22,6 +22,21 @@ std.input = input
 
 if std.CLIENT_MENU then
 
+    -- TODO: use ANALOG somewhere
+
+    -- -- https://wiki.facepunch.com/gmod/Enums/ANALOG
+    -- std.ANALOG = {
+    --     MOUSE_X = 0,
+    --     MOUSE_Y = 1,
+    --     MOUSE_WHEEL = 3,
+    --     JOY_X = 4,
+    --     JOY_Y = 5,
+    --     JOY_Z = 6,
+    --     JOY_R = 7,
+    --     JOY_U = 8,
+    --     JOY_V = 9
+    -- }
+
     do
 
         --- [CLIENT AND MENU]

@@ -292,6 +292,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- Table used by `console.Variable` class constructor.
+    ---
     ---@class gpm.std.console.Variable.Data
     local console_variable_data = {}
 
@@ -304,7 +305,7 @@ do
     console_variable_data.type = nil
 
     --- The flags of the console variable.
-    ---@type gpm.std.FCVAR?
+    ---@type gpm.std.console.Variable.Flags?
     console_variable_data.flags = nil
 
     --- The default value of the console variable.

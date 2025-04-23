@@ -20,3 +20,4 @@ local GamemodeClass = std.class.create( Gamemode )
 std.Gamemode = GamemodeClass
 
 -- TODO: make gamemode class and gamemode handler
+-- TODO: engine.GetGamemodes

@@ -15,13 +15,7 @@ local Hook = std.Hook
 local server = std.server or {}
 std.server = server
 
-do
-
-    local glua_engine = _G.engine
-    server.getGamemodes = server.getGamemodes or glua_engine.GetGamemodes
-    server.getGamemode = server.getGamemode or glua_engine.ActiveGamemode
-
-end
+server.getUptime = server.getUptime or _G.UnPredictedCurTime or function() return 0 end
 
 if std.CLIENT and server.Tick == nil then
 

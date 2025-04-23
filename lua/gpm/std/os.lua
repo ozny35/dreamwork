@@ -1,5 +1,4 @@
 local _G = _G
-local glua_os = _G.os
 
 ---@class gpm.std
 local std = _G.gpm.std
@@ -7,17 +6,29 @@ local std = _G.gpm.std
 --- [SHARED AND MENU]
 ---
 --- Library for interacting with the operating system.
+---
 ---@class gpm.std.os
-local os = {
-    name = std.jit.os,
-    arch = std.jit.arch,
-    date = glua_os.date,
-    time = glua_os.time,
-    clock = glua_os.clock,
-    difftime = glua_os.difftime
-}
-
+local os = std.os or {}
 std.os = os
+
+do
+
+    os.name = std.jit.os
+    os.arch = std.jit.arch
+
+    local glua_os = _G.os
+    if glua_os == nil then
+        std.error( "os library not found" )
+    end
+
+    ---@cast glua_os oslib
+
+    os.date = os.date or glua_os.date
+    os.time = os.time or glua_os.time
+    os.clock = os.clock or glua_os.clock
+    os.difftime = os.difftime or glua_os.difftime
+
+end
 
 do
 
@@ -26,6 +37,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- Returns the endianness of the current machine.
+    ---
     ---@return string: The endianness of the current machine.
     function os.endianness()
         return is_host_big_endian and "big" or "little"
@@ -41,6 +53,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- Returns the current battery level.
+    ---
     ---@return number: The battery level, between 0 and 100.
     function os.getBatteryLevel()
         return level
@@ -49,18 +62,16 @@ do
     --- [SHARED AND MENU]
     ---
     --- Checks if the system has a battery.
+    ---
     ---@return boolean: `true` if the system has a battery, `false` if not.
     function os.hasBattery()
         return has_battery
     end
 
-    if _G.system then
-
+    if _G.system ~= nil then
         local system = _G.system
 
-        os.uptime = system.UpTime
-        os.apptime = system.AppTime
-        os.country = system.GetCountry
+        os.country = os.country or system.GetCountry
 
         if system.BatteryPower ~= nil then
 

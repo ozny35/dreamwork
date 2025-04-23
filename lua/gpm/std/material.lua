@@ -19,6 +19,18 @@ do
 
     local string_dec2bin = string.dec2bin
 
+    -- Material Parameters
+    -- TODO: Think about this, maybe depricated later
+    -- MPAR = {
+    --     VERTEXLITGENERIC = 0x80,
+    --     NOCULL = 0x40,
+    --     ALPHATEST = 0x20,
+    --     MIPS = 0x10,
+    --     NOCLAMP = 0x8,
+    --     SMOOTH = 0x4,
+    --     IGNOREZ = 0x2
+    -- }
+
     -- TODO: Think about material library
 
     local Material = game.Material

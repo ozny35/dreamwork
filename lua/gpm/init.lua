@@ -10,12 +10,28 @@ local _G = _G
 local gpm = _G.gpm
 if gpm == nil then
     ---@class gpm
-    gpm = {}; _G.gpm = gpm
+    gpm = {}
+    _G.gpm = gpm
+end
+
+--- [SHARED AND MENU]
+---
+--- gpm standard environment
+---
+---@class gpm.std
+local std = gpm.std
+if std == nil then
+    ---@class gpm.std
+    std = {}
+    gpm.std = std
 end
 
 ---@diagnostic disable-next-line: undefined-field
-local include = gpm.dofile or _G.include or _G.dofile
-gpm.dofile = include
+local dofile = gpm.dofile
+if dofile == nil then
+    dofile = _G.include or _G.dofile
+    gpm.dofile = dofile
+end
 
 ---@diagnostic disable-next-line: undefined-field
 local getTime = _G.SysTime or _G.os.time
@@ -24,62 +40,44 @@ gpm.StartTime = getTime()
 gpm.VERSION = version
 gpm.PREFIX = "gpm@" .. version
 
-if gpm.detour == nil then
-    gpm.detour = include( "detour.lua" )
-end
+dofile( "detour.lua" )
 
 --- object transducers
 ---@class gpm.transducers
 local transducers = {}
 gpm.transducers = transducers
 
---- gpm standard environment
----@class gpm.std
----@field MENU boolean `true` if code is running on the menu, `false` otherwise.
----@field CLIENT boolean `true` if code is running on the client, `false` otherwise.
----@field SERVER boolean `true` if code is running on the server, `false` otherwise.
----@field SHARED boolean `true` if code is running on the client or server, `false` otherwise.
----@field CLIENT_MENU boolean `true` if code is running on the client or menu, `false` otherwise.
----@field CLIENT_SERVER boolean `true` if code is running on the client or server, `false` otherwise.
----@field DEVELOPER integer A cached value of `developer` console variable.
----@field OSX boolean `true` if the game is running on OSX.
----@field LINUX boolean `true` if the game is running on Linux.
----@field WINDOWS boolean `true` if the game is running on Windows.
----@field BRANCH string A variable containing a string indicating which (Beta) Branch of the game you are using.
----@field SINGLEPLAYER boolean `true` if code is running on a single player game, `false` otherwise.
----@field DEDICATED boolean `true` if code is running on a dedicated server, `false` otherwise.
----@field GAMEMODE string A variable containing the name of the active gamemode.
-local std = gpm.std
-if std == nil then
-    std = include( "std/constants.lua" )
-    gpm.std = std
-end
+dofile( "std/constants.lua" )
 
 --- [SHARED AND MENU]
 ---
 --- Library containing functions for working with raw data. (ignoring metatables)
 ---@class gpm.std.raw
-local raw = std.raw
-if raw == nil then
-    raw = {
-        tonumber = _G.tonumber,
-        equal = _G.rawequal,
-        ipairs = _G.ipairs,
-        pairs = _G.pairs,
-        error = _G.error,
-        get = _G.rawget,
-        set = _G.rawset,
-        type = _G.type,
-        len = _G.rawlen or function( value )
-            return #value
-        end
-    }
+local raw = std.raw or {}
+std.raw = raw
 
-    std.raw = raw
+raw.tonumber = raw.tonumber or _G.tonumber
+
+raw.ipairs = raw.ipairs or _G.ipairs
+raw.pairs = raw.pairs or _G.pairs
+
+raw.error = raw.error or _G.error
+raw.type = raw.type or _G.type
+
+raw.equal = raw.equal or _G.rawequal
+raw.get = raw.get or _G.rawget
+raw.set = raw.set or _G.rawset
+raw.len = raw.len or _G.rawlen
+
+if raw.len == nil then
+    function raw.len( value )
+        return #value
+    end
 end
 
 std.assert = std.assert or _G.assert
 std.select = std.select or _G.select
+std.print = std.print or _G.print
 
 std.tostring = std.tostring or _G.tostring
 
@@ -120,15 +118,16 @@ if SERVER then
     end
 end
 
----@class gpm.std.debug
-local debug = include( "std/debug.lua" )
-std.debug = debug
+dofile( "std/debug.lua" )
+dofile( "std/debug.gc.lua" )
 
-debug.gc = include( "std/garbage-collection.lua" )
-
+local debug = std.debug
+local debug_fempty = debug.fempty
 local debug_getmetatable = debug.getmetatable
 
-std.setmetatable( transducers, {
+local setmetatable = std.setmetatable
+
+setmetatable( transducers, {
     __index = function( self, value )
         local metatable = debug_getmetatable( value )
         if metatable == nil then return value end
@@ -139,6 +138,21 @@ std.setmetatable( transducers, {
         return fn( value )
     end
 } )
+
+if _G.util ~= nil then
+
+    local fn = _G.util.GetActivityIDByName
+    if fn ~= nil then
+        setmetatable( std.ACT, {
+            __index = function( tbl, key )
+                local value = fn( "ACT_" .. key )
+                tbl[ key ] = value
+                return value
+            end
+        } )
+    end
+
+end
 
 --- [SHARED AND MENU]
 ---
@@ -259,42 +273,29 @@ do
 
 end
 
---- [SHARED AND MENU]
----
---- coroutine library
---- Coroutines are similar to threads, however they do not run simultaneously.
----
---- They offer a way to split up tasks and dynamically pause & resume functions.
-local coroutine
 do
 
-    local CurTime = _G.CurTime
-    local glua_coroutine = _G.coroutine
-    local coroutine_yield = glua_coroutine.yield
-
-    ---@class gpm.std.coroutine
-    coroutine = {
-        -- lua
-        create = glua_coroutine.create,
-        ---@diagnostic disable-next-line: deprecated
-        isyieldable = glua_coroutine.isyieldable or function() return true end,
-        resume = glua_coroutine.resume,
-        running = glua_coroutine.running,
-        status = glua_coroutine.status,
-        wrap = glua_coroutine.wrap,
-        yield = coroutine_yield
-    }
-
-    ---@async
-    function coroutine.wait( seconds )
-        local endtime = CurTime() + seconds
-        while true do
-            if endtime < CurTime() then return end
-            coroutine_yield()
-        end
-    end
-
+    --- [SHARED AND MENU]
+    ---
+    --- coroutine library
+    --- Coroutines are similar to threads, however they do not run simultaneously.
+    ---
+    --- They offer a way to split up tasks and dynamically pause & resume functions.
+    ---@class gpm.std.coroutine : coroutinelib
+    local coroutine = std.coroutine or {}
     std.coroutine = coroutine
+
+    local glua_coroutine = _G.coroutine
+
+    ---@diagnostic disable-next-line: deprecated
+    coroutine.isyieldable = coroutine.isyieldable or glua_coroutine.isyieldable or function() return true end
+
+    coroutine.create = coroutine.create or glua_coroutine.create or debug_fempty
+    coroutine.resume = coroutine.resume or glua_coroutine.resume
+    coroutine.running = coroutine.running or glua_coroutine.running
+    coroutine.status = coroutine.status or glua_coroutine.status
+    coroutine.wrap = coroutine.wrap or glua_coroutine.wrap
+    coroutine.yield = coroutine.yield or glua_coroutine.yield
 
 end
 
@@ -455,12 +456,10 @@ do
     -- function ( 6 )
     do
 
-        local object = debug.fempty
-
-        local FUNCTION = debug_getmetatable( object )
+        local FUNCTION = debug_getmetatable( debug_fempty )
         if FUNCTION == nil then
             FUNCTION = {}
-            debug_setmetatable( object, FUNCTION )
+            debug_setmetatable( debug_fempty, FUNCTION )
         end
 
         debug_registermetatable( "function", FUNCTION )
@@ -489,7 +488,7 @@ do
     -- thread ( 8 )
     do
 
-        local object = std.coroutine.create( debug.fempty )
+        local object = std.coroutine.create( debug_fempty )
 
         local THREAD = debug_getmetatable( object )
         if THREAD == nil then
@@ -512,8 +511,8 @@ do
 
 end
 
-include( "std/math.lua" )
-include( "std/math.ease.lua" )
+dofile( "std/math.lua" )
+dofile( "std/math.ease.lua" )
 
 local math = std.math
 
@@ -538,7 +537,7 @@ do
 
 end
 
-include( "std/string.lua" )
+dofile( "std/string.lua" )
 
 local string = std.string
 
@@ -553,10 +552,8 @@ end
 
 do
 
-    local print = std.print or _G.print
-    std.print = print
-
     local string_format = string.format
+    local print = std.print
 
     --- [SHARED AND MENU]
     ---
@@ -571,8 +568,8 @@ do
 
 end
 
-include( "std/bit.lua" )
-include( "std/os.lua" )
+dofile( "std/bit.lua" )
+dofile( "std/os.lua" )
 
 -- TODO: remove me later or rewrite
 do
@@ -600,15 +597,13 @@ do
 
 end
 
----@class gpm.std.table
-local table = include( "std/table.lua" )
-std.table = table
+dofile( "std/table.lua" )
 
-local table_concat = table.concat
+local table_concat = std.table.concat
 
 do
 
-    local coroutine_running = coroutine.running
+    local coroutine_running = std.coroutine.running
     local debug_getinfo = debug.getinfo
     local string_rep = string.rep
     local tostring = std.tostring
@@ -666,7 +661,7 @@ do
 
 end
 
-include( "std/class.lua" )
+dofile( "std/class.lua" )
 
 local type
 do
@@ -710,11 +705,11 @@ do
 
 end
 
-include( "std/string.utf8.lua" )
-include( "engine.lua" )
+dofile( "std/string.utf8.lua" )
+dofile( "engine.lua" )
 
-include( "std/math.classes.lua" )
-include( "std/structures.lua" )
+dofile( "std/math.classes.lua" )
+dofile( "std/structures.lua" )
 
 -- symbol class
 do
@@ -732,6 +727,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- Creates a new symbol.
+    ---
     ---@param name string The name of the symbol.
     ---@return Symbol obj The new symbol.
     function std.Symbol( name )
@@ -745,30 +741,41 @@ do
 
 end
 
-include( "std/hook.lua" )
-include( "std/timer.lua" )
-
-include( "package/init.lua" )
+dofile( "std/futures.lua" )
+dofile( "std/hook.lua" )
+dofile( "std/timer.lua" )
+dofile( "std/color.lua" )
 
 do
 
-    --- [SHARED AND MENU]
+    local Timer_wait = std.Timer.wait
+    local futures = std.futures
+
+    --- Puts current thread to sleep for given amount of seconds.
     ---
-    --- The game's file library.
-    ---@class gpm.std.file
-    local file = std.file or {}
-    std.file = file
+    ---@see gpm.std.futures.pending
+    ---@see gpm.std.futures.wakeup
+    ---@async
+    ---@param seconds number
+    ---@return nil
+    function std.sleep( seconds )
+        local co = futures.running()
+        if co == nil then
+            std.error( "sleep cannot be called from main thread", 2 )
+        else
+            Timer_wait( function()
+                futures.wakeup( co )
+            end, seconds )
+
+            return futures.pending()
+        end
+    end
 
 end
 
-include( "std/file.path.lua" )
-include( "std/file.lua" )
-
-local Color = include( "std/color.lua" )
-std.Color = Color
-
 do
 
+    local Color = std.Color
     local scheme = Color.scheme
 
     scheme.white = Color( 255, 255, 255, 255 )
@@ -798,32 +805,46 @@ do
 
 end
 
-include( "std/futures.lua" )
+dofile( "std/crypto.lua" )
+dofile( "std/crypto.lzw.lua" )
+dofile( "std/crypto.xtea.lua" )
+dofile( "std/crypto.binary.lua" )
 
-include( "std/crypto.lua" )
-include( "std/crypto.lzw.lua" )
-include( "std/crypto.xtea.lua" )
-include( "std/crypto.binary.lua" )
+dofile( "std/crypto.deflate.lua" )
+-- dofile( "std/crypto.hmac.lua" )
+dofile( "std/crypto.aes.lua" )
 
-include( "std/crypto.deflate.lua" )
--- include( "std/crypto.hmac.lua" )
-include( "std/crypto.aes.lua" )
+dofile( "std/crypto.byte_reader.lua" )
+dofile( "std/crypto.byte_writer.lua" )
 
-include( "std/crypto.byte_reader.lua" )
-include( "std/crypto.byte_writer.lua" )
+dofile( "std/bigint.lua" )
 
-include( "std/bigint.lua" )
+dofile( "std/string.extensions.lua" )
 
-include( "std/string.extensions.lua" )
+dofile( "std/version.lua" )
+dofile( "std/url.lua" )
 
-include( "std/version.lua" )
-include( "std/url.lua" )
+do
+
+    --- [SHARED AND MENU]
+    ---
+    --- The game's file library.
+    ---@class gpm.std.file
+    local file = std.file or {}
+    std.file = file
+
+end
+
+dofile( "std/file.path.lua" )
+dofile( "std/file.lua" )
+
+dofile( "package/init.lua" )
 
 -- Additional `file.path` function
 do
 
     local string_byteSplit, string_lower = string.byteSplit, string.lower
-    local table_flipped = table.flipped
+    local table_flipped = std.table.flipped
     local is_url = std.isurl
     local URL = std.URL
 
@@ -848,8 +869,8 @@ do
 
 end
 
-include( "std/console.lua" )
-include( "std/error.lua" )
+dofile( "std/console.lua" )
+dofile( "std/error.lua" )
 
 -- Welcome message
 do
@@ -980,7 +1001,9 @@ do
             ---@cast chunk function
 
             local segment = chunk()
-            if segment == nil then return nil, "first segment is nil" end
+            if segment == nil then
+                return nil, "first segment is nil"
+            end
 
             local result, length = {}, 0
             while segment ~= nil do
@@ -999,8 +1022,8 @@ do
 
 end
 
-include( "std/game.lua" )
-include( "std/level.lua" )
+dofile( "std/game.lua" )
+dofile( "std/level.lua" )
 
 do
 
@@ -1031,11 +1054,11 @@ do
 
 end
 
-include( "std/logger.lua" )
+dofile( "std/logger.lua" )
 
 local logger = std.Logger( {
     title = gpm.PREFIX,
-    color = Color( 180, 180, 255 ),
+    color = std.Color( 180, 180, 255 ),
     interpolation = false
 } )
 
@@ -1046,8 +1069,8 @@ if math.randomseed == 0 then
     logger:info( "Random seed was re-synchronized with unix time." )
 end
 
-include( "std/sqlite.lua" )
-include( "database.lua" )
+dofile( "std/sqlite.lua" )
+dofile( "database.lua" )
 
 local loadbinary
 do
@@ -1122,8 +1145,8 @@ end
 -- https://github.com/willox/gmbc
 loadbinary( "gmbc" )
 
-include( "std/http.lua" )
-include( "std/http.github.lua" )
+dofile( "std/http.lua" )
+dofile( "std/http.github.lua" )
 
 do
 
@@ -1136,34 +1159,52 @@ do
 
 end
 
-include( "std/steam.identifier.lua" )
-include( "std/steam.workshop_item.lua" )
-include( "std/steam.lua" )
-include( "std/addon.lua" )
+dofile( "std/steam.identifier.lua" )
+dofile( "std/steam.workshop_item.lua" )
+dofile( "std/steam.lua" )
+dofile( "std/addon.lua" )
 
 if std.CLIENT_MENU then
-    include( "std/os.window.lua" )
-    include( "std/menu.lua" )
-    include( "std/client.lua" )
-    include( "std/render.lua" )
+    dofile( "std/os.window.lua" )
+    dofile( "std/menu.lua" )
+    dofile( "std/client.lua" )
+    dofile( "std/render.lua" )
 end
 
-include( "std/server.lua" )
+dofile( "std/server.lua" )
+
+do
+
+    ---@class gpm.std.coroutine
+    local coroutine = std.coroutine
+    local coroutine_yield = coroutine.yield
+    local server_getUptime = std.server.getUptime
+
+    ---@async
+    function coroutine.wait( seconds )
+        local endtime = server_getUptime() + seconds
+        while true do
+            if endtime < server_getUptime() then return end
+            coroutine_yield()
+        end
+    end
+
+end
 
 if std.CLIENT_SERVER then
-    include( "std/physics.lua" )
-    include( "std/entity.lua" )
-    include( "std/player.lua" )
-    -- include( "std/net.lua" )
+    dofile( "std/physics.lua" )
+    dofile( "std/entity.lua" )
+    dofile( "std/player.lua" )
+    -- dofile( "std/net.lua" )
 end
 
-include( "std/input.lua" )
+dofile( "std/input.lua" )
 
-if std.TYPE.COUNT ~= 44 then
+if _G.TYPE_COUNT ~= 44 then
     logger:warn( "Global TYPE_COUNT mismatch, data corruption suspected. (" .. std.tostring( _G.TYPE_COUNT or "missing" ) .. " ~= 44)"  )
 end
 
-if std._VERSION ~= "Lua 5.1" then
+if _G._VERSION ~= "Lua 5.1" then
     logger:warn( "Lua version changed, possible unpredictable behavior. (" .. std.tostring( _G._VERSION or "missing") .. ")" )
 end
 
@@ -1171,7 +1212,7 @@ logger:info( "Start-up time: %.2f ms.", ( getTime() - gpm.StartTime ) * 1000 )
 
 do
     local start_time = getTime()
-    std.debug.gc.collect()
+    debug.gc.collect()
     logger:info( "Clean-up time: %.2f ms.", ( getTime() - start_time ) * 1000 )
 end
 
@@ -1212,7 +1253,7 @@ end
 
 --     local files = _G.file.Find( "gpm/plugins/*.lua", "LUA" )
 --     for i = 1, #files do
---         include( "plugins/" .. files[ i ] )
+--         dofile( "plugins/" .. files[ i ] )
 --     end
 
 -- end
