@@ -43,6 +43,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- The Github API library.
+---
 ---@class gpm.std.http.github
 local github = http.github or {}
 http.github = github
@@ -54,6 +55,7 @@ local ratelimit_reset_time = 0
 --- [SHARED AND MENU]
 ---
 --- Sends a request to the Github API.
+---
 ---@param method gpm.std.http.Request.Method The request method.
 ---@param pathname string The path to send the request to.
 ---@param headers? table The headers to send with the request.
@@ -135,6 +137,7 @@ github.request = request
 --- [SHARED AND MENU]
 ---
 --- Makes a request to the Github API.
+---
 ---@param method gpm.std.http.Request.Method The request method.
 ---@param pathname string The path to send the request to.
 ---@param headers? table The headers to send with the request.
@@ -161,6 +164,7 @@ github.apiRequest = apiRequest
 --- [SHARED AND MENU]
 ---
 --- Replaces all occurrences of `{name}` in `pathname` with `tbl[name]`.
+---
 ---@param pathname string The path to replace placeholders in.
 ---@param tbl string<any> The table to replace placeholders with.
 ---@return string pathname The path with placeholders replaced.
@@ -176,6 +180,7 @@ github.template = template
 --- [SHARED AND MENU]
 ---
 --- Replaces all occurrences of `{name}` in `pathname` with `tbl[name]` and makes a request to the Github API.
+---
 ---@param method gpm.std.http.Request.Method The request method.
 ---@param pathname string The path to send the request to.
 ---@param tbl string<any> The table to replace placeholders with.
@@ -218,12 +223,13 @@ end
 
 --- [SHARED AND MENU]
 ---
---- TODO
----@param owner string The owner of the repository.
----@param repo string The name of the repository.
----@param tree_sha any TODO
----@param recursive boolean?: TODO
----@return table: TODO
+--- Returns a single tree using the SHA1 value or ref name for that tree.
+---
+---@param owner string The account owner of the repository. The name is not case sensitive.
+---@param repo string The name of the repository without the .git extension. The name is not case sensitive.
+---@param tree_sha string The SHA1 value or ref (branch or tag) name of the tree.
+---@param recursive? boolean Setting this parameter to any value returns the objects or subtrees referenced by the tree specified in :tree_sha.
+---@return gpm.std.http.github.Tree tree The tree.
 ---@async
 function github.getTree( owner, repo, tree_sha, recursive )
     return templateRequest( 1, "/repos/{owner}/{repo}/git/trees/{tree_sha}?recursive={recursive}", {

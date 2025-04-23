@@ -539,3 +539,94 @@ do
     local URLState = {}
 
 end
+
+do
+
+    --- [SHARED AND MENU]
+    ---
+    --- Git Tree
+    ---
+    --- The hierarchy between files in a Git repository.
+    ---
+    ---@class gpm.std.http.github.Tree
+    local tree = {}
+
+    --- The SHA1 of the tree.
+    ---
+    ---@type string
+    tree.sha = nil
+
+    --- The URL of the tree.
+    ---
+    ---@type string
+    tree.url = nil
+
+    --- Whether the tree is truncated.
+    ---
+    --- If truncated is true in the response
+    --- then the number of items in the tree
+    --- array exceeded our maximum limit.
+    ---
+    --- If you need to fetch more items,
+    --- use the non-recursive method of
+    --- fetching trees, and fetch one
+    --- sub-tree at a time.
+    ---
+    ---@type boolean
+    tree.truncated = nil
+
+    --- [SHARED AND MENU]
+    ---
+    --- A list of files and directories in the tree.
+    ---
+    ---@class gpm.std.http.github.Tree.Item[]
+    tree.tree = nil
+
+    --- [SHARED AND MENU]
+    ---
+    --- A single file or directory in a tree.
+    ---
+    ---@class gpm.std.http.github.Tree.Item
+    local item = {}
+
+    --- The path to the file or directory.
+    ---
+    ---@type string
+    tree.path = nil
+
+    --- The type of item that this is.
+    ---
+	---| Mode    | Meaning                      | Types    |
+	---|:--------|:-----------------------------|:---------|
+    ---|`100644` | Normal file (non-executable) | `Blob`
+    ---|`100755` | Executable file              | `Blob`
+    ---|`040000` | Directory                    | `Tree`
+    ---|`120000` | Symbolic link                | `Blob`
+    ---|`160000` | Git submodule (commit ref)   | `Commit`
+    ---
+    ---@type string
+    tree.mode = nil
+
+    --- The type of item that this is.
+    ---
+    --- One of "blob", "tree", "commit".
+    ---
+    ---@type string
+    tree.type = nil
+
+    --- The SHA1 of the item.
+    ---
+    ---@type string
+    tree.sha = nil
+
+    --- The size of the item in bytes.
+    ---
+    ---@type number
+    tree.size = nil
+
+    --- The URL of the item.
+    ---
+    ---@type string
+    tree.url = nil
+
+end
