@@ -49,7 +49,7 @@ do
     debug.setlocal = debug.setlocal or glua_debug.setlocal or fempty
 
     debug.getmetatable = debug.getmetatable or glua_debug.getmetatable or std.getmetatable or fempty
-    debug.setmetatable = debug.setmetatable or glua_debug.setmetatable or std.setmetatable or fempty
+    debug.setmetatable = debug.setmetatable or glua_debug.setmetatable or function() return false end
 
     debug.getupvalue = debug.getupvalue or glua_debug.getupvalue or fempty -- fucked up in menu
     debug.setupvalue = debug.setupvalue or glua_debug.setupvalue or fempty -- fucked up in menu
@@ -123,7 +123,9 @@ do
         local raw_get = std.raw.get
 
         -- in case the game gets killed (thanks Garry)
-        if debug_getmetatable( fempty ) == nil then
+        if debug_getmetatable( fempty ) == nil and
+            not debug.setmetatable( fempty, {} ) and
+            debug_getmetatable( fempty ) == nil then
 
             local type = _G.type
 
