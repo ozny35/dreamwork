@@ -550,9 +550,10 @@ do
 
 end
 
+local string_format = string.format
+
 do
 
-    local string_format = string.format
     local print = std.print
 
     --- [SHARED AND MENU]
@@ -699,7 +700,7 @@ do
         if got == expected_type or expected_type == "any" then
             return true, nil
         else
-            return false, string.format( "bad argument #%d to \'%s\' ('%s' expected, got '%s')", arg_num, debug_getinfo( 2, "n" ).name or "unknown", expected_type, got )
+            return false, string_format( "bad argument #%d to \'%s\' ('%s' expected, got '%s')", arg_num, debug_getinfo( 2, "n" ).name or "unknown", expected_type, got )
         end
     end
 
@@ -716,7 +717,7 @@ do
 
     local function __tostring( self )
         ---@diagnostic disable-next-line: param-type-mismatch
-        return raw_get( debug_getmetatable( self ), "__type" )
+        return string_format( "%s: %p", raw_get( debug_getmetatable( self ), "__type" ), self )
     end
 
     local debug_newproxy = debug.newproxy
@@ -734,7 +735,7 @@ do
         ---@class gpm.std.Symbol
         local obj = debug_newproxy( true )
         local metatable = debug_getmetatable( obj )
-        metatable.__type = string.format( "Symbol: %p ['%s']", obj, name )
+        metatable.__type = name .. " Symbol"
         metatable.__tostring = __tostring
         return obj
     end
@@ -757,18 +758,19 @@ do
     ---@see gpm.std.futures.wakeup
     ---@async
     ---@param seconds number
-    ---@return nil
     function std.sleep( seconds )
         local co = futures.running()
         if co == nil then
             std.error( "sleep cannot be called from main thread", 2 )
-        else
-            Timer_wait( function()
-                futures.wakeup( co )
-            end, seconds )
-
-            return futures.pending()
         end
+
+        ---@cast co thread
+
+        Timer_wait( function()
+            futures.wakeup( co )
+        end, seconds )
+
+        return futures.pending()
     end
 
 end
@@ -943,85 +945,6 @@ do
 
 end
 
-do
-
-    ---@diagnostic disable-next-line: undefined-field
-    local CompileString, gmbc_load_bytecode = _G.CompileString, _G.gmbc_load_bytecode
-    local getfenv, setfenv = std.getfenv, std.setfenv
-    local string_byte = string.byte
-
-    --- [SHARED AND MENU]
-    ---
-    --- Loads a chunk of code in the specified environment.
-    ---@param chunk string | function The chunk to load, can be a string or a function.
-    ---@param chunkName string? The chunk name, if chunk is binary the name will be ignored.
-    ---@param mode string? The string mode controls whether the chunk can be text or binary (that is, a precompiled chunk). It may be the string "b" (only binary chunks), "t" (only text chunks), or "bt" (both binary and text). The default is "bt".
-    ---@param env table? The environment to load the chunk in.
-    ---@return function? fn The compiled lua function.
-    ---@return string? msg The error message.
-    local function load( chunk, chunkName, mode, env )
-        if env == nil then env = getfenv( 2 ) end
-
-        if isstring( chunk ) then
-            if mode == nil then mode = "bt" end
-            ---@cast chunk string
-
-            local fn
-            if ( mode == "bt" or mode == "tb" or mode == "b" ) and string_byte( chunk, 1 ) == 0x1B then
-                if gmbc_load_bytecode == nil then
-                    return nil, "bytecode compilation is not supported"
-                else
-                    fn = gmbc_load_bytecode( chunk )
-                end
-            elseif ( mode == "bt" or mode == "tb" or mode == "t" ) then
-                if not isstring( chunkName ) then return nil, "chunk name must be a string" end
-                ---@cast chunkName string
-
-                fn = CompileString( chunk, chunkName, false )
-                if isstring( fn ) then
-                    ---@cast fn string
-                    return nil, fn
-                end
-            end
-
-            ---@cast fn function?
-
-            if fn == nil then
-                return nil, "wrong load mode"
-            end
-
-            if istable( env ) then
-                setfenv( fn, env )
-            else
-                return nil, "environment must be a table"
-            end
-
-            return fn
-        elseif isfunction( chunk ) then
-            ---@cast chunk function
-
-            local segment = chunk()
-            if segment == nil then
-                return nil, "first segment is nil"
-            end
-
-            local result, length = {}, 0
-            while segment ~= nil do
-                length = length + 1
-                result[ length ] = segment
-                segment = chunk()
-            end
-
-            return load( table_concat( result, "", 1, length ), chunkName, mode, env )
-        end
-
-        return nil, "bad argument #1 to \'load\' ('string/function' expected, got '" .. type( chunk ) .. "')"
-    end
-
-    std.load = load
-
-end
-
 dofile( "std/game.lua" )
 dofile( "std/level.lua" )
 
@@ -1139,11 +1062,136 @@ end
 -- https://github.com/WilliamVenner/gmsv_workshop
 ---@diagnostic disable-next-line: undefined-field
 if SERVER and not ( std.istable( _G.steamworks ) and std.isfunction( _G.steamworks.DownloadUGC ) ) then
-    loadbinary( "workshop" )
+    if loadbinary( "workshop" ) then
+        logger:info( "'gmsv_workshop' was connected as server-side Steam Workshop API." )
+    end
 end
 
 -- https://github.com/willox/gmbc
-loadbinary( "gmbc" )
+if loadbinary( "gmbc" ) then
+    logger:info( "'gmbc' was connected as bytecode compiler, binary code compilation avaliable." )
+end
+
+do
+
+    local getfenv, setfenv = std.getfenv, std.setfenv
+
+    do
+
+        local CompileString = _G.CompileString
+
+        --- [SHARED AND MENU]
+        ---
+        --- Loads a string or function as
+        --- a chunk in the specified environment
+        --- and returns function as a compile result.
+        ---
+        ---@param chunk string | function The lua code chunk.
+        ---@param chunkName string The lua code chunk name.
+        ---@param env table | nil The environment of compiled function.
+        ---@return function | nil fn The compiled function.
+        ---@return string | nil msg The error message.
+        local function loadstring( chunk, chunkName, env )
+            if env == nil then
+                env = getfenv( 2 )
+            end
+
+            if isstring( chunk ) then
+                ---@cast chunk string
+
+                local fn = CompileString( chunk, chunkName, false )
+
+                if fn == nil then
+                    return nil, "failed to compile chunk"
+                elseif isstring( fn ) then
+                    ---@diagnostic disable-next-line: cast-type-mismatch
+                    ---@cast fn string
+                    return nil, fn
+                else
+                    setfenv( fn, env )
+                    return fn
+                end
+            elseif isfunction( chunk ) then
+                ---@cast chunk function
+
+                local segment = chunk()
+                if segment == nil then
+                    return nil, "first chunk segment cannot be nil"
+                end
+
+                local segments, length = {}, 0
+                while segment ~= nil do
+                    length = length + 1
+                    segments[ length ] = segment
+                    segment = chunk()
+                end
+
+                return loadstring( table_concat( segments, "", 1, length ), chunkName, env )
+            else
+                return nil, "bad argument #1 to 'loadstring' ('string/function' expected, got '" .. type( chunk ) .. "')"
+            end
+        end
+
+        std.loadstring = loadstring
+
+    end
+
+    do
+
+        ---@diagnostic disable-next-line: undefined-field
+        local gmbc_load_bytecode = _G.gmbc_load_bytecode
+
+        --- [SHARED AND MENU]
+        ---
+        --- Loads a string or function as
+        --- a bytecode chunk in the specified environment
+        --- and returns function as a compile result.
+        ---
+        ---@param chunk string | function The luajit bytecode chunk.
+        ---@param env table | nil The environment of compiled function.
+        ---@return function | nil fn The compiled function.
+        ---@return string | nil msg The error message.
+        local function loadbytecode( chunk, env )
+            if env == nil then
+                env = getfenv( 2 )
+            end
+
+            if isstring( chunk ) then
+                ---@cast chunk string
+
+                local success, result = pcall( gmbc_load_bytecode, chunk )
+                if success then
+                    setfenv( result, env )
+                    return result
+                else
+                    return nil, result
+                end
+            elseif isfunction( chunk ) then
+                ---@cast chunk function
+
+                local segment = chunk()
+                if segment == nil then
+                    return nil, "first chunk segment cannot be nil"
+                end
+
+                local segments, length = {}, 0
+                while segment ~= nil do
+                    length = length + 1
+                    segments[ length ] = segment
+                    segment = chunk()
+                end
+
+                return loadbytecode( table_concat( segments, "", 1, length ), env )
+            else
+                return nil, "bad argument #1 to 'loadbytecode' ('string/function' expected, got '" .. type( chunk ) .. "')"
+            end
+        end
+
+        std.loadbytecode = loadbytecode
+
+    end
+
+end
 
 dofile( "std/http.lua" )
 dofile( "std/http.github.lua" )
