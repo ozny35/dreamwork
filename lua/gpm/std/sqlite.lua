@@ -219,5 +219,3 @@ do
     end
 
 end
-
-return sqlite

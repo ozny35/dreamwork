@@ -1261,6 +1261,22 @@ end
 logger:info( "Start-up time: %.2f ms.", ( getTime() - gpm.StartTime ) * 1000 )
 
 do
+
+    logger:info( "Preparing the database to begin migration..." )
+    local start_time = getTime()
+
+    local db = gpm.db
+    db.optimize()
+    db.prepare()
+    db.migrate( "initial file table" )
+
+    logger:info( "Migration completed, time spent: %.2f ms.", ( getTime() - start_time ) * 1000 )
+
+end
+
+-- TODO: package manager start-up ( aka starting package loading )
+
+do
     local start_time = getTime()
     debug.gc.collect()
     logger:info( "Clean-up time: %.2f ms.", ( getTime() - start_time ) * 1000 )

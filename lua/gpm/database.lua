@@ -7,7 +7,10 @@ local std = gpm.std
 local os_time = std.os.time
 
 local sqlite = std.sqlite
-local sqlite_queryOne, sqlite_queryValue, sqlite_rawQuery, sqlite_query, sqlite_transaction = sqlite.queryOne, sqlite.queryValue, sqlite.rawQuery, sqlite.query, sqlite.transaction
+
+local sqlite_transaction = sqlite.transaction
+local sqlite_query, sqlite_rawQuery = sqlite.query, sqlite.rawQuery
+local sqlite_queryOne, sqlite_queryValue = sqlite.queryOne, sqlite.queryValue
 
 -- http_cache table, used for etag caching in http library
 do
@@ -142,7 +145,7 @@ if std.SERVER then
     function repositories.removeRepository( repository )
         local repository_id = getRepositoryID( repository )
         if repository_id == nil then
-            std.error( "invalid repository '" .. tostring( repository ) .. "' was given as #1 argument" )
+            std.error( "invalid repository '" .. tostring( repository ) .. "' was given as #1 argument", 2 )
         end
 
         local repositoryIDStr = tostring( repository_id )
@@ -170,7 +173,7 @@ if std.SERVER then
     function repositories.getPackage( repository, name )
         local repository_id = getRepositoryID( repository )
         if repository_id == nil then
-            std.error( "invalid repository '" .. tostring( repository ) .. "' was given as #1 argument" )
+            std.error( "invalid repository '" .. tostring( repository ) .. "' was given as #1 argument", 2 )
         end
 
         local pkg = sqlite_queryOne( "select * from 'gpm.packages' where name=? and repositoryID=?", name, tostring( repository_id ) )
@@ -188,7 +191,7 @@ if std.SERVER then
     function repositories.getPackages( repository )
         local repository_id = getRepositoryID( repository )
         if repository_id == nil then
-            std.error( "invalid repository '" .. tostring( repository ) .. "' was given as #1 argument" )
+            std.error( "invalid repository '" .. tostring( repository ) .. "' was given as #1 argument", 2 )
         end
 
         local packages = sqlite_query( "select * from 'gpm.packages' where repositoryID=?", tostring( repository_id ) )
@@ -214,7 +217,7 @@ if std.SERVER then
     function repositories.updateRepository( repository, packages )
         local repository_id = getRepositoryID( repository )
         if repository_id == nil then
-            std.error( "invalid repository '" .. tostring( repository ) .. "' was given as #1 argument" )
+            std.error( "invalid repository '" .. tostring( repository ) .. "' was given as #1 argument", 2 )
         end
 
         local repositoryIDStr = tostring( repository_id )
@@ -292,39 +295,51 @@ do
 
 end
 
--- optimize sqlite database
----@private
-if _G.sql.__patched == nil then
-    _G.sql.__patched = true
-
-    local pragma_values = sqlite_rawQuery( "pragma foreign_keys; pragma journal_mode; pragma synchronous; pragma wal_autocheckpoint" )
-    if pragma_values ~= nil then
-        if pragma_values[ 1 ]["foreign_keys"] == "0" then
-            sqlite_rawQuery( "pragma foreign_keys = 1" )
-        end
-
-        if pragma_values[ 2 ]["journal_mode"] == "delete" then
-            sqlite_rawQuery( "pragma journal_mode = wal" )
-        end
-
-        if pragma_values[ 3 ]["synchronous"] == "0" then
-            sqlite_rawQuery( "pragma synchronous = normal" )
-        end
-
-        if pragma_values[ 4 ]["wal_autocheckpoint"] == "1000" then
-            sqlite_rawQuery( "pragma wal_autocheckpoint = 100" )
-        end
-    end
-end
-
--- truncate WAL journal on shutdown
-gpm.engine.hookCatch( "ShutDown", function()
-    if sqlite.query( "pragma wal_checkpoint(TRUNCATE)" ) == false then
-        gpm.Logger:error( "Failed to truncate WAL journal: %s", sqlite.getLastError() )
-    end
-end )
-
 do
+
+    --- [SHARED AND MENU]
+    ---
+    --- Database module.
+    ---@class gpm.db
+    local db = gpm.db or {}
+    gpm.db = db
+
+    --- [SHARED AND MENU]
+    ---
+    --- Improves the performance of sqlite databases.
+    ---
+    function db.optimize()
+        if db.__optimized ~= nil then return end
+
+        ---@private
+        db.__optimized = true
+
+        local pragma_values = sqlite_rawQuery( "pragma foreign_keys; pragma journal_mode; pragma synchronous; pragma wal_autocheckpoint" )
+        if pragma_values ~= nil then
+            if pragma_values[ 1 ]["foreign_keys"] == "0" then
+                sqlite_rawQuery( "pragma foreign_keys = 1" )
+            end
+
+            if pragma_values[ 2 ]["journal_mode"] == "delete" then
+                sqlite_rawQuery( "pragma journal_mode = wal" )
+            end
+
+            if pragma_values[ 3 ]["synchronous"] == "0" then
+                sqlite_rawQuery( "pragma synchronous = normal" )
+            end
+
+            if pragma_values[ 4 ]["wal_autocheckpoint"] == "1000" then
+                sqlite_rawQuery( "pragma wal_autocheckpoint = 100" )
+            end
+        end
+
+        -- truncate WAL journal on shutdown
+        gpm.engine.hookCatch( "ShutDown", function()
+            if sqlite.query( "pragma wal_checkpoint(TRUNCATE)" ) == false then
+                gpm.Logger:error( "Failed to truncate WAL journal: %s", sqlite.getLastError() )
+            end
+        end )
+    end
 
     local migrations = {
         {
@@ -404,11 +419,11 @@ do
 
     --- [SHARED AND MENU]
     ---
-    --- Database module.
-    ---@class gpm.db
-    local db = {}
-
-    sqlite_rawQuery( "create table if not exists 'gpm.migration_history' (name text, timestamp integer)" )
+    --- Prepares the database by creating the migration history table.
+    ---
+    function db.prepare()
+        sqlite_rawQuery( "create table if not exists 'gpm.migration_history' (name text, timestamp integer)" )
+    end
 
     --- [SHARED AND MENU]
     ---
@@ -427,34 +442,44 @@ do
 
     db.migrationExists = migrationExists
 
-    local isfunction = std.isfunction
+    local migrateByTable
+    do
 
+        local iscallable = std.iscallable
 
-    --- [SHARED AND MENU]
-    ---
-    --- Runs a migration by migration table.
-    ---@param migration table The migration to run.
-    ---@return boolean success Returns `true` if successful, `false` if failed.
-    local function migrateByTable( migration )
-        if not isfunction( migration.execute ) then
-            std.error( "Migration '" .. tostring( migration.name ) .. "' does not have an execute function" )
+        local function display_error( msg )
+            std.error( msg, -2 )
         end
 
-        gpm.Logger:info( "Running migration '" .. tostring( migration.name ) .. "'...")
+        --- [SHARED AND MENU]
+        ---
+        --- Runs a migration by migration table.
+        ---
+        ---@param migration table The migration to run.
+        ---@return boolean success Returns `true` if successful, `false` if failed.
+        function migrateByTable( migration )
+            if not iscallable( migration.execute ) then
+                std.error( "Migration '" .. tostring( migration.name ) .. "' does not have an execute function", 2 )
+            end
 
-        if xpcall( sqlite_transaction, _G.ErrorNoHaltWithStack, migration.execute ) then
-            sqlite_query( "insert into 'gpm.migration_history' (name, timestamp) values (?, ?)", migration.name, os_time() )
-            return true
-        else
-            return false
+            gpm.Logger:info( "Running migration '" .. tostring( migration.name ) .. "'...")
+
+            if xpcall( sqlite_transaction, display_error, migration.execute ) then
+                sqlite_query( "insert into 'gpm.migration_history' (name, timestamp) values (?, ?)", migration.name, os_time() )
+                return true
+            else
+                return false
+            end
         end
+
+        db.migrateByTable = migrateByTable
+
     end
-
-    db.migrateByTable = migrateByTable
 
     --- [SHARED AND MENU]
     ---
     --- Runs a migration by its name.
+    ---
     ---@param name string
     function db.migrate( name )
         local history = sqlite_rawQuery( "select name from 'gpm.migration_history'" ) or {}
@@ -475,7 +500,5 @@ do
             end
         end
     end
-
-    gpm.db = db
 
 end
