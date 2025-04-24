@@ -15,7 +15,7 @@ local Hook = std.Hook
 local server = std.server or {}
 std.server = server
 
-server.getUptime = server.getUptime or _G.UnPredictedCurTime or function() return 0 end
+server.getUptime = server.getUptime or _G.UnPredictedCurTime
 
 if std.CLIENT and server.Tick == nil then
 

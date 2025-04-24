@@ -15,18 +15,10 @@ local steam = std.steam
 
 do
 
-    local placeholder_fn = function() return 0 end
-
-    if _G.system == nil then
-        steam.time = steam.time or placeholder_fn
-        steam.getAwayTime = steam.getAwayTime or placeholder_fn
-        steam.getAppTime = steam.getAppTime or placeholder_fn
-    else
-        local system = _G.system
-        steam.time = steam.time or system.SteamTime or placeholder_fn
-        steam.getAwayTime = steam.getAwayTime or system.UpTime or placeholder_fn
-        steam.getAppTime = steam.getAppTime or system.AppTime or placeholder_fn
-    end
+    local system = _G.system
+    steam.time = steam.time or system.SteamTime
+    steam.getAwayTime = steam.getAwayTime or system.UpTime
+    steam.getAppTime = steam.getAppTime or system.AppTime
 
 end
 

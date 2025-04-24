@@ -24,6 +24,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- A cache for http requests.
+    ---
     ---@class gpm.http_cache
     ---@field MAX_SIZE number The maximum size of cached content.
     local http_cache = {}
@@ -31,6 +32,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- Gets the cached content for the specified URL.
+    ---
     ---@param url string
     ---@return table?
     function http_cache.get( url )
@@ -43,6 +45,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- Sets the cached content for the specified URL.
+    ---
     ---@param url string The URL to cache.
     ---@param etag string The ETag for the cached content.
     ---@param content string The cached content.
@@ -70,12 +73,14 @@ do
     --- [SHARED AND MENU]
     ---
     --- A key-value store for gpm.
+    ---
     ---@class gpm.store
     local store = {}
 
     --- [SHARED AND MENU]
     ---
     --- Returns the value for the specified key.
+    ---
     ---@param key string
     ---@return string
     function store.get( key )
@@ -85,6 +90,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- Sets the value for the specified key.
+    ---
     ---@param key string
     ---@param value string
     function store.set( key, value )
@@ -104,6 +110,7 @@ if std.SERVER then
     --- [SERVER]
     ---
     --- Returns a list of all repositories
+    ---
     ---@return table lst The list of repositories.
     function repositories.getRepositories()
         return sqlite_query( "select * from 'gpm.repositories'" ) or {}
@@ -112,6 +119,7 @@ if std.SERVER then
     --- [SERVER]
     ---
     --- Adds a new repository to the database.
+    ---
     ---@param url string
     function repositories.addRepository( url )
         -- sadly gmod's sqlite does not support returning clause :(
@@ -141,6 +149,7 @@ if std.SERVER then
     --- [SERVER]
     ---
     --- Removes the specified repository from the database.
+    ---
     ---@param repository table | number | string The repository to remove.
     function repositories.removeRepository( repository )
         local repository_id = getRepositoryID( repository )
@@ -167,6 +176,7 @@ if std.SERVER then
     --- [SERVER]
     ---
     --- Returns the package for the specified repository and name.
+    ---
     ---@param repository table | number | string The repository to get the package from.
     ---@param name string The name of the package to get.
     ---@return table? pkg The package, or `nil` if the package does not exist.
@@ -186,6 +196,7 @@ if std.SERVER then
     --- [SERVER]
     ---
     --- Returns a list of packages for the specified repository.
+    ---
     ---@param repository table | number | string The repository to get the packages from.
     ---@return table lst The list of packages.
     function repositories.getPackages( repository )
@@ -212,6 +223,7 @@ if std.SERVER then
     --- [SERVER]
     ---
     --- Updates the packages for the specified repository.
+    ---
     ---@param repository table | number | string The repository to update.
     ---@param packages table The packages to update.
     function repositories.updateRepository( repository, packages )
@@ -263,12 +275,14 @@ do
     --- [SHARED AND MENU]
     ---
     --- The files hash database.
+    ---
     ---@class gpm.files
     local files = {}
 
     --- [SHARED AND MENU]
     ---
     --- Saves a file to the database.
+    ---
     ---@param path string The path of the file.
     ---@param size number The size of the file.
     ---@param seconds number The last modified time of the file.
@@ -280,6 +294,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- Returns a file from the database.
+    ---
     ---@param path string The path of the file.
     ---@return table? data The file data.
     function files.get( path )
@@ -428,6 +443,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- Checks if a migration exists and returns `true` or `false`.
+    ---
     ---@param name string The name of the migration.
     ---@return boolean exists `true` if migration exists, `false` otherwise.
     local function migrationExists( name )

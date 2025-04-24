@@ -14,17 +14,16 @@ local window = std.os.window
 local menu = std.menu or { visible = false }
 std.menu = menu
 
-local debug_fempty = std.debug.fempty
+do
 
-local gui = _G.gui
-if gui ~= nil then
+    local gui = _G.gui
 
-    menu.isVisible = gui.IsGameUIVisible or debug_fempty
-    menu.open = gui.ActivateGameUI or debug_fempty
-    menu.openURL = gui.OpenURL or debug_fempty
+    menu.isVisible = gui.IsGameUIVisible
+    menu.open = gui.ActivateGameUI
+    menu.openURL = gui.OpenURL
 
     ---@diagnostic disable-next-line: deprecated
-    menu.close = gui.HideGameUI or debug_fempty
+    menu.close = gui.HideGameUI or std.debug.fempty
 
     local gui_IsGameUIVisible = gui.IsGameUIVisible
 
@@ -37,13 +36,6 @@ if gui ~= nil then
         end )
 
     end
-
-else
-
-    menu.isVisible = debug_fempty
-    menu.open = debug_fempty
-    menu.openURL = debug_fempty
-    menu.close = debug_fempty
 
 end
 

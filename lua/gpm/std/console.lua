@@ -283,7 +283,7 @@ do
     end
 
     if std.CLIENT_MENU and _G.input ~= nil then
-        CommandClass.translateAlias = _G.input.TranslateAlias or debug.fempty
+        CommandClass.translateAlias = _G.input.TranslateAlias
     end
 
     CommandClass.run = RunConsoleCommand

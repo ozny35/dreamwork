@@ -292,7 +292,7 @@ do
     ---@diagnostic disable-next-line: deprecated
     coroutine.isyieldable = coroutine.isyieldable or glua_coroutine.isyieldable or function() return true end
 
-    coroutine.create = coroutine.create or glua_coroutine.create or debug_fempty
+    coroutine.create = coroutine.create or glua_coroutine.create
     coroutine.resume = coroutine.resume or glua_coroutine.resume
     coroutine.running = coroutine.running or glua_coroutine.running
     coroutine.status = coroutine.status or glua_coroutine.status
@@ -641,9 +641,12 @@ do
 
     end
 
+    -- TODO: think about throw
+
     --- [SHARED AND MENU]
     ---
     --- Throws a Lua error.
+    ---
     ---@param message string | Error: The error message to throw.
     ---@param level gpm.std.ErrorType?: The error level to throw.
     function std.error( message, level )
@@ -675,6 +678,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- Returns a string representing the name of the type of the passed object.
+    ---
     ---@param value any The value to get the type of.
     ---@return string type_name The type name of the given value.
     function type( value )
@@ -692,6 +696,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- Validates the type of the argument and returns a boolean and an error message.
+    ---
     ---@param value any The argument value.
     ---@param arg_num number The argument number.
     ---@param expected_type string The expected type name.
@@ -815,7 +820,7 @@ dofile( "std/crypto.xtea.lua" )
 dofile( "std/crypto.binary.lua" )
 
 dofile( "std/crypto.deflate.lua" )
--- dofile( "std/crypto.hmac.lua" )
+dofile( "std/crypto.hmac.lua" )
 dofile( "std/crypto.aes.lua" )
 
 dofile( "std/crypto.byte_reader.lua" )

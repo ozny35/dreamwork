@@ -8,14 +8,19 @@ local math_max = math.max
 
 ---@class gpm.std.string
 local string = std.string
-local string_byte, string_sub, string_find, string_rep, string_len, string_match = string.byte, string.sub, string.find, string.rep, string.len, string.match
+
+local string_byte, string_char = string.byte, string.char
+local string_find, string_match = string.find, string.match
+local string_sub, string_rep, string_len = string.sub, string.rep, string.len
 
 ---@class gpm.std.table
 local table = std.table
 local table_concat = table.concat
 
-
+--- [SHARED AND MENU]
+---
 --- Converts a binary string to a decimal number.
+---
 ---@param str string The binary string.
 ---@return number
 local function bin2dec( str )
@@ -29,7 +34,10 @@ do
 
     local math_ceil, math_floor, math_log, math_ln2 = math.ceil, math.floor, math.log, math.ln2
 
+    --- [SHARED AND MENU]
+    ---
     --- Converts a decimal number to a binary string.
+    ---
     ---@param number number The decimal number.
     ---@param complement? boolean Whether to complement the binary string.
     ---@return string The binary string.
@@ -77,7 +85,10 @@ end
 
 string.dec2bin = dec2bin
 
+--- [SHARED AND MENU]
+---
 --- Converts a hex string to a decimal number.
+---
 ---@param str string The hex string.
 ---@return number
 local function hex2dec( str )
@@ -91,7 +102,10 @@ do
 
     local string_format = string.format
 
+    --- [SHARED AND MENU]
+    ---
     --- Converts a decimal number to a hex string.
+    ---
     ---@param number number The decimal number.
     ---@return string
     function dec2hex( number )
@@ -102,7 +116,10 @@ do
 
 end
 
+--- [SHARED AND MENU]
+---
 --- Converts a hex string to a binary string.
+---
 ---@param str string The hex string.
 ---@param complement? boolean
 ---@return string, number
@@ -110,7 +127,10 @@ function string.hex2bin( str, complement )
     return dec2bin( hex2dec( str ), complement )
 end
 
+--- [SHARED AND MENU]
+---
 --- Converts a binary string to a hex string.
+---
 ---@param str string The binary string.
 ---@return string
 function string.bin2hex( str )
@@ -151,7 +171,10 @@ do
         [ 0x24 ] = "%$"
     }
 
+    --- [SHARED AND MENU]
+    ---
     --- Returns a pattern-safe string.
+    ---
     ---@param str string The string.
     ---@return string
     function string.makePatternSafe( str )
@@ -192,7 +215,10 @@ do
         return table_concat( result, "", 1, length )
     end
 
+    --- [SHARED AND MENU]
+    ---
     --- Removes leading and trailing matches of a string.
+    ---
     ---@param str string The string.
     ---@param pattern? string The pattern to match, `%s` for whitespace.
     ---@param direction? number The direction to trim. `1` for left, `-1` for right, `0` for both.
@@ -229,7 +255,10 @@ do
 
     local string_byteSplit = string.byteSplit
 
+    --- [SHARED AND MENU]
+    ---
     --- Checks if a string is a domain.
+    ---
     ---@param str string The string.
     ---@return boolean isDomain Whether the string is a domain.
     ---@return string? error The error message.
@@ -270,7 +299,10 @@ do
 
 end
 
+--- [SHARED AND MENU]
+---
 --- Checks if a string is an email.
+---
 ---@param str string The string.
 ---@return boolean isEmail Whether the string is an email.
 ---@return string? error The error message.
@@ -319,53 +351,47 @@ do
     local symbol_alphabet = {}
     local extended_ascii_alphabet = {}
 
-    do
-
-        local string_char = string.char
-
-        for i = 97, 122, 1 do
-            table_insert( lowercase_alphabet, string_char( i ) )
-        end
-
-        lowercase_alphabet[ 0 ] = #lowercase_alphabet
-
-        for i = 65, 90, 1 do
-            table_insert( uppercase_alphabet, string_char( i ) )
-        end
-
-        uppercase_alphabet[ 0 ] = #uppercase_alphabet
-
-        for i = 48, 57, 1 do
-            table_insert( numberic_alphabet, string_char( i ) )
-        end
-
-        numberic_alphabet[ 0 ] = #numberic_alphabet
-
-        for i = 33, 47, 1 do
-            table_insert( symbol_alphabet, string_char( i ) )
-        end
-
-        for i = 58, 64, 1 do
-            table_insert( symbol_alphabet, string_char( i ) )
-        end
-
-        for i = 91, 96, 1 do
-            table_insert( symbol_alphabet, string_char( i ) )
-        end
-
-        for i = 123, 126, 1 do
-            table_insert( symbol_alphabet, string_char( i ) )
-        end
-
-        symbol_alphabet[ 0 ] = #symbol_alphabet
-
-        for i = 128, 255, 1 do
-            table_insert( extended_ascii_alphabet, string_char( i ) )
-        end
-
-        extended_ascii_alphabet[ 0 ] = #extended_ascii_alphabet
-
+    for i = 97, 122, 1 do
+        table_insert( lowercase_alphabet, string_char( i ) )
     end
+
+    lowercase_alphabet[ 0 ] = #lowercase_alphabet
+
+    for i = 65, 90, 1 do
+        table_insert( uppercase_alphabet, string_char( i ) )
+    end
+
+    uppercase_alphabet[ 0 ] = #uppercase_alphabet
+
+    for i = 48, 57, 1 do
+        table_insert( numberic_alphabet, string_char( i ) )
+    end
+
+    numberic_alphabet[ 0 ] = #numberic_alphabet
+
+    for i = 33, 47, 1 do
+        table_insert( symbol_alphabet, string_char( i ) )
+    end
+
+    for i = 58, 64, 1 do
+        table_insert( symbol_alphabet, string_char( i ) )
+    end
+
+    for i = 91, 96, 1 do
+        table_insert( symbol_alphabet, string_char( i ) )
+    end
+
+    for i = 123, 126, 1 do
+        table_insert( symbol_alphabet, string_char( i ) )
+    end
+
+    symbol_alphabet[ 0 ] = #symbol_alphabet
+
+    for i = 128, 255, 1 do
+        table_insert( extended_ascii_alphabet, string_char( i ) )
+    end
+
+    extended_ascii_alphabet[ 0 ] = #extended_ascii_alphabet
 
     --- [SHARED AND MENU]
     ---

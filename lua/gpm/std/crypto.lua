@@ -1,8 +1,8 @@
 local _G = _G
-local gpm, glua_util = _G.gpm, _G.util
+local glua_util = _G.util
 
 ---@class gpm.std
-local std = gpm.std
+local std = _G.gpm.std
 
 local string = std.string
 local string_byte, string_len = string.byte, string.len
@@ -10,10 +10,15 @@ local string_byte, string_len = string.byte, string.len
 --- [SHARED AND MENU]
 ---
 --- The crypto library.
+---
 ---@class gpm.std.crypto
 local crypto = {}
 std.crypto = crypto
 
+--- [SHARED AND MENU]
+---
+--- The lzma format is a lossless data compression algorithm that is used to compress large files.
+---
 ---@class gpm.std.crypto.lzma
 ---@field PROPS_SIZE number The size of the lzma properties in bytes.
 local lzma = {
@@ -27,6 +32,7 @@ crypto.lzma = lzma
 --- [SHARED AND MENU]
 ---
 --- Returns the decompressed size of the given string.
+---
 ---@param str string Compressed string.
 ---@return number size The decompressed size in bytes.
 function lzma.size( str )
@@ -43,25 +49,83 @@ end
 --- [SHARED AND MENU]
 ---
 --- The KeyValues format is used in the Source engine to store meta data for resources, scripts, materials, VGUI elements, and more..
+---
 ---@class gpm.std.crypto.vdf
 crypto.vdf = { deserialize = glua_util.KeyValuesToTable, serialize = glua_util.TableToKeyValues }
 
 --- [SHARED AND MENU]
 ---
 --- The JSON format is used to store data in a human-readable format.
+---
 ---@class gpm.std.crypto.json
 crypto.json = { deserialize = glua_util.JSONToTable, serialize = glua_util.TableToJSON }
 
 --- [SHARED AND MENU]
 ---
 --- The base64 format is used to encode data as a string of characters.
+---
 ---@class gpm.std.crypto.base64
 crypto.base64 = { decode = glua_util.Base64Decode, encode = glua_util.Base64Encode }
 
-crypto.sha256 = glua_util.SHA256
-crypto.crc32 = glua_util.CRC
-crypto.sha1 = glua_util.SHA1
-crypto.md5 = glua_util.MD5
+--- [SHARED AND MENU]
+---
+--- SHA-256 stands for Secure Hash Algorithm 256-bit, part of the SHA-2 family.
+---
+--- Like other hash functions, it takes input data ( string )
+--- and produces a digest ( string ) — a
+--- fixed-size output string that represents that data.
+---
+---@class gpm.std.crypto.sha256
+---@field block integer The block size in bytes.
+---@field digest integer The digest ( fingerprint ) size in bytes.
+crypto.sha256 = { hash = glua_util.SHA256, block = 64, digest = 32 }
+
+--- [SHARED AND MENU]
+---
+--- SHA-1 is a cryptographic hash function that produces a 160-bit hash value.
+---
+--- Like other hash functions, it takes input data ( string )
+--- and produces a digest ( string ) — a
+--- fixed-size output string that represents that data.
+---
+--- **SHA1 is insecure**
+---
+--- Because of collision attacks,
+--- attackers can find two different inputs
+--- that produce the same hash.
+---
+--- This violates one of the basic principles
+--- of a secure hash function - collision resistance.
+---
+---@class gpm.std.crypto.sha1
+---@field block integer The block size in bytes.
+---@field digest integer The digest ( fingerprint ) size in bytes.
+crypto.sha1 = { hash = glua_util.SHA1, block = 64, digest = 20 }
+
+--- [SHARED AND MENU]
+---
+--- MD5 stands for Message Digest Algorithm 5.
+---
+--- It’s a cryptographic hash function that was
+--- once very widely used and produces a 128-bit hash value.
+---
+--- Like other hash functions, it takes input data ( string )
+--- and produces a digest ( string ) — a
+--- fixed-size output string that represents that data.
+---
+--- **MD5 is insecure**
+---
+--- Because of collision attacks,
+--- attackers can find two different inputs
+--- that produce the same hash.
+---
+--- This violates one of the basic principles
+--- of a secure hash function - collision resistance.
+---
+---@class gpm.std.crypto.md5
+---@field block integer The block size in bytes.
+---@field digest integer The digest ( fingerprint ) size in bytes.
+crypto.md5 = { hash = glua_util.MD5, block = 64, digest = 16 }
 
 --- [SHARED AND MENU]
 ---
@@ -141,4 +205,4 @@ function crypto.adler32( str )
     return ( b * 0x10000 + a ) % 0x100000000
 end
 
-return crypto
+crypto.crc32 = glua_util.CRC

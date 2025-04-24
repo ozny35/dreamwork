@@ -18,15 +18,12 @@ os.window = window
 local width, height = _G.ScrW(), _G.ScrH()
 window.width, window.height = width, height
 
-local glua_system = _G.system
-if glua_system == nil then
-    local debug_fempty = std.debug.fempty
-    window.isWindowed = debug_fempty
-    window.flash = debug_fempty
-else
+do
 
-    window.isWindowed = window.isWindowed or glua_system.IsWindowed or std.debug.fempty
-    window.flash = window.flash or glua_system.FlashWindow or std.debug.fempty
+    local glua_system = _G.system
+
+    window.isWindowed = window.isWindowed or glua_system.IsWindowed
+    window.flash = window.flash or glua_system.FlashWindow
 
     if glua_system.HasFocus ~= nil then
 

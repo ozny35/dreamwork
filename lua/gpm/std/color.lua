@@ -79,6 +79,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Creates a color object from RGBA values.
+---
 ---@param r integer?: The 8-bit red channel.
 ---@param g integer?: The 8-bit green channel.
 ---@param b integer?: The 8-bit blue channel.
@@ -130,6 +131,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Inverts current color.
+---
 ---@return gpm.std.Color color The color object.
 function Color:invert()
     self[ 1 ] = math_min( math_max( math_abs( 255 - self[ 1 ] ), 0 ), 255 )
@@ -226,6 +228,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Unpacks the color as r, g, b, a values.
+---
 ---@return integer r The 8-bit red channel.
 ---@return integer g The 8-bit green channel.
 ---@return integer b The 8-bit blue channel.
@@ -237,6 +240,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Makes a copy of the color.
+---
 ---@return gpm.std.Color color The copy of the color.
 function Color:copy()
     return setmetatable( { self[ 1 ], self[ 2 ], self[ 3 ], self[ 4 ] }, Color )
@@ -245,6 +249,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Makes color a copy of the another color.
+---
 ---@param color gpm.std.Color The color to copy.
 ---@return gpm.std.Color color The copy of the color.
 function Color:copyFrom( color )
@@ -258,6 +263,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Set the color as r, g, b, a values.
+---
 ---@param r integer The 8-bit red channel.
 ---@param g integer The 8-bit green channel.
 ---@param b integer The 8-bit blue channel.
@@ -276,6 +282,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Returns the color as hex string.
+---
 ---@param withAlpha boolean?: Whether to include alpha.
 ---@return string hex_str The hex string.
 function Color:toHex( withAlpha )
@@ -293,6 +300,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- Returns the color as 32-bit integer.
+    ---
     ---@param withAlpha boolean?: Whether to include alpha.
     ---@return integer uint32 The 32-bit integer.
     function Color:toUInt32( withAlpha )
@@ -308,6 +316,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Returns the color as binary string.
+---
 ---@param withAlpha boolean?: Whether to include alpha.
 ---@return string bin_str The binary string.
 function Color:toBinary( withAlpha )
@@ -317,6 +326,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Returns the color as HSL values (hue, saturation, lightness).
+---
 ---@return integer hue The hue in degrees [0, 360].
 ---@return number saturation The saturation as fraction [0, 1].
 ---@return number lightness The lightness as fraction [0, 1].
@@ -355,6 +365,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Returns the color as HSV values (hue, saturation, value).
+---
 ---@return integer hue The hue in degrees [0, 360].
 ---@return number saturation The saturation as fraction [0, 1].
 ---@return number value The value as fraction [0, 1].
@@ -389,6 +400,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Returns the color as HWB values (hue, whiteness, blackness).
+---
 ---@return integer hue The hue in degrees [0, 360].
 ---@return number whiteness The whiteness as fraction [0, 1].
 ---@return number blackness The blackness as fraction [0, 1].
@@ -400,6 +412,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Returns the color as CMYK values (cyan, magenta, yellow, black).
+---
 ---@return number cyan The cyan as fraction [0, 1].
 ---@return number magenta The magenta as fraction [0, 1].
 ---@return number yellow The yellow as fraction [0, 1].
@@ -416,6 +429,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- Smoothing a color object to another color object.
+    ---
     ---@param color gpm.std.Color The color to lerp.
     ---@param frac number?: The fraction to lerp [0, 1].
     ---@param withAlpha boolean?: Whether to lerp alpha channel.
@@ -439,6 +453,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Creates a color object from lerp.
+---
 ---@param color gpm.std.Color The "from" color.
 ---@param frac number?: The fraction [0, 1].
 ---@param withAlpha boolean?: Whether to lerp alpha channel.
@@ -450,6 +465,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Returns the color's hue.
+---
 ---@return integer hue The hue in degrees [0, 360].
 function Color:getHue()
     local red, green, blue = self[ 1 ] * DIV255_CONST, self[ 2 ] * DIV255_CONST, self[ 3 ] * DIV255_CONST
@@ -477,6 +493,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Sets the color's hue.
+---
 ---@param hue integer The hue in degrees [0, 360].
 ---@return gpm.std.Color color The color object.
 function Color:setHue( hue )
@@ -487,6 +504,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Returns the color's saturation.
+---
 ---@return number saturation The saturation as fraction [0, 1].
 function Color:getSaturation()
     local red, green, blue = self[ 1 ] * DIV255_CONST, self[ 2 ] * DIV255_CONST, self[ 3 ] * DIV255_CONST
@@ -497,6 +515,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Sets the color's saturation.
+---
 ---@param saturation number The saturation as fraction [0, 1].
 ---@return gpm.std.Color color The color object.
 function Color:setSaturation( saturation )
@@ -507,6 +526,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Returns the color's brightness.
+---
 ---@return number brightness The brightness as fraction [0, 1].
 function Color:getBrightness()
     return math_max( self[ 1 ], self[ 2 ], self[ 3 ] ) * DIV255_CONST
@@ -515,6 +535,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Sets the color's brightness.
+---
 ---@param brightness number The brightness as fraction [0, 1].
 ---@return gpm.std.Color color The color object.
 function Color:setBrightness( brightness )
@@ -525,6 +546,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Returns the color's lightness.
+---
 ---@return number lightness The lightness as fraction [0, 1].
 function Color:getLightness()
     local red, green, blue = self[ 1 ] * DIV255_CONST, self[ 2 ] * DIV255_CONST, self[ 3 ] * DIV255_CONST
@@ -534,6 +556,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Sets the color's lightness.
+---
 ---@param lightness number The lightness as fraction [0, 1].
 ---@return gpm.std.Color color The color object.
 function Color:setLightness( lightness )
@@ -544,6 +567,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Returns the color's whiteness.
+---
 ---@return number whiteness The whiteness as fraction [0, 1].
 function Color:getWhiteness()
     local _, saturation, brightness = self:toHSL()
@@ -553,6 +577,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Sets the color's whiteness.
+---
 ---@param whiteness number The whiteness as fraction [0, 1].
 ---@return gpm.std.Color color The color object.
 function Color:setWhiteness( whiteness )
@@ -563,6 +588,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Returns the color's blackness.
+---
 ---@return number blackness The blackness as fraction [0, 1].
 function Color:getBlackness()
     local _, __, brightness = self:toHSL()
@@ -572,6 +598,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Sets the color's blackness.
+---
 ---@param blackness number The blackness as fraction [0, 1].
 ---@return gpm.std.Color color The color object.
 function Color:setBlackness( blackness )
@@ -611,6 +638,7 @@ do
     --- Changes the color to hex string.
     ---
     --- Supports hex strings from `0` to `8` characters.
+    ---
     ---@param hex string The hex string. If the first character is `#`, it will be ignored.
     ---@return gpm.std.Color color The color object.
     function Color:fromHex( hex )
@@ -666,6 +694,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- Creates a color object from hex string.
+    ---
     ---@param hex string The hex string. If the first character is `#`, it will be ignored.
     ---@return gpm.std.Color color The color object.
     function ColorClass.fromHex( hex )
@@ -681,6 +710,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- Changes the color to 32-bit uint.
+    ---
     ---@param uint32 integer The 32-bit uint.
     ---@param withAlpha boolean?: Whether to include alpha.
     ---@return gpm.std.Color color The color object.
@@ -708,6 +738,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- Creates a color object from 32-bit uint.
+    ---
     ---@param uint32 integer The 32-bit uint.
     ---@param withAlpha boolean?: Whether to include alpha.
     ---@return gpm.std.Color color The color object.
@@ -720,6 +751,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Changes the color to binary string.
+---
 ---@param binary string The binary string.
 ---@return gpm.std.Color color The color object.
 function Color:fromBinary( binary )
@@ -752,6 +784,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Creates a color object from binary string.
+---
 ---@param binary string The binary string.
 ---@return gpm.std.Color color The color object.
 function ColorClass.fromBinary( binary )
@@ -761,6 +794,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Changes the color to HSL.
+---
 ---@param hue integer The hue in degrees [0, 360].
 ---@param saturation number The saturation [0, 1].
 ---@param lightness number The lightness [0, 1].
@@ -796,6 +830,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Creates a color object from HSL values.
+---
 ---@param hue integer The hue in degrees [0, 360].
 ---@param saturation number The saturation [0, 1].
 ---@param lightness number The lightness [0, 1].
@@ -807,6 +842,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Changes the color to HSV values.
+---
 ---@param hue integer The hue in degrees [0, 360].
 ---@param saturation number The saturation [0, 1].
 ---@param brightness number The brightness [0, 1].
@@ -842,6 +878,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Creates a color object from HSV values.
+---
 ---@param hue integer The hue in degrees [0, 360].
 ---@param saturation number The saturation [0, 1].
 ---@param brightness number The brightness [0, 1].
@@ -853,6 +890,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Changes the color to HWB values.
+---
 ---@param hue integer The hue in degrees [0, 360].
 ---@param saturation number The saturation [0, 1].
 ---@param brightness number The brightness [0, 1].
@@ -865,6 +903,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Creates a color object from HWB values.
+---
 ---@param hue integer The hue in degrees [0, 360].
 ---@param saturation number The saturation [0, 1].
 ---@param brightness number The brightness [0, 1].
@@ -876,6 +915,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Changes the color to CMYK values.
+---
 ---@param cyan number The cyan as fraction [0, 1].
 ---@param magenta number The magenta as fraction [0, 1].
 ---@param yellow number The yellow as fraction [0, 1].
@@ -895,6 +935,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Creates a color object from CMYK values.
+---
 ---@param cyan number The cyan as fraction [0, 1].
 ---@param magenta number The magenta as fraction [0, 1].
 ---@param yellow number The yellow as fraction [0, 1].
@@ -940,6 +981,7 @@ do
     --- If no color is found, a new empty color will be created and assigned to specified name.
     ---
     --- Table key must be string or integer.
+    ---
     ---@class gpm.std.Color.scheme
     ---@field [string] gpm.std.Color
     ---@field [integer] gpm.std.Color
@@ -969,6 +1011,7 @@ do
             return debug_getmetatable( value ) == Color
         end
 
+        ---@protected
         function metatable:__newindex( key, value )
             if ( isstring( key ) or isnumber( key ) ) and debug_getmetatable( value ) == Color then
                 raw_set( scheme, key, value )
@@ -985,6 +1028,7 @@ do
         ---@diagnostic disable-next-line: undefined-field
         local NamedColor = _G.NamedColor
 
+        ---@protected
         function metatable:__index( name )
             local data
             if isstring( name ) then
@@ -1006,6 +1050,7 @@ do
 
     else
 
+        ---@protected
         function metatable:__index( name )
             if isstring( name ) or isnumber( name ) then
                 local color = from_rgba( 255, 255, 255, 255 )
