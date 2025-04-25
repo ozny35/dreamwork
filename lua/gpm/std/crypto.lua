@@ -67,65 +67,94 @@ crypto.json = { deserialize = glua_util.JSONToTable, serialize = glua_util.Table
 ---@class gpm.std.crypto.base64
 crypto.base64 = { decode = glua_util.Base64Decode, encode = glua_util.Base64Encode }
 
---- [SHARED AND MENU]
----
---- SHA-256 stands for Secure Hash Algorithm 256-bit, part of the SHA-2 family.
----
---- Like other hash functions, it takes input data ( string )
---- and produces a digest ( string ) — a
---- fixed-size output string that represents that data.
----
----@class gpm.std.crypto.sha256
----@field block integer The block size in bytes.
----@field digest integer The digest ( fingerprint ) size in bytes.
-crypto.sha256 = { hash = glua_util.SHA256, block = 64, digest = 32 }
+do
 
---- [SHARED AND MENU]
----
---- SHA-1 is a cryptographic hash function that produces a 160-bit hash value.
----
---- Like other hash functions, it takes input data ( string )
---- and produces a digest ( string ) — a
---- fixed-size output string that represents that data.
----
---- **SHA1 is insecure**
----
---- Because of collision attacks,
---- attackers can find two different inputs
---- that produce the same hash.
----
---- This violates one of the basic principles
---- of a secure hash function - collision resistance.
----
----@class gpm.std.crypto.sha1
----@field block integer The block size in bytes.
----@field digest integer The digest ( fingerprint ) size in bytes.
-crypto.sha1 = { hash = glua_util.SHA1, block = 64, digest = 20 }
+    --- [SHARED AND MENU]
+    ---
+    --- MD5 stands for Message Digest Algorithm 5.
+    ---
+    --- It’s a cryptographic hash function that was
+    --- once very widely used and produces a 128-bit hash value.
+    ---
+    --- Like other hash functions, it takes input data ( string )
+    --- and produces a digest ( string ) — a
+    --- fixed-size output string that represents that data.
+    ---
+    --- **MD5 is insecure**
+    ---
+    --- Because of collision attacks,
+    --- attackers can find two different inputs
+    --- that produce the same hash.
+    ---
+    --- This violates one of the basic principles
+    --- of a secure hash function - collision resistance.
+    ---
+    ---@class gpm.std.crypto.md5 : gpm.std.crypto.hashlib
+    local md5 = crypto.md5 or {}
+    crypto.md5 = md5
 
---- [SHARED AND MENU]
----
---- MD5 stands for Message Digest Algorithm 5.
----
---- It’s a cryptographic hash function that was
---- once very widely used and produces a 128-bit hash value.
----
---- Like other hash functions, it takes input data ( string )
---- and produces a digest ( string ) — a
---- fixed-size output string that represents that data.
----
---- **MD5 is insecure**
----
---- Because of collision attacks,
---- attackers can find two different inputs
---- that produce the same hash.
----
---- This violates one of the basic principles
---- of a secure hash function - collision resistance.
----
----@class gpm.std.crypto.md5
----@field block integer The block size in bytes.
----@field digest integer The digest ( fingerprint ) size in bytes.
-crypto.md5 = { hash = glua_util.MD5, block = 64, digest = 16 }
+    md5.block = 64
+    md5.digest = 16
+    md5.hex = 32
+
+    md5.hash = md5.hash or glua_util.MD5
+
+end
+
+do
+
+    --- [SHARED AND MENU]
+    ---
+    --- SHA-1 is a cryptographic hash function that produces a 160-bit hash value.
+    ---
+    --- Like other hash functions, it takes input data ( string )
+    --- and produces a digest ( string ) — a
+    --- fixed-size output string that represents that data.
+    ---
+    --- **SHA1 is insecure**
+    ---
+    --- Because of collision attacks,
+    --- attackers can find two different inputs
+    --- that produce the same hash.
+    ---
+    --- This violates one of the basic principles
+    --- of a secure hash function - collision resistance.
+    ---
+    ---@class gpm.std.crypto.sha1 : gpm.std.crypto.hashlib
+    local sha1 = crypto.sha1 or {}
+    crypto.sha1 = sha1
+
+    sha1.block = 64
+    sha1.digest = 20
+    sha1.hex = 40
+
+    sha1.hash = sha1.hash or glua_util.SHA1
+
+end
+
+do
+
+    --- [SHARED AND MENU]
+    ---
+    --- SHA-256 stands for Secure Hash Algorithm 256-bit, part of the SHA-2 family.
+    ---
+    --- This hash algorithm is recommended because it is fast and secure.
+    ---
+    --- Like other hash functions, it takes input data ( string )
+    --- and produces a digest ( string ) — a
+    --- fixed-size output string that represents that data.
+    ---
+    ---@class gpm.std.crypto.sha256 : gpm.std.crypto.hashlib
+    local sha256 = crypto.sha256 or {}
+    crypto.sha256 = sha256
+
+    sha256.block = 64
+    sha256.digest = 32
+    sha256.hex = 64
+
+    sha256.hash = sha256.hash or glua_util.SHA256
+
+end
 
 --- [SHARED AND MENU]
 ---
