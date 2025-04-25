@@ -450,3 +450,51 @@ do
     end
 
 end
+
+
+do
+
+    local string_format = string.format
+
+    --- [SHARED AND MENU]
+    ---
+    --- Converts a string into a hex string.
+    ---
+    --- Basically must be used for binary strings.
+    ---
+    ---@param str string The input string.
+    ---@return string hex_str The hex string.
+    function string.toHex( str )
+        local binary_length = string_len( str )
+        return string_format( string_rep( "%02x", binary_length ), string_byte( str, 1, binary_length ) )
+    end
+
+end
+
+do
+
+    local table_unpack = table.unpack
+
+    --- [SHARED AND MENU]
+    ---
+    --- Converts a hex string into a string.
+    ---
+    ---@param str string The hex string.
+    ---@return string result The string.
+    function string.fromHex( str )
+        local length = string_len( str )
+        if length % 2 ~= 0 then
+            std.error( "hex string must have an even length", 2 )
+        end
+
+        local buffer, pointer = {}, 0
+
+        for i = 1, string_len( str ), 2 do
+            pointer = pointer + 1
+            buffer[ pointer ] = tonumber( string_sub( str, i, i + 1 ), 16 )
+        end
+
+        return string_char( table_unpack( buffer, 1, pointer ) )
+    end
+
+end

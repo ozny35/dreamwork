@@ -9,6 +9,37 @@ The package manager will allow asynchronous loading of Lua packages, introduces 
 
 Now I can finally say that we have created a powerful tool for skilled developers ;>
 
+## Implemented
+* Built-in OOP (Object Oriented Programming) support
+* Built-in async support (python like futures)
+* Big Integer class
+* LZW compression
+* Deflate compression
+* XTEA encryption
+* AES encryption
+* HMAC hashing
+* PBKDF2 hashing
+* Separate lua environment
+* Extremely fast functions
+* Fast binary read/write functions
+* POSIX like file system
+* Built-in support for a huge number of community binary modules
+* Fast separate hook library
+* Server, Client, Menu realms support
+* Multiple native lua 5.1 - 5.4 functions and features
+* Highly extended base libraries
+* Development-ready functions for working with bits/bytes
+* Fully integrated Lua Language Server ( LuaLS )
+* Fully implemented Steam Identifier ( SteamID ) class ( supports all account types and all existing transformations )
+
+## Planned
+* Downloading and building package dependency chains
+* Complete reworking of Garry's Mod codebase
+* Implement file multi-transport API
+* Built-in support of holy-lib
+* Addon ( GMA file ) class
+* and many, many more...
+
 ## Bugs and Suggestions
 If you have any ideas or found a bug or error, please report it to us, we will try to fix it or explain what the problem is.
 
