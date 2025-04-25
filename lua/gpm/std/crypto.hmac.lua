@@ -112,9 +112,22 @@ end
 ---@param outer string The outer hmac padding.
 ---@param inner string The inner hmac padding.
 ---@param msg string The message to compute hmac for.
----@return string hmac_str The hex hmac string of the message.
-function hmac.compute( hash_fn, outer, inner, msg )
+---@return string hex_str The hex hmac string of the message.
+function hmac.computeHex( hash_fn, outer, inner, msg )
     return hash_fn( outer .. string_fromHex( hash_fn( inner .. msg ) ) )
+end
+
+--- [SHARED AND MENU]
+---
+--- Computes hmac and returns the result as a binary string.
+---
+---@param hash_fn function The hash function that must return hex string.
+---@param outer string The outer hmac padding.
+---@param inner string The inner hmac padding.
+---@param msg string The message to compute hmac for.
+---@return string hmac_str The binary hmac string of the message.
+function hmac.computeBinary( hash_fn, outer, inner, msg )
+    return string_fromHex( hash_fn( outer .. string_fromHex( hash_fn( inner .. msg ) ) ) )
 end
 
 do
@@ -127,7 +140,7 @@ do
     ---@param key string The key to use.
     ---@param hash_fn function The hash function that must return hex string.
     ---@param block_size integer The block size of the hash function.
-    ---@return string hmac_str The hex hmac string of the message.
+    ---@return string hex_str The hex hmac string of the message.
     local function hash( msg, key, hash_fn, block_size )
         local outer, inner = key_padding( key_normalize( key, hash_fn, block_size ), block_size )
         return hash_fn( outer .. string_fromHex( hash_fn( inner .. msg ) ) )
@@ -144,7 +157,7 @@ do
     function hmac.preset( hash_fn, block_size )
         ---@param message string The message to compute hmac for.
         ---@param key string The key to use.
-        ---@return string hmac_str The hex hmac string of the message.
+        ---@return string hex_str The hex hmac string of the message.
         return function( message, key )
             return hash( message, key, hash_fn, block_size )
         end

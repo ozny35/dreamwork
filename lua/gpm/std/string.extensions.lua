@@ -470,7 +470,6 @@ do
 
 end
 
-
 do
 
     local string_format = string.format
