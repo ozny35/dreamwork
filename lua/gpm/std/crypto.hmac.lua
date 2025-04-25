@@ -1,5 +1,6 @@
 local std = _G.gpm.std
 local string = std.string
+local string_fromHex = string.fromHex
 
 ---@class gpm.std.crypto
 local crypto = std.crypto
@@ -15,21 +16,20 @@ crypto.hmac = hmac
 local key_normalize
 do
 
-    local string_len = string.len
-    local string_rep = string.rep
+    local string_len, string_rep = string.len, string.rep
 
     --- [SHARED AND MENU]
     ---
     --- Normalizes the key to the block size of the hash function.
     ---
     ---@param key string The key to normalize.
-    ---@param hash_fn function The hash function to use.
+    ---@param hash_fn function The hash function that must return hex string.
     ---@param block_size integer The block size of the hash function.
-    ---@return string key The normalized key.
+    ---@return string hmac_key The normalized key.
     function key_normalize( key, hash_fn, block_size )
         local key_length = string_len( key )
         if key_length > block_size then
-            return hash_fn( key )
+            return key_normalize( string_fromHex( hash_fn( key ) ), hash_fn, block_size )
         elseif key_length < block_size then
             return key .. string_rep( "\0", block_size - key_length )
         else
@@ -106,95 +106,66 @@ end
 
 --- [SHARED AND MENU]
 ---
---- Computes a hmac using the given hash function, outer and inner padding.
+--- Computes hmac and returns the result as a hex string.
 ---
----@param hash_fn function The hash function to use.
----@param str string The string to compute hmac for.
----@param outer string The outer padding.
----@param inner string The inner padding.
----@return string hash The hmac of the string.
-local function compute( hash_fn, str, outer, inner )
-    return hash_fn( outer .. hash_fn( inner .. str ) )
+---@param hash_fn function The hash function that must return hex string.
+---@param outer string The outer hmac padding.
+---@param inner string The inner hmac padding.
+---@param msg string The message to compute hmac for.
+---@return string hmac_str The hex hmac string of the message.
+function hmac.compute( hash_fn, outer, inner, msg )
+    return hash_fn( outer .. string_fromHex( hash_fn( inner .. msg ) ) )
 end
 
-hmac.compute = compute
+do
+
+    --- [SHARED AND MENU]
+    ---
+    --- Computes hmac and returns the result as a hex string.
+    ---
+    ---@param msg string The message to compute hmac for.
+    ---@param key string The key to use.
+    ---@param hash_fn function The hash function that must return hex string.
+    ---@param block_size integer The block size of the hash function.
+    ---@return string hmac_str The hex hmac string of the message.
+    local function hash( msg, key, hash_fn, block_size )
+        local outer, inner = key_padding( key_normalize( key, hash_fn, block_size ), block_size )
+        return hash_fn( outer .. string_fromHex( hash_fn( inner .. msg ) ) )
+    end
+
+    hmac.hash = hash
+
+    --- [SHARED AND MENU]
+    ---
+    --- Returns a function that computes hmac using the given hash function and block length.
+    ---
+    ---@param hash_fn function The hash function that must return hex string.
+    ---@param block_size integer The block size of the hash function.
+    function hmac.preset( hash_fn, block_size )
+        ---@param message string The message to compute hmac for.
+        ---@param key string The key to use.
+        ---@return string hmac_str The hex hmac string of the message.
+        return function( message, key )
+            return hash( message, key, hash_fn, block_size )
+        end
+    end
+
+end
 
 --- [SHARED AND MENU]
 ---
---- Computes a hmac.
+--- Computes a hmac using the md5 hash function.
 ---
----@param msg string The message to compute hmac for.
----@param key string The key to use.
----@param hash_fn function The hash function to use.
----@param block_size integer The block size of the hash function.
----@param outer? string The outer padding.
----@param inner? string The inner padding.
----@return string hash The hmac of the message.
-local function hash( msg, key, hash_fn, block_size, outer, inner )
-    return compute( hash_fn, msg, key_padding( key_normalize( key, hash_fn, block_size ), block_size, outer, inner ) )
-end
+hmac.md5 = hmac.preset( crypto.md5.hash, crypto.md5.block )
 
-hmac.hash = hash
+--- [SHARED AND MENU]
+---
+--- Computes a hmac using the sha1 hash function.
+---
+hmac.sha1 = hmac.preset( crypto.sha1.hash, crypto.sha1.block )
 
--- sha1
-do
-
-    local sha1 = crypto.sha1
-
-    local block_size = sha1.block
-    local hash_fn = sha1.hash
-
-    --- [SHARED AND MENU]
-    ---
-    --- Computes a hmac using the sha1 hash function.
-    ---
-    ---@param msg string The message to compute hmac for.
-    ---@param key string The key to use.
-    ---@return string sha1_hmac The hmac of the message.
-    function hmac.sha1( msg, key )
-        return hash( msg, key, hash_fn, block_size )
-    end
-
-end
-
--- sha256
-do
-
-    local sha256 = crypto.sha256
-
-    local block_size = sha256.block
-    local hash_fn = sha256.hash
-
-    --- [SHARED AND MENU]
-    ---
-    --- Computes a hmac using the sha256 hash function.
-    ---
-    ---@param msg string The message to compute hmac for.
-    ---@param key string The key to use.
-    ---@return string sha256_hmac The hmac of the message.
-    function hmac.sha256( msg, key )
-        return hash( msg, key, hash_fn, block_size )
-    end
-
-end
-
--- md5
-do
-
-    local md5 = crypto.md5
-
-    local block_size = md5.block
-    local hash_fn = md5.hash
-
-    --- [SHARED AND MENU]
-    ---
-    --- Computes a hmac using the md5 hash function.
-    ---
-    ---@param msg string The message to compute hmac for.
-    ---@param key string The key to use.
-    ---@return string md5_hmac The hmac of the message.
-    function hmac.md5( msg, key )
-        return hash( msg, key, hash_fn, block_size )
-    end
-
-end
+--- [SHARED AND MENU]
+---
+--- Computes a hmac using the sha256 hash function.
+---
+hmac.sha256 = hmac.preset( crypto.sha256.hash, crypto.sha256.block )
