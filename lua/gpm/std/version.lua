@@ -475,6 +475,9 @@ do
 		end
 	}
 
+	-- TODO: implement separated __mod aka :select or :match ...
+
+	---@protected
 	function Version:__mod( str )
 		-- spaces clean up
 		str = string_trim( string_gsub( str, "%s+", " " ), "%s", 0 )

@@ -22,9 +22,15 @@ local table_concat = table.concat
 --- Converts a binary string to a decimal number.
 ---
 ---@param str string The binary string.
----@return number
-local function bin2dec( str )
-    return tonumber( str, 2 )
+---@param from? integer The start index.
+---@param to? integer The end index.
+---@return integer result The decimal number.
+local function bin2dec( str, from, to )
+    if from == nil and to == nil then
+        return tonumber( str, 2 )
+    else
+        return tonumber( string_sub( str, from or 1, to ), 2 )
+    end
 end
 
 string.bin2dec = bin2dec
@@ -38,10 +44,10 @@ do
     ---
     --- Converts a decimal number to a binary string.
     ---
-    ---@param number number The decimal number.
+    ---@param number integer The decimal number.
     ---@param complement? boolean Whether to complement the binary string.
-    ---@return string The binary string.
-    ---@return number The length of the binary string.
+    ---@return string result The binary string.
+    ---@return integer length The length of the binary string.
     function dec2bin( number, complement )
         if number == 0 then
             if complement then
@@ -90,9 +96,15 @@ string.dec2bin = dec2bin
 --- Converts a hex string to a decimal number.
 ---
 ---@param str string The hex string.
----@return number
-local function hex2dec( str )
-    return tonumber( str, 16 )
+---@param from? integer The start index.
+---@param to? integer The end index.
+---@return integer result The decimal number.
+local function hex2dec( str, from, to )
+    if from == nil and to == nil then
+        return tonumber( str, 16 )
+    else
+        return tonumber( string_sub( str, from or 1, to ), 16 )
+    end
 end
 
 string.hex2dec = hex2dec
@@ -106,10 +118,11 @@ do
     ---
     --- Converts a decimal number to a hex string.
     ---
-    ---@param number number The decimal number.
-    ---@return string
-    function dec2hex( number )
-        return string_format( "%X", number)
+    ---@param number integer The decimal number.
+    ---@param with_prefix? boolean Whether to include the "0x" prefix.
+    ---@return string result The hex string.
+    function dec2hex( number, with_prefix )
+        return string_format( with_prefix and "0x%X" or "%X", number )
     end
 
     string.dec2hex = dec2hex
@@ -121,10 +134,13 @@ end
 --- Converts a hex string to a binary string.
 ---
 ---@param str string The hex string.
----@param complement? boolean
----@return string, number
-function string.hex2bin( str, complement )
-    return dec2bin( hex2dec( str ), complement )
+---@param complement? boolean Whether to complement the binary string.
+---@param from? integer The start index.
+---@param to? integer The end index.
+---@return string result The binary string.
+---@return integer length The length of the binary string.
+function string.hex2bin( str, complement, from, to )
+    return dec2bin( hex2dec( str, from, to ), complement )
 end
 
 --- [SHARED AND MENU]
@@ -132,9 +148,12 @@ end
 --- Converts a binary string to a hex string.
 ---
 ---@param str string The binary string.
----@return string
-function string.bin2hex( str )
-    return dec2hex( bin2dec( str ) )
+---@param with_prefix? boolean Whether to include the "0x" prefix.
+---@param from? integer The start index.
+---@param to? integer The end index.
+---@return string hex_str The hex string.
+function string.bin2hex( str, with_prefix, from, to )
+    return dec2hex( bin2dec( str, from, to ), with_prefix )
 end
 
 do

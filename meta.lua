@@ -630,3 +630,34 @@ do
     tree.url = nil
 
 end
+
+do
+
+    --- [SHARED AND MENU]
+    ---
+    --- A hashing method.
+    ---
+    ---@class gpm.std.crypto.hashlib
+    local hashlib = {}
+
+    --- The block size in bytes.
+    ---
+    --- @type integer
+    hashlib.block = nil
+
+    --- The digest ( fingerprint ) size in bytes.
+    ---
+    --- @type integer
+    hashlib.digest = nil
+
+    --- The digest ( fingerprint ) size in hex.
+    ---
+    --- @type integer
+    hashlib.hex = nil
+
+    --- The hash function.
+    ---
+    --- @type fun( data: string ): string
+    hashlib.hash = nil
+
+end
