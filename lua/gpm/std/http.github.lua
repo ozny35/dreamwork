@@ -166,11 +166,11 @@ github.apiRequest = apiRequest
 --- Replaces all occurrences of `{name}` in `pathname` with `tbl[name]`.
 ---
 ---@param pathname string The path to replace placeholders in.
----@param tbl string<any> The table to replace placeholders with.
+---@param replaces table<string, any> The table to replace placeholders with.
 ---@return string pathname The path with placeholders replaced.
-local function template( pathname, tbl )
+local function template( pathname, replaces )
     return string_gsub( pathname, "{([%w_-]-)}", function( str )
-        return tostring( tbl[ str ] )
+        return tostring( replaces[ str ] )
         ---@diagnostic disable-next-line: redundant-return-value
     end ), nil
 end
@@ -183,21 +183,32 @@ github.template = template
 ---
 ---@param method gpm.std.http.Request.Method The request method.
 ---@param pathname string The path to send the request to.
----@param tbl string<any> The table to replace placeholders with.
+---@param replaces table<string, any> The table to replace placeholders with.
 ---@return table data The data returned from the API.
 ---@async
-local function templateRequest( method, pathname, tbl )
-    return apiRequest( method, template( pathname, tbl ) )
+local function templateRequest( method, pathname, replaces )
+    return apiRequest( method, template( pathname, replaces ) )
 end
 
 github.templateRequest = templateRequest
 
 --- [SHARED AND MENU]
 ---
+--- Fetches a list of all github emojis.
+---
+---@return table data The list of emojis. -- TODO: make meta structure
+---@async
+function github.getEmojis()
+    return apiRequest( 1, "/emojis" )
+end
+
+--- [SHARED AND MENU]
+---
+--- Fetches a detailed information about a specific repository.
 ---
 ---@param owner string The owner of the repository.
 ---@param repo string The name of the repository.
----@return table data The repository data.
+---@return table data The repository data. -- TODO: make meta structure
 ---@async
 function github.getRepository( owner, repo )
     return templateRequest( 1, "/repos/{owner}/{repo}", {
@@ -208,22 +219,24 @@ end
 
 --- [SHARED AND MENU]
 ---
+--- Fetches a lists the tags (versions) of a repository.
 ---
 ---@param owner string The owner of the repository.
 ---@param repo string The name of the repository.
----@return table: TODO
+---@param page? integer The page number, default value is `1`.
+---@return table data The repository tags. -- TODO: make meta structure
 ---@async
-function github.getRepositoryTags( owner, repo )
-    -- TODO: implement pagination? - yes
-    return templateRequest( 1, "/repos/{owner}/{repo}/tags?per_page=100", {
+function github.getRepositoryTags( owner, repo, page )
+    return templateRequest( 1, "/repos/{owner}/{repo}/tags?per_page=100&page={page}", {
         owner = owner,
-        repo = repo
+        repo = repo,
+        page = page or 1
     } )
 end
 
 --- [SHARED AND MENU]
 ---
---- Returns a single tree using the SHA1 value or ref name for that tree.
+--- Fetches a single Git tree — that is, a snapshot of the repository's file structure at a specific commit or tree.
 ---
 ---@param owner string The account owner of the repository. The name is not case sensitive.
 ---@param repo string The name of the repository without the .git extension. The name is not case sensitive.
@@ -242,11 +255,12 @@ end
 
 --- [SHARED AND MENU]
 ---
---- TODO
+--- Fetches the content of a blob (a blob = file contents) in a repository, using its SHA-1.
+---
 ---@param owner string The owner of the repository.
 ---@param repo string The name of the repository.
----@param file_sha any TODO
----@return table blob The blob.
+---@param file_sha string The SHA1 value of the blob.
+---@return table blob The blob. -- TODO: make meta structure
 ---@async
 function github.getBlob( owner, repo, file_sha )
     local result = templateRequest( 1, "/repos/{owner}/{repo}/git/blobs/{file_sha}", {
@@ -265,14 +279,50 @@ end
 
 --- [SHARED AND MENU]
 ---
---- Fetches a zipball from a repository.
+--- Fetches a list of repository contributors.
+---
 ---@param owner string The owner of the repository.
 ---@param repo string The name of the repository.
----@param ref string The reference to fetch.
----@return string body The body of the zipball.
+---@return table contributors The contributors. -- TODO: make meta structure
+---@async
+function github.getContributors( owner, repo )
+    return templateRequest( 1, "/repos/{owner}/{repo}/contributors", {
+        owner = owner,
+        repo = repo
+    } )
+end
+
+--- [SHARED AND MENU]
+---
+--- Fetches a list of repository languages.
+---
+---@param owner string The owner of the repository.
+---@param repo string The name of the repository.
+---@return table<string, integer> languages The languages. -- TODO: make meta structure
+---@async
+function github.getLanguages( owner, repo )
+    return templateRequest( 1, "/repos/{owner}/{repo}/languages", {
+        owner = owner,
+        repo = repo
+    } )
+end
+
+--- [SHARED AND MENU]
+---
+--- Fetches the repository contents as a ZIP archive based on a specific reference (branch name, tag name, or commit sha-1).
+---
+---@param owner string The owner of the repository.
+---@param repo string The name of the repository.
+---@param ref string The branch name, tag name, or commit sha-1.
+---@return string content The body of the zipball.
 ---@async
 function github.fetchZip( owner, repo, ref )
-    local result = request( 1, "/repos/" .. tostring( owner ) .. "/" .. tostring( repo ) .. "/zipball/" .. tostring( ref ) )
+    local result = templateRequest( 1, "/repos/{owner}/{repo}/zipball/{ref}", {
+        owner = owner,
+        repo = repo,
+        ref = ref
+    } )
+
     if result.status ~= 200 then
         std.error( HTTPClientError( "Failed to fetch zipball (" .. tostring( owner ) .. "/" .. tostring( repo ) .. "/" .. tostring( ref ) .. ") from Github API (" .. tostring( result.status ) .. ")" ) )
     end
