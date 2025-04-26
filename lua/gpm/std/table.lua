@@ -11,7 +11,7 @@ local string_sub, string_find, string_len = std.string.sub, std.string.find, std
 ---
 --- The table library is a standard Lua library which provides functions to manipulate tables.
 ---
----@class gpm.std.table
+---@class gpm.std.table : tablelib
 local table = std.table or {}
 std.table = table
 
