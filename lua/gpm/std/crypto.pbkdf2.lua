@@ -8,6 +8,8 @@ local hmac_key = hmac.key
 local hmac_padding = hmac.padding
 local hmac_computeBinary = hmac.computeBinary
 
+local pack_writeUInt32 = crypto.pack.writeUInt32
+
 local string = std.string
 local string_toHex = string.toHex
 local string_len, string_sub = string.len, string.sub
@@ -55,7 +57,7 @@ function pbkdf2.derive( options )
     local blocks = {}
 
     for block = 1, block_count, 1 do
-        local u = hmac_computeBinary( hash_fn, hmac_outer, hmac_inner, pbkdf2_salt .. crypto.binary.unsigned.writeLong( block, true ) )
+        local u = hmac_computeBinary( hash_fn, hmac_outer, hmac_inner, pbkdf2_salt .. pack_writeUInt32( block, true ) )
         local t = { string_byte( u, 1, digest_length ) }
 
         for _ = 2, pbkdf2_iterations, 1 do

@@ -816,11 +816,18 @@ end
 
 dofile( "std/string.extensions.lua" )
 dofile( "std/version.lua" )
+dofile( "std/bigint.lua" )
 
 -- generic
 dofile( "std/crypto.lua" )
-dofile( "std/crypto.binary.lua" )
-dofile( "std/bigint.lua" )
+
+-- binary
+-- dofile( "std/crypto.bitpack.lua" )
+dofile( "std/crypto.bytepack.lua" )
+dofile( "std/crypto.pack.lua" )
+
+-- dofile( "std/crypto.byte_reader.lua" )
+-- dofile( "std/crypto.byte_writer.lua" )
 
 -- hashing
 dofile( "std/crypto.hmac.lua" )
@@ -831,12 +838,9 @@ dofile( "std/crypto.deflate.lua" )
 dofile( "std/crypto.lzw.lua" )
 
 -- encryption
-dofile( "std/crypto.xtea.lua" )
-dofile( "std/crypto.aes.lua" )
-
--- binary
-dofile( "std/crypto.byte_reader.lua" )
-dofile( "std/crypto.byte_writer.lua" )
+-- dofile( "std/crypto.chacha20.lua" )
+-- dofile( "std/crypto.xtea.lua" )
+-- dofile( "std/crypto.aes.lua" )
 
 dofile( "std/url.lua" )
 
