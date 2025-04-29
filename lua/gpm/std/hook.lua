@@ -1,9 +1,7 @@
-local _G = _G
-local gpm = _G.gpm
-
 ---@class gpm.std
-local std = gpm.std
+local std = _G.gpm.std
 
+local debug = std.debug
 local table = std.table
 local getmetatable = std.getmetatable
 
@@ -44,6 +42,7 @@ local getmetatable = std.getmetatable
 --- [SHARED AND MENU]
 ---
 --- Hook object.
+---
 ---@alias Hook gpm.std.Hook
 ---@class gpm.std.Hook: gpm.std.Object
 ---@field __class gpm.std.HookClass
@@ -52,18 +51,20 @@ local Hook = std.class.base( "Hook" )
 --- [SHARED AND MENU]
 ---
 --- Hook class.
+---
 ---@class gpm.std.HookClass: gpm.std.Hook
 ---@field __base gpm.std.Hook
 ---@overload fun( name: string?, returns_vararg: boolean? ): Hook
 local HookClass = std.class.create( Hook )
 std.Hook = HookClass
 
+---@protected
 function Hook:__tostring()
     return std.string.format( "Hook: %p [%s][%s]", self, self[ -2 ], self[ -1 ] and "running" or "stopped" )
 end
 
----@param name string?: The name of the hook.
----@param returns_vararg boolean?: Whether the hook returns vararg.
+---@param name? string The name of the hook.
+---@param returns_vararg? boolean Whether the hook returns vararg.
 ---@protected
 function Hook:__init( name, returns_vararg )
     self[ 0 ], self[ -1 ], self[ -2 ], self[ -3 ] = 0, false, name or "unnamed", returns_vararg == true
@@ -71,14 +72,15 @@ end
 
 do
 
-    local debug_fempty = std.debug.fempty
+    local debug_fempty = debug.fempty
     local table_eject = table.eject
 
     --- [SHARED AND MENU]
     ---
     --- Detaches a callback function from the hook.
-    ---@param identifier string | Hook | any: The unique name of the callback, Hook or object with `__isvalid` function in metatable.
-    ---@return boolean: Returns `true` if the callback was detached, otherwise `false`.
+    ---
+    ---@param identifier string | Hook | any The unique name of the callback, Hook or object with `__isvalid` function in metatable.
+    ---@return boolean detached Returns `true` if the callback was detached, otherwise `false`.
     function Hook:detach( identifier )
         if identifier == nil then return false end
 
@@ -109,16 +111,17 @@ end
 
 do
 
-    local string_meta = std.debug.findmetatable( "string" )
+    local string_meta = debug.findmetatable( "string" )
     local table_inject = table.inject
     local math_clamp = std.math.clamp
 
     --- [SHARED AND MENU]
     ---
     --- Attaches a callback function to the hook.
-    ---@param identifier string | Hook | any: The unique name of the callback, Hook or object with `__isvalid` function in metatable.
-    ---@param fn function | gpm.std.Hook.Type?: The callback function or the type of the hook if `identifier` is a Hook.
-    ---@param hook_type gpm.std.Hook.Type?: The type of the hook, default is `0`.
+    ---
+    ---@param identifier string | Hook | any The unique name of the callback, Hook or object with `__isvalid` function in metatable.
+    ---@param fn function | gpm.std.Hook.Type | nil The callback function or the type of the hook if `identifier` is a Hook.
+    ---@param hook_type gpm.std.Hook.Type | nil The type of the hook, default is `0`.
     function Hook:attach( identifier, fn, hook_type )
         if identifier == nil then
             std.error( "callback identifier cannot be nil", 2 )
@@ -135,7 +138,7 @@ do
             if metatable == Hook then
                 fn, hook_type = identifier, fn
                 ---@cast fn function
-                ---@cast hook_type gpm.std.Hook.Type?
+                ---@cast hook_type gpm.std.Hook.Type | nil
             else
                 ---@cast identifier any
                 ---@cast fn function
@@ -206,7 +209,8 @@ end
 --- [SHARED AND MENU]
 ---
 --- Checks if the hook is running.
----@return boolean: Returns `true` if the hook is running, otherwise `false`.
+---
+---@return boolean is_running Returns `true` if the hook is running, otherwise `false`.
 function Hook:isRunning()
     return self[ -1 ]
 end
@@ -216,7 +220,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- Stops the hook.
-    ---@return boolean: Returns `true` if the hook was stopped, `false` if it was already stopped.
+    ---@return boolean stopped Returns `true` if the hook was stopped, `false` if it was already stopped.
     local function hook_stop( self )
         if not self[ -1 ] then return false end
         self[ -1 ] = false
@@ -241,6 +245,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- Clears the hook from all callbacks.
+    ---
     function Hook:clear()
         hook_stop( self )
 
@@ -386,8 +391,9 @@ do
     --- [SHARED AND MENU]
     ---
     --- Calls the hook.
-    ---@param ... any: The arguments to pass to the hook.
-    ---@return any ...: The return values from the hook.
+    ---
+    ---@param ... any The arguments to pass to the hook.
+    ---@return any ... The return values from the hook.
     function Hook:call( ... )
         if self[ -1 ] then return end
         self[ -1 ] = true
@@ -412,10 +418,58 @@ end
 
 --- [SHARED AND MENU]
 ---
---- A return mixer that is called after any call to the hook and allows the return values to be modified.
----@param mixer_fn function?: The function to perform mixing, `nil` if no mixing is required.
+--- Sets the mixer function for the hook.
+---
+--- This function will be called after pre
+--- and normal callbacks that changes the
+--- return value of the hook,
+--- and can change that value.
+---
+---@param mixer_fn nil | fun( old_value, new_value ): any The function to perform mixing, `nil` if no mixing is required.
 function Hook:mixer( mixer_fn )
     self[ -4 ] = mixer_fn
 end
 
-return HookClass
+do
+
+    local pack_writeUInt32 = std.crypto.pack.writeUInt32
+    local debug_getpointer = debug.getpointer
+
+    --- [SHARED AND MENU]
+    ---
+    --- Attaches a callback function to the hook.
+    ---
+    ---@param fn function | gpm.std.Hook.Type The callback function or the type of the hook if `identifier` is a Hook.
+    ---@param hook_type? gpm.std.Hook.Type The type of the hook, default is `0`.
+    function Hook:once( fn, hook_type )
+        local identifier
+
+        local function hook_fn( ... )
+            self:detach( identifier )
+            return fn( ... )
+        end
+
+        identifier = "\104\111\99\0" .. pack_writeUInt32( debug_getpointer( hook_fn ) or 0, true )
+        self:attach( identifier, hook_fn, hook_type )
+    end
+
+end
+
+local Future = std.Future
+
+--- [SHARED AND MENU]
+---
+--- Waits for the hook to finish.
+---
+---@param hook_type gpm.std.Hook.Type? The type of the hook, default is `0`.
+---@return any ... The return values from the hook.
+---@async
+function Hook:wait( hook_type )
+    local f = Future()
+
+    self:once( function( ... )
+        f:setResult( { ... } )
+    end, hook_type )
+
+    return f:await()
+end
