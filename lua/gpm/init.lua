@@ -716,9 +716,6 @@ end
 dofile( "std/string.utf8.lua" )
 dofile( "engine.lua" )
 
-dofile( "std/math.classes.lua" )
-dofile( "std/structures.lua" )
-
 -- symbol class
 do
 
@@ -749,6 +746,8 @@ do
 
 end
 
+dofile( "std/math.classes.lua" )
+dofile( "std/structures.lua" )
 dofile( "std/futures.lua" )
 dofile( "std/hook.lua" )
 dofile( "std/timer.lua" )
@@ -815,13 +814,46 @@ do
 end
 
 dofile( "std/string.extensions.lua" )
+dofile( "std/console.lua" )
+
 dofile( "std/version.lua" )
 dofile( "std/bigint.lua" )
 
--- generic
-dofile( "std/crypto.lua" )
+do
 
--- binary
+    local developer = std.console.Variable.get( "developer", "number" )
+
+    local getDeveloper
+    if developer == nil then
+        getDeveloper = function() return 1 end
+    elseif std.DEDICATED then
+        local value = developer:get()
+        developer:addChangeCallback( "gpm::init", function( _, __, new ) value = new end )
+        getDeveloper = function() return value end
+    else
+        getDeveloper = function() return developer:get() end
+    end
+
+    local key2call = {
+        DEVELOPER = getDeveloper
+    }
+
+    std.setmetatable( std, {
+        __index = function( _, key )
+            local func = key2call[ key ]
+            if func == nil then return end
+            return func()
+        end
+    } )
+
+end
+
+dofile( "std/game.lua" )
+dofile( "std/level.lua" )
+
+dofile( "std/crypto.lua" )
+dofile( "std/crypto.uuid.lua" )
+
 -- dofile( "std/crypto.bitpack.lua" )
 dofile( "std/crypto.bytepack.lua" )
 dofile( "std/crypto.pack.lua" )
@@ -829,15 +861,12 @@ dofile( "std/crypto.pack.lua" )
 -- dofile( "std/crypto.byte_reader.lua" )
 -- dofile( "std/crypto.byte_writer.lua" )
 
--- hashing
 dofile( "std/crypto.hmac.lua" )
 dofile( "std/crypto.pbkdf2.lua" )
 
--- compression
 dofile( "std/crypto.deflate.lua" )
 dofile( "std/crypto.lzw.lua" )
 
--- encryption
 -- dofile( "std/crypto.chacha20.lua" )
 -- dofile( "std/crypto.xtea.lua" )
 -- dofile( "std/crypto.aes.lua" )
@@ -857,6 +886,7 @@ end
 
 dofile( "std/file.path.lua" )
 dofile( "std/file.lua" )
+dofile( "std/error.lua" )
 
 dofile( "package/init.lua" )
 
@@ -888,9 +918,6 @@ do
     end
 
 end
-
-dofile( "std/console.lua" )
-dofile( "std/error.lua" )
 
 -- Welcome message
 do
@@ -960,38 +987,6 @@ do
     end
 
     std.printf( "\n                                     ___          __            \n                                   /'___`\\      /'__`\\          \n     __    _____     ___ ___      /\\_\\ /\\ \\    /\\ \\/\\ \\         \n   /'_ `\\ /\\ '__`\\ /' __` __`\\    \\/_/// /__   \\ \\ \\ \\ \\        \n  /\\ \\L\\ \\\\ \\ \\L\\ \\/\\ \\/\\ \\/\\ \\      // /_\\ \\ __\\ \\ \\_\\ \\   \n  \\ \\____ \\\\ \\ ,__/\\ \\_\\ \\_\\ \\_\\    /\\______//\\_\\\\ \\____/   \n   \\/___L\\ \\\\ \\ \\/  \\/_/\\/_/\\/_/    \\/_____/ \\/_/ \\/___/    \n     /\\____/ \\ \\_\\                                          \n     \\_/__/   \\/_/                %s                        \n\n  GitHub: https://github.com/Pika-Software\n  Discord: https://discord.gg/Gzak99XGvv\n  Website: https://p1ka.eu\n  Developers: Pika Software\n  License: MIT\n", splash )
-
-end
-
-dofile( "std/game.lua" )
-dofile( "std/level.lua" )
-
-do
-
-    local developer = std.console.Variable.get( "developer", "number" )
-
-    local getDeveloper
-    if developer == nil then
-        getDeveloper = function() return 1 end
-    elseif std.DEDICATED then
-        local value = developer:get()
-        developer:addChangeCallback( "gpm::init", function( _, __, new ) value = new end )
-        getDeveloper = function() return value end
-    else
-        getDeveloper = function() return developer:get() end
-    end
-
-    local key2call = {
-        DEVELOPER = getDeveloper
-    }
-
-    std.setmetatable( std, {
-        __index = function( _, key )
-            local func = key2call[ key ]
-            if func == nil then return end
-            return func()
-        end
-    } )
 
 end
 
