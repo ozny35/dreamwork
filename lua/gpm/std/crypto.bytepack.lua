@@ -401,8 +401,6 @@ end
 ---
 --- Valid values without loss of precision: `0` - `9007199254740991`
 ---
---- All values above will have problems when working with them.
----
 ---@param b1? integer The first byte.
 ---@param b2? integer The second byte.
 ---@param b3? integer The third byte.
@@ -436,48 +434,66 @@ end
 
 bytepack.readUInt = readUInt
 
---- [SHARED AND MENU]
----
---- Writes unsigned integer as big endian bytes.
----
---- Valid values without loss of precision: `0` - `9007199254740991`
----
---- All values above will have problems when working with them.
----
----@param value integer The unsigned integer.
----@param byte_count? integer The number of bytes to write. Defaults to `4`.
----@return integer ... The written bytes.
-local function writeUInt( value, byte_count )
-	if byte_count == nil then
-		byte_count = 4
+local writeUInt
+do
+
+	local max_values = {
+		255,
+		65535,
+		16777215,
+		4294967295,
+		1099511627775,
+		281474976710655,
+		9007199254740991,
+		9007199254740991
+	}
+
+	--- [SHARED AND MENU]
+	---
+	--- Writes unsigned integer as big endian bytes.
+	---
+	--- Valid values without loss of precision: `0` - `9007199254740991`
+	---
+	---@param value integer The unsigned integer.
+	---@param byte_count? integer The number of bytes to write. Defaults to `4`.
+	---@return integer ... The written bytes.
+	function writeUInt( value, byte_count )
+		if byte_count == nil then
+			byte_count = 4
+		end
+
+		if value == 0 then
+			---@diagnostic disable-next-line: return-type-mismatch
+			return table_create( 0, byte_count )
+		elseif value < 0 then
+			std.error( "integer is too small to write", 2 )
+		elseif value > max_values[ byte_count ] then
+			std.error( "integer is too large to write", 2 )
+		elseif byte_count == 1 then
+			return value
+		elseif byte_count == 2 then
+			return writeUInt16( value )
+		elseif byte_count == 3 then
+			return writeUInt24( value )
+		elseif byte_count == 4 then
+			return writeUInt32( value )
+		elseif byte_count == 5 then
+			return writeUInt40( value )
+		elseif byte_count == 6 then
+			return writeUInt48( value )
+		elseif byte_count == 7 then
+			return writeUInt56( value )
+		elseif byte_count == 8 then
+			return writeUInt64( value )
+		else
+			std.error( "unsupported byte count", 2 )
+			return 0
+		end
 	end
 
-	if value == 0 then
-		---@diagnostic disable-next-line: return-type-mismatch
-		return table_create( 0, byte_count )
-	elseif byte_count == 1 then
-		return value
-	elseif byte_count == 2 then
-		return writeUInt16( value )
-	elseif byte_count == 3 then
-		return writeUInt24( value )
-	elseif byte_count == 4 then
-		return writeUInt32( value )
-	elseif byte_count == 5 then
-		return writeUInt40( value )
-	elseif byte_count == 6 then
-		return writeUInt48( value )
-	elseif byte_count == 7 then
-		return writeUInt56( value )
-	elseif byte_count == 8 then
-		return writeUInt64( value )
-	else
-		std.error( "unsupported byte count", 2 )
-		return 0
-	end
+	bytepack.writeUInt = writeUInt
+
 end
-
-bytepack.writeUInt = writeUInt
 
 --- [SHARED AND MENU]
 ---
@@ -840,8 +856,6 @@ bytepack.writeInt64 = writeInt64
 ---
 --- Valid values without loss of precision: `-9007199254740991` - `9007199254740991`
 ---
---- All values above will have problems when working with them.
----
 ---@param b1? integer The first byte.
 ---@param b2? integer The second byte.
 ---@param b3? integer The third byte.
@@ -875,48 +889,77 @@ end
 
 bytepack.readInt = readInt
 
---- [SHARED AND MENU]
----
---- Writes signed integer as big endian bytes.
----
---- Valid values without loss of precision: `-9007199254740991` - `9007199254740991`
----
---- All values above will have problems when working with them.
----
----@param value integer The signed integer.
----@param byte_count? integer The number of bytes to write. Defaults to `4`.
----@return integer ... The written bytes.
-local function writeInt( value, byte_count )
-	if byte_count == nil then
-		byte_count = 4
+local writeInt
+do
+
+	local min_values = {
+		-128,
+		-32768,
+		-8388608,
+		-2147483648,
+		-549755813888,
+		-140737488355328,
+		-9007199254740991
+		-9007199254740991
+	}
+
+	local max_values = {
+		127,
+		32767,
+		8388607,
+		2147483647,
+		549755813887,
+		140737488355327,
+		9007199254740991,
+		9007199254740991
+	}
+
+	--- [SHARED AND MENU]
+	---
+	--- Writes signed integer as big endian bytes.
+	---
+	--- Valid values without loss of precision: `-9007199254740991` - `9007199254740991`
+	---
+	---@param value integer The signed integer.
+	---@param byte_count? integer The number of bytes to write. Defaults to `4`.
+	---@return integer ... The written bytes.
+	function writeInt( value, byte_count )
+		if byte_count == nil then
+			byte_count = 4
+		end
+
+		if value == 0 then
+			---@diagnostic disable-next-line: return-type-mismatch
+			return table_create( 0, byte_count )
+		elseif value < min_values[ byte_count ] then
+			std.error( "integer is too small to write", 2 )
+		elseif value > max_values[ byte_count ] then
+			std.error( "integer is too large to write", 2 )
+		elseif byte_count == 1 then
+			return writeInt8( value )
+		elseif byte_count == 2 then
+			return writeInt16( value )
+		elseif byte_count == 3 then
+			return writeInt24( value )
+		elseif byte_count == 4 then
+			return writeInt32( value )
+		elseif byte_count == 5 then
+			return writeInt40( value )
+		elseif byte_count == 6 then
+			return writeInt48( value )
+		elseif byte_count == 7 then
+			return writeInt56( value )
+		elseif byte_count == 8 then
+			return writeInt64( value )
+		else
+			std.error( "unsupported byte count", 2 )
+			return 0
+		end
 	end
 
-	if value == 0 then
-		---@diagnostic disable-next-line: return-type-mismatch
-		return table_create( 0, byte_count )
-	elseif byte_count == 1 then
-		return writeInt8( value )
-	elseif byte_count == 2 then
-		return writeInt16( value )
-	elseif byte_count == 3 then
-		return writeInt24( value )
-	elseif byte_count == 4 then
-		return writeInt32( value )
-	elseif byte_count == 5 then
-		return writeInt40( value )
-	elseif byte_count == 6 then
-		return writeInt48( value )
-	elseif byte_count == 7 then
-		return writeInt56( value )
-	elseif byte_count == 8 then
-		return writeInt64( value )
-	else
-		std.error( "unsupported byte count", 2 )
-		return 0
-	end
+	bytepack.writeInt = writeInt
+
 end
-
-bytepack.writeInt = writeInt
 
 --- [SHARED AND MENU]
 ---

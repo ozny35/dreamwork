@@ -854,7 +854,7 @@ dofile( "std/level.lua" )
 dofile( "std/crypto.lua" )
 dofile( "std/crypto.uuid.lua" )
 
--- dofile( "std/crypto.bitpack.lua" )
+dofile( "std/crypto.bitpack.lua" )
 dofile( "std/crypto.bytepack.lua" )
 dofile( "std/crypto.pack.lua" )
 
