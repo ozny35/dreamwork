@@ -196,10 +196,23 @@ github.templateRequest = templateRequest
 ---
 --- Fetches a list of all github emojis.
 ---
----@return table data The list of emojis. -- TODO: make meta structure
+---@return table<string, string> data The list of emojis.
 ---@async
 function github.getEmojis()
     return apiRequest( 1, "/emojis" )
+end
+
+--- [SHARED AND MENU]
+---
+--- Fetches a list of all repositories owned by an organization.
+---
+---@param organization string The name of the organization.
+---@return table data The list of repositories. -- TODO: make meta structure
+---@async
+function github.getRepositories( organization )
+    return templateRequest( 1, "/orgs/{org}/repos", {
+        org = organization
+    } )
 end
 
 --- [SHARED AND MENU]

@@ -28,26 +28,40 @@ std.class = class
 ---@field __inherited fun( parent: gpm.std.Class, child: gpm.std.Class ) | nil: The function that will be called when the class is inherited.
 ---@alias Class gpm.std.Class
 
----@param obj Object The object to search in.
+---@param obj table The object to search in.
 ---@param key string The key to search for.
+---@return any value The value of the key.
 local function find_rawkey( obj, key )
     if obj == nil then return nil end
-    return raw_get( obj, key ) or find_rawkey( debug_getmetatable( obj ), key )
+
+    local value = raw_get( obj, key )
+    if value ~= nil then
+        return value
+    end
+
+    local metatable = debug_getmetatable( obj )
+    if metatable == nil then
+        return nil
+    end
+
+    return find_rawkey( metatable, key )
 end
 
 do
 
+    local debug_getmetavalue = debug.getmetavalue
     local string_sub = string.sub
 
     ---@param obj Object The object to convert to a string.
     ---@return string str The string representation of the object.
     local function base__tostring( obj )
-        return string_format( "%s: %p", raw_get( debug_getmetatable( obj ), "__type" ), obj )
+        return string_format( "%s: %p", debug_getmetavalue( obj, "__type" ) or "unknown", obj )
     end
 
     --- [SHARED AND MENU]
     ---
     --- Creates a new class base ( metatable ).
+    ---
     ---@param name string The name of the class.
     ---@param parent Class | unknown | nil: The parent of the class.
     ---@return Object base The base of the class.
@@ -92,6 +106,7 @@ do
         --- [SHARED AND MENU]
         ---
         --- Calls the base initialization function, <b>if it exists</b>, and returns the given object.
+        ---
         ---@param obj table The object to initialize.
         ---@param base Object The base object, aka metatable.
         ---@param ... any?: Arguments to pass to the constructor.
@@ -197,6 +212,11 @@ do
             cls.__template = template
 
             local metatable = debug_getmetatable( template )
+            if metatable == nil then
+                std.error( "userdata metatable is missing, lol how", 2 )
+            end
+
+            ---@cast metatable table
 
             for key, value in raw_pairs( base ) do
                 metatable[ key ] = value

@@ -1,22 +1,13 @@
 ---@class gpm.std
 local std = _G.gpm.std
 
-local debug_getstack, debug_getupvalue, debug_getlocal
-do
-    local debug = std.debug
-    debug_getstack, debug_getupvalue, debug_getlocal = debug.getstack, debug.getupvalue, debug.getlocal
-end
+local debug_getstack, debug_getupvalue, debug_getlocal = std.debug.getstack, std.debug.getupvalue, std.debug.getlocal
 
 local string = std.string
 local string_rep, string_format = string.rep, string.format
 
 local table_concat = std.table.concat
-
-local class_base, class_create
-do
-    local class = std.class
-    class_base, class_create = class.base, class.create
-end
+local class_base, class_create = std.class.base, std.class.create
 
 ---@diagnostic disable-next-line: undefined-field
 local ErrorNoHalt, ErrorNoHaltWithStack = _G.ErrorNoHalt, _G.ErrorNoHaltWithStack

@@ -18,7 +18,7 @@ local glua_engine, glua_game, glua_util, system_IsWindowed = _G.engine, _G.game,
 local game = std.game or {}
 std.game = game
 
-game.getSystemTime = game.getSystemTime or _G.SysTime
+game.getUptime = game.getUptime or _G.SysTime
 game.addDebugInfo = game.addDebugInfo or _G.DebugInfo
 game.getFrameTime = game.getFrameTime or _G.FrameTime
 game.getTickCount = game.getTickCount or glua_engine.TickCount

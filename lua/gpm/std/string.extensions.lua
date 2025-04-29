@@ -1,6 +1,5 @@
 local std = _G.gpm.std
-
-local tonumber = std.tonumber
+local raw_tonumber = std.raw.tonumber
 
 ---@class gpm.std.math
 local math = std.math
@@ -27,9 +26,9 @@ local table_concat = table.concat
 ---@return integer result The decimal number.
 local function bin2dec( str, from, to )
     if from == nil and to == nil then
-        return tonumber( str, 2 )
+        return raw_tonumber( str, 2 )
     else
-        return tonumber( string_sub( str, from or 1, to ), 2 )
+        return raw_tonumber( string_sub( str, from or 1, to ), 2 )
     end
 end
 
@@ -101,9 +100,9 @@ string.dec2bin = dec2bin
 ---@return integer result The decimal number.
 local function hex2dec( str, from, to )
     if from == nil and to == nil then
-        return tonumber( str, 16 )
+        return raw_tonumber( str, 16 )
     else
-        return tonumber( string_sub( str, from or 1, to ), 16 )
+        return raw_tonumber( string_sub( str, from or 1, to ), 16 )
     end
 end
 
@@ -509,7 +508,7 @@ do
 
         for i = 1, string_len( str ), 2 do
             pointer = pointer + 1
-            buffer[ pointer ] = tonumber( string_sub( str, i, i + 1 ), 16 )
+            buffer[ pointer ] = raw_tonumber( string_sub( str, i, i + 1 ), 16 )
         end
 
         return string_char( table_unpack( buffer, 1, pointer ) )
