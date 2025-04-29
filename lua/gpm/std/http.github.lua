@@ -152,9 +152,11 @@ local function apiRequest( method, pathname, headers, body, do_cache )
     end
 
     local data = json_deserialize( result.body, true, true )
-    if not data then
+    if data == nil then
         std.error( HTTPClientError( "Failed to parse JSON response from Github API (" .. tostring( result.status ) .. ") (" .. tostring( pathname ) .. ")" ) )
     end
+
+    ---@cast data table
 
     return data
 end
@@ -204,10 +206,20 @@ end
 
 --- [SHARED AND MENU]
 ---
+--- Fetches a list of all github licenses.
+---
+---@return gpm.std.http.github.License[]
+---@async
+function github.getLicenses()
+    return apiRequest( 1, "/licenses" )
+end
+
+--- [SHARED AND MENU]
+---
 --- Fetches a list of all repositories owned by an organization.
 ---
 ---@param organization string The name of the organization.
----@return table data The list of repositories. -- TODO: make meta structure
+---@return gpm.std.http.github.Repository[] repos The list of repositories.
 ---@async
 function github.getRepositories( organization )
     return templateRequest( 1, "/orgs/{org}/repos", {
@@ -221,7 +233,7 @@ end
 ---
 ---@param owner string The owner of the repository.
 ---@param repo string The name of the repository.
----@return table data The repository data. -- TODO: make meta structure
+---@return gpm.std.http.github.Repository repo The repository.
 ---@async
 function github.getRepository( owner, repo )
     return templateRequest( 1, "/repos/{owner}/{repo}", {
@@ -237,7 +249,7 @@ end
 ---@param owner string The owner of the repository.
 ---@param repo string The name of the repository.
 ---@param page? integer The page number, default value is `1`.
----@return table data The repository tags. -- TODO: make meta structure
+---@return gpm.std.http.github.Repository.Tag[] tags The list of tags.
 ---@async
 function github.getRepositoryTags( owner, repo, page )
     return templateRequest( 1, "/repos/{owner}/{repo}/tags?per_page=100&page={page}", {
@@ -273,7 +285,7 @@ end
 ---@param owner string The owner of the repository.
 ---@param repo string The name of the repository.
 ---@param file_sha string The SHA1 value of the blob.
----@return table blob The blob. -- TODO: make meta structure
+---@return gpm.std.http.github.Blob blob The blob.
 ---@async
 function github.getBlob( owner, repo, file_sha )
     local result = templateRequest( 1, "/repos/{owner}/{repo}/git/blobs/{file_sha}", {
@@ -296,7 +308,7 @@ end
 ---
 ---@param owner string The owner of the repository.
 ---@param repo string The name of the repository.
----@return table contributors The contributors. -- TODO: make meta structure
+---@return gpm.std.http.github.Contributor[] contributors The list of contributors.
 ---@async
 function github.getContributors( owner, repo )
     return templateRequest( 1, "/repos/{owner}/{repo}/contributors", {
@@ -311,7 +323,7 @@ end
 ---
 ---@param owner string The owner of the repository.
 ---@param repo string The name of the repository.
----@return table<string, integer> languages The languages. -- TODO: make meta structure
+---@return table<string, integer> languages The languages.
 ---@async
 function github.getLanguages( owner, repo )
     return templateRequest( 1, "/repos/{owner}/{repo}/languages", {
