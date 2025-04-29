@@ -749,8 +749,6 @@ end
 dofile( "std/math.classes.lua" )
 dofile( "std/structures.lua" )
 dofile( "std/futures.lua" )
-dofile( "std/hook.lua" )
-dofile( "std/timer.lua" )
 dofile( "std/color.lua" )
 
 do
@@ -886,7 +884,11 @@ end
 
 dofile( "std/file.path.lua" )
 dofile( "std/file.lua" )
+
 dofile( "std/error.lua" )
+
+dofile( "std/hook.lua" )
+dofile( "std/timer.lua" )
 
 dofile( "package/init.lua" )
 
