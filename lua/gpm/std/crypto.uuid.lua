@@ -34,7 +34,7 @@ do
         function crypto.UUIDv3( namespace, name )
             local uuid = string_gsub( namespace, "-", "" )
             if string_len( uuid ) ~= 32 then
-                std.error( "Invalid namespace UUID format", 2 )
+                std.error( "invalid namespace UUID format", 2 )
             end
 
             local b1, b2, b3, b4, b5, b6, b7, b8, b9, b10, b11, b12, b13, b14, b15, b16 = string_byte( string_fromHex( md5_hash( string_fromHex( uuid ) .. name ) ), 1, 16 )
@@ -64,7 +64,7 @@ do
         function crypto.UUIDv5( namespace, name )
             local uuid = string_gsub( namespace, "-", "" )
             if string_len( uuid ) ~= 32 then
-                std.error( "Invalid namespace UUID format", 2 )
+                std.error( "invalid namespace UUID format", 2 )
             end
 
             local b1, b2, b3, b4, b5, b6, b7, b8, b9, b10, b11, b12, b13, b14, b15, b16 = string_byte( string_fromHex( sha1_hash( string_fromHex( uuid ) .. name ) ), 1, 16 )
