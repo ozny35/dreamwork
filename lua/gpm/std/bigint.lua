@@ -69,10 +69,6 @@ end
 local BigIntClass = std.class.create( BigInt )
 std.BigInt = BigIntClass
 
----@class gpm.std.BigInt.bit
-local bit = {}
-BigIntClass.bit = bit
-
 --- [SHARED AND MENU]
 ---
 --- Makes a copy of the big integer.
@@ -905,7 +901,7 @@ do
     ---@param object gpm.std.BigInt The big integer object to shift.
     ---@param shift integer The number of bits to shift by.
     ---@return gpm.std.BigInt object The shifted big integer object.
-    function bit.lshift( object, shift )
+    function BigIntClass.lshift( object, shift )
         return bit_lshift( copy( object ), shift )
     end
 
@@ -978,7 +974,7 @@ do
     ---@param object gpm.std.BigInt The big integer object to shift.
     ---@param shift integer The number of bits to shift by.
     ---@return gpm.std.BigInt object The shifted big integer object.
-    function bit.rshift( object, shift )
+    function BigIntClass.rshift( object, shift )
         return bit_rshift( copy( object ), shift )
     end
 
@@ -1044,7 +1040,7 @@ do
     ---@param value gpm.std.BigInt The big integer object to perform the operation on.
     ---@param ... any The values to perform the operation on.
     ---@return gpm.std.BigInt object The result of the operation.
-    function bit.bor( value, ... )
+    function BigIntClass.bor( value, ... )
         local object = copy( value )
         local args = { ... }
 
@@ -1119,7 +1115,7 @@ do
     ---@param value gpm.std.BigInt The big integer object to perform the operation on.
     ---@param ... any The values to perform the operation on.
     ---@return gpm.std.BigInt object The result of the operation.
-    function bit.band( value, ... )
+    function BigIntClass.band( value, ... )
         local object = copy( value )
         local args = { ... }
 
@@ -1185,7 +1181,7 @@ do
     ---@param value gpm.std.BigInt The big integer object to perform the operation on.
     ---@param ... any The values to perform the operation on.
     ---@return gpm.std.BigInt object The result of the operation.
-    function bit.bxor( value, ... )
+    function BigIntClass.bxor( value, ... )
         local object = copy( value )
         local args = { ... }
 
@@ -1250,7 +1246,7 @@ do
     ---@param object gpm.std.BigInt The big integer object to perform the operation on.
     ---@param size integer The size of the new big integer object.
     ---@return gpm.std.BigInt object The result of the operation.
-    function bit.bnot( object, size )
+    function BigIntClass.bnot( object, size )
         return bnot( copy( object ), size )
     end
 

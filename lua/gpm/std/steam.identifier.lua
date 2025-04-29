@@ -207,12 +207,11 @@ end
 do
 
     local BigInt = std.BigInt
-    local bit = BigInt.bit
 
     do
 
         local x64_zero = BigInt.fromBytes( 1, 0, 0, 0, 0, 0, 0, 0, 0 )
-        local bit_bor, bit_lshift = bit.bor, bit.lshift
+        local BigInt_bor, BigInt_lshift = BigInt.bor, BigInt.lshift
         local BigInt_fromNumber = BigInt.fromNumber
 
         --- [SHARED AND MENU]
@@ -221,11 +220,11 @@ do
         ---@param object gpm.std.steam.Identifier
         ---@return string
         local function to64( object )
-            return bit_bor(
+            return BigInt_bor(
                 x64_zero,
-                bit_lshift( BigInt_fromNumber( object[ 1 ] ), 56 ),
-                bit_lshift( BigInt_fromNumber( object[ 2 ] ), 52 ),
-                bit_lshift( BigInt_fromNumber( object[ 3 ] ), 32 ),
+                BigInt_lshift( BigInt_fromNumber( object[ 1 ] ), 56 ),
+                BigInt_lshift( BigInt_fromNumber( object[ 2 ] ), 52 ),
+                BigInt_lshift( BigInt_fromNumber( object[ 3 ] ), 32 ),
                 BigInt_fromNumber( object[ 4 ] )
             ):toString( 10, true )
         end
@@ -259,7 +258,7 @@ do
 
     do
 
-        local bit_band, bit_rshift = bit.band, bit.rshift
+        local BigInt_band, BigInt_rshift = BigInt.band, BigInt.rshift
         local BigInt_fromString = BigInt.fromString
         local BitInt_toInteger = BigInt.toInteger
 
@@ -281,10 +280,10 @@ do
             local number = BigInt_fromString( str, 10 )
 
             return setmetatable( {
-                BitInt_toInteger( bit_band( bit_rshift( number, 56 ), 0xFF ) ),
-                BitInt_toInteger( bit_band( bit_rshift( number, 52 ), 0xF ) ),
-                BitInt_toInteger( bit_band( bit_rshift( number, 32 ), 0xFFFFF ) ),
-                BitInt_toInteger( bit_band( number, 0xFFFFFFFF ) )
+                BitInt_toInteger( BigInt_band( BigInt_rshift( number, 56 ), 0xFF ) ),
+                BitInt_toInteger( BigInt_band( BigInt_rshift( number, 52 ), 0xF ) ),
+                BitInt_toInteger( BigInt_band( BigInt_rshift( number, 32 ), 0xFFFFF ) ),
+                BitInt_toInteger( BigInt_band( number, 0xFFFFFFFF ) )
             }, Identifier )
         end
 
