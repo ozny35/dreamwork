@@ -749,35 +749,9 @@ end
 dofile( "std/math.classes.lua" )
 dofile( "std/structures.lua" )
 dofile( "std/futures.lua" )
+dofile( "std/version.lua" )
+dofile( "std/bigint.lua" )
 dofile( "std/color.lua" )
-
-do
-
-    local Timer_wait = std.Timer.wait
-    local futures = std.futures
-
-    --- Puts current thread to sleep for given amount of seconds.
-    ---
-    ---@see gpm.std.futures.pending
-    ---@see gpm.std.futures.wakeup
-    ---@async
-    ---@param seconds number
-    function std.sleep( seconds )
-        local co = futures.running()
-        if co == nil then
-            std.error( "sleep cannot be called from main thread", 2 )
-        end
-
-        ---@cast co thread
-
-        Timer_wait( function()
-            futures.wakeup( co )
-        end, seconds )
-
-        return futures.pending()
-    end
-
-end
 
 do
 
@@ -813,9 +787,7 @@ end
 
 dofile( "std/string.extensions.lua" )
 dofile( "std/console.lua" )
-
-dofile( "std/version.lua" )
-dofile( "std/bigint.lua" )
+dofile( "std/game.lua" )
 
 do
 
@@ -846,11 +818,10 @@ do
 
 end
 
-dofile( "std/game.lua" )
-dofile( "std/level.lua" )
-
 dofile( "std/crypto.lua" )
 dofile( "std/crypto.uuid.lua" )
+
+-- TODO: manage loading queue
 
 dofile( "std/crypto.bitpack.lua" )
 dofile( "std/crypto.bytepack.lua" )
@@ -865,32 +836,49 @@ dofile( "std/crypto.pbkdf2.lua" )
 dofile( "std/crypto.deflate.lua" )
 dofile( "std/crypto.lzw.lua" )
 
--- dofile( "std/crypto.chacha20.lua" )
--- dofile( "std/crypto.xtea.lua" )
+dofile( "std/crypto.chacha20.lua" )
 -- dofile( "std/crypto.aes.lua" )
 
+dofile( "std/timer.lua" )
+dofile( "std/hook.lua" )
 dofile( "std/url.lua" )
-
-do
-
-    --- [SHARED AND MENU]
-    ---
-    --- The game's file library.
-    ---@class gpm.std.file
-    local file = std.file or {}
-    std.file = file
-
-end
 
 dofile( "std/file.path.lua" )
 dofile( "std/file.lua" )
 
 dofile( "std/error.lua" )
 
-dofile( "std/hook.lua" )
-dofile( "std/timer.lua" )
+dofile( "std/audio.lua" )
 
 dofile( "package/init.lua" )
+
+do
+
+    local Timer_wait = std.Timer.wait
+    local futures = std.futures
+
+    --- Puts current thread to sleep for given amount of seconds.
+    ---
+    ---@see gpm.std.futures.pending
+    ---@see gpm.std.futures.wakeup
+    ---@async
+    ---@param seconds number
+    function std.sleep( seconds )
+        local co = futures.running()
+        if co == nil then
+            std.error( "sleep cannot be called from main thread", 2 )
+        end
+
+        ---@cast co thread
+
+        Timer_wait( function()
+            futures.wakeup( co )
+        end, seconds )
+
+        return futures.pending()
+    end
+
+end
 
 -- Additional `file.path` function
 do
@@ -1026,6 +1014,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- Checks if a binary module is installed and returns its path.
+    ---
     ---@param name string The binary module name.
     ---@return boolean installed `true` if the binary module is installed, `false` otherwise.
     ---@return string path The absolute path to the binary module.
@@ -1235,6 +1224,7 @@ if std.CLIENT_MENU then
 end
 
 dofile( "std/server.lua" )
+dofile( "std/level.lua" )
 
 do
 
@@ -1295,6 +1285,19 @@ do
     logger:info( "Clean-up time: %.2f ms.", ( getTime() - start_time ) * 1000 )
 end
 
+if SERVER then
+
+    -- timer.Simple( 0, function()
+    --     ---@async
+    --     std.futures.run( function()
+
+    --         PrintTable( std.http.github.getRepositories( "Pika-Software" ) )
+
+    --     end )
+    -- end )
+
+end
+
 -- TODO: put https://wiki.facepunch.com/gmod/Global.DynamicLight somewhere
 -- TODO: put https://wiki.facepunch.com/gmod/Global.ProjectedTexture somewhere
 -- TODO: put https://wiki.facepunch.com/gmod/Global.IsFirstTimePredicted somewhere
@@ -1337,4 +1340,257 @@ end
 
 -- end
 
-return gpm
+-- if CLIENT then
+
+--     local sw, sh = ScrW(), ScrH()
+--     local sw_w, sh_h = sw / 2, sh / 2
+
+--     local vmin = math.min( sw, sh ) / 100
+
+--     local square_size = math.floor( vmin * 5 )
+--     local bounds = math.floor( vmin )
+
+--     local x, y = sw_w - ( square_size ) * 2, sh_h - ( square_size ) * 2
+
+
+--     local positions = {
+--         [ 0 ] = { x, -square_size },
+
+--         { x, y },
+--         { x + bounds + square_size, y },
+--         { x + ( bounds + square_size ) * 2, y },
+
+--         { x + ( bounds + square_size ) * 2, y + bounds + square_size },
+--         { x + bounds + square_size, y + bounds + square_size },
+--         { x, y + bounds + square_size },
+
+--         { x, y + ( bounds + square_size ) * 2 },
+--         { x + bounds + square_size, y + ( bounds + square_size ) * 2 },
+--         { x + ( bounds + square_size ) * 2, y + ( bounds + square_size ) * 2 },
+
+--         { x + ( bounds + square_size ) * 2, sh }
+--     }
+
+--     local alpha_map = {
+--         [ 0 ] = 0,
+
+--         40,
+--         60,
+--         80,
+
+--         90,
+--         120,
+--         150,
+
+--         180,
+--         200,
+--         220,
+
+--         -500
+--     }
+
+--     local squares = {}
+
+--     --[[
+
+--         square:
+--             [ 0 ] - index
+--             [ 1 ] - x
+--             [ 2 ] - y
+--             [ 3 ] - progress
+--             [ 4 ] - to x
+--             [ 5 ] - to y
+--             [ 6 ] - alpha
+
+--     ]]
+--     for i = 1, 9, 1 do
+--         local start = positions[ i ]
+--         local next_pos = positions[ i + 1 ]
+--         squares[ i ] = { [ 0 ] = i, start[ 1 ], start[ 2 ], 0, next_pos[ 1 ], next_pos[ 2 ], alpha_map[ i ] }
+--     end
+
+--     local text = "Preparing"
+
+--     local dots = 0
+
+--     timer.Create( "tests", 0.5, 0, function()
+--         dots = dots + 1
+
+--         if dots > 3 then
+--             dots = 0
+--         end
+--     end )
+
+--     hook.Add( "PostRender", "tests", function()
+--         cam.Start2D()
+
+--         -- surface.SetDrawColor( 20, 20, 20, 255 )
+--         -- surface.DrawRect( 0, 0, sw, sh )
+
+--         for _, square in ipairs( squares ) do
+--             surface.SetDrawColor( 55, 55, 55, square[ 6 ] )
+--             surface.DrawRect( square[ 1 ] - 4, square[ 2 ] - 4, square_size + 4, square_size + 2 )
+
+--             if square[ 0 ] == 5 then
+--                 surface.SetDrawColor( 100, 250, 100, square[ 6 ] )
+--             else
+--                 surface.SetDrawColor( 80, 80, 250, square[ 6 ] )
+--             end
+
+--             surface.DrawRect( square[ 1 ], square[ 2 ], square_size, square_size )
+--         end
+
+--         local post_text = text .. string.rep( ".", dots )
+
+--         surface.SetFont( "DermaLarge" )
+--         local tw, th = surface.GetTextSize( post_text )
+
+--         surface.SetTextColor( 255, 255, 255 )
+--         surface.SetTextPos( x + ( ( ( bounds + square_size ) * 2 + square_size ) - tw ) / 2, y + ( ( ( bounds + square_size ) * 2 + square_size ) + th ) )
+--         surface.DrawText( post_text )
+
+--         -- surface.SetTextPos( sw - 512, 8 )
+--         -- surface.DrawText( string.format( "%p", post_text ) )
+
+--         cam.End2D()
+--         -- return true
+--     end )
+
+--     local current = 1
+
+--     hook.Add( "Tick", "tests", function()
+--         if current > 9 then
+--             current = 1
+--         end
+
+--         local square = squares[ 9 - current + 1 ]
+--         local current_index = square[ 0 ]
+
+--         local progress = square[ 3 ]
+--         if progress > 0.5 then
+--             progress = 1
+--         end
+
+--         if progress == 1 then
+--             current = current + 1
+--             square[ 3 ] = 0
+
+--             if current_index == 9 then
+--                 local zero_position = positions[ 0 ]
+--                 square[ 1 ], square[ 2 ] = zero_position[ 1 ], zero_position[ 2 ]
+--                 square[ 6 ] = alpha_map[ 0 ]
+--                 current_index = 0
+--             else
+--                 current_index = current_index + 1
+--                 local current_position = positions[ current_index ]
+--                 square[ 1 ], square[ 2 ] = current_position[ 1 ], current_position[ 2 ]
+--                 square[ 6 ] = alpha_map[ current_index ]
+--             end
+
+--             square[ 0 ] = current_index
+--         else
+
+--             if progress == 0 then
+--                 if current_index == 0 then
+--                     local zero_position = positions[ 0 ]
+--                     square[ 1 ], square[ 2 ] = zero_position[ 1 ], zero_position[ 2 ]
+
+--                     local one_position = positions[ 1 ]
+--                     square[ 4 ], square[ 5 ] = one_position[ 1 ], one_position[ 2 ]
+--                 else
+--                     local start_position = positions[ current_index ]
+--                     square[ 1 ], square[ 2 ] = start_position[ 1 ], start_position[ 2 ]
+
+--                     local next_position = positions[ current_index + 1 ]
+--                     square[ 4 ], square[ 5 ] = next_position[ 1 ], next_position[ 2 ]
+
+--                 end
+--             end
+
+--             square[ 3 ] = std.math.clamp( progress + FrameTime() * 2, 0, 1 )
+--             square[ 1 ] = std.math.lerp( progress, square[ 1 ], square[ 4 ] )
+--             square[ 2 ] = std.math.lerp( progress, square[ 2 ], square[ 5 ] )
+--             square[ 6 ] = std.math.lerp( progress, alpha_map[ current_index ], alpha_map[ current_index + 1 ] )
+
+--         end
+--     end )
+
+-- end
+
+-- print( env == _G )
+-- if env and env.print then
+--     env.print("Found print!")
+-- end
+
+-- local functions = {}
+-- local scanned = {}
+
+-- local find_fns, scan_fn
+
+-- function scan_fn( fn )
+--     if scanned[ fn ] then return end
+--     scanned[ fn ] = true
+
+--     local name = tostring( fn )
+--     if string.sub( name, 1, 18 ) == "function: builtin#" then
+--         local id = tonumber( string.sub( name, 19 ), 10 )
+--         if id ~= nil then
+--             functions[ id ] = fn
+--         end
+--     end
+
+--     for i = 1, math.huge do
+--         local n, v = debug.getupvalue( fn, i )
+--         if not n then break end
+
+--         local vt = type( v )
+--         if vt == "function" then
+--             scan_fn( v )
+--         elseif vt == "table" then
+--             find_fns( v )
+--         end
+--     end
+-- end
+
+-- function find_fns( t )
+--     if scanned[ t ] then return end
+--     scanned[ t ] = true
+
+--     for k, v in pairs( t ) do
+--         local vt = type( v )
+--         if vt == "function" then
+--             scan_fn( v )
+--         elseif vt == "table" then
+--             find_fns( v )
+--         end
+
+--         local kt = type( k )
+--         if kt == "function" then
+--             scan_fn( k )
+--         elseif kt == "table" then
+--             find_fns( k )
+--         end
+--     end
+-- end
+
+-- find_fns( getfenv and getfenv( 0 ) or _G or _ENV or {} )
+-- PrintTable( functions )
+
+-- print( functions[2]( {} ))
+
+local t = gpm.timer_test2 or std.Timer()
+gpm.timer_test2 = t
+
+t:clear()
+
+t:attach( function()
+    print( "tick" )
+end )
+
+t:stop()
+
+-- print( t:setRepetitions( 0 ) )
+-- print( t:start() )
+-- print( t:setPause( false ) )
+
+print( t )

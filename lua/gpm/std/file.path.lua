@@ -1,4 +1,6 @@
+---@class gpm.std
 local std = _G.gpm.std
+
 local string, table = std.string, std.table
 
 local table_concat = table.concat
@@ -15,7 +17,8 @@ end
 local getfenv, raw_get, select = std.getfenv, std.raw.get, std.select
 
 ---@class gpm.std.file
-local file = std.file
+local file = std.file or {}
+std.file = file
 
 --- [SHARED AND MENU]
 ---

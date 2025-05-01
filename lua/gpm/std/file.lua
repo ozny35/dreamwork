@@ -4,12 +4,19 @@ local _G = _G
 -- TODO: https://wiki.facepunch.com/gmod/Global.AddCSLuaFile
 
 local glua_file = _G.file
+
+---@class gpm.std
 local std = _G.gpm.std
 
 local CLIENT, SERVER, MENU = std.CLIENT, std.SERVER, std.MENU
 
+--- [SHARED AND MENU]
+---
+--- The game's file library.
+---
 ---@class gpm.std.file
-local file = std.file
+local file = std.file or {}
+std.file = file
 
 local path = file.path
 
