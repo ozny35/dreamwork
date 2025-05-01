@@ -1367,8 +1367,6 @@ do
     ---
     --- Common sizes:
     ---
-    --- **XTEA** → `16 bytes`
-    ---
     --- **AES-128** → `16 bytes`
     ---
     --- **AES-256** → `32 bytes`
