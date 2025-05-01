@@ -837,7 +837,6 @@ dofile( "std/crypto.deflate.lua" )
 dofile( "std/crypto.lzw.lua" )
 
 dofile( "std/crypto.chacha20.lua" )
--- dofile( "std/crypto.aes.lua" )
 
 dofile( "std/timer.lua" )
 dofile( "std/hook.lua" )

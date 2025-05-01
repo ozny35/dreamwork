@@ -15,7 +15,6 @@ Now I can finally say that we have created a powerful tool for skilled developer
 * Big Integer class
 * LZW compression
 * Deflate compression
-* AES encryption
 * HMAC hashing
 * PBKDF2 hashing
 * Separate lua environment
