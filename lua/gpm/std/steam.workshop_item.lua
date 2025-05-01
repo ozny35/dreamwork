@@ -637,6 +637,12 @@ if MENU then
 
 end
 
+if MENU then
+
+    WorkshopItemClass.reloadAll = steamworks.ApplyAddons
+
+end
+
 if CLIENT_MENU then
 
     local steamworks_ViewFile = steamworks.ViewFile
