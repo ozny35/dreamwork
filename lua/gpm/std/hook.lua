@@ -432,8 +432,7 @@ end
 
 do
 
-    local pack_writeUInt32 = std.crypto.pack.writeUInt32
-    local debug_getpointer = debug.getpointer
+    local crypto_UUIDv7 = std.crypto.UUIDv7
 
     --- [SHARED AND MENU]
     ---
@@ -442,15 +441,11 @@ do
     ---@param fn function | gpm.std.Hook.Type The callback function or the type of the hook if `identifier` is a Hook.
     ---@param hook_type? gpm.std.Hook.Type The type of the hook, default is `0`.
     function Hook:once( fn, hook_type )
-        local identifier
-
-        local function hook_fn( ... )
+        local identifier = crypto_UUIDv7()
+        self:attach( identifier, function( ... )
             self:detach( identifier )
             return fn( ... )
-        end
-
-        identifier = "\104\111\99\0" .. pack_writeUInt32( debug_getpointer( hook_fn ) or 0, true )
-        self:attach( identifier, hook_fn, hook_type )
+        end, hook_type )
     end
 
 end
