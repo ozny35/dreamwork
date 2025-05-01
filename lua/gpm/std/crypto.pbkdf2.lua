@@ -22,21 +22,13 @@ local math_ceil = std.math.ceil
 
 --- [SHARED AND MENU]
 ---
---- A pbkdf2 library.
----
----@class gpm.std.crypto.pbkdf2
-local pbkdf2 = crypto.pbkdf2 or {}
-crypto.pbkdf2 = pbkdf2
-
---- [SHARED AND MENU]
----
 --- Derives a password using the pbkdf2 algorithm.
 ---
 --- See https://en.wikipedia.org/wiki/PBKDF2 for the algorithm.
 ---
 ---@param options gpm.std.crypto.pbkdf2.Options
 ---@return string pbkdf2_hash The derived password as a hex string.
-function pbkdf2.derive( options )
+function crypto.pbkdf2( options )
     local pbkdf2_iterations = options.iterations or 4096
     local pbkdf2_length = options.length or 16
     local pbkdf2_password = options.password
