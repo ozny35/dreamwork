@@ -9,23 +9,25 @@ local std = _G.gpm.std
 --- [SHARED AND MENU]
 ---
 --- Timer object.
+---
 ---@alias Timer gpm.std.Timer
 ---@class gpm.std.Timer: gpm.std.Object
 ---@field __class gpm.std.TimerClass
-local Timer = std.class.base( "Timer" )
+local Timer = std.Timer and std.Timer.__base or std.class.base( "Timer" )
 
 --- [SHARED AND MENU]
 ---
 --- Timer class.
+---
 ---@class gpm.std.TimerClass: gpm.std.Timer
 ---@field __base gpm.std.Timer
----@overload fun( name: string, delay: number?, repetitions: integer? ): Timer
-local TimerClass = std.class.create( Timer )
+---@overload fun( name: string?, delay: number?, repetitions: integer? ): Timer
+local TimerClass = std.Timer or std.class.create( Timer )
 std.Timer = TimerClass
 
--- TODO: simplify
-
 do
+
+    local string_format = std.string.format
 
     local status2string = {
         [ 0 ] = "removed",
@@ -34,8 +36,9 @@ do
         [ 3 ] = "running"
     }
 
+    ---@protected
     function Timer:__tostring()
-        return std.string.format( "Timer: %p [%s][%s]", self, self[ -2 ], status2string[ self[ -1 ] ] or "unknown" )
+        return string_format( "Timer: %p [%s][%s]", self, self[ -2 ], status2string[ self[ -1 ] ] or "unknown" )
     end
 
 end
@@ -49,43 +52,66 @@ end
 
 do
 
+    local crypto_UUIDv7 = std.crypto.UUIDv7
     local timer_Create = timer.Create
 
     local function call( self )
         self[ -5 ] = true
 
         for i = 2, self[ 0 ], 2 do
-            if not self[ -5 ] then break end
-            self[ i ]( self )
+            if self[ -5 ] then
+                self[ i ]( self )
+            else
+                break
+            end
         end
 
         self[ -5 ] = false
 
         local queue = self[ -6 ]
+        if queue ~= nil then
+            self[ -6 ] = nil
 
-        if queue == nil then
-            return
-        end
-
-        self[ -6 ] = nil
-
-        for i = 1, #queue, 1 do
-            local args = queue[ i ]
-            if args[ 1 ] then
-                self:attach( args[ 3 ], args[ 2 ] )
-            else
-                self:detach( args[ 2 ] )
+            for i = 1, #queue, 1 do
+                local args = queue[ i ]
+                if args[ 1 ] then
+                    self:attach( args[ 3 ], args[ 2 ] )
+                else
+                    self:detach( args[ 2 ] )
+                end
             end
         end
     end
 
+    --[[
+
+        Timer:
+            -6 - post run queue for attach/detach
+            -5 - is running
+            -4 - repetitions
+            -3 - delay
+            -2 - name
+            -1 - status code
+             0 - callback count
+
+    --]]
+
     ---@protected
     function Timer:__init( name, delay, repetitions )
-        if repetitions == nil then repetitions = 1 end
-        if delay == nil then delay = 0 end
+        if name == nil then
+            name = crypto_UUIDv7()
+        end
+
+        if delay == nil then
+            delay = 0
+        end
+
+        if repetitions == nil then
+            repetitions = 1
+        end
 
         self[ 0 ] = 0
-        self[ -1 ] = 2
+        self[ -1 ] = 1
         self[ -2 ] = name
         self[ -3 ] = delay
         self[ -4 ] = repetitions
@@ -94,6 +120,8 @@ do
         timer_Create( name, delay, repetitions, function()
             return call( self )
         end )
+
+        self:stop()
     end
 
 end
@@ -101,6 +129,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Attaches a callback to the timer.
+---
 ---@param fn function The callback function.
 ---@param name string?: The name of the callback, default is `unnamed`.
 function Timer:attach( fn, name )
@@ -141,6 +170,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- Detaches a callback from the timer.
+    ---
     ---@param name string The name of the callback to detach.
     function Timer:detach( name )
         for i = 1, self[ 0 ], 2 do
@@ -169,6 +199,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Detaches all timer callbacks.
+---
 function Timer:clear()
     self[ -5 ] = false
 
@@ -191,10 +222,13 @@ do
     --- [SHARED AND MENU]
     ---
     --- Start the timer.
+    ---
     ---@return boolean success Returns `true` if successful, otherwise `false`.
     function Timer:start()
         local status = self[ -1 ]
-        if status == 0 or status == 3 then return false end
+        if status == 0 or status == 3 then
+            return false
+        end
 
         if status == 2 then
             self:setPause( false )
@@ -208,6 +242,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- Restart the timer.
+    ---
     ---@return boolean success Returns `true` if successful, otherwise `false`.
     function Timer:restart()
         if self[ -1 ] == 0 then return false end
@@ -227,10 +262,13 @@ do
     --- [SHARED AND MENU]
     ---
     --- Stops the timer.
+    ---
     ---@return boolean success Returns `true` if successful, otherwise `false`.
     function Timer:stop()
         local status = self[ -1 ]
-        if status == 0 or status == 1 then return false end
+        if status == 0 or status == 1 then
+            return false
+        end
 
         if status == 2 then
             self:setPause( false )
@@ -249,44 +287,8 @@ do
 
     --- [SHARED AND MENU]
     ---
-    --- Returns the number of timer repetitions.
-    ---@return integer repetitions The number of timer repetitions.
-    function Timer:getRepetitions()
-        return self[ -4 ]
-    end
-
-    --- [SHARED AND MENU]
-    ---
-    --- Sets the number of timer repetitions.
-    ---@param repetitions integer?: The number of timer repetitions.
-    ---@return boolean success Returns `true` if successful, otherwise `false`.
-    function Timer:setRepetitions( repetitions )
-        if self[ -1 ] == 0 then return false end
-        repetitions = self[ -4 ] or repetitions
-        self[ -4 ] = repetitions
-
-        timer_Adjust( self[ -2 ], self[ -3 ], repetitions )
-        return true
-    end
-
-    do
-
-        local timer_RepsLeft = timer.RepsLeft
-
-        --- [SHARED AND MENU]
-        ---
-        --- Returns the number of timer repetitions left.
-        ---@return integer repetitions The number of timer repetitions left.
-        function Timer:getRepetitionsLeft()
-            if self[ -1 ] == 0 then return 0 end
-            return timer_RepsLeft( self[ -1 ] )
-        end
-
-    end
-
-    --- [SHARED AND MENU]
-    ---
     --- Returns the delay between repetitions of the timer in seconds.
+    ---
     ---@return number delay The delay between repetitions in seconds.
     function Timer:getDelay()
         return self[ -3 ]
@@ -295,36 +297,91 @@ do
     --- [SHARED AND MENU]
     ---
     --- Sets the delay between repetitions of the timer in seconds.
-    ---@param delay number?: The delay between repetitions in seconds.
+    ---
+    ---@param delay number | nil The delay between repetitions in seconds.
     ---@return boolean success Returns `true` if successful, otherwise `false`.
     function Timer:setDelay( delay )
-        if self[ -1 ] == 0 then return false end
-        delay = self[ -3 ] or delay
-        self[ -3 ] = delay
+        if self[ -1 ] == 0 then
+            return false
+        end
 
-        ---@cast delay number
+        if delay == nil then
+            delay = self[ -3 ]
+        else
+            self[ -3 ] = delay
+        end
 
         timer_Adjust( self[ -2 ], delay )
         return true
     end
 
-    do
+    --- [SHARED AND MENU]
+    ---
+    --- Returns the number of timer repetitions.
+    ---
+    ---@return integer repetitions The number of timer repetitions.
+    function Timer:getRepetitions()
+        return self[ -4 ]
+    end
 
-        local timer_TimeLeft = timer.TimeLeft
-        local math_huge = std.math.huge
-
-        --- [SHARED AND MENU]
-        ---
-        --- Returns the time left to the next callbacks call in seconds.
-        ---@return number timef The time left in seconds.
-        function Timer:getTimeLeft()
-            if self[ -1 ] == 3 then
-                return timer_TimeLeft( self[ -2 ] )
-            else
-                return math_huge
-            end
+    --- [SHARED AND MENU]
+    ---
+    --- Sets the number of timer repetitions.
+    ---
+    ---@param repetitions integer | nil The number of timer repetitions, `0` is infinite.
+    ---@return boolean success Returns `true` if successful, otherwise `false`.
+    function Timer:setRepetitions( repetitions )
+        if self[ -1 ] == 0 then
+            return false
         end
 
+        if repetitions == nil then
+            repetitions = self[ -4 ]
+        else
+            self[ -4 ] = repetitions
+        end
+
+        timer_Adjust( self[ -2 ], self[ -3 ], repetitions )
+        return true
+    end
+
+end
+
+do
+
+    local timer_TimeLeft = timer.TimeLeft
+    local math_huge = std.math.huge
+
+    --- [SHARED AND MENU]
+    ---
+    --- Returns the time left to the next callbacks call in seconds.
+    ---
+    ---@return number timef The time left in seconds.
+    function Timer:getTimeLeft()
+        if self[ -1 ] == 3 then
+            return timer_TimeLeft( self[ -2 ] )
+        else
+            return math_huge
+        end
+    end
+
+end
+
+do
+
+    local timer_RepsLeft = timer.RepsLeft
+
+    --- [SHARED AND MENU]
+    ---
+    --- Returns the number of timer repetitions left.
+    ---
+    ---@return integer repetitions The number of timer repetitions left.
+    function Timer:getRepetitionsLeft()
+        if self[ -1 ] == 0 then
+            return 0
+        else
+            return timer_RepsLeft( self[ -1 ] )
+        end
     end
 
 end
@@ -336,6 +393,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- Removes the timer.
+    ---
     ---@return boolean success Returns `true` if successful, `false` if timer already removed.
     function Timer:remove()
         if self[ -1 ] == 0 then return false end
@@ -351,6 +409,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Checks if the timer is valid.
+---
 ---@return boolean is_valid Returns `true` if the timer is valid (not removed), otherwise `false`.
 function Timer:isValid()
     return self[ -1 ] ~= 0
@@ -359,6 +418,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Checks if the timer is stopped.
+---
 ---@return boolean is_stopped Returns `true` if the timer is stopped, otherwise `false`.
 function Timer:isStopped()
     return self[ -1 ] == 1
@@ -367,6 +427,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Checks if the timer is paused.
+---
 ---@return boolean is_paused Returns `true` if the timer is paused, otherwise `false`.
 function Timer:isPaused()
     return self[ -1 ] == 2
@@ -375,6 +436,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Checks if the timer is running.
+---
 ---@return boolean is_running Returns `true` if the timer is running, otherwise `false`.
 function Timer:isRunning()
     return self[ -1 ] == 3
@@ -387,6 +449,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- Pauses/unpauses the timer.
+    ---
     ---@param value boolean `true` to pause, `false` to unpause.
     ---@return boolean success Returns `true` if successful, otherwise `false`.
     function Timer:setPause( value )
@@ -394,11 +457,15 @@ do
         if status == 0 or status == 1 then return false end
 
         if value then
-            if status == 2 then return false end
-            timer_Pause( self[ -2 ] )
-            self[ -1 ] = 2
+            if status == 2 then
+                return false
+            else
+                timer_Pause( self[ -2 ] )
+                self[ -1 ] = 2
+            end
+        elseif status == 3 then
+            return false
         else
-            if status == 3 then return false end
             timer_UnPause( self[ -2 ] )
             self[ -1 ] = 3
         end
@@ -415,8 +482,9 @@ do
     --- [SHARED AND MENU]
     ---
     --- Creates a simple timer.
+    ---
     ---@param fn function The callback function.
-    ---@param seconds number?: The delay in seconds.
+    ---@param seconds number? The delay in seconds.
     function TimerClass.wait( fn, seconds )
         return timer_Simple( seconds or 0, fn )
     end
@@ -430,6 +498,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- Checks if the timer exists.
+    ---
     ---@param name string The name of the timer.
     ---@return boolean exists Returns `true` if the timer exists, otherwise `false`.
     function TimerClass.exists( name )

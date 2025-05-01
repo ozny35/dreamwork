@@ -16,6 +16,7 @@ local console_Variable = console.Variable
 --- BSP: `maps/{name}.bsp`
 --- AI navigation: `maps/{name}.ain`
 --- Navigation Mesh: `maps/{name}.nav`
+---
 ---@class gpm.std.level
 ---@field name string The name of the current loaded level.
 local level = std.level or {}
@@ -51,6 +52,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Checks if a map/level exists.
+---
 ---@param name string The map/level name in maps/*.bsp folder.
 ---@param gamePath? string An optional argument specifying the search location, as an example for addon searches.
 ---@return boolean
@@ -73,6 +75,15 @@ if std.SHARED then
 
     level.getStartSpot = level.getStartSpot or glua_game.StartSpot
     level.getContents = level.getContents or glua_util.PointContents
+
+    --- [SHARED AND MENU]
+    ---
+    --- Returns the gravity of the current level.
+    ---
+    ---@return integer: The gravity of the current level.
+    function level.getGravity()
+        return console_Variable.getNumber( "sv_gravity" )
+    end
 
 end
 
@@ -175,15 +186,7 @@ if std.SERVER then
 
 end
 
---- [SHARED AND MENU]
----
---- Returns the gravity of the current level.
----@return integer: The gravity of the current level.
-function level.getGravity()
-    return console_Variable.getNumber( "sv_gravity" )
-end
-
-do
+if std.MENU then
 
     --- [SHARED AND MENU]
     ---

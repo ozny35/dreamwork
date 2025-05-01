@@ -7,10 +7,9 @@ local pcall, xpcall = std.pcall, std.xpcall
 local isfunction = std.isfunction
 local tostring = std.tostring
 
-local Queue = std.Queue
-
 local coroutine = std.coroutine
 local string = std.string
+local Queue = std.Queue
 
 --- [SHARED AND MENU]
 ---
@@ -25,9 +24,9 @@ std.futures = futures
 --[[
 
     Results:
-        0 = RESULT_YIELD
-        1 = RESULT_ERROR
-        2 = RESULT_END
+        0 - RESULT_YIELD
+        1 - RESULT_ERROR
+        2 - RESULT_END
 
 --]]
 

@@ -472,6 +472,7 @@ end
 do
 
     local string_format = string.format
+    local bit_tohex = std.bit.tohex
 
     --- [SHARED AND MENU]
     ---
@@ -483,7 +484,19 @@ do
     ---@return string hex_str The hex string.
     function string.toHex( str )
         local binary_length = string_len( str )
-        return string_format( string_rep( "%02x", binary_length ), string_byte( str, 1, binary_length ) )
+        if binary_length == 0 then
+            return ""
+        elseif binary_length > 8000 then
+            local buffer = {}
+
+            for i = 1, binary_length, 1 do
+                buffer[ i ] = bit_tohex( string_byte( str, i ), 2 )
+            end
+
+            return table_concat( buffer, "", 1, binary_length )
+        else
+            return string_format( string_rep( "%02x", binary_length ), string_byte( str, 1, binary_length ) )
+        end
     end
 
 end

@@ -15,7 +15,7 @@ local Future = std.Future
 local HTTPClientError = std.HTTPClientError
 
 local http_client, client_name
-if std.SERVER and std.loadbinary( "reqwest" ) then
+if std.loadbinary( "reqwest" ) then
     local user_agent = "gLua Package Manager/" .. gpm.VERSION .. " - Garry's Mod/" .. _G.VERSIONSTR
     ---@diagnostic disable-next-line: undefined-field
     local reqwest = _G.reqwest

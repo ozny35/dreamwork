@@ -8,6 +8,7 @@ local os = std.os
 --- [CLIENT AND MENU]
 ---
 --- The game's os window library.
+---
 ---@class gpm.std.os.window
 ---@field width number The width of the game's window (in pixels).
 ---@field height number The height of the game's window (in pixels).
@@ -49,6 +50,7 @@ if window.isFullscreen == nil then
     --- [CLIENT AND MENU]
     ---
     --- Returns whether the game window is fullscreen.
+    ---
     ---@return boolean is_on `true` if the game window is fullscreen, `false` if not.
     function window.isFullscreen()
         return not system_IsWindowed()

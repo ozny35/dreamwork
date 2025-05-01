@@ -9,11 +9,14 @@ local std = gpm.std
 local debug = std.debug
 local console_Variable = std.console.Variable
 
-local glua_engine, glua_game, glua_util, system_IsWindowed = _G.engine, _G.game, _G.util, _G.system.IsWindowed
+local glua_engine = _G.engine
+local glua_game = _G.game
+local glua_util = _G.util
 
 --- [SHARED AND MENU]
 ---
 --- The game library.
+---
 ---@class gpm.std.game
 local game = std.game or {}
 std.game = game
@@ -57,6 +60,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- Checks whether or not a game is currently mounted.
+    ---
     ---@param folder_name string The folder name of the game.
     ---@return boolean: Returns `true` if the game is mounted, `false` otherwise.
     function game.isMounted( folder_name )
@@ -76,18 +80,12 @@ if std.MENU then
 
     --- [MENU]
     ---
-    --- Mounts a game on the client.
-    ---@param appID number Steam AppID of the game.
-    function game.mount( appID )
-        SetMounted( tostring( appID ), true )
-    end
-
-    --- [MENU]
+    --- Mounts or unmounts a game content to the client.
     ---
-    --- Unmounts a game on the client.
     ---@param appID number Steam AppID of the game.
-    function game.unmount( appID )
-        SetMounted( tostring( appID ), false )
+    ---@param value boolean `true` to mount, `false` to unmount.
+    function game.setMount( appID, value )
+        SetMounted( tostring( appID ), true )
     end
 
 end
@@ -101,8 +99,6 @@ do
 end
 
 if std.CLIENT_MENU then
-    game.isInWindow = system_IsWindowed
-
     do
 
         ---@class gpm.std.game.demo

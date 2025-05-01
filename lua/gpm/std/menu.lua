@@ -43,15 +43,15 @@ if std.MENU then
 
     menu.getWorkshopStatus = _G.GetAddonStatus
 
-    local RunGameUICommand = _G.RunGameUICommand
-    menu.runCommand = RunGameUICommand
+    local menu_runCommand = menu.runCommand or _G.RunGameUICommand
+    menu.runCommand = menu_runCommand
 
     --- [MENU]
     ---
     --- Closes the menu and returns to the game.
     ---
-    function menu.resume()
-        RunGameUICommand( "ResumeGame" )
+    function menu.close()
+        menu_runCommand( "ResumeGame" )
     end
 
     --- [MENU]
@@ -59,7 +59,7 @@ if std.MENU then
     --- Opens the legacy server browser.
     ---
     function menu.openServerBrowser()
-        RunGameUICommand( "OpenServerBrowser" )
+        menu_runCommand( "OpenServerBrowser" )
     end
 
     --- [MENU]
@@ -67,7 +67,7 @@ if std.MENU then
     --- Opens the Source "Load Game" dialog.
     ---
     function menu.openGameLoadDialog()
-        RunGameUICommand( "OpenLoadGameDialog" )
+        menu_runCommand( "OpenLoadGameDialog" )
     end
 
     --- [MENU]
@@ -75,7 +75,7 @@ if std.MENU then
     --- Opens the Source "Save Game" dialog.
     ---
     function menu.openGameSaveDialog()
-        RunGameUICommand( "OpenSaveGameDialog" )
+        menu_runCommand( "OpenSaveGameDialog" )
     end
 
     --- [MENU]
@@ -83,25 +83,18 @@ if std.MENU then
     --- Opens the "Mute Players" dialog that shows all players connected to the server and allows to mute them.
     ---
     function menu.openPlayerList()
-        RunGameUICommand( "OpenPlayerListDialog" )
-    end
-
-    --- [MENU]
-    ---
-    --- Disconnects from the current server.
-    ---
-    function menu.disconnect()
-        RunGameUICommand( "Disconnect" )
+        menu_runCommand( "OpenPlayerListDialog" )
     end
 
     --- [MENU]
     ---
     --- Quits the game.
     ---
-    ---@param noConfirm boolean Whether to skip the confirmation prompt.
-    --- NOTE: confirmation dialog is broken in Garry's mod and `noConfirm` do nothing.
-    function menu.quit( noConfirm )
-        RunGameUICommand( noConfirm and "QuitNoConfirm" or "Quit" )
+    --- **NOTE**: confirmation dialog is broken in Garry's mod and `no_confirm` do nothing.
+    ---
+    ---@param no_confirm boolean Whether to skip the confirmation prompt.
+    function menu.quit( no_confirm )
+        menu_runCommand( no_confirm and "QuitNoConfirm" or "Quit" )
     end
 
     --- [MENU]
@@ -271,6 +264,8 @@ do
 
     if std.MENU then
 
+        local menu_runCommand = menu.runCommand
+
         --- [MENU]
         ---
         --- Sets the master volume.
@@ -427,7 +422,7 @@ do
         --- Opens the options dialog.
         ---
         function options.open()
-            RunGameUICommand( "OpenOptionsDialog" )
+            menu_runCommand( "OpenOptionsDialog" )
         end
 
     end
