@@ -11,7 +11,8 @@ local raw_get, raw_pairs = std.raw.get, std.raw.pairs
 
 --- [SHARED AND MENU]
 ---
---- The class library.
+--- The class (OOP) library.
+---
 ---@class gpm.std.class
 local class = {}
 std.class = class
@@ -181,6 +182,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- Creates a new class from the given base.
+    ---
     ---@param base Object The base object, aka metatable.
     ---@param private? boolean If the class should be private.
     ---@return Class | unknown cls The class.

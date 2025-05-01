@@ -268,6 +268,14 @@ do
 
         --- [MENU]
         ---
+        --- Reloads all local addons. (**garrysmod/addons**)
+        ---
+        function menu.reloadAddons()
+            command.run( "reload_legacy_addons" )
+        end
+
+        --- [MENU]
+        ---
         --- Sets the master volume.
         ---
         ---@param volume number The volume to set, from 0 to 1.

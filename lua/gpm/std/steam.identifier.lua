@@ -3,7 +3,8 @@ local tonumber = std.tonumber
 local setmetatable = std.setmetatable
 
 ---@class gpm.std.steam
-local steam = std.steam
+local steam = std.steam or {}
+std.steam = steam
 
 ---@alias gpm.std.steam.Identifier.Type
 ---| string # Steam Account Type ( https://developer.valvesoftware.com/wiki/SteamID#Types_of_Steam_Accounts )

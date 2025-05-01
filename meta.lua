@@ -1365,12 +1365,6 @@ do
 
     --- Desired length of the derived key (in bytes).
     ---
-    --- Common sizes:
-    ---
-    --- **AES-128** → `16 bytes`
-    ---
-    --- **AES-256** → `32 bytes`
-    ---
     --- Default value: `16`
     ---
     ---@type integer | nil
@@ -1385,5 +1379,46 @@ do
     ---
     ---@type gpm.std.crypto.hashlib
     options.hash = nil
+
+end
+
+do
+
+    --- [SHARED AND MENU]
+    ---
+    --- Source game item.
+    ---
+    ---@class gpm.std.game.Item
+    local game = {}
+
+    --- The name of the game.
+    ---
+    ---@type string
+    game.title = nil
+
+    --- The Steam application ID of the game.
+    ---
+    ---@type integer
+    game.appid = nil
+
+    --- The mount folder name of the game.
+    ---
+    ---@type string
+    game.folder = nil
+
+    --- Whether the game is installed or not.
+    ---
+    ---@type boolean
+    game.installed = nil
+
+    --- Whether the game is mounted or not.
+    ---
+    ---@type boolean
+    game.mounted = nil
+
+    --- Whether the game is owned or not.
+    ---
+    ---@type boolean
+    game.owned = nil
 
 end

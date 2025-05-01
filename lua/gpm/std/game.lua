@@ -29,30 +29,30 @@ game.getTickInterval = game.getTickInterval or glua_engine.TickInterval
 
 do
 
-
     --- [SHARED AND MENU]
     ---
-    --- Returns an array of tables corresponding to all games from which Garry's Mod supports mounting content.
-    ---@return table: Array of tables with the following fields: `appid`, `title`, `folder`, `owned`, `installed`, `mounted`.
-    ---@return integer: The length of the list.
+    --- Returns a list of items corresponding to all games from which Garry's Mod supports content mounting.
+    ---
+    ---@return gpm.std.game.Item[] items The list of games.
+    ---@return integer item_count The length of the items array (`#items`).
     function game.getAll()
+        local item_count = engine.game_count
         local games = engine.games
-        local lst, length = {}, 0
+        local items = {}
 
-        for i = 1, engine.game_count, 1 do
+        for i = 1, item_count, 1 do
             local data = games[ i ]
-            length = length + 1
-            lst[ length ] = {
-                appid = data.depot,
-                folder = data.folder,
+            items[ i ] = {
                 installed = data.installed,
                 mounted = data.mounted,
+                folder = data.folder,
+                appid = data.depot,
                 owned = data.owned,
                 title = data.title
             }
         end
 
-        return lst, length
+        return items, item_count
     end
 
     local mounted_games = engine.mounted_games
@@ -101,6 +101,10 @@ end
 if std.CLIENT_MENU then
     do
 
+        --- [CLIENT AND MENU]
+        ---
+        --- The game demo library.
+        ---
         ---@class gpm.std.game.demo
         local demo = {
             getTotalPlaybackTicks = glua_engine.GetDemoPlaybackTotalTicks,
@@ -124,7 +128,12 @@ if std.CLIENT_MENU then
         local glua_achievements = _G.achievements
         local achievements_Count, achievements_GetName, achievements_GetDesc, achievements_GetCount, achievements_GetGoal, achievements_IsAchieved = glua_achievements.Count, glua_achievements.GetName, glua_achievements.GetDesc, glua_achievements.GetCount, glua_achievements.GetGoal, glua_achievements.IsAchieved
 
+        -- TODO: update code/docs
+
+        --- [CLIENT AND MENU]
+        ---
         --- Returns information about an achievement (name, description, value, etc.)
+        ---
         ---@param id number The ID of achievement to retrieve name of. Note: IDs start from 0, not 1.
         ---@return table | nil: Returns nil if the ID is invalid.
         local function get( id )
@@ -154,7 +163,10 @@ if std.CLIENT_MENU then
             return achievements_IsAchieved( id ) ~= nil
         end
 
+        --- [CLIENT AND MENU]
+        ---
         --- Returns information about all achievements.
+        ---
         ---@return table: The list of all achievements.
         ---@return number: The count of achievements.
         function achievement.getAll()
@@ -209,6 +221,7 @@ if std.SHARED then
     --- [SHARED]
     ---
     --- Checks if Half-Life 2 aux suit power stuff is enabled.
+    ---
     ---@return boolean: `true` if Half-Life 2 aux suit power stuff is enabled, `false` if not.
     function game.getHL2Suit()
         return console_Variable.getBoolean( "gmod_suit" )
@@ -225,6 +238,7 @@ if std.SERVER then
     --- [SERVER]
     ---
     --- Enables Half-Life 2 aux suit power stuff.
+    ---
     ---@param bool boolean `true` to enable Half-Life 2 aux suit power stuff, `false` to disable it.
     function game.setHL2Suit( bool )
         console_Variable.set( "gmod_suit", bool == true )
@@ -233,30 +247,3 @@ if std.SERVER then
     game.exit = glua_engine.CloseServer
 
 end
-
-if std.MENU then
-
-    local steamworks_ApplyAddons = _G.steamworks.ApplyAddons
-    local Command_run = std.console.Command.run
-
-    --- Reloads addons.
-    ---@param reloadType number?: The reload type.
-    ---
-    --- `0`: reload workshop addons
-    ---
-    --- `1`: reload legacy addons
-    ---
-    --- `2`: reload all addons
-    function game.reloadAddons( reloadType )
-        if reloadType == nil then
-            steamworks_ApplyAddons()
-        elseif reloadType == 1 then
-            Command_run( "reload_legacy_addons" )
-        elseif reloadType == 2 then
-            Command_run( "reload_legacy_addons" )
-            steamworks_ApplyAddons()
-        end
-    end
-
-end
-

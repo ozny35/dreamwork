@@ -2,6 +2,7 @@ local _G = _G
 local gpm = _G.gpm
 local steamworks = _G.steamworks
 
+---@class gpm.std
 local std = gpm.std
 
 local Future = std.Future
@@ -10,8 +11,13 @@ local tonumber = std.tonumber
 local Timer_wait = std.Timer.wait
 local string_byte, string_sub = std.string.byte, std.string.sub
 
+--- [SHARED AND MENU]
+---
+--- The Steam API library.
+---
 ---@class gpm.std.steam
-local steam = std.steam
+local steam = std.steam or {}
+std.steam = steam
 
 do
 

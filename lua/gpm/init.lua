@@ -1199,20 +1199,10 @@ end
 dofile( "std/http.lua" )
 dofile( "std/http.github.lua" )
 
-do
-
-    --- [SHARED AND MENU]
-    ---
-    --- Steam library.
-    ---@class gpm.std.steam
-    local steam = {}
-    std.steam = steam
-
-end
-
 dofile( "std/steam.identifier.lua" )
 dofile( "std/steam.workshop_item.lua" )
 dofile( "std/steam.lua" )
+
 dofile( "std/addon.lua" )
 
 if std.CLIENT_MENU then
@@ -1282,19 +1272,6 @@ do
     local start_time = getTime()
     debug.gc.collect()
     logger:info( "Clean-up time: %.2f ms.", ( getTime() - start_time ) * 1000 )
-end
-
-if SERVER then
-
-    -- timer.Simple( 0, function()
-    --     ---@async
-    --     std.futures.run( function()
-
-    --         PrintTable( std.http.github.getRepositories( "Pika-Software" ) )
-
-    --     end )
-    -- end )
-
 end
 
 -- TODO: put https://wiki.facepunch.com/gmod/Global.DynamicLight somewhere
@@ -1515,81 +1492,3 @@ end
 --     end )
 
 -- end
-
--- print( env == _G )
--- if env and env.print then
---     env.print("Found print!")
--- end
-
--- local functions = {}
--- local scanned = {}
-
--- local find_fns, scan_fn
-
--- function scan_fn( fn )
---     if scanned[ fn ] then return end
---     scanned[ fn ] = true
-
---     local name = tostring( fn )
---     if string.sub( name, 1, 18 ) == "function: builtin#" then
---         local id = tonumber( string.sub( name, 19 ), 10 )
---         if id ~= nil then
---             functions[ id ] = fn
---         end
---     end
-
---     for i = 1, math.huge do
---         local n, v = debug.getupvalue( fn, i )
---         if not n then break end
-
---         local vt = type( v )
---         if vt == "function" then
---             scan_fn( v )
---         elseif vt == "table" then
---             find_fns( v )
---         end
---     end
--- end
-
--- function find_fns( t )
---     if scanned[ t ] then return end
---     scanned[ t ] = true
-
---     for k, v in pairs( t ) do
---         local vt = type( v )
---         if vt == "function" then
---             scan_fn( v )
---         elseif vt == "table" then
---             find_fns( v )
---         end
-
---         local kt = type( k )
---         if kt == "function" then
---             scan_fn( k )
---         elseif kt == "table" then
---             find_fns( k )
---         end
---     end
--- end
-
--- find_fns( getfenv and getfenv( 0 ) or _G or _ENV or {} )
--- PrintTable( functions )
-
--- print( functions[2]( {} ))
-
-local t = gpm.timer_test2 or std.Timer()
-gpm.timer_test2 = t
-
-t:clear()
-
-t:attach( function()
-    print( "tick" )
-end )
-
-t:stop()
-
--- print( t:setRepetitions( 0 ) )
--- print( t:start() )
--- print( t:setPause( false ) )
-
-print( t )
