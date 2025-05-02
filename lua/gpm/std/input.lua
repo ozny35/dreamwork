@@ -152,9 +152,10 @@ if std.CLIENT_MENU then
         mouse.doubleClick = gui.InternalMouseDoublePressed
 
         mouse.isDown = glua_input.IsMouseDown
-        mouse.isPressed = glua_input.WasMousePressed
-        mouse.isReleased = glua_input.WasMouseReleased
-        mouse.isDoubleClicked = glua_input.WasMouseDoublePressed
+
+        mouse.wasPressed = glua_input.WasMousePressed
+        mouse.wasReleased = glua_input.WasMouseReleased
+        mouse.wasDoubleClicked = glua_input.WasMouseDoublePressed
 
     end
 
@@ -169,8 +170,8 @@ if std.CLIENT_MENU then
         local key = input.key or { count = 106 }
         input.key = key
 
-        -- https://wiki.facepunch.com/gmod/input.IsKeyDown ?? whats a difference
-        key.isDown = key.isDown or glua_input.IsButtonDown
+        -- TODO: https://wiki.facepunch.com/gmod/input.IsButtonDown ?? whats a difference
+        key.isDown = key.isDown or glua_input.IsKeyDown
 
         do
 
@@ -273,9 +274,15 @@ if std.CLIENT_MENU then
         key.press = glua_gui.InternalKeyCodePressed
         key.release = glua_gui.InternalKeyCodeReleased
 
+        key.wasTyped = glua_input.WasKeyTyped
+        key.wasPressed = glua_input.WasKeyPressed
+        key.wasReleased = glua_input.WasKeyReleased
+
     end
 
     input.typeByte = glua_gui.InternalKeyTyped
+    input.isShiftDown = glua_input.IsShiftDown
+    input.isControlDown = glua_input.IsControlDown
 
     do
 
@@ -318,6 +325,9 @@ if std.CLIENT_MENU then
         ---@class gpm.std.input.controller
         local controller = input.controller or {}
         input.controller = controller
+
+        -- TODO: https://wiki.facepunch.com/gmod/input.GetAnalogValue
+        -- TODO: https://wiki.facepunch.com/gmod/Enums/ANALOG
 
     end
 
@@ -396,10 +406,8 @@ if std.CLIENT_SERVER then
         end
     end
 
+    -- TODO: https://wiki.facepunch.com/gmod/motionsensor
+
     -- TODO: gmcl_rekinect support ( net library required )
 
 end
-
--- TODO: https://wiki.facepunch.com/gmod/input
--- TODO: https://wiki.facepunch.com/gmod/motionsensor
--- TODO: https://wiki.facepunch.com/gmod/gui
