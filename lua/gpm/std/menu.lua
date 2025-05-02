@@ -18,16 +18,14 @@ do
 
     local gui = _G.gui
 
-    menu.isVisible = gui.IsGameUIVisible
     menu.open = gui.ActivateGameUI
-    menu.openURL = gui.OpenURL
 
     ---@diagnostic disable-next-line: deprecated
     menu.close = gui.HideGameUI or std.debug.fempty
 
-    local gui_IsGameUIVisible = gui.IsGameUIVisible
+    do
 
-    if std.CLIENT_MENU and gui_IsGameUIVisible ~= nil then
+        local gui_IsGameUIVisible = gui.IsGameUIVisible
 
         menu.visible = gui_IsGameUIVisible()
 
@@ -36,6 +34,8 @@ do
         end )
 
     end
+
+    menu.openURL = gui.OpenURL
 
 end
 

@@ -41,7 +41,7 @@ if std.CLIENT_MENU then
 
         --- [CLIENT AND MENU]
         ---
-        --- The cursor module allows you to manipulate the client's cursor.
+        --- The cursor module allows to manipulate the client's cursor.
         ---
         ---@clas gpm.std.input.cursor
         local cursor = input.cursor or {}
@@ -55,13 +55,28 @@ if std.CLIENT_MENU then
         cursor.getPosition = cursor.getPosition or glua_input.GetCursorPos
         cursor.setPosition = cursor.setPosition or glua_input.SetCursorPos
 
+        if std.debug.getmetatable( cursor ) == nil then
+            local gui_MouseX = glua_gui.MouseX
+            local gui_MouseY = glua_gui.MouseY
+
+            std.setmetatable( cursor, {
+                __index = function( _, key )
+                    if key == 1 or key == "x" then
+                        return gui_MouseX()
+                    elseif key == 2 or key == "y" then
+                        return gui_MouseY()
+                    end
+                end
+            } )
+        end
+
     end
 
     do
 
         --- [CLIENT AND MENU]
         ---
-        --- The clipboard module allows you to manipulate the client's clipboard.
+        --- The clipboard module allows to manipulate the client's clipboard.
         ---
         ---@class gpm.std.input.clipboard
         local clipboard = input.clipboard or {}
@@ -115,13 +130,39 @@ if std.CLIENT_MENU then
             SetClipboardText( clipboard_text )
         end
 
+        -- TODO: add hooks and history
+
     end
 
     do
 
         --- [CLIENT AND MENU]
         ---
-        --- The key module allows you to manipulate the client's keys.
+        --- The mouse module allows to manipulate the client's mouse.
+        ---
+        ---@class gpm.std.input.mouse
+        local mouse = input.mouse or {}
+        input.mouse = mouse
+
+        mouse.wheel = glua_gui.InternalMouseWheeled
+        mouse.move = gui.InternalCursorMoved
+
+        mouse.press = glua_gui.InternalMousePressed
+        mouse.release = glua_gui.InternalMouseReleased
+        mouse.doubleClick = gui.InternalMouseDoublePressed
+
+        mouse.isDown = glua_input.IsMouseDown
+        mouse.isPressed = glua_input.WasMousePressed
+        mouse.isReleased = glua_input.WasMouseReleased
+        mouse.isDoubleClicked = glua_input.WasMouseDoublePressed
+
+    end
+
+    do
+
+        --- [CLIENT AND MENU]
+        ---
+        --- The key module allows manipulate the client's keys.
         ---
         ---@class gpm.std.input.key
         ---@field count integer The number of keys.
@@ -228,13 +269,19 @@ if std.CLIENT_MENU then
 
         end
 
+        key.type = glua_gui.InternalKeyCodeTyped
+        key.press = glua_gui.InternalKeyCodePressed
+        key.release = glua_gui.InternalKeyCodeReleased
+
     end
+
+    input.typeByte = glua_gui.InternalKeyTyped
 
     do
 
         --- [CLIENT AND MENU]
         ---
-        --- The bind module allows you to manipulate the client's binds.
+        --- The bind module allows to manipulate the client's binds.
         ---
         ---@class gpm.std.input.binding
         local binding = input.binding or {}
@@ -266,7 +313,7 @@ if std.CLIENT_MENU then
 
         --- [CLIENT AND MENU]
         ---
-        --- The controller module allows you to manipulate the client's controllers.
+        --- The controller module allows to manipulate the client's controllers.
         ---
         ---@class gpm.std.input.controller
         local controller = input.controller or {}
@@ -280,7 +327,7 @@ if std.CLIENT then
 
     --- [CLIENT]
     ---
-    --- The weapon module allows you to manipulate the client's weapons.
+    --- The weapon module allows to manipulate the client's weapon.
     ---
     ---@class gpm.std.input.weapon
     local weapon = input.weapon or {}
@@ -324,7 +371,7 @@ if std.CLIENT_SERVER then
 
     --- [CLIENT AND SERVER]
     ---
-    --- The kinect module allows you to manipulate the client's kinect.
+    --- The kinect module allows to manipulate the client's kinect.
     ---
     --- Highly recommended to use with https://github.com/WilliamVenner/gmcl_rekinect
     ---

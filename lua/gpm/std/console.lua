@@ -154,7 +154,7 @@ if std.MENU then
     ---
     --- Shows the console.
     ---
-    console.show = _G.gui and _G.gui.ShowConsole or function()
+    console.show = _G.gui.ShowConsole or function()
         RunConsoleCommand( "showconsole" )
     end
 
@@ -178,21 +178,13 @@ end
 
 if std.CLIENT_MENU then
 
-    local gui = _G.gui
-    if gui == nil then
-        console.visible = false
-    else
-        local gui_IsConsoleVisible = gui.IsConsoleVisible
-        if gui_IsConsoleVisible == nil then
-            console.visible = false
-        else
-            console.visible = gui_IsConsoleVisible()
+    local gui_IsConsoleVisible = _G.gui.IsConsoleVisible
 
-            _G.timer.Create( gpm.PREFIX .. " - gui.IsConsoleVisible", 0.25, 0, function()
-                console.visible = gui_IsConsoleVisible()
-            end )
-        end
-    end
+    console.visible = gui_IsConsoleVisible()
+
+    _G.timer.Create( gpm.PREFIX .. " - gui.IsConsoleVisible", 0.25, 0, function()
+        console.visible = gui_IsConsoleVisible()
+    end )
 
 end
 
