@@ -715,44 +715,12 @@ do
 
 end
 
-dofile( "std/string.utf8.lua" )
-dofile( "engine.lua" )
-
--- symbol class
-do
-
-    local function __tostring( self )
-        ---@diagnostic disable-next-line: param-type-mismatch
-        return string_format( "%s: %p", raw_get( debug_getmetatable( self ), "__type" ), self )
-    end
-
-    local debug_newproxy = debug.newproxy
-
-    ---@class gpm.std.Symbol : userdata
-    ---@alias Symbol gpm.std.Symbol
-
-    --- [SHARED AND MENU]
-    ---
-    --- Creates a new symbol.
-    ---
-    ---@param name string The name of the symbol.
-    ---@return Symbol obj The new symbol.
-    function std.Symbol( name )
-        ---@class gpm.std.Symbol
-        local obj = debug_newproxy( true )
-        local metatable = debug_getmetatable( obj )
-        metatable.__type = name .. " Symbol"
-        metatable.__tostring = __tostring
-        return obj
-    end
-
-end
-
+dofile( "std/string.extensions.lua" )
 dofile( "std/math.classes.lua" )
+dofile( "std/string.utf8.lua" )
 dofile( "std/structures.lua" )
-dofile( "std/futures.lua" )
+
 dofile( "std/version.lua" )
-dofile( "std/bigint.lua" )
 dofile( "std/color.lua" )
 
 do
@@ -787,7 +755,8 @@ do
 
 end
 
-dofile( "std/string.extensions.lua" )
+dofile( "engine.lua" )
+
 dofile( "std/console.lua" )
 dofile( "std/game.lua" )
 
@@ -820,6 +789,9 @@ do
 
 end
 
+dofile( "std/futures.lua" )
+dofile( "std/bigint.lua" )
+
 dofile( "std/crypto.lua" )
 dofile( "std/crypto.uuid.lua" )
 
@@ -828,6 +800,26 @@ dofile( "std/crypto.uuid.lua" )
 dofile( "std/crypto.bitpack.lua" )
 dofile( "std/crypto.bytepack.lua" )
 dofile( "std/crypto.pack.lua" )
+
+do
+
+    local crypto = std.crypto
+    local pack_readUInt32 = crypto.pack.readUInt32
+
+    ---@class gpm.std.crypto.lzma
+    local lzma = crypto.lzma
+
+    --- [SHARED AND MENU]
+    ---
+    --- Returns the decompressed size of the given string.
+    ---
+    ---@param str string Compressed string.
+    ---@return integer size The decompressed size in bytes.
+    function lzma.size( str )
+        return pack_readUInt32( str, false, 6 )
+    end
+
+end
 
 -- dofile( "std/crypto.byte_reader.lua" )
 -- dofile( "std/crypto.byte_writer.lua" )
@@ -847,7 +839,7 @@ dofile( "std/url.lua" )
 dofile( "std/file.path.lua" )
 dofile( "std/file.lua" )
 
-dofile( "std/error.lua" )
+-- dofile( "std/error.lua" ) -- TODO: deprecated
 
 dofile( "std/audio.lua" )
 
@@ -1141,6 +1133,15 @@ do
 
 end
 
+--[[
+
+    TODO:
+
+    StringReader   StringWriter     __init( str: string )
+    FileReader     FileWriter       __init( file_path: string )
+    NetworkReader  NetworkWriter    __init( network_name: string )
+
+]]
 
 dofile( "std/http.lua" )
 dofile( "std/http.github.lua" )
@@ -1250,191 +1251,4 @@ end
 
 ]]
 
--- local file = std.file
-
--- -- Plugins
--- do
-
---     local files = _G.file.Find( "gpm/plugins/*.lua", "LUA" )
---     for i = 1, #files do
---         dofile( "plugins/" .. files[ i ] )
---     end
-
--- end
-
--- if CLIENT then
-
---     local sw, sh = ScrW(), ScrH()
---     local sw_w, sh_h = sw / 2, sh / 2
-
---     local vmin = math.min( sw, sh ) / 100
-
---     local square_size = math.floor( vmin * 5 )
---     local bounds = math.floor( vmin )
-
---     local x, y = sw_w - ( square_size ) * 2, sh_h - ( square_size ) * 2
-
-
---     local positions = {
---         [ 0 ] = { x, -square_size },
-
---         { x, y },
---         { x + bounds + square_size, y },
---         { x + ( bounds + square_size ) * 2, y },
-
---         { x + ( bounds + square_size ) * 2, y + bounds + square_size },
---         { x + bounds + square_size, y + bounds + square_size },
---         { x, y + bounds + square_size },
-
---         { x, y + ( bounds + square_size ) * 2 },
---         { x + bounds + square_size, y + ( bounds + square_size ) * 2 },
---         { x + ( bounds + square_size ) * 2, y + ( bounds + square_size ) * 2 },
-
---         { x + ( bounds + square_size ) * 2, sh }
---     }
-
---     local alpha_map = {
---         [ 0 ] = 0,
-
---         40,
---         60,
---         80,
-
---         90,
---         120,
---         150,
-
---         180,
---         200,
---         220,
-
---         -500
---     }
-
---     local squares = {}
-
---     --[[
-
---         square:
---             [ 0 ] - index
---             [ 1 ] - x
---             [ 2 ] - y
---             [ 3 ] - progress
---             [ 4 ] - to x
---             [ 5 ] - to y
---             [ 6 ] - alpha
-
---     ]]
---     for i = 1, 9, 1 do
---         local start = positions[ i ]
---         local next_pos = positions[ i + 1 ]
---         squares[ i ] = { [ 0 ] = i, start[ 1 ], start[ 2 ], 0, next_pos[ 1 ], next_pos[ 2 ], alpha_map[ i ] }
---     end
-
---     local text = "Preparing"
-
---     local dots = 0
-
---     timer.Create( "tests", 0.5, 0, function()
---         dots = dots + 1
-
---         if dots > 3 then
---             dots = 0
---         end
---     end )
-
---     hook.Add( "PostRender", "tests", function()
---         cam.Start2D()
-
---         -- surface.SetDrawColor( 20, 20, 20, 255 )
---         -- surface.DrawRect( 0, 0, sw, sh )
-
---         for _, square in ipairs( squares ) do
---             surface.SetDrawColor( 55, 55, 55, square[ 6 ] )
---             surface.DrawRect( square[ 1 ] - 4, square[ 2 ] - 4, square_size + 4, square_size + 2 )
-
---             if square[ 0 ] == 5 then
---                 surface.SetDrawColor( 100, 250, 100, square[ 6 ] )
---             else
---                 surface.SetDrawColor( 80, 80, 250, square[ 6 ] )
---             end
-
---             surface.DrawRect( square[ 1 ], square[ 2 ], square_size, square_size )
---         end
-
---         local post_text = text .. string.rep( ".", dots )
-
---         surface.SetFont( "DermaLarge" )
---         local tw, th = surface.GetTextSize( post_text )
-
---         surface.SetTextColor( 255, 255, 255 )
---         surface.SetTextPos( x + ( ( ( bounds + square_size ) * 2 + square_size ) - tw ) / 2, y + ( ( ( bounds + square_size ) * 2 + square_size ) + th ) )
---         surface.DrawText( post_text )
-
---         -- surface.SetTextPos( sw - 512, 8 )
---         -- surface.DrawText( string.format( "%p", post_text ) )
-
---         cam.End2D()
---         -- return true
---     end )
-
---     local current = 1
-
---     hook.Add( "Tick", "tests", function()
---         if current > 9 then
---             current = 1
---         end
-
---         local square = squares[ 9 - current + 1 ]
---         local current_index = square[ 0 ]
-
---         local progress = square[ 3 ]
---         if progress > 0.5 then
---             progress = 1
---         end
-
---         if progress == 1 then
---             current = current + 1
---             square[ 3 ] = 0
-
---             if current_index == 9 then
---                 local zero_position = positions[ 0 ]
---                 square[ 1 ], square[ 2 ] = zero_position[ 1 ], zero_position[ 2 ]
---                 square[ 6 ] = alpha_map[ 0 ]
---                 current_index = 0
---             else
---                 current_index = current_index + 1
---                 local current_position = positions[ current_index ]
---                 square[ 1 ], square[ 2 ] = current_position[ 1 ], current_position[ 2 ]
---                 square[ 6 ] = alpha_map[ current_index ]
---             end
-
---             square[ 0 ] = current_index
---         else
-
---             if progress == 0 then
---                 if current_index == 0 then
---                     local zero_position = positions[ 0 ]
---                     square[ 1 ], square[ 2 ] = zero_position[ 1 ], zero_position[ 2 ]
-
---                     local one_position = positions[ 1 ]
---                     square[ 4 ], square[ 5 ] = one_position[ 1 ], one_position[ 2 ]
---                 else
---                     local start_position = positions[ current_index ]
---                     square[ 1 ], square[ 2 ] = start_position[ 1 ], start_position[ 2 ]
-
---                     local next_position = positions[ current_index + 1 ]
---                     square[ 4 ], square[ 5 ] = next_position[ 1 ], next_position[ 2 ]
-
---                 end
---             end
-
---             square[ 3 ] = std.math.clamp( progress + FrameTime() * 2, 0, 1 )
---             square[ 1 ] = std.math.lerp( progress, square[ 1 ], square[ 4 ] )
---             square[ 2 ] = std.math.lerp( progress, square[ 2 ], square[ 5 ] )
---             square[ 6 ] = std.math.lerp( progress, alpha_map[ current_index ], alpha_map[ current_index + 1 ] )
-
---         end
---     end )
-
--- end
+-- TODO: plugins support

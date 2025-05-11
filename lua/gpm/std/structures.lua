@@ -12,9 +12,6 @@ do
     ---@field __class gpm.std.StackClass
     local Stack = std.class.base( "Stack" )
 
-    ---@diagnostic disable-next-line: duplicate-doc-alias
-    ---@alias Stack gpm.std.Stack
-
     ---@protected
     function Stack:__init()
         self[ 0 ] = 0
@@ -100,6 +97,9 @@ do
     local StackClass = std.class.create( Stack )
     std.Stack = StackClass
 
+    ---@diagnostic disable-next-line: duplicate-doc-alias
+    ---@alias Stack gpm.std.Stack
+
 end
 
 do
@@ -112,8 +112,6 @@ do
     ---@field __class gpm.std.QueueClass
     local Queue = std.class.base( "Queue" )
 
-    ---@alias Queue gpm.std.Queue
-
     ---@protected
     function Queue:__init()
         self.front = 0
@@ -124,7 +122,7 @@ do
     ---
     --- Returns the length of the queue.
     ---
-    ---@return integer
+    ---@return integer length The length of the queue.
     function Queue:getLength()
         return self.front - self.back
     end
@@ -156,7 +154,7 @@ do
     --- Returns the value at the front of the queue or the back if `fromBack` is `true`.
     ---
     ---@param fromBack? boolean If `true`, returns the value at the back of the queue.
-    ---@return any
+    ---@return any value The value at the front of the queue.
     function Queue:peek( fromBack )
         return self[ fromBack and ( self.back + 1 ) or self.front ]
     end
@@ -224,7 +222,7 @@ do
     ---
     ---@param fromBack? boolean If `true`, returns an iterator for the back of the queue.
     ---@return function iterator The iterator function.
-    ---@return Queue queue The queue being iterated over.
+    ---@return gpm.std.Queue queue The queue being iterated over.
     ---@return boolean fromBack `true` if the iterator is for the back of the queue.
     function Queue:iterator( fromBack )
         return self.pop, self, fromBack == true
@@ -239,5 +237,45 @@ do
     ---@overload fun(): gpm.std.Queue
     local QueueClass = std.class.create( Queue )
     std.Queue = QueueClass
+
+    ---@alias Queue gpm.std.Queue
+
+end
+
+-- symbol class
+do
+
+    local debug_getmetatable = std.debug.getmetatable
+    local debug_newproxy = std.debug.newproxy
+    local string_format = std.string.format
+    local raw_get = std.raw.get
+
+    local function __tostring( self )
+        ---@diagnostic disable-next-line: param-type-mismatch
+        return string_format( "%s: %p", raw_get( debug_getmetatable( self ), "__type" ), self )
+    end
+
+    --- [SHARED AND MENU]
+    ---
+    --- A symbol.
+    ---
+    ---@class gpm.std.Symbol : userdata
+
+    ---@alias Symbol gpm.std.Symbol
+
+    --- [SHARED AND MENU]
+    ---
+    --- Creates a new symbol.
+    ---
+    ---@param name string The name of the symbol.
+    ---@return gpm.std.Symbol obj The new symbol.
+    function std.Symbol( name )
+        ---@class gpm.std.Symbol
+        local obj = debug_newproxy( true )
+        local metatable = debug_getmetatable( obj )
+        metatable.__type = name .. " Symbol"
+        metatable.__tostring = __tostring
+        return obj
+    end
 
 end

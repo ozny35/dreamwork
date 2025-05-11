@@ -82,8 +82,6 @@ local letter2int = {
 ---@operator sub( integer ): gpm.std.steam.Identifier
 local Identifier = std.class.base( "Identifier" )
 
----@alias SteamID gpm.std.steam.Identifier
-
 --- [SHARED AND MENU]
 ---
 --- SteamID class.

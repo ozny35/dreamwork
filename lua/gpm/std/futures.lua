@@ -21,14 +21,27 @@ std.futures = futures
 -- TODO: use errors instead of string
 -- TODO: make cancel error
 
---[[
+---@package
+---@enum gpm.std.futures.result
+futures.RESULT = futures.RESULT or {
+    YIELD = std.Symbol( "futures.RESULT_YIELD" ),
+    ERROR = std.Symbol( "futures.RESULT_ERROR" ),
+    END =   std.Symbol( "futures.RESULT_END" )
+}
 
-    Results:
-        0 - RESULT_YIELD
-        1 - RESULT_ERROR
-        2 - RESULT_END
+---@package
+---@enum gpm.std.futures.action
+futures.ACTION = futures.ACTION or {
+    CANCEL = std.Symbol( "futures.ACTION_CANCEL" ),
+    RESUME = std.Symbol( "futures.ACTION_RESUME" ),
+}
 
---]]
+local RESULT_YIELD = futures.RESULT.YIELD
+local RESULT_ERROR = futures.RESULT.ERROR
+local RESULT_END = futures.RESULT.END
+
+local ACTION_CANCEL = futures.ACTION.CANCEL
+local ACTION_RESUME = futures.ACTION.RESUME
 
 ---@private
 ---@type { [thread]: function }
@@ -146,7 +159,7 @@ futures.run = futures_run
 
 ---@async
 local function handle_pending( value, ... )
-    if value == false then
+    if value == ACTION_CANCEL then
         return error( "Operation was cancelled" ) -- TODO: use error
     else
         return value, ...
@@ -229,11 +242,11 @@ futures.pending = futures_pending
 function futures.cancel( co )
     local status = coroutine_status( co )
     if status == "suspended" then
-        coroutine_resume( co, false )
+        coroutine_resume( co, ACTION_CANCEL )
     elseif status == "normal" and coroutine_running() then
         -- let's hope that passed coroutine resumed us
         ---@diagnostic disable-next-line: await-in-sync
-        coroutine_yield( false )
+        coroutine_yield( ACTION_CANCEL )
     elseif status == "running" then
         error( "Operation was cancelled" ) -- TODO: use error
     end
@@ -271,13 +284,13 @@ futures.transfer = futures_transfer
 ---@async
 local function handle_yield( ok, value, ... )
     -- ignore errors, they must be handled by whoever calls us
-    if not ok or value == 1 then
+    if not ok or value == RESULT_ERROR then
         return
     end
 
-    if value == false then
+    if value == ACTION_CANCEL then
         return error( "Operation was cancelled" ) -- TODO: use error
-    elseif value == true then
+    elseif value == ACTION_RESUME then
         return ...
     elseif value ~= nil then
         std.error( "invalid yield action: " .. tostring( value ), -2 )
@@ -298,7 +311,7 @@ do
     local function futures_yield( ... )
         local listener = coroutine_listeners[ coroutine_running() ]
         if listener then
-            return handle_yield( futures_transfer( listener, 0, ... ) )
+            return handle_yield( futures_transfer( listener, RESULT_YIELD, ... ) )
         else
             -- whaat? we don't have a listener?!
             error( "Operation was cancelled" ) -- TODO: use error
@@ -318,9 +331,9 @@ local function async_iteratable_thread( fn, ... )
     local listener = coroutine_listeners[ coroutine_running() ]
     if listener then
         if ok then
-            futures_transfer( listener, 2 )
+            futures_transfer( listener, RESULT_END )
         else
-            futures_transfer( listener, 1, err )
+            futures_transfer( listener, RESULT_ERROR, err )
         end
     elseif not ok then
         error( err )
@@ -335,11 +348,11 @@ local function handle_anext( co, ok, value, ... )
         return error( value )
     end
 
-    if value == 0 then
+    if value == RESULT_YIELD then
         return ...
-    elseif value == 2 then
+    elseif value == RESULT_END then
         return -- return nothing so for loop with be stopped
-    elseif value == 1 then
+    elseif value == RESULT_ERROR then
         return error( ... )
     elseif value ~= nil then
         std.error( "invalid anext result: " .. tostring( value ), -2 )
@@ -359,7 +372,7 @@ end
 ---@async
 ---@param iterator thread
 local function futures_anext( iterator, ... )
-    return handle_anext( iterator, futures_transfer( iterator, true, ... ) )
+    return handle_anext( iterator, futures_transfer( iterator, ACTION_RESUME, ... ) )
 end
 
 futures.anext = futures_anext
@@ -472,21 +485,12 @@ do
     ---@class gpm.std.futures.Future : gpm.std.Object
     ---@field __class gpm.std.futures.FutureClass
     ---@field protected callbacks function[] The list of callbacks that will be called when future is done.
-    ---@field protected state number 0 = PENDING, 1 = FINISHED, 2 = CANCELLED.
-    ---@field protected value any The result of the future.
-    ---@field protected error any The error of the future.
+    ---@field protected state `0` | `1` | `2` `0` - PENDING, `1` - FINISHED, `2` - CANCELLED.
+    ---@field protected result_value any The result value of the future.
+    ---@field protected error_value any The error value of the future.
     local Future = futures.Future and futures.Future.__base or std.class.base( "Future" )
 
     ---@alias Future gpm.std.futures.Future
-
-    --[[
-
-        States:
-            0 = PENDING
-            1 = FINISHED
-            2 = CANCELLED
-
-    --]]
 
     ---@protected
     function Future:__init()
@@ -499,14 +503,14 @@ do
         local state = self.state
         if state ~= 0 then
             if state == 2 then
-                return string.format( "Future: %p ( cancelled )", self )
-            elseif self.error then
-                return string.format( "Future: %p ( finished error = %s )", self, tostring( self.error ) )
+                return string.format( "Future: %p [cancelled]", self )
+            elseif self.error_value then
+                return string.format( "Future: %p [failure][%s]", self, tostring( self.error_value ) )
             else
-                return string.format( "Future: %p ( finished value = %s )", self, tostring( self.value ) )
+                return string.format( "Future: %p [success][%s]", self, tostring( self.result_value ) )
             end
         else
-            return string.format( "Future: %p ( pending )", self )
+            return string.format( "Future: %p [pending]", self )
         end
     end
 
@@ -605,7 +609,7 @@ do
         if self.state ~= 0 then
             error( "future is already finished", 2 )
         else
-            self.state, self.value = 1, result
+            self.state, self.result_value = 1, result
             self:runCallbacks()
         end
     end
@@ -620,7 +624,7 @@ do
         if self.state ~= 0 then
             error( "future is already finished", 2 )
         else
-            self.state, self.error = 1, err
+            self.state, self.error_value = 1, err
             self:runCallbacks()
         end
     end
@@ -654,7 +658,7 @@ do
         if state == 2 then
             return "future was cancelled"
         elseif state ~= 0 then
-            return self.error
+            return self.error_value
         else
             return "future is not finished"
         end
@@ -672,10 +676,11 @@ do
         if state == 2 then
             return error( "future was cancelled" )
         elseif state ~= 0 then
-            if self.error then
-                error( self.error )
+            local error_value = self.error_value
+            if error_value == nil then
+                return self.result_value
             else
-                return self.value
+                error( error_value )
             end
         else
             return error( "future is not finished" )
@@ -712,7 +717,7 @@ do
     --- Future class.
     ---
     ---@class gpm.std.futures.FutureClass : gpm.std.futures.Future
-    ---@field __base Future
+    ---@field __base gpm.std.futures.Future
     ---@overload fun(): gpm.std.futures.Future
     local FutureClass = std.class.create( Future )
     futures.Future = FutureClass
@@ -747,6 +752,7 @@ do
     ---@field private setError fun( self, error )
     local Task = futures.Task and futures.Task.__base or std.class.base( "Task", futures.Future )
 
+    ---@diagnostic disable-next-line: duplicate-doc-alias
     ---@alias Task gpm.std.futures.Task
 
     ---@protected

@@ -36,75 +36,79 @@ end
 --- [SHARED AND MENU]
 ---
 --- HTTP request method.
---- 0. HEAD
---- 1. GET
---- 2. POST
---- 3. PUT
---- 4. PATCH
---- 5. DELETE
---- 6. OPTIONS
 ---
----@alias gpm.std.http.Request.Method
----| integer
----| `0` HEAD
----| `1` GET
----| `2` POST
----| `3` PUT
----| `4` PATCH
----| `5` DELETE
----| `6` OPTIONS
+---@alias gpm.std.http.Request.Method "HEAD" | "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "OPTIONS"
+
+--- [SHARED AND MENU]
+---
+--- HTTP request URL.
+---
+---@alias gpm.std.http.Request.URL string | gpm.std.URL | "http://" | "https://"
 
 do
 
     --- [SHARED AND MENU]
     ---
-    --- Table used by `http.request` function.
+    --- Options table for `http.request` function.
+    ---
     ---@class gpm.std.http.Request
     local request = {}
 
-    --- Request method (0 = HEAD, 1 = GET, 2 = POST, 3 = PUT, 4 = PATCH, 5 = DELETE, 6 = OPTIONS).
+    --- Request method.
     ---
-    --- The default value is 1 (GET).
-    ---@type gpm.std.http.Request.Method | nil
+    ---@type gpm.std.http.Request.Method
     request.method = nil
 
-    --- The target url
-    ---@type string | URL
+    --- Request URL.
+    ---
+    ---@type gpm.std.http.Request.URL
     request.url = nil
 
     --- KeyValue table for parameters.
     ---
-    --- This is only applicable to the following request methods:
-    --- (0 = HEAD, 1 = GET, 2 = POST)
+    --- This is only applicable to the following request methods: **HEAD**, **GET**, **POST**
+    ---
     ---@type gpm.std.URL.SearchParams | table | nil
     request.parameters = nil
 
     --- Body string for POST data.
+    ---
     --- If set, will override parameters.
+    ---
     ---@type string | nil
     request.body = nil
 
-    --- KeyValue table for headers.
-    ---@type table | nil
-    request.headers = nil
-
     --- Content type for body.
+    ---
     ---@type string | nil
     request.type = "text/plain; charset=utf-8"
 
-    --- The timeout for the connection.
-    ---@type number | nil
+    --- KeyValue table for headers.
+    ---
+    ---@type table | nil
+    request.headers = nil
+
+    --- The timeout for the connection in seconds.
+    ---
+    --- The default timeout is 60 seconds.
+    ---
+    --- `0` means no timeout.
+    ---
+    ---@type integer | nil
     request.timeout = 60
 
     --- Whether to cache the response.
+    ---
     ---@type boolean | nil
     request.cache = false
 
     --- The cache lifetime for the request.
+    ---
     ---@type number | nil
     request.lifetime = nil
 
     --- Whether to use ETag caching.
+    ---
     ---@type boolean | nil
     request.etag = false
 
@@ -526,7 +530,6 @@ do
     --- [SHARED AND MENU]
     ---
     --- The URL state object.
-    ---@alias URLState gpm.std.URL.State
     ---@class gpm.std.URL.State
     ---@field scheme string?
     ---@field username string?

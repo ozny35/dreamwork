@@ -7,7 +7,6 @@ local std = gpm.std
 local class = std.class
 local Version = std.Version
 
----@alias Package gpm.Package
 ---@class gpm.Package: gpm.std.Object
 ---@field __class gpm.PackageClass
 ---@field name string

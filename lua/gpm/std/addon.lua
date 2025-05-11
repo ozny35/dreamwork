@@ -1,7 +1,6 @@
 ---@class gpm.std
 local std = _G.gpm.std
 
----@alias Addon gpm.std.Addon
 ---@class gpm.std.Addon: gpm.std.Object
 ---@field __class gpm.std.AddonClass
 local Addon = std.class.base( "Addon" )

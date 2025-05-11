@@ -1655,7 +1655,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- The URL search parameters object.
----@alias URLSearchParams gpm.std.URL.SearchParams
+---
 ---@class gpm.std.URL.SearchParams : gpm.std.Object
 ---@field __class gpm.std.URL.SearchParamsClass
 local SearchParams = std.class.base( "URLSearchParams" )
@@ -1895,7 +1895,7 @@ local STATE_FIELDS = {
 	fragment = true
 }
 
----@param obj URL
+---@param obj gpm.std.URL
 local function resetCache( obj )
 	raw_set( obj, "_href", nil )
 	raw_set( obj, "_origin", nil )
@@ -1906,7 +1906,7 @@ local function resetCache( obj )
 end
 
 ---@generic V: string | number
----@param obj URL
+---@param obj gpm.std.URL
 ---@param key string
 ---@param value V
 ---@return V
@@ -1918,7 +1918,6 @@ end
 --- [SHARED AND MENU]
 ---
 --- The URL object.
----@alias URL gpm.std.URL
 ---@class gpm.std.URL : gpm.std.Object, gpm.std.URL.State
 ---@field __class gpm.std.URLClass
 ---@field state gpm.std.URL.State internal state of URL
@@ -1970,7 +1969,7 @@ local URL = std.class.base( "URL" )
 --- ```
 ---@class gpm.std.URLClass : gpm.std.URL
 ---@field __base gpm.std.URL
----@overload fun( url: string, base: string | URL | nil ): gpm.std.URL
+---@overload fun( url: string, base: string | gpm.std.URL | nil ): gpm.std.URL
 local URLClass = std.class.create( URL )
 std.URL = URLClass
 
@@ -2190,10 +2189,10 @@ end
 
 --- [SHARED AND MENU]
 ---
---- Parses given URL string but returns URLState object instead
----@see std.URL
+--- Parses given gpm.std.URL string but returns URLState object instead
+---@see gpm.std.URL
 ---@param url string
----@param base string | URL | nil
+---@param base string | gpm.std.URL | nil
 ---@return gpm.std.URL.State
 function URLClass.parse( url, base )
 	return parse( {}, url, base )
@@ -2204,7 +2203,7 @@ end
 --- Returns true if given url can be parsed with URLState
 --- otherwise returns false and error string
 ---@param url string
----@param base string | URL | nil
+---@param base string | gpm.std.URL | nil
 ---@return boolean
 ---@return gpm.std.URL.State | string
 function URLClass.canParse( url, base )

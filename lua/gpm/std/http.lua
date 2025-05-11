@@ -12,7 +12,6 @@ local string_gmatch = std.string.gmatch
 local isnumber, isstring, istable = std.isnumber, std.isstring, std.istable
 
 local Future = std.Future
-local HTTPClientError = std.HTTPClientError
 
 local http_client, client_name
 if std.loadbinary( "reqwest" ) then
@@ -132,23 +131,17 @@ local session_cache = {}
 
 ]]
 
-local int2method = {
-    [ 0 ] = "HEAD",
-    [ 1 ] = "GET",
-    [ 2 ] = "POST",
-    [ 3 ] = "PUT",
-    [ 4 ] = "PATCH",
-    [ 5 ] = "DELETE",
-    [ 6 ] = "OPTIONS"
-}
-
---- Executes an asynchronous http request with the given parameters.
----@see gpm.std.http.Request structure.
----@param tbl gpm.std.http.Request The request parameters.
+--- [SHARED AND MENU]
+---
+--- Executes an asynchronous http request with the given options.
+---
+---@param options gpm.std.http.Request The request options.
 ---@return gpm.std.http.Response data The response.
+---@see gpm.std.http.Request for the request options structure.
+---@see gpm.std.http.Response for the response structure.
 ---@async
-local function request( tbl )
-    local search_parameters = tbl.parameters
+local function request( options )
+    local search_parameters = options.parameters
     if std.isURLSearchParams( search_parameters ) then
         ---@cast search_parameters gpm.std.URL.SearchParams
 
@@ -165,35 +158,33 @@ local function request( tbl )
             end
         end
 
-        tbl.parameters = parameters
+        options.parameters = parameters
     elseif not istable( search_parameters ) then
-        tbl.parameters = nil
+        options.parameters = nil
     end
 
-    local url = tbl.url
+    local url = options.url
     if url == nil then
         error( "URL is nil", 2 )
     elseif not isstring( url ) then
         ---@cast url gpm.std.URL
         url = url.href
-        tbl.url = url
+        options.url = url
     end
 
     ---@cast url string
 
-    local method = int2method[ tbl.method ] or "GET"
+    local method = options.method or "GET"
+    options.method = method
 
-    ---@diagnostic disable-next-line: assign-type-mismatch
-    tbl.method = method
-
-    local timeout = tbl.timeout
+    local timeout = options.timeout
     if timeout == nil or not isnumber( timeout ) then
         ---@diagnostic disable-next-line: cast-local-type
         timeout = gpm_http_timeout:get()
         ---@cast timeout number
     end
 
-    tbl.timeout = timeout
+    options.timeout = timeout
 
     -- TODO: add package logger searching
     Logger:debug( "%s HTTP request to '%s', using '%s', with timeout %f seconds.", method, url, client_name, timeout )
@@ -201,24 +192,24 @@ local function request( tbl )
     local f = Future()
 
     ---@diagnostic disable-next-line: inject-field
-    function tbl.success( status, body, headers )
+    function options.success( status, body, headers )
         f:setResult( { status = status, body = body, headers = headers } )
     end
 
     ---@diagnostic disable-next-line: inject-field
-    function tbl.failed( msg )
-        f:setError( HTTPClientError( msg ) )
+    function options.failed( msg )
+        f:setError( msg )
     end
 
     -- Cache extension
-    if tbl.cache then
-        tbl.cache = nil
+    if options.cache then
+        options.cache = nil
 
         local identifier = json_serialize( {
             url = url,
             method = method,
-            parameters = tbl.parameters,
-            headers = tbl.headers
+            parameters = options.parameters,
+            headers = options.headers
         }, false )
 
         local data = session_cache[ identifier ]
@@ -226,8 +217,8 @@ local function request( tbl )
             return data[ 1 ]
         end
 
-        local lifetime = tbl.lifetime
-        tbl.lifetime = nil
+        local lifetime = options.lifetime
+        options.lifetime = nil
 
         if not isnumber( lifetime ) then
             lifetime = gpm_http_lifetime:get() * 60
@@ -237,10 +228,10 @@ local function request( tbl )
         data = { f, SysTime(), lifetime }
         session_cache[ identifier ] = data
 
-        local success = tbl.success
+        local success = options.success
 
         ---@diagnostic disable-next-line: inject-field
-        function tbl.success( status, body, headers )
+        function options.success( status, body, headers )
             local cache_control = headers["cache-control"]
             if cache_control then
                 local options = {}
@@ -258,34 +249,34 @@ local function request( tbl )
             success( status, body, headers )
         end
 
-        local failed = tbl.failed
+        local failed = options.failed
 
         ---@diagnostic disable-next-line: inject-field
-        function tbl.failed( msg )
+        function options.failed( msg )
             session_cache[ identifier ] = nil
             failed( msg )
         end
     end
 
     -- ETag extension
-    if tbl.etag then
-        tbl.etag = nil
+    if options.etag then
+        options.etag = nil
 
         local data = http_cache_get( url )
         if data then
-            local headers = tbl.headers
+            local headers = options.headers
             if istable( headers ) then
                 headers[ "If-None-Match" ] = data.etag
             else
                 headers = { [ "If-None-Match" ] = data.etag }
-                tbl.headers = headers
+                options.headers = headers
             end
         end
 
-        local success = tbl.success
+        local success = options.success
 
         ---@diagnostic disable-next-line: inject-field
-        function tbl.success( status, body, headers )
+        function options.success( status, body, headers )
             if status == 304 then
                 status, body = 200, data and data.content or ""
             elseif status == 200 and headers.etag then
@@ -296,8 +287,8 @@ local function request( tbl )
         end
     end
 
-    if not make_request( tbl ) then
-        tbl.failed( "failed to connect to '" .. client_name .. "' http client for '" .. url .. "'" )
+    if not make_request( options ) then
+        options.failed( "failed to connect to '" .. client_name .. "' http client for '" .. url .. "'" )
     end
 
     return f:await()
@@ -328,12 +319,12 @@ if std.MENU then
                 end
             end
 
-            f:setError( HTTPClientError( "failed to get facepunch manifest" ) )
+            f:setError( "failed to get facepunch manifest" )
         end )
 
         Timer_wait( function()
             if f:isPending() then
-                f:setError( HTTPClientError( "timed out getting facepunch manifest" ) )
+                f:setError( "timed out getting facepunch manifest" )
             end
         end, timeout or 30 )
 

@@ -40,21 +40,17 @@ print( car.speed ) -- 0
 ```lua
 ---@class gpm.std.Truck : gpm.std.Car
 ---@field __class gpm.std.TruckClass
----@field __parent gpm.std.CarClass               <-- now we need to define the parent, so LuaLS can know how to access our parent
+---@field __parent gpm.std.Car               <-- now we need to define the parent, so LuaLS can know how to access our parent
 local Truck = std.class.base( "Truck", std.Car )
 
 ---@alias Truck gpm.std.Truck
 
 ---@class gpm.std.TruckClass : gpm.std.Truck
 ---@field __base gpm.std.Truck
+---@field __parent gpm.std.CarClass
 ---@overload fun(): gpm.std.Truck
 local TruckClass = std.class.create( Truck )
 std.Truck = TruckClass
-```
-
-### 5. Optionally call inherited callback
-```lua
-std.class.inherited(TruckClass)
 ```
 
 ## Class Template
@@ -69,13 +65,27 @@ local Car = std.class.base( "Car" )
 ---@protected
 function Car:__init()
     self.speed = 0
-    self.color = Color(255, 255, 255)
+    self.color = Color( 255, 255, 255 )
 end
 
 ---@class gpm.std.CarClass : gpm.std.Car
 ---@field __base gpm.std.Car
 ---@overload fun(): Car
-local CarClass = std.class.create(Car)
+local CarClass = std.class.create( Car )
 std.Car = CarClass
+
+---@class gpm.std.Truck : gpm.std.Car
+---@field __class gpm.std.TruckClass
+---@field __parent gpm.std.Car
+local Truck = std.class.base( "Truck", std.Car )
+
+---@alias Truck gpm.std.Truck
+
+---@class gpm.std.TruckClass : gpm.std.Truck
+---@field __base gpm.std.Truck
+---@field __parent gpm.std.CarClass
+---@overload fun(): Truck
+local TruckClass = std.class.create( Truck )
+std.Truck = TruckClass
 
 ```

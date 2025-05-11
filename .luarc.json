@@ -2,8 +2,8 @@
     "$schema": "https://raw.githubusercontent.com/LuaLS/vscode-lua/master/setting/schema.json",
     "runtime.path": [ "?" ],
     "runtime.special": {
-        "include": "require",
-        "IncludeCS": "require"
+        "IncludeCS": "require",
+        "include": "require"
     },
     "runtime.version": "LuaJIT",
     "workspace.library": [
@@ -19,7 +19,7 @@
         "continue"
     ],
     "diagnostics.globals": ["gpm"],
-    "diagnostics.disable": ["duplicate-set-field"],
+    "diagnostics.disable": [],
     "diagnostics.groupFileStatus": {
         "await": "Any"
     },

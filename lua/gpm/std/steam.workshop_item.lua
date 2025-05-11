@@ -17,65 +17,41 @@ local isstring = std.isstring
 local Timer_wait = std.Timer.wait
 
 
----@alias gpm.std.steam.WorkshopItem.ContentType
----| string # The type of the content.
----| `"addon"`
----| `"save"`
----| `"dupe"`
----| `"demo"`
+--- [SHARED AND MENU]
+---
+--- The Steam Workshop publication content type.
+---
+---@alias gpm.std.steam.WorkshopItem.ContentType "addon" | "save" | "dupe" | "demo"
 
----@alias gpm.std.steam.WorkshopItem.Type
----| string # The type of the publication.
----| `"gamemode"`
----| `"map"`
----| `"weapon"`
----| `"vehicle"`
----| `"npc"`
----| `"entity"`
----| `"tool"`
----| `"effects"`
----| `"model"`
----| `"servercontent"`
+--- [SHARED AND MENU]
+---
+--- The Steam Workshop publication type.
+---
+---@alias gpm.std.steam.WorkshopItem.Type "gamemode" | "map" | "weapon" | "vehicle" | "npc" | "entity" | "tool" | "effects" | "model" | "servercontent"
 
----@alias gpm.std.steam.WorkshopItem.AddonTag
----| string # The tag of the addon.
----| `"fun"`
----| `"roleplay"`
----| `"scenic"`
----| `"movie"`
----| `"realism"`
----| `"cartoon"`
----| `"water"`
----| `"comic"`
----| `"build"`
+--- [SHARED AND MENU]
+---
+--- The Steam Workshop addon tag.
+---
+---@alias gpm.std.steam.WorkshopItem.AddonTag "fun" | "roleplay" | "scenic" | "movie" | "realism" | "cartoon" | "water" | "comic" | "build"
 
----@alias gpm.std.steam.WorkshopItem.DupeTag
----| string # The tag of the dupe.
----| `"buildings"`
----| `"machines"`
----| `"posed"`
----| `"scenes"`
----| `"vehicles"`
----| `"other"`
+--- [SHARED AND MENU]
+---
+--- The Steam Workshop dupe tag.
+---
+---@alias gpm.std.steam.WorkshopItem.DupeTag "buildings" | "machines" | "posed" | "scenes" | "vehicles" | "other"
 
----@alias gpm.std.steam.WorkshopItem.SaveTag
----| string # The tag of the save.
----| `"buildings"`
----| `"courses"`
----| `"machines"`
----| `"scenes"`
----| `"other"`
+--- [SHARED AND MENU]
+---
+--- The Steam Workshop save tag.
+---
+---@alias gpm.std.steam.WorkshopItem.SaveTag "buildings" | "courses" | "machines" | "scenes" | "other"
 
----@alias gpm.std.steam.WorkshopItem.SearchType
----| string # The workshop search types.
----| `"friendfavorite"` # A favorite publication of the client's friends.
----| `"subscribed"` # The addons to which the client is subscribed.
----| `"friends"` # The publish to which the client is subscribed.
----| `"favorite"` # The client's favorite publications.
----| `"trending"` # The publications sorted by popularity.
----| `"popular"` # The publications are actively gaining popularity right now.
----| `"latest"` # The most recently published publications.
----| `"mine"` # The publications produced by the client.
+--- [SHARED AND MENU]
+---
+--- The Steam Workshop search type.
+---
+---@alias gpm.std.steam.WorkshopItem.SearchType "friendfavorite" | "subscribed" | "friends" | "favorite" | "trending" | "popular" | "latest" | "mine"
 
 --- [SHARED AND MENU]
 ---
@@ -659,7 +635,7 @@ if CLIENT_MENU then
         steamworks_ViewFile( self[ 0 ] )
     end
 
-    WorkshopItem.openWorkshopPage = steamworks_ViewFile
+    WorkshopItemClass.openWorkshopPage = steamworks_ViewFile
 
 end
 

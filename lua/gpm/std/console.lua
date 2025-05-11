@@ -255,9 +255,7 @@ do
     ---@field name string The name of the console command.
     ---@field description string The help text of the console command.
     ---@field flags integer The flags of the console command.
-    local Command = std.class.base( "ConsoleCommand" )
-
-    ---@alias ConsoleCommand gpm.std.console.Command
+    local Command = std.class.base( "console.Command" )
 
     local commands = {}
 
@@ -464,13 +462,12 @@ do
     ---
     --- The console variable object.
     ---
-    ---@alias ConsoleVariable gpm.std.console.Variable
     ---@class gpm.std.console.Variable : gpm.std.Object
     ---@field __class gpm.std.console.Variable
     ---@field protected object ConVar The `ConVar` object.
     ---@field protected type gpm.std.console.Variable.Type The type of the console variable.
     ---@field name string The name of the console variable.
-    local Variable = std.class.base( "ConsoleVariable" )
+    local Variable = std.class.base( "console.Variable" )
 
     local variables = {}
 

@@ -196,7 +196,7 @@ github.templateRequest = templateRequest
 ---@return table<string, string> data The list of emojis.
 ---@async
 function github.getEmojis()
-    return apiRequest( 1, "/emojis" )
+    return apiRequest( "GET", "/emojis" )
 end
 
 --- [SHARED AND MENU]
@@ -206,7 +206,7 @@ end
 ---@return gpm.std.http.github.License[]
 ---@async
 function github.getLicenses()
-    return apiRequest( 1, "/licenses" )
+    return apiRequest( "GET", "/licenses" )
 end
 
 --- [SHARED AND MENU]
@@ -217,7 +217,7 @@ end
 ---@return gpm.std.http.github.Repository[] repos The list of repositories.
 ---@async
 function github.getRepositories( organization )
-    return templateRequest( 1, "/orgs/{org}/repos", {
+    return templateRequest( "GET", "/orgs/{org}/repos", {
         org = organization
     } )
 end
@@ -231,7 +231,7 @@ end
 ---@return gpm.std.http.github.Repository repo The repository.
 ---@async
 function github.getRepository( owner, repo )
-    return templateRequest( 1, "/repos/{owner}/{repo}", {
+    return templateRequest( "GET", "/repos/{owner}/{repo}", {
         owner = owner,
         repo = repo
     } )
@@ -247,7 +247,7 @@ end
 ---@return gpm.std.http.github.Repository.Tag[] tags The list of tags.
 ---@async
 function github.getRepositoryTags( owner, repo, page )
-    return templateRequest( 1, "/repos/{owner}/{repo}/tags?per_page=100&page={page}", {
+    return templateRequest( "GET", "/repos/{owner}/{repo}/tags?per_page=100&page={page}", {
         owner = owner,
         repo = repo,
         page = page or 1
@@ -265,7 +265,7 @@ end
 ---@return gpm.std.http.github.Tree tree The tree.
 ---@async
 function github.getTree( owner, repo, tree_sha, recursive )
-    return templateRequest( 1, "/repos/{owner}/{repo}/git/trees/{tree_sha}?recursive={recursive}", {
+    return templateRequest( "GET", "/repos/{owner}/{repo}/git/trees/{tree_sha}?recursive={recursive}", {
         owner = owner,
         repo = repo,
         tree_sha = tree_sha,
@@ -283,7 +283,7 @@ end
 ---@return gpm.std.http.github.Blob blob The blob.
 ---@async
 function github.getBlob( owner, repo, file_sha )
-    local result = templateRequest( 1, "/repos/{owner}/{repo}/git/blobs/{file_sha}", {
+    local result = templateRequest( "GET", "/repos/{owner}/{repo}/git/blobs/{file_sha}", {
         owner = owner,
         repo = repo,
         file_sha = file_sha
@@ -306,7 +306,7 @@ end
 ---@return gpm.std.http.github.Contributor[] contributors The list of contributors.
 ---@async
 function github.getContributors( owner, repo )
-    return templateRequest( 1, "/repos/{owner}/{repo}/contributors", {
+    return templateRequest( "GET", "/repos/{owner}/{repo}/contributors", {
         owner = owner,
         repo = repo
     } )
@@ -321,7 +321,7 @@ end
 ---@return table<string, integer> languages The languages.
 ---@async
 function github.getLanguages( owner, repo )
-    return templateRequest( 1, "/repos/{owner}/{repo}/languages", {
+    return templateRequest( "GET", "/repos/{owner}/{repo}/languages", {
         owner = owner,
         repo = repo
     } )
@@ -337,7 +337,7 @@ end
 ---@return string content The body of the zipball.
 ---@async
 function github.fetchZip( owner, repo, ref )
-    local result = templateRequest( 1, "/repos/{owner}/{repo}/zipball/{ref}", {
+    local result = templateRequest( "GET", "/repos/{owner}/{repo}/zipball/{ref}", {
         owner = owner,
         repo = repo,
         ref = ref

@@ -23,7 +23,6 @@ local math_floor, math_max, math_clamp = math.floor, math.max, math.clamp
 ---
 --- The big integer object.
 ---
----@alias BigInt gpm.std.BigInt
 ---@class gpm.std.BigInt : gpm.std.Object
 ---@field __class gpm.std.BigIntClass
 ---@operator add(any): gpm.std.BigInt
@@ -37,16 +36,6 @@ local math_floor, math_max, math_clamp = math.floor, math.max, math.clamp
 ---@field sign integer `-1` if negative, `0` if zero, `1` if positive.
 ---@field size integer The number of bytes that make up the big integer.
 local BigInt = std.class.base( "BigInt" )
-
---- [SHARED AND MENU]
----
---- The big integer sign.
----
----@alias gpm.std.BigInt.Sign
----| integer
----| `-1`
----| `0`
----| `1`
 
 ---@return integer
 ---@protected
@@ -485,7 +474,7 @@ do
             ---@param byte_count integer The number of bytes.
             ---@param signed boolean If `true`, the big integer object will be signed.
             ---@param big_endian boolean If `true`, the big integer object will be in bit endian.
-            ---@return BigInt object The big integer object.
+            ---@return gpm.std.BigInt object The big integer object.
             local function fromBytes( object, bytes, byte_count, signed, big_endian )
                 local is_zero = true
 
@@ -519,7 +508,7 @@ do
             ---@param byte_count? integer The number of bytes.
             ---@param signed? boolean If `true`, the big integer object will be signed.
             ---@param big_endian? boolean If `true`, the big integer object will be in bit endian.
-            ---@return BigInt object The big integer object.
+            ---@return gpm.std.BigInt object The big integer object.
             function BigIntClass.fromBytes( bytes, byte_count, signed, big_endian )
                 return fromBytes( setmetatable( {}, BigInt ), bytes, byte_count or #bytes, signed == true, big_endian == true )
             end
@@ -532,7 +521,7 @@ do
             ---@param byte_count? integer The number of bytes.
             ---@param signed? boolean If `true`, the big integer object will be signed.
             ---@param big_endian? boolean If `true`, the big integer object will be in bit endian.
-            ---@return BigInt object The big integer object.
+            ---@return gpm.std.BigInt object The big integer object.
             function BigInt:fromBytes( bytes, byte_count, signed, big_endian )
                 return fromBytes( self, bytes, byte_count or #bytes, signed == true, big_endian == true )
             end
@@ -547,7 +536,7 @@ do
             ---@param big_endian boolean If `true`, the big integer object will be in big endian.
             ---@param signed boolean If `true`, the big integer object will be signed.
             ---@param start_position? integer The start position in the binary data string.
-            ---@return BigInt object The big integer object.
+            ---@return gpm.std.BigInt object The big integer object.
             local function fromBinary( object, str, byte_count, big_endian, start_position, signed )
                 return fromBytes( object, { string_byte( str, start_position, ( start_position + byte_count ) - 1 ) }, byte_count, signed == true, big_endian == true )
             end
@@ -561,7 +550,7 @@ do
             ---@param big_endian? boolean If `true`, the big integer object will be in big endian.
             ---@param start_position? integer The start position in the binary data string.
             ---@param signed? boolean If `true`, the big integer object will be signed.
-            ---@return BigInt object The big integer object.
+            ---@return gpm.std.BigInt object The big integer object.
             function BigIntClass.fromBinary( str, byte_count, big_endian, start_position, signed )
                 return fromBinary( setmetatable( {}, BigInt ), str, byte_count or string_len( str ), big_endian == true, start_position or 1, signed == true )
             end
@@ -575,7 +564,7 @@ do
             ---@param big_endian? boolean If `true`, the big integer object will be in big endian.
             ---@param start_position? integer The start position in the binary data string.
             ---@param signed? boolean If `true`, the big integer object will be signed.
-            ---@return BigInt object The big integer object.
+            ---@return gpm.std.BigInt object The big integer object.
             function BigInt:fromBinary( str, byte_count, big_endian, start_position, signed )
                 return fromBinary( self, str, byte_count or string_len( str ), big_endian == true, start_position or 1, signed == true )
             end
