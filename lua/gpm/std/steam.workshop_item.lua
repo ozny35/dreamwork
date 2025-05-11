@@ -81,28 +81,29 @@ local Timer_wait = std.Timer.wait
 ---
 --- The Steam Workshop publication object.
 ---
----@alias WorkshopItem gpm.std.steam.WorkshopItem
----@class gpm.std.steam.WorkshopItem: gpm.std.Object
+---@class gpm.std.steam.WorkshopItem : gpm.std.Object
 ---@field __class gpm.std.steam.WorkshopItemClass
 ---@field wsid string The workshop ID of the addon.
 local WorkshopItem = std.class.base( "steam.WorkshopItem" )
+
+---@alias WorkshopItem gpm.std.steam.WorkshopItem
 
 --- [SHARED AND MENU]
 ---
 --- The Steam Workshop publication class.
 ---
----@class gpm.std.steam.WorkshopItemClass: gpm.std.steam.WorkshopItem
+---@class gpm.std.steam.WorkshopItemClass : gpm.std.steam.WorkshopItem
 ---@field __base gpm.std.steam.WorkshopItem
 ---@overload fun( wsid: string ): WorkshopItem
 local WorkshopItemClass = std.class.create( WorkshopItem )
 steam.WorkshopItem = WorkshopItemClass
 
-local findWorkshopItem
+local find_workshop_item
 do
 
     local engine = gpm.engine
 
-    function findWorkshopItem( wsid )
+    function find_workshop_item( wsid )
         local addons = engine.addons
         for i = 1, engine.addon_count, 1 do
             local data = addons[ i ]
@@ -116,8 +117,8 @@ do
     ---
     --- Returns all subscribed publications.
     ---
-    ---@return WorkshopItem[]: The subscribed addons.
-    ---@return integer: The length of the addons found array (`#addons`).
+    ---@return WorkshopItem[] items The subscribed addons.
+    ---@return integer item_count The length of the addons found array (`#addons`).
     function WorkshopItemClass.getDownloaded()
         local addons, count = engine.addons, engine.addon_count
 
@@ -132,8 +133,8 @@ do
     ---
     --- Returns all mounted addons.
     ---
-    ---@return WorkshopItem[]: The mounted addons.
-    ---@return integer: The length of the addons found array (`#addons`).
+    ---@return WorkshopItem[] items The mounted addons.
+    ---@return integer item_count The length of the addons found array (`#addons`).
     function WorkshopItemClass.getMounted()
         local addons = engine.addons
 
@@ -188,7 +189,7 @@ end
 ---
 --- Returns the workshop ID of the publication.
 ---
----@return string: The workshop ID of the publication.
+---@return string wsid The workshop ID of the publication.
 function WorkshopItem:getWorkshopID()
     return self[ 0 ]
 end
@@ -202,11 +203,11 @@ do
     --- Returns the title of the publication.
     ---
     ---@param wsid string The workshop ID of the publication.
-    ---@return string?: The title of the publication.
+    ---@return string? title The title of the publication.
     local function getTitle( wsid )
         local title = wsid2title[ wsid ]
         if title == nil then
-            local data = findWorkshopItem( wsid )
+            local data = find_workshop_item( wsid )
             if data == nil then
                 return nil
             end
@@ -222,7 +223,7 @@ do
     ---
     --- Returns the title of the publication.
     ---
-    ---@return string?: The title of the publication.
+    ---@return string? title The title of the publication.
     function WorkshopItem:getTitle()
         return getTitle( self[ 0 ] )
     end
@@ -238,13 +239,15 @@ do
     --- Returns the absolute file path of the addon `.gma`.
     ---
     ---@param wsid string The workshop ID of the publication.
-    ---@return string?: The absolute file path of the publication `.gma`.
+    ---@return string? file_path The absolute file path of the publication `.gma`.
     local function getFilePath( wsid )
-        local data = findWorkshopItem( wsid )
+        local data = find_workshop_item( wsid )
         if data == nil then return nil end
 
         local filePath = data.file
         if filePath == "" then return nil end
+
+        -- TODO: re-check vfs compatibility
 
         return "/" .. filePath
     end
@@ -253,7 +256,7 @@ do
     ---
     --- Returns the absolute file path of the addon `.gma`.
     ---
-    ---@return string?: The absolute file path of the publication `.gma`.
+    ---@return string? file_path The absolute file path of the publication `.gma`.
     function WorkshopItem:getFilePath()
         return getFilePath( self[ 0 ] )
     end
@@ -269,9 +272,9 @@ do
     --- Checks if the addon is mounted.
     ---
     ---@param wsid string The workshop ID of the addon.
-    ---@return boolean: `true` if the addon is mounted, `false` otherwise.
+    ---@return boolean is_mounted `true` if the addon is mounted, `false` otherwise.
     local function isMounted( wsid )
-        local data = findWorkshopItem( wsid )
+        local data = find_workshop_item( wsid )
         if data == nil then return false end
         return data.mounted == true
     end
@@ -280,7 +283,7 @@ do
     ---
     --- Checks if the addon is mounted.
     ---
-    ---@return boolean: `true` if the addon is mounted, `false` otherwise.
+    ---@return boolean is_mounted `true` if the addon is mounted, `false` otherwise.
     function WorkshopItem:isMounted()
         return isMounted( self[ 0 ] )
     end
@@ -296,9 +299,9 @@ do
     --- Checks if the publication is downloaded.
     ---
     ---@param wsid string The workshop ID of the publication.
-    ---@return boolean: `true` if the publication is downloaded, `false` otherwise.
+    ---@return boolean is_downloaded `true` if the publication is downloaded, `false` otherwise.
     local function isDownloaded( wsid )
-        local data = findWorkshopItem( wsid )
+        local data = find_workshop_item( wsid )
         if data == nil then return false end
         return data.downloaded == true
     end
@@ -307,7 +310,7 @@ do
     ---
     --- Checks if the addon is downloaded.
     ---
-    ---@return boolean: `true` if the addon is downloaded, `false` otherwise.
+    ---@return boolean is_downloaded `true` if the addon is downloaded, `false` otherwise.
     function WorkshopItem:isDownloaded()
         return isDownloaded( self[ 0 ] )
     end
@@ -342,9 +345,9 @@ do
         --- Returns the type of the publication.
         ---
         ---@param wsid string The workshop ID of the publication.
-        ---@return gpm.std.steam.WorkshopItem.Type?: The type of the publication.
+        ---@return gpm.std.steam.WorkshopItem.Type? item_type The type of the publication.
         local function getType( wsid )
-            local data = findWorkshopItem( wsid )
+            local data = find_workshop_item( wsid )
             if data == nil then return nil end
 
             local tags, length = string_byteSplit( data.tags, 0x2C --[[ , ]] )
@@ -361,7 +364,7 @@ do
         ---
         --- Returns the type of the publication.
         ---
-        ---@return gpm.std.steam.WorkshopItem.Type?: The type of the publication.
+        ---@return gpm.std.steam.WorkshopItem.Type? item_type The type of the publication.
         function WorkshopItem:getType()
             return getType( self[ 0 ] )
         end
@@ -389,10 +392,10 @@ do
         --- Returns the tags of the addon.
         ---
         ---@param wsid string The workshop ID of the addon.
-        ---@return gpm.std.steam.WorkshopItem.AddonTag[]?: The tags of the addon.
-        ---@return integer?: The number of tags.
+        ---@return gpm.std.steam.WorkshopItem.AddonTag[]? tags The tags of the addon.
+        ---@return integer? tag_count The number of tags.
         local function getTags( wsid )
-            local data = findWorkshopItem( wsid )
+            local data = find_workshop_item( wsid )
             if data == nil then return nil end
 
             local tags, length = string_byteSplit( data.tags, 0x2C --[[ , ]] )
@@ -414,7 +417,8 @@ do
         ---
         --- Returns the tags of the addon.
         ---
-        ---@return string[]?: The tags of the addon.
+        ---@return gpm.std.steam.WorkshopItem.AddonTag[]? tags The tags of the addon.
+        ---@return integer? tag_count The number of tags.
         function WorkshopItem:getTags()
             return getTags( self[ 0 ] )
         end
@@ -432,9 +436,9 @@ do
     --- Returns the last time the addon was updated.
     ---
     ---@param wsid string The workshop ID of the publication.
-    ---@return integer?: The last time the publication was updated in UNIX time.
+    ---@return integer? unix_timestamp The last time the publication was updated in UNIX time.
     local function getUpdateTime( wsid )
-        local data = findWorkshopItem( wsid )
+        local data = find_workshop_item( wsid )
         if data == nil then return nil end
         return data.timeupdated
     end
@@ -443,7 +447,7 @@ do
     ---
     --- Returns the last time the publication was updated.
     ---
-    ---@return integer?: The last time the publication was updated in UNIX time.
+    ---@return integer? unix_timestamp The last time the publication was updated in UNIX time.
     function WorkshopItem:getUpdateTime()
         return getUpdateTime( self[ 0 ] )
     end
@@ -459,9 +463,9 @@ do
     --- Returns the creation time of the publication.
     ---
     ---@param wsid string The workshop ID of the publication.
-    ---@return integer?: The creation time of the publication in UNIX time.
+    ---@return integer? unix_timestamp The creation time of the publication in UNIX time.
     local function getCreationTime( wsid )
-        local data = findWorkshopItem( wsid )
+        local data = find_workshop_item( wsid )
         if data == nil then return nil end
         return data.timecreated
     end
@@ -470,7 +474,7 @@ do
     ---
     --- Returns the creation time of the publication.
     ---
-    ---@return integer?: The creation time of the publication in UNIX time.
+    ---@return integer? unix_timestamp The creation time of the publication in UNIX time.
     function WorkshopItem:getCreationTime()
         return getCreationTime( self[ 0 ] )
     end
@@ -486,9 +490,9 @@ do
     --- Returns the size of the publication.
     ---
     ---@param wsid string The workshop ID of the publication.
-    ---@return integer?: The size of the publication in bytes.
+    ---@return integer? size The size of the publication in bytes.
     local function getSize( wsid )
-        local data = findWorkshopItem( wsid )
+        local data = find_workshop_item( wsid )
         if data == nil then return nil end
         return data.size
     end
@@ -497,7 +501,7 @@ do
     ---
     --- Returns the size of the publication.
     ---
-    ---@return integer?: The size of the publication in bytes.
+    ---@return integer? size The size of the publication in bytes.
     function WorkshopItem:getSize()
         return getSize( self[ 0 ] )
     end
@@ -514,7 +518,7 @@ if CLIENT_MENU then
     ---
     --- Returns whether the addon should be mounted.
     ---
-    ---@return boolean?: Whether the addon should be mounted.
+    ---@return boolean? should_mount Whether the addon should be mounted.
     function WorkshopItem:isShouldMount()
         return steamworks_ShouldMountAddon( self[ 0 ] )
     end
@@ -580,7 +584,7 @@ if CLIENT_MENU then
     ---
     --- Checks if the publication is subscribed.
     ---
-    ---@return boolean: `true` if the publication is subscribed, `false` otherwise.
+    ---@return boolean is_subscribed `true` if the publication is subscribed, `false` otherwise.
     function WorkshopItem:isSubscribed()
         return steamworks_IsSubscribed( self[ 0 ] )
     end
@@ -668,8 +672,8 @@ if CLIENT_MENU then
     --- Downloads the icon of the publication.
     ---
     ---@param wsid string The workshop ID of the publication.
-    ---@param uncompress boolean?: Whether the icon should be uncompressed. Default is `true`.
-    ---@return string: The absolute path to the icon file.
+    ---@param uncompress boolean? Whether the icon should be uncompressed. Default is `true`.
+    ---@return string file_path The absolute path to the icon file.
     ---@async
     local function downloadIcon( wsid, uncompress, timeout )
         if uncompress == nil then uncompress = true end
@@ -697,8 +701,8 @@ if CLIENT_MENU then
     ---
     --- Downloads the icon of the publication.
     ---
-    ---@param uncompress boolean?: Whether the icon should be uncompressed. Default is `true`.
-    ---@return string: The absolute path to the icon file.
+    ---@param uncompress boolean? Whether the icon should be uncompressed. Default is `true`.
+    ---@return string file_path The absolute path to the icon file.
     ---@async
     function WorkshopItem:downloadIcon( uncompress )
         return downloadIcon( self[ 0 ], uncompress )
@@ -718,8 +722,8 @@ if CLIENT_MENU then
     --- Downloads the addon and returns the absolute path to the `.gma` file.
     ---
     ---@param wsid string The workshop ID of the addon.
-    ---@param timeout number | nil | false: The timeout in seconds. Set to `false` to disable the timeout.
-    ---@return string: The absolute path to the downloaded addon `.gma`.
+    ---@param timeout number | nil | false The timeout in seconds. Set to `false` to disable the timeout.
+    ---@return string file_path The absolute path to the downloaded addon `.gma`.
     ---@async
     local function download( wsid, timeout )
         local f = Future()
@@ -752,8 +756,8 @@ if CLIENT_MENU then
     ---
     --- Downloads the addon from Steam Workshop and returns the absolute path to the `.gma` file.
     ---
-    ---@param timeout number | nil | false: The timeout in seconds. Set to `false` to disable the timeout.
-    ---@return string: The absolute path to the `.gma` file.
+    ---@param timeout number | nil | false The timeout in seconds. Set to `false` to disable the timeout.
+    ---@return string file_path The absolute path to the `.gma` file.
     ---@async
     function WorkshopItem:download( timeout )
         return download( self[ 0 ], timeout )
