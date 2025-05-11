@@ -15,6 +15,8 @@ local player = {
 
 -- TODO: make player class
 
+-- TODO: bots, alive, dead, all iterator/s
+
 if std.SERVER then
     -- local PLAYER_IsListenServerHost = PLAYER.IsListenServerHost
     -- local player_CreateNextBot = glua_player.CreateNextBot
@@ -77,7 +79,7 @@ elseif std.CLIENT then
 
         --- Sends a message to the player chat.
         ---@param text string The message's content.
-        ---@param teamChat boolean?: Whether the message should be sent as team chat.
+        ---@param teamChat boolean? Whether the message should be sent as team chat.
         function chat.say( text, teamChat )
             command_run( teamChat and "say_team" or "say", text )
         end

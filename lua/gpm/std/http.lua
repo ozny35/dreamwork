@@ -51,7 +51,12 @@ else
     client_name = "Garry's Mod"
 end
 
-Logger:info( "'%s' was connected as HTTP client.", client_name )
+if http_client == nil then
+    Logger:error( "HTTP client '%s' loading failed, sending requests is not possible.", client_name )
+else
+    Logger:info( "'%s' was connected as HTTP client.", client_name )
+end
+
 
 local make_request
 do
@@ -66,7 +71,8 @@ do
     Timer_wait( function()
         make_request = http_client
 
-        for i = 1, length do
+        for i = 1, length, 1 do
+            ---@diagnostic disable-next-line: need-check-nil
             http_client( queue[ i ] )
         end
 
@@ -108,19 +114,23 @@ do
 
 end
 
+local http_cache_get, http_cache_set = gpm.http_cache.get, gpm.http_cache.set
 local json_serialize = std.crypto.json.serialize
-
-local http_cache_get, http_cache_set
-do
-    local http_cache = gpm.http_cache
-    http_cache_get, http_cache_set = http_cache.get, http_cache.set
-end
+local game_getUptime = std.game.getUptime
 
 local session_cache = {}
 
-local function isValidCache( data )
-    return ( SysTime() - data.start ) < data.age
-end
+--[[
+
+    todo
+
+        http method as string luals
+        http success and failure as one
+
+        add private request structures
+        add private response structures
+
+]]
 
 local int2method = {
     [ 0 ] = "HEAD",
@@ -162,7 +172,7 @@ local function request( tbl )
 
     local url = tbl.url
     if url == nil then
-        std.error( "URL is nil", 2 )
+        error( "URL is nil", 2 )
     elseif not isstring( url ) then
         ---@cast url gpm.std.URL
         url = url.href
@@ -212,7 +222,7 @@ local function request( tbl )
         }, false )
 
         local data = session_cache[ identifier ]
-        if data and isValidCache( data ) then
+        if data ~= nil and ( game_getUptime() - data.start ) < data.age then
             return data[ 1 ]
         end
 

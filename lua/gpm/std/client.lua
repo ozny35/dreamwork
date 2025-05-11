@@ -15,10 +15,6 @@ std.client = client
 
 client.getServerTime = client.getServerTime or _G.CurTime
 
-if _G.gui ~= nil then
-    client.openURL = _G.gui.OpenURL
-end
-
 if _G.render ~= nil then
 
     local glua_render = _G.render
@@ -120,11 +116,26 @@ do
 
     local command_run = std.console.Command.run
 
-    --- [CLIENT AND MENU]
-    ---
-    --- Disconnect game from server.
-    function client.disconnect()
-        command_run( "disconnect" )
+    if std.CLIENT then
+
+        --- [CLIENT AND MENU]
+        ---
+        --- Disconnects the client from the server.
+        ---
+        function client.disconnect()
+            command_run( "disconnect" )
+        end
+
+    else
+
+        --- [CLIENT AND MENU]
+        ---
+        --- Disconnects the client from the server.
+        ---
+        function client.disconnect()
+            std.menu.run( "Disconnect" )
+        end
+
     end
 
     --- [CLIENT AND MENU]

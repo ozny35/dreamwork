@@ -11,7 +11,7 @@ local std = _G.gpm.std
 --- Timer object.
 ---
 ---@alias Timer gpm.std.Timer
----@class gpm.std.Timer: gpm.std.Object
+---@class gpm.std.Timer : gpm.std.Object
 ---@field __class gpm.std.TimerClass
 local Timer = std.Timer and std.Timer.__base or std.class.base( "Timer" )
 
@@ -19,9 +19,9 @@ local Timer = std.Timer and std.Timer.__base or std.class.base( "Timer" )
 ---
 --- Timer class.
 ---
----@class gpm.std.TimerClass: gpm.std.Timer
+---@class gpm.std.TimerClass : gpm.std.Timer
 ---@field __base gpm.std.Timer
----@overload fun( name: string?, delay: number?, repetitions: integer? ): Timer
+---@overload fun( name: string?, delay: number?, repetitions: integer? )  Timer
 local TimerClass = std.Timer or std.class.create( Timer )
 std.Timer = TimerClass
 
@@ -131,7 +131,7 @@ end
 --- Attaches a callback to the timer.
 ---
 ---@param fn function The callback function.
----@param name string?: The name of the callback, default is `unnamed`.
+---@param name string? The name of the callback, default is `unnamed`.
 function Timer:attach( fn, name )
     if name == nil then name = "unnamed" end
 

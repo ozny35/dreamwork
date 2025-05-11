@@ -2,13 +2,14 @@ local _G = _G
 
 ---@class gpm.std
 local std = _G.gpm.std
-local error, string = std.error, std.string
+local string = std.string
 
 local glua_sql = _G.sql
 
 --- [SHARED AND MENU]
 ---
 --- The local SQLite library.
+---
 ---@class gpm.std.sqlite
 local sqlite = std.sqlite or {}
 std.sqlite = sqlite
@@ -16,7 +17,8 @@ std.sqlite = sqlite
 --- [SHARED AND MENU]
 ---
 --- Returns the last error message from the last query.
----@return string: The last error message.
+---
+---@return string | nil err_msg The last error message.
 function sqlite.getLastError()
     return glua_sql.m_strError
 end
@@ -29,8 +31,9 @@ do
     --- [SHARED AND MENU]
     ---
     --- Converts a string to a safe string for use in an SQL query.
-    ---@param str string?: The string to convert.
-    ---@return string: The safe string.
+    ---
+    ---@param str string? The string to convert.
+    ---@return string str The safe string.
     function escape( str, no_quotes )
         if str == nil then
             return "null"
@@ -61,8 +64,9 @@ do
     --- [SHARED AND MENU]
     ---
     --- Executes a raw SQL query.
+    ---
     ---@param str string The SQL query to execute.
-    ---@return table?: The result of the query.
+    ---@return table? result The result of the query.
     function rawQuery( str )
         local fenv = getfenv( 2 )
         if fenv == nil then
@@ -92,8 +96,9 @@ sqlite.rawQuery = rawQuery
 --- [SHARED AND MENU]
 ---
 --- Checks if a table exists in the database.
+---
 ---@param name string The name of the table to check.
----@return boolean: `true` if the table exists, `false` otherwise.
+---@return boolean exist `true` if the table exists, `false` otherwise.
 function sqlite.tableExists( name )
     return rawQuery( "select name from sqlite_master where name=" .. escape( name ) .. " and type='table'" ) ~= nil
 end
@@ -101,8 +106,9 @@ end
 --- [SHARED AND MENU]
 ---
 --- Checks if an index exists in the database.
+---
 ---@param name string The name of the index to check.
----@return boolean: `true` if the index exists, `false` otherwise.
+---@return boolean exist `true` if the index exists, `false` otherwise.
 function sqlite.indexExists( name )
     return rawQuery( "select name from sqlite_master where name=" .. escape( name ) .. " and type='index'" ) ~= nil
 end
@@ -115,9 +121,10 @@ do
     --- [SHARED AND MENU]
     ---
     --- Executes a SQL query with parameters.
+    ---
     ---@param str string The SQL query to execute.
-    ---@param ... string: The parameters to use in the query.
-    ---@return table?: The result of the query.
+    ---@param ... string The parameters to use in the query.
+    ---@return table? result The result of the query.
     function query( str, ... )
         local args, counter = { ... }, 0
 
@@ -148,10 +155,11 @@ end
 --- [SHARED AND MENU]
 ---
 --- Executes a SQL query and returns a specific row.
+---
 ---@param str string The SQL query to execute.
----@param row number?: The row to return.
----@param ... string?: The parameters to use in the query.
----@return table?: The selected row of the result.
+---@param row number? The row to return.
+---@param ... string? The parameters to use in the query.
+---@return table? result The selected row of the result.
 local function queryRow( str, row, ... )
     local result = query( str, ... )
     if result == nil then
@@ -166,9 +174,10 @@ sqlite.queryRow = queryRow
 --- [SHARED AND MENU]
 ---
 --- Executes a SQL query and returns the first row.
+---
 ---@param str string The SQL query to execute.
----@param ... string?: The parameters to use in the query.
----@return table?: The first row of the result.
+---@param ... string? The parameters to use in the query.
+---@return table? result The first row of the result.
 local function queryOne( str, ... )
     return queryRow( str, 1, ... )
 end
@@ -182,9 +191,10 @@ do
     --- [SHARED AND MENU]
     ---
     --- Executes a SQL query and returns the first value of the first row.
+    ---
     ---@param str string The SQL query to execute.
-    ---@param ... string?: The parameters to use in the query.
-    ---@return any: The first value of the first row of the result.
+    ---@param ... string? The parameters to use in the query.
+    ---@return any value The first value of the first row of the result.
     function sqlite.queryValue( str, ... )
         local result = queryOne( str, ... )
         if result == nil then
@@ -203,8 +213,9 @@ do
     --- [SHARED AND MENU]
     ---
     --- Executes a transaction of SQL queries in one block.
+    ---
     ---@param fn function The function to execute all SQL queries in one transaction.
-    ---@return any: The result of function execution.
+    ---@return any value The result of function execution.
     function sqlite.transaction( fn )
         rawQuery( "begin" )
 

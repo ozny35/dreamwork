@@ -14,7 +14,7 @@ https://wiki.facepunch.com/gmod/vgui
 ]]
 
 ---@alias Panel gpm.std.Panel
----@class gpm.std.Panel: gpm.std.Object
+---@class gpm.std.Panel : gpm.std.Object
 ---@field __class gpm.std.PanelClass
 local Panel = std.class.base( "Panel" )
 
@@ -25,7 +25,7 @@ function Panel:__init()
 
 end
 
----@class gpm.std.PanelClass: gpm.std.Panel
+---@class gpm.std.PanelClass : gpm.std.Panel
 ---@field __base gpm.std.Panel
 ---@overload fun(): Panel
 local PanelClass = std.class.create( Panel )

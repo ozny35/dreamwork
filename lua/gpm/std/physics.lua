@@ -1,8 +1,8 @@
 local _G = _G
 local std = _G.gpm.std
 local isstring = std.isstring
+local setmetatable = std.setmetatable
 local physenv, util = _G.physenv, _G.util
-local error, setmetatable = std.error, std.setmetatable
 
 ---@class gpm.std.physics
 local physics = {
@@ -86,7 +86,7 @@ do
     }
 
     --- Adds surface properties to the game's physics environment.
-    ---@param data SurfacePropertyData | table: The surface data to be added.
+    ---@param data SurfacePropertyData | table The surface data to be added.
     function surface.add( data )
         local buffer, length = {}, 0
 

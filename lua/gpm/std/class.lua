@@ -17,55 +17,48 @@ local raw_get, raw_pairs = std.raw.get, std.raw.pairs
 local class = {}
 std.class = class
 
----@class gpm.std.Object
----@field __type string The name of object type.
----@field __class Class The class of the object (must be defined).
----@field __parent gpm.std.Object | nil: The parent of the object.
 ---@alias Object gpm.std.Object
+---@class gpm.std.Object : table
+---@field private __type string The name of object type.
+---@field __class gpm.std.Class The class of the object.
+---@field __parent gpm.std.Object | nil The parent of the object.
+---@field protected __new function A function that will be called when a new class is created and allows you to replace the result.
+---@field private __init function A function that will be called when creating a new object and should be used as the constructor.
 
----@class gpm.std.Class : gpm.std.Object
----@field __base gpm.std.Object: The base of the class (must be defined).
----@field __parent gpm.std.Class | nil: The parent of the class.
----@field __inherited fun( parent: gpm.std.Class, child: gpm.std.Class ) | nil: The function that will be called when the class is inherited.
 ---@alias Class gpm.std.Class
-
----@param obj table The object to search in.
----@param key string The key to search for.
----@return any value The value of the key.
-local function find_rawkey( obj, key )
-    if obj == nil then return nil end
-
-    local value = raw_get( obj, key )
-    if value ~= nil then
-        return value
-    end
-
-    local metatable = debug_getmetatable( obj )
-    if metatable == nil then
-        return nil
-    end
-
-    return find_rawkey( metatable, key )
-end
+---@class gpm.std.Class : gpm.std.Object
+---@field __base gpm.std.Object The base of the class.
+---@field __parent gpm.std.Class | nil The parent of the class.
+---@field __private boolean If the class is private (cannot be inherited).
+---@field private __inherited fun( parent: gpm.std.Class, child: gpm.std.Class ) | nil The function that will be called when the class is inherited.
 
 do
 
     local debug_getmetavalue = debug.getmetavalue
     local string_sub = string.sub
 
-    ---@param obj Object The object to convert to a string.
+    ---@param obj gpm.std.Object The object to convert to a string.
     ---@return string str The string representation of the object.
     local function base__tostring( obj )
         return string_format( "%s: %p", debug_getmetavalue( obj, "__type" ) or "unknown", obj )
     end
+
+    ---@type table<string, boolean>
+    local meta_blacklist = {
+        __private = true,
+        __class = true,
+        __base = true,
+        __type = true,
+        __init = true
+    }
 
     --- [SHARED AND MENU]
     ---
     --- Creates a new class base ( metatable ).
     ---
     ---@param name string The name of the class.
-    ---@param parent Class | unknown | nil: The parent of the class.
-    ---@return Object base The base of the class.
+    ---@param parent gpm.std.Class? The parent of the class.
+    ---@return gpm.std.Object base The base of the class.
     function class.base( name, parent )
         local base = {
             __type = name,
@@ -77,7 +70,7 @@ do
         if parent then
             local parent_base = raw_get( parent, "__base" )
             if parent_base == nil then
-                std.error( "parent class has no base", 2 )
+                error( "parent class has no base", 2 )
             end
 
             ---@cast parent_base gpm.std.Object
@@ -86,7 +79,7 @@ do
 
             -- copy metamethods from parent
             for key, value in raw_pairs( parent_base ) do
-                if string_sub( key, 1, 2 ) == "__" and not ( key == "__index" and value == parent_base ) and key ~= "__type" then
+                if string_sub( key, 1, 2 ) == "__" and not ( key == "__index" and value == parent_base ) and not meta_blacklist[ key ] then
                     base[ key ] = value
                 end
             end
@@ -109,27 +102,26 @@ do
         --- Calls the base initialization function, <b>if it exists</b>, and returns the given object.
         ---
         ---@param obj table The object to initialize.
-        ---@param base Object The base object, aka metatable.
-        ---@param ... any?: Arguments to pass to the constructor.
-        ---@return Object object The initialized object.
+        ---@param base gpm.std.Object The base object, aka metatable.
+        ---@param ... any? Arguments to pass to the constructor.
+        ---@return gpm.std.Object object The initialized object.
         local function init( obj, base, ... )
-            local init_fn = find_rawkey( base, "__init" )
+            local init_fn = raw_get( base, "__init" )
             if init_fn ~= nil then
                 init_fn( obj, ... )
             end
 
-            ---@diagnostic disable-next-line: return-type-mismatch
             return obj
         end
 
         class.init = init
 
-        ---@param self Class The class.
-        ---@return Object object The new object.
+        ---@param self gpm.std.Class The class.
+        ---@return gpm.std.Object object The new object.
         function class__call( self, ... )
-            local base = find_rawkey( self, "__base" )
+            local base = raw_get( self, "__base" )
             if base == nil then
-                std.error( "class base is missing, class creation failed.", 2 )
+                error( "class base is missing, class creation failed.", 2 )
             end
 
             ---@cast base gpm.std.Object
@@ -140,14 +132,14 @@ do
 
                 local template = raw_get( self, "__template" )
                 if template == nil then
-                    std.error( "template is missing, class creation failed.", 2 )
+                    error( "template is missing, class creation failed.", 2 )
                 end
 
                 obj = debug_newproxy( template )
 
             else
 
-                local new_fn = find_rawkey( base, "__new" )
+                local new_fn = raw_get( base, "__new" )
                 if new_fn ~= nil then
                     obj = new_fn( base, ... )
                 end
@@ -161,7 +153,7 @@ do
 
             ---@cast obj gpm.std.Object
 
-            local init_fn = find_rawkey( base, "__init" )
+            local init_fn = raw_get( base, "__init" )
             if init_fn ~= nil then
                 init_fn( obj, ... )
             end
@@ -171,7 +163,7 @@ do
 
     end
 
-    ---@param cls Class The class.
+    ---@param cls gpm.std.Class The class.
     ---@return string str The string representation of the class.
     local function class__tostring( cls )
         return string_format( "%sClass: %p", raw_get( raw_get( cls, "__base" ), "__type" ), cls )
@@ -183,9 +175,9 @@ do
     ---
     --- Creates a new class from the given base.
     ---
-    ---@param base Object The base object, aka metatable.
+    ---@param base gpm.std.Object The base object, aka metatable.
     ---@param private? boolean If the class should be private.
-    ---@return Class | unknown cls The class.
+    ---@return gpm.std.Class | unknown cls The class.
     function class.create( base, private )
         local cls = {
             __base = base
@@ -198,7 +190,7 @@ do
 
             local parent = raw_get( parent_base, "__class" )
             if parent == nil then
-                std.error( "parent class has no class", 2 )
+                error( "parent class has no class", 2 )
             else
                 local inherited_fn = raw_get( parent, "__inherited" )
                 if inherited_fn ~= nil then
@@ -215,7 +207,7 @@ do
 
             local metatable = debug_getmetatable( template )
             if metatable == nil then
-                std.error( "userdata metatable is missing, lol how", 2 )
+                error( "userdata metatable is missing, lol how", 2 )
             end
 
             ---@cast metatable table

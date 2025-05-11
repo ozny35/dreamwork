@@ -12,7 +12,7 @@ local string_byte, string_len = string.byte, string.len
 --- The crypto library.
 ---
 ---@class gpm.std.crypto
-local crypto = {}
+local crypto = std.crypto or {}
 std.crypto = crypto
 
 --- [SHARED AND MENU]
@@ -21,30 +21,11 @@ std.crypto = crypto
 ---
 ---@class gpm.std.crypto.lzma
 ---@field PROPS_SIZE number The size of the lzma properties in bytes.
-local lzma = {
-    decompress = glua_util.Decompress,
-    compress = glua_util.Compress,
-    PROPS_SIZE = 5
-}
-
+local lzma = crypto.lzma or { PROPS_SIZE = 5 }
 crypto.lzma = lzma
 
---- [SHARED AND MENU]
----
---- Returns the decompressed size of the given string.
----
----@param str string Compressed string.
----@return number size The decompressed size in bytes.
-function lzma.size( str )
-    if string_len( str ) < 20 then return 0 end
-
-    local size = 0
-    for i = 6, 19 do
-        size = size + string_byte( str, i ) * 2 ^ ( 8 * ( i - 6 ) )
-    end
-
-    return size
-end
+lzma.compress = lzma.compress or glua_util.Compress
+lzma.decompress = lzma.decompress or glua_util.Decompress
 
 --- [SHARED AND MENU]
 ---

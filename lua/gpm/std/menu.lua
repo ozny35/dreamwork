@@ -43,15 +43,32 @@ if std.MENU then
 
     menu.getWorkshopStatus = _G.GetAddonStatus
 
-    local menu_runCommand = menu.runCommand or _G.RunGameUICommand
-    menu.runCommand = menu_runCommand
+    ---@diagnostic disable-next-line: undefined-field
+    menu.run = menu.run or _G.RunGameUICommand
+
+    if menu.run == nil then
+
+        --- [MENU]
+        ---
+        --- Runs a menu command.
+        ---
+        --- Equivalent to `console.Command.run( "gamemenucommand", command )` unless the command starts with the "engine" keyword in which case it is equivalent to `console.Command.run( command )`.
+        ---
+        ---@param cmd string The command to run.
+        ---@diagnostic disable-next-line: duplicate-set-field
+        function menu.run( cmd )
+            std.console.Command.run( "gamemenucommand", cmd )
+        end
+
+    end
 
     --- [MENU]
     ---
     --- Closes the menu and returns to the game.
     ---
+    ---@diagnostic disable-next-line: duplicate-set-field
     function menu.close()
-        menu_runCommand( "ResumeGame" )
+        menu.run( "ResumeGame" )
     end
 
     --- [MENU]
@@ -59,7 +76,7 @@ if std.MENU then
     --- Opens the legacy server browser.
     ---
     function menu.openServerBrowser()
-        menu_runCommand( "OpenServerBrowser" )
+        menu.run( "OpenServerBrowser" )
     end
 
     --- [MENU]
@@ -67,7 +84,7 @@ if std.MENU then
     --- Opens the Source "Load Game" dialog.
     ---
     function menu.openGameLoadDialog()
-        menu_runCommand( "OpenLoadGameDialog" )
+        menu.run( "OpenLoadGameDialog" )
     end
 
     --- [MENU]
@@ -75,7 +92,7 @@ if std.MENU then
     --- Opens the Source "Save Game" dialog.
     ---
     function menu.openGameSaveDialog()
-        menu_runCommand( "OpenSaveGameDialog" )
+        menu.run( "OpenSaveGameDialog" )
     end
 
     --- [MENU]
@@ -83,7 +100,7 @@ if std.MENU then
     --- Opens the "Mute Players" dialog that shows all players connected to the server and allows to mute them.
     ---
     function menu.openPlayerList()
-        menu_runCommand( "OpenPlayerListDialog" )
+        menu.run( "OpenPlayerListDialog" )
     end
 
     --- [MENU]
@@ -94,7 +111,7 @@ if std.MENU then
     ---
     ---@param no_confirm boolean Whether to skip the confirmation prompt.
     function menu.quit( no_confirm )
-        menu_runCommand( no_confirm and "QuitNoConfirm" or "Quit" )
+        menu.run( no_confirm and "QuitNoConfirm" or "Quit" )
     end
 
     --- [MENU]
@@ -134,7 +151,7 @@ do
     ---
     --- Gets the master volume.
     ---
-    ---@return number: The volume, from 0 to 1.
+    ---@return number master_volume The volume, from 0 to 1.
     function options.getMasterVolume()
         return console_Variable.getNumber( "volume" )
     end
@@ -143,7 +160,7 @@ do
     ---
     --- Gets the effects volume.
     ---
-    ---@return number: The volume, from 0 to 1.
+    ---@return number sfx_volume The volume, from 0 to 1.
     function options.getEffectsVolume()
         return console_Variable.getNumber( "volume_sfx" )
     end
@@ -152,7 +169,7 @@ do
     ---
     --- Gets the music volume.
     ---
-    ---@return number: The volume, from 0 to 1.
+    ---@return number music_volume The volume, from 0 to 1.
     function options.getMusicVolume()
         return console_Variable.getNumber( "snd_musicvolume" )
     end
@@ -161,7 +178,7 @@ do
     ---
     --- Gets the HEV suit volume.
     ---
-    ---@return number: The volume, from 0 to 1.
+    ---@return number hev_volume The volume, from 0 to 1.
     function options.getSuitVolume()
         return console_Variable.getNumber( "suitvolume" )
     end
@@ -170,7 +187,7 @@ do
     ---
     --- Gets whether to mute the volume when the game loses focus.
     ---
-    ---@return boolean: Whether to mute the volume.
+    ---@return boolean muted Whether to mute the volume.
     function options.getMuteVolumeOnLoseFocus()
         return console_Variable.getBoolean( "snd_mute_losefocus" )
     end
@@ -181,7 +198,7 @@ do
     ---
     --- All language codes https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes.
     ---
-    ---@return string: ISO 639-1 language code.
+    ---@return string language_code ISO 639-1 language code.
     function options.getLanguage()
         return console_Variable.getString( "gmod_language" )
     end
@@ -190,7 +207,7 @@ do
     ---
     --- Returns whether the fast weapon switch is enabled.
     ---
-    ---@return boolean: Whether the fast weapon switch is enabled.
+    ---@return boolean enabled Whether the fast weapon switch is enabled.
     function options.getFastWeaponSwitch()
         return console_Variable.getBoolean( "hud_fastswitch" )
     end
@@ -199,7 +216,7 @@ do
     ---
     --- Returns whether the quick info is enabled.
     ---
-    ---@return boolean: Whether the quick info is enabled.
+    ---@return boolean enabled Whether the quick info is enabled.
     function options.getQuickInfo()
         return console_Variable.getBoolean( "hud_quickinfo" )
     end
@@ -208,17 +225,16 @@ do
     ---
     --- Returns whether the crosshair is enabled.
     ---
-    ---@return boolean: Whether the crosshair is enabled.
+    ---@return boolean enabled Whether the crosshair is enabled.
     function options.getCrosshair()
         return console_Variable.getBoolean( "crosshair" )
     end
-
 
     --- [CLIENT AND MENU]
     ---
     --- Returns whether the HUD render (health, ammo, etc) is enabled.
     ---
-    ---@return boolean: Whether the HUD render is enabled.
+    ---@return boolean enabled Whether the HUD render is enabled.
     function options.getDrawHUD()
         return console_Variable.getBoolean( "cl_drawhud" )
     end
@@ -227,7 +243,7 @@ do
     ---
     --- Returns client's mouse sensitivity.
     ---
-    ---@return number: The mouse sensitivity.
+    ---@return number sensitivity The mouse sensitivity.
     function options.getMouseSensitivity()
         return console_Variable.getNumber( "sensitivity" )
     end
@@ -236,7 +252,7 @@ do
     ---
     --- Returns whether the loading URL is enabled.
     ---
-    ---@return boolean: Whether the loading URL is enabled.
+    ---@return boolean allowed Whether the loading URL is enabled.
     function options.isCustomLoadingScreenAllowed()
         return console_Variable.getBoolean( "cl_enable_loadingurl" )
     end
@@ -263,8 +279,6 @@ do
     end
 
     if std.MENU then
-
-        local menu_runCommand = menu.runCommand
 
         --- [MENU]
         ---
@@ -423,6 +437,8 @@ do
 
             - fs_tellmeyoursecrets: Causes the Filesystem to print every action.
 
+            - engine_no_focus_sleep
+
         ]]
 
         --- [MENU]
@@ -430,7 +446,7 @@ do
         --- Opens the options dialog.
         ---
         function options.open()
-            menu_runCommand( "OpenOptionsDialog" )
+            menu.run( "OpenOptionsDialog" )
         end
 
     end

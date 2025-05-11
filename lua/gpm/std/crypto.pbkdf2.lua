@@ -36,7 +36,7 @@ function crypto.pbkdf2( options )
 
     local hash = options.hash
     if hash == nil then
-        std.error( "hash name not specified", 2 )
+        error( "hash name not specified", 2 )
     end
 
     ---@cast hash gpm.std.crypto.hashlib

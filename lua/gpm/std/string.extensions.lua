@@ -514,7 +514,7 @@ do
     function string.fromHex( str )
         local length = string_len( str )
         if length % 2 ~= 0 then
-            std.error( "hex string must have an even length", 2 )
+            error( "hex string must have an even length", 2 )
         end
 
         local buffer, pointer = {}, 0

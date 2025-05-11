@@ -1,16 +1,26 @@
 local _G = _G
 local gpm = _G.gpm
-local RunConsoleCommand = _G.RunConsoleCommand
 
 ---@class gpm.std
 local std = gpm.std
 
 local debug = std.debug
 local Future = std.Future
+
+local isstring = std.isstring
 local string_format = std.string.format
 local debug_getfpackage = debug.getfpackage
 local bit_bor, setmetatable = std.bit.bor, std.setmetatable
 local table_insert, table_remove = std.table.insert, std.table.remove
+
+--- [SHARED AND MENU]
+---
+--- Run console command.
+---
+---@param str string The name of the console command.
+---@param ... string? The arguments of the console command.
+---@diagnostic disable-next-line: undefined-field
+local RunConsoleCommand = _G.RunConsoleCommand or function( str, ... ) end
 
 --- [SHARED AND MENU]
 ---
@@ -26,7 +36,7 @@ local table_insert, table_remove = std.table.insert, std.table.remove
 ---
 ---@alias gpm.std.console.Command.Flags gpm.std.console.Variable.Flags
 ---@class gpm.std.console.Variable.Flags : integer
-local flags = {
+local convar_flags = {
     --- The default, no flags at all.
     NONE = 0,
 
@@ -190,29 +200,56 @@ end
 
 do
 
-    local MsgC = _G.MsgC
-    console.write = MsgC
+    ---@diagnostic disable-next-line: undefined-field
+    local console_write = _G.MsgC
+
+    if console_write == nil then
+
+        local table_concat = std.table.concat
+        local print = std.print
+
+        function console_write( ... )
+            local buffer, buffer_size = {}, 0
+            local args = { ... }
+
+            for i = 1, select( "#", ... ), 1 do
+                local value = args[ i ]
+                if isstring( value ) then
+                    buffer_size = buffer_size + 1
+                    buffer[ buffer_size ] = value
+                end
+            end
+
+            if buffer_size == 1 then
+                print( buffer[ 1 ] )
+            elseif buffer_size ~= 0 then
+                print( table_concat( buffer, "", 1, buffer_size ) )
+            end
+        end
+    end
+
+    console.write = console_write
 
     --- [SHARED AND MENU]
     ---
     --- Writes a colored message to the console on a new line.
     ---
-    ---@param ... string | Color: The message to write to the console.
+    ---@param ... string | Color The message to write to the console.
     function console.writeLine( ... )
-        return MsgC( ... ), MsgC( "\n" )
+        return console_write( ... ), console_write( "\n" )
     end
 
 end
 
 do
 
-    local AddConsoleCommand = _G.AddConsoleCommand
+    ---@diagnostic disable-next-line: undefined-field
+    local AddConsoleCommand = _G.AddConsoleCommand or function( name, description, flags ) end
 
     --- [SHARED AND MENU]
     ---
     --- The console command object.
     ---
-    ---@alias ConsoleCommand gpm.std.console.Command
     ---@class gpm.std.console.Command : gpm.std.Object
     ---@field __class gpm.std.console.Command
     ---@field name string The name of the console command.
@@ -220,11 +257,13 @@ do
     ---@field flags integer The flags of the console command.
     local Command = std.class.base( "ConsoleCommand" )
 
+    ---@alias ConsoleCommand gpm.std.console.Command
+
     local commands = {}
 
     ---@param name string The name of the console command.
-    ---@param description string?: The help text of the console command.
-    ---@param ... gpm.std.console.Command.Flags?: The flags of the console command.
+    ---@param description string? The help text of the console command.
+    ---@param ... gpm.std.console.Command.Flags? The flags of the console command.
     ---@protected
     function Command:__init( name, description, ... )
         self.name = name
@@ -257,13 +296,13 @@ do
     ---
     --- The console command class.
     ---
-    ---@class gpm.std.console.CommandClass: gpm.std.console.Command
+    ---@class gpm.std.console.CommandClass : gpm.std.console.Command
     ---@field __base gpm.std.console.Command
     ---@overload fun( name: string, description: string?, ...: gpm.std.console.Command.Flags? ): gpm.std.console.Command
     local CommandClass = std.class.create( Command )
     console.Command = CommandClass
 
-    CommandClass.Flags = flags
+    CommandClass.Flags = convar_flags
 
     --- [SHARED AND MENU]
     ---
@@ -274,8 +313,24 @@ do
         return commands[ name ]
     end
 
-    if std.CLIENT_MENU and _G.input ~= nil then
-        CommandClass.translateAlias = _G.input.TranslateAlias
+    ---@diagnostic disable-next-line: undefined-field
+    if std.CLIENT_MENU then
+        local glua_input = _G.input
+        if glua_input ~= nil and glua_input.TranslateAlias ~= nil then
+            ---@diagnostic disable-next-line: undefined-field
+            CommandClass.translateAlias = glua_input.TranslateAlias
+        else
+
+            --- [CLIENT AND MENU]
+            ---
+            --- Translates a console command alias, basically reverse of the `alias` console command.
+            ---
+            ---@param str string The alias to lookup.
+            ---@return string | nil cmd The command(s) this alias will execute if ran, or nil if the alias doesn't exist.
+            ---@diagnostic disable-next-line: duplicate-set-field
+            function CommandClass.translateAlias( str ) end
+
+        end
     end
 
     CommandClass.run = RunConsoleCommand
@@ -284,15 +339,24 @@ do
     ---
     --- Runs the console command.
     ---
-    ---@param ... string: The arguments to pass to the console command.
+    ---@param ... string The arguments to pass to the console command.
     function Command:run( ... )
         RunConsoleCommand( self.name, ... )
     end
 
     do
 
-        local IsConCommandBlocked = _G.IsConCommandBlocked
-        CommandClass.isBlacklisted = IsConCommandBlocked
+        ---@diagnostic disable-next-line: undefined-field
+        local is_blacklisted = _G.IsConCommandBlocked
+
+        if is_blacklisted == nil then
+            ---@param str string
+            function is_blacklisted( str )
+                return false
+            end
+        end
+
+        CommandClass.isBlacklisted = is_blacklisted
 
         --- [SHARED AND MENU]
         ---
@@ -300,7 +364,7 @@ do
         ---
         ---@return boolean is_blacklisted `true` if the console command is blacklisted, `false` otherwise.
         function Command:isBlacklisted()
-            return IsConCommandBlocked( self.name )
+            return is_blacklisted( self.name )
         end
 
     end
@@ -311,7 +375,7 @@ do
     ---
     ---@param identifier any The identifier of the callback.
     ---@param fn function The callback function.
-    ---@param once boolean?: Whether the callback should be called only once.
+    ---@param once boolean? Whether the callback should be called only once.
     function Command:addCallback( identifier, fn, once )
         local data = { fn, identifier, once }
 
@@ -379,7 +443,7 @@ do
 
     local ConVarExists, GetConVar, CreateConVar = _G.ConVarExists, _G.GetConVar, _G.CreateConVar
     local tostring, tonumber, toboolean = std.tostring, std.tonumber, std.toboolean
-    local isstring, isnumber = std.isstring, std.isnumber
+    local isnumber = std.isnumber
     local type = std.type
 
     ---@alias gpm.std.console.Variable.Type
@@ -401,10 +465,10 @@ do
     --- The console variable object.
     ---
     ---@alias ConsoleVariable gpm.std.console.Variable
-    ---@class gpm.std.console.Variable: gpm.std.Object
+    ---@class gpm.std.console.Variable : gpm.std.Object
     ---@field __class gpm.std.console.Variable
-    ---@field protected object ConVar: The `ConVar` object.
-    ---@field protected type gpm.std.console.Variable.Type: The type of the console variable.
+    ---@field protected object ConVar The `ConVar` object.
+    ---@field protected type gpm.std.console.Variable.Type The type of the console variable.
     ---@field name string The name of the console variable.
     local Variable = std.class.base( "ConsoleVariable" )
 
@@ -447,7 +511,9 @@ do
             ---@cast default string
 
             local flags = data.flags
-            if not isnumber( flags ) then flags = nil end
+            if not isnumber( flags ) then
+                flags = 0
+            end
 
             ---@cast flags integer
 
@@ -472,6 +538,7 @@ do
 
             ---@cast max number
 
+            ---@diagnostic disable-next-line: param-type-mismatch
             self.object = CreateConVar( name, default, flags, description, min, max )
         else
             self.object = object
@@ -491,13 +558,13 @@ do
     ---
     --- The console variable class.
     ---
-    ---@class gpm.std.console.VariableClass: gpm.std.console.Variable
+    ---@class gpm.std.console.VariableClass : gpm.std.console.Variable
     ---@field __base gpm.std.console.Variable
     ---@overload fun( data: gpm.std.console.Variable.Data ): gpm.std.console.Variable
     local VariableClass = std.class.create( Variable )
     console.Variable = VariableClass
 
-    VariableClass.Flags = flags
+    VariableClass.Flags = convar_flags
     VariableClass.exists = ConVarExists
 
     do
@@ -524,17 +591,15 @@ do
     --- Gets a `ConsoleVariable` object by its name.
     ---
     ---@param name string The name of the console variable.
-    ---@param cvar_type gpm.std.console.Variable.Type?: The type of the console variable.
+    ---@param cvar_type gpm.std.console.Variable.Type? The type of the console variable.
     ---@return gpm.std.console.Variable variable The `ConsoleVariable` object.
     function VariableClass.get( name, cvar_type )
         local value = variables[ name ]
         if value == nil then
             local object = GetConVar( name )
             if object == nil then
-                std.error( "console variable '" .. name .. "' does not exist.", 2 )
+                error( "console variable '" .. name .. "' does not exist.", 2 )
             end
-
-            ---@cast object ConVar
 
             value = {
                 name = name,
@@ -571,7 +636,7 @@ do
     --- Sets the value of the `ConsoleVariable` object.
     ---
     ---@param name string The name of the console variable.
-    ---@param value boolean | string | number: The value to set.
+    ---@param value boolean | string | number The value to set.
     function VariableClass.set( name, value )
         local value_type = type( value )
         if value_type == "boolean" then

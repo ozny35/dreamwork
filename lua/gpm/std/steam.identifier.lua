@@ -68,8 +68,11 @@ local letter2int = {
     a = 10
 }
 
----@alias SteamID gpm.std.steam.Identifier
----@class gpm.std.steam.Identifier: gpm.std.Object
+--- [SHARED AND MENU]
+---
+--- SteamID object.
+---
+---@class gpm.std.steam.Identifier : gpm.std.Object
 ---@field __class gpm.std.steam.IdentifierClass
 ---@field universe gpm.std.steam.Identifier.Universe Indicates the Steam environment (e.g., public, beta).
 ---@field type gpm.std.steam.Identifier.Type Specifies the entity type (e.g., individual user, group, game server).
@@ -79,7 +82,13 @@ local letter2int = {
 ---@operator sub( integer ): gpm.std.steam.Identifier
 local Identifier = std.class.base( "Identifier" )
 
----@class gpm.std.steam.IdentifierClass: gpm.std.steam.Identifier
+---@alias SteamID gpm.std.steam.Identifier
+
+--- [SHARED AND MENU]
+---
+--- SteamID class.
+---
+---@class gpm.std.steam.IdentifierClass : gpm.std.steam.Identifier
 ---@field __base gpm.std.steam.Identifier
 ---@overload fun( universe?: gpm.std.steam.Identifier.Universe, type?: gpm.std.steam.Identifier.Type, id?: integer, instance?: boolean ): gpm.std.steam.Identifier
 local IdentifierClass = std.class.create( Identifier )
@@ -211,7 +220,7 @@ do
 
     do
 
-        local x64_zero = BigInt.fromBytes( 1, 0, 0, 0, 0, 0, 0, 0, 0 )
+        local x64_zero = BigInt.fromBytes( { 0, 0, 0, 0, 0, 0, 0, 0 }, 8, false, false )
         local BigInt_bor, BigInt_lshift = BigInt.bor, BigInt.lshift
         local BigInt_fromNumber = BigInt.fromNumber
 
@@ -353,7 +362,7 @@ do
     function IdentifierClass.fromSteam2( str, allow_zero_universe )
         local x, y, z = string_match( str, "^STEAM_([12]?%d?%d):([01]):(%d+)$" )
         if x == nil or y == nil or z == nil then
-            std.error( "steam identifier steam2 is invalid", 2 )
+            error( "steam identifier steam2 is invalid", 2 )
         end
 
         local universe = tonumber( x, 10 )
@@ -372,7 +381,7 @@ do
     function IdentifierClass.fromSteam3( str )
         local letter, universe, id = string_match( str, "^%[(%a):(%d+):(%d+)%]$" )
         if letter == nil or universe == nil or id == nil then
-            std.error( "steam identifier steam3 is invalid", 2 )
+            error( "steam identifier steam3 is invalid", 2 )
         end
 
         return setmetatable( {

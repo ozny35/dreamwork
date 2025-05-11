@@ -40,8 +40,9 @@ local function byte2char( byte )
 end
 
 --- Converts a sequence of UTF-8 bytes to a string
----@param ... number: The UTF-8 bytes
----@return string: The resulting string
+---
+---@param ... number The UTF-8 bytes
+---@return string result The resulting string
 local function char_fn( ... )
 	local length = select( "#", ... )
 	if length == 0 then return "" end
@@ -103,7 +104,7 @@ end
 ---@param str string
 ---@param stringStart? number
 ---@param stringEnd? number
----@return string ...: The UTF-8 code points.
+---@return string ... The UTF-8 code points.
 local function codepoint( str, stringStart, stringEnd )
 	local stringLength = string_len( str )
 	stringStart = stringPosition( stringStart or 1, stringLength )
@@ -113,7 +114,7 @@ local function codepoint( str, stringStart, stringEnd )
 	repeat
 		local sequenceStart, sequenceEnd, codePoint = decode( str, stringStart, stringLength )
 		if sequenceStart == nil then
-			std.error( "invalid UTF-8 code", 2 )
+			error( "invalid UTF-8 code", 2 )
 		end
 
 		stringStart = sequenceEnd + 1
@@ -173,7 +174,7 @@ local function offset_fn( str, offset, stringStart )
 	end
 
 	if decode( str, position, stringLength ) == nil then
-		std.error( "initial position is a continuation byte", 2 )
+		error( "initial position is a continuation byte", 2 )
 	end
 
 	if offset < 0 then
@@ -1246,7 +1247,7 @@ function utf8.codes( str )
 
 		local stringStart, stringEnd, codePoint = decode( str, index, stringLength )
 		if stringStart == nil then
-			std.error( "invalid UTF-8 code", 2 )
+			error( "invalid UTF-8 code", 2 )
 		end
 
 		index = stringEnd + 1

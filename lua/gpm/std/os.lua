@@ -18,7 +18,7 @@ do
 
     local glua_os = _G.os
     if glua_os == nil then
-        std.error( "os library not found" )
+        error( "os library not found" )
     end
 
     ---@cast glua_os oslib
@@ -30,20 +30,7 @@ do
 
 end
 
-do
-
-    local is_host_big_endian = std.string.byte( std.string.dump( std.debug.fempty ), 7 ) == 0x00
-
-    --- [SHARED AND MENU]
-    ---
-    --- Returns the endianness of the current machine.
-    ---
-    ---@return string: The endianness of the current machine.
-    function os.endianness()
-        return is_host_big_endian and "big" or "little"
-    end
-
-end
+os.endianness = std.string.byte( std.string.dump( std.debug.fempty ), 7 ) == 0x00
 
 do
 
@@ -54,7 +41,7 @@ do
     ---
     --- Returns the current battery level.
     ---
-    ---@return number: The battery level, between 0 and 100.
+    ---@return number level The battery level, between 0 and 100.
     function os.getBatteryLevel()
         return level
     end
@@ -63,7 +50,7 @@ do
     ---
     --- Checks if the system has a battery.
     ---
-    ---@return boolean: `true` if the system has a battery, `false` if not.
+    ---@return boolean has `true` if the system has a battery, `false` if not.
     function os.hasBattery()
         return has_battery
     end

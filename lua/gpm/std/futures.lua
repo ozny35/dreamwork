@@ -66,11 +66,11 @@ local coroutine_create = coroutine.create
 local coroutine_status = coroutine.status
 local coroutine_yield = coroutine.yield
 
-local function displayError( message )
+local function display_error( message )
     return std.error( message, -2 )
 end
 
-local asyncThreadResult
+local async_thread_result
 do
 
     local string_find = string.find
@@ -78,7 +78,7 @@ do
 
     ---@async
     ---@param ok boolean
-    function asyncThreadResult( ok, value, ... )
+    function async_thread_result( ok, value, ... )
         local fn = listeners[ coroutine_running() ]
         if isfunction( fn ) then
             fn( ok, value, ... )
@@ -95,8 +95,8 @@ do
 end
 
 ---@async
-local function asyncThread( fn, ... )
-    return asyncThreadResult( pcall( fn, ... ) )
+local function async_thread( fn, ... )
+    return async_thread_result( pcall( fn, ... ) )
 end
 
 --- [SHARED AND MENU]
@@ -125,20 +125,19 @@ end
 --- end, 2, 2 ) -- 2 and 2 are arguments for asyncFunction
 --- ```
 ---@see gpm.std.futures.cancel you can cancel returned coroutine from this function
----@param target async fun(...):...
----@param callback fun(ok: boolean, ...)?
+---@param target async fun(...):... The function to execute.
+---@param callback fun(ok: boolean, ...)? The callback function.
 ---@param ... any Arguments to pass into the target function
----@return thread
+---@return thread co The created coroutine object.
 local function futures_run( target, callback, ... )
-    local co = coroutine_create( asyncThread )
+    local co = coroutine_create( async_thread )
     listeners[ co ] = callback
 
     local ok, err = coroutine_resume( co, target, ... )
     if ok then
         return co
     else
-        std.error( err )
-        ---@diagnostic disable-next-line: missing-return
+        error( err, 2 )
     end
 end
 
@@ -146,9 +145,9 @@ futures.run = futures_run
 
 
 ---@async
-local function handlePending( value, ... )
+local function handle_pending( value, ... )
     if value == false then
-        return std.error( "Operation was cancelled" ) -- TODO: use error
+        return error( "Operation was cancelled" ) -- TODO: use error
     else
         return value, ...
     end
@@ -183,7 +182,7 @@ end
 ---@async
 ---@return ...
 local function futures_pending()
-    return handlePending( coroutine_yield() )
+    return handle_pending( coroutine_yield() )
 end
 
 futures.pending = futures_pending
@@ -236,7 +235,7 @@ function futures.cancel( co )
         ---@diagnostic disable-next-line: await-in-sync
         coroutine_yield( false )
     elseif status == "running" then
-        std.error( "Operation was cancelled" ) -- TODO: use error
+        error( "Operation was cancelled" ) -- TODO: use error
     end
 end
 
@@ -270,21 +269,21 @@ futures.transfer = futures_transfer
 
 
 ---@async
-local function handleYield( ok, value, ... )
+local function handle_yield( ok, value, ... )
     -- ignore errors, they must be handled by whoever calls us
     if not ok or value == 1 then
         return
     end
 
     if value == false then
-        return std.error( "Operation was cancelled" ) -- TODO: use error
+        return error( "Operation was cancelled" ) -- TODO: use error
     elseif value == true then
         return ...
     elseif value ~= nil then
         std.error( "invalid yield action: " .. tostring( value ), -2 )
     else
         -- caller probably went sleeping
-        return handleYield( true, coroutine_yield() )
+        return handle_yield( true, coroutine_yield() )
     end
 end
 
@@ -299,11 +298,10 @@ do
     local function futures_yield( ... )
         local listener = coroutine_listeners[ coroutine_running() ]
         if listener then
-            return handleYield( futures_transfer( listener, 0, ... ) )
+            return handle_yield( futures_transfer( listener, 0, ... ) )
         else
             -- whaat? we don't have a listener?!
-            std.error( "Operation was cancelled" ) -- TODO: use error
-            ---@diagnostic disable-next-line: missing-return
+            error( "Operation was cancelled" ) -- TODO: use error
         end
     end
 
@@ -313,7 +311,7 @@ do
 end
 
 ---@async
-local function asyncIteratableThread( fn, ... )
+local function async_iteratable_thread( fn, ... )
     coroutine_yield() -- wait until anext wakes us up
     local ok, err = pcall( fn, ... )
 
@@ -325,16 +323,16 @@ local function asyncIteratableThread( fn, ... )
             futures_transfer( listener, 1, err )
         end
     elseif not ok then
-        std.error( err )
+        error( err )
     end
 end
 
 ---@async
 ---@param co thread
 ---@param ok boolean
-local function handleAnext( co, ok, value, ... )
+local function handle_anext( co, ok, value, ... )
     if not ok then
-        return std.error( value )
+        return error( value )
     end
 
     if value == 0 then
@@ -342,13 +340,13 @@ local function handleAnext( co, ok, value, ... )
     elseif value == 2 then
         return -- return nothing so for loop with be stopped
     elseif value == 1 then
-        return std.error( ... )
+        return error( ... )
     elseif value ~= nil then
         std.error( "invalid anext result: " .. tostring( value ), -2 )
     end
 
     -- iterator went sleeping, wait until it wakes us up
-    return handleAnext( co, true, coroutine_yield() )
+    return handle_anext( co, true, coroutine_yield() )
 end
 
 --- [SHARED AND MENU]
@@ -361,7 +359,7 @@ end
 ---@async
 ---@param iterator thread
 local function futures_anext( iterator, ... )
-    return handleAnext( iterator, futures_transfer( iterator, true, ... ) )
+    return handle_anext( iterator, futures_transfer( iterator, true, ... ) )
 end
 
 futures.anext = futures_anext
@@ -396,7 +394,7 @@ futures.anext = futures_anext
 ---@return async fun(...): K, V
 ---@return thread
 local function futures_apairs( iterator, ... )
-    local co = coroutine_create( asyncIteratableThread )
+    local co = coroutine_create( async_iteratable_thread )
     coroutine_listeners[ co ] = coroutine_running()
     coroutine_resume( co, iterator, ... )
     return futures_anext, co
@@ -408,6 +406,7 @@ std.apairs = futures_apairs
 --- [SHARED AND MENU]
 ---
 --- Collects all values from async iterator into a list.
+---
 ---@async
 ---@generic V
 ---@param iterator async fun(...): gpm.std.futures.AsyncIterator<V>
@@ -426,6 +425,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Collects all values from async iterator into a table.
+---
 ---@async
 ---@generic K, V
 ---@param iterator async fun(...): gpm.std.futures.AsyncIterator<K, V>
@@ -442,8 +442,6 @@ end
 do
 
     local table = std.table
-
-    ---@alias Future gpm.std.futures.Future
 
     --- Futures are objects that hold the result that can be assigned asynchronously
     --- they can be awaited to get the result
@@ -473,7 +471,13 @@ do
     --- ```
     ---@class gpm.std.futures.Future : gpm.std.Object
     ---@field __class gpm.std.futures.FutureClass
+    ---@field protected callbacks function[] The list of callbacks that will be called when future is done.
+    ---@field protected state number 0 = PENDING, 1 = FINISHED, 2 = CANCELLED.
+    ---@field protected value any The result of the future.
+    ---@field protected error any The error of the future.
     local Future = futures.Future and futures.Future.__base or std.class.base( "Future" )
+
+    ---@alias Future gpm.std.futures.Future
 
     --[[
 
@@ -484,32 +488,22 @@ do
 
     --]]
 
-    --[[
-
-        Future:
-            [ 0 ] = state
-            [ 1 ] = callbacks
-            [ 2 ] = result
-            [ 3 ] = error
-
-    ]]
-
     ---@protected
     function Future:__init()
-        self[ 0 ] = 0
-        self[ 1 ] = {}
+        self.state = 0
+        self.callbacks = {}
     end
 
     ---@protected
     function Future:__tostring()
-        local state = self[ 0 ]
+        local state = self.state
         if state ~= 0 then
             if state == 2 then
                 return string.format( "Future: %p ( cancelled )", self )
-            elseif self[ 3 ] then
-                return string.format( "Future: %p ( finished error = %s )", self, tostring( self[ 3 ] ) )
+            elseif self.error then
+                return string.format( "Future: %p ( finished error = %s )", self, tostring( self.error ) )
             else
-                return string.format( "Future: %p ( finished value = %s )", self, tostring( self[ 2 ] ) )
+                return string.format( "Future: %p ( finished value = %s )", self, tostring( self.value ) )
             end
         else
             return string.format( "Future: %p ( pending )", self )
@@ -519,37 +513,41 @@ do
     --- [SHARED AND MENU]
     ---
     --- Returns `true` if Future is pending.
+    ---
     ---@return boolean
     function Future:isPending()
-        return self[ 0 ] == 0
+        return self.state == 0
     end
 
     --- [SHARED AND MENU]
     ---
     --- Returns `true` if Future is finished (or cancelled).
+    ---
     ---@return boolean
     function Future:isFinished()
-        return self[ 0 ] ~= 0
+        return self.state ~= 0
     end
 
     --- [SHARED AND MENU]
     ---
     --- Returns true if Future was cancelled.
+    ---
     ---@return boolean
     function Future:isCancelled()
-        return self[ 0 ] == 2
+        return self.state == 2
     end
 
     --- [SHARED AND MENU]
     ---
-    --- Runs all callbacks
+    --- Runs all callbacks.
+    ---
     ---@private
     function Future:runCallbacks()
-        local callbacks = self[ 1 ]
-        self[ 1 ] = {}
+        local callbacks = self.callbacks
+        self.callbacks = {}
 
         for i = 1, #callbacks, 1 do
-            xpcall( callbacks[ i ], displayError, self )
+            xpcall( callbacks[ i ], display_error, self )
         end
     end
 
@@ -565,10 +563,10 @@ do
         ---@see gpm.std.futures.Future.removeCallback for removing callback
         ---@param fn fun( fut: gpm.std.futures.Future )
         function Future:addCallback( fn )
-            if self[ 0 ] ~= 0 then
-                xpcall( fn, displayError, self )
+            if self.state ~= 0 then
+                xpcall( fn, display_error, self )
             else
-                table_insert( self[ 1 ], fn )
+                table_insert( self.callbacks, fn )
             end
         end
 
@@ -585,7 +583,7 @@ do
         ---@see gpm.std.futures.Future.addCallback for adding callback
         ---@param value function
         function Future:removeCallback( value )
-            local callbacks = self[ 1 ]
+            local callbacks = self.callbacks
             for i = #callbacks, 1, -1 do
                 if callbacks[ i ] == value then
                     table_remove( callbacks, i )
@@ -604,10 +602,10 @@ do
     ---@see gpm.std.futures.Future.await to asynchronously retrieve result
     ---@param result any
     function Future:setResult( result )
-        if self[ 0 ] ~= 0 then
-            std.error( "future is already finished", 2 )
+        if self.state ~= 0 then
+            error( "future is already finished", 2 )
         else
-            self[ 0 ], self[ 2 ] = 1, result
+            self.state, self.value = 1, result
             self:runCallbacks()
         end
     end
@@ -616,12 +614,13 @@ do
     ---
     --- Sets error of the Future, marks it as finished, and runs all callbacks
     --- if future is already finished, error will be thrown.
+    ---
     ---@param err any
     function Future:setError( err )
-        if self[ 0 ] ~= 0 then
-            std.error( "future is already finished", 2 )
+        if self.state ~= 0 then
+            error( "future is already finished", 2 )
         else
-            self[ 0 ], self[ 3 ] = 1, err
+            self.state, self.error = 1, err
             self:runCallbacks()
         end
     end
@@ -630,12 +629,13 @@ do
     ---
     --- Tries to cancel future, if it's already done, returns `false`
     --- otherwise marks it as cancelled, runs all callbacks and returns `true`.
+    ---
     ---@return boolean cancelled
     function Future:cancel()
-        if self[ 0 ] ~= 0 then
+        if self.state ~= 0 then
             return false
         else
-            self[ 0 ] = 2
+            self.state = 2
             self:runCallbacks()
             return true
         end
@@ -650,11 +650,11 @@ do
     ---@see gpm.std.futures.Future.setError
     ---@return unknown?
     function Future:error()
-        local state = self[ 0 ]
+        local state = self.state
         if state == 2 then
             return "future was cancelled"
         elseif state ~= 0 then
-            return self[ 3 ]
+            return self.error
         else
             return "future is not finished"
         end
@@ -664,20 +664,21 @@ do
     ---
     --- Returns result if future is finished
     --- otherwise throws an error.
+    ---
     ---@see gpm.std.futures.Future.setResult
     ---@return any
     function Future:result()
-        local state = self[ 0 ]
+        local state = self.state
         if state == 2 then
-            return std.error( "future was cancelled" )
+            return error( "future was cancelled" )
         elseif state ~= 0 then
-            if self[ 3 ] then
-                std.error( self[ 3 ] )
+            if self.error then
+                error( self.error )
             else
-                return self[ 2 ]
+                return self.value
             end
         else
-            return std.error( "future is not finished" )
+            return error( "future is not finished" )
         end
     end
 
@@ -685,10 +686,11 @@ do
     ---
     --- Await until future will be finished
     --- if it contains an error, then it will be thrown.
+    ---
     ---@async
     ---@return any
     function Future:await()
-        if not self[ 0 ] ~= 0 then
+        if not self.state ~= 0 then
             local co = coroutine_running()
 
             self:addCallback( function()
@@ -698,13 +700,17 @@ do
             futures_pending()
         end
 
-        if self[ 0 ] ~= 0 then
+        if self.state ~= 0 then
             return self:result()
         else
-            std.error( "future hasn't changed it's state wtf???" )
+            error( "future hasn't changed it's state wtf???" )
         end
     end
 
+    --- [SHARED AND MENU]
+    ---
+    --- Future class.
+    ---
     ---@class gpm.std.futures.FutureClass : gpm.std.futures.Future
     ---@field __base Future
     ---@overload fun(): gpm.std.futures.Future
@@ -718,8 +724,6 @@ do
 
     --- [SHARED AND MENU]
     ---
-    ---@diagnostic disable-next-line: duplicate-doc-alias
-    ---@alias Task gpm.std.futures.Task
     --- Task is a Future wrapper around futures.run(...) to retrieve result of async function
     --- when task is created, it will immediately run given function.
     ---
@@ -743,6 +747,8 @@ do
     ---@field private setError fun( self, error )
     local Task = futures.Task and futures.Task.__base or std.class.base( "Task", futures.Future )
 
+    ---@alias Task gpm.std.futures.Task
+
     ---@protected
     ---@param fn async fun(...): any
     function Task:__init( fn, ... )
@@ -758,6 +764,10 @@ do
         end, ... )
     end
 
+    --- [SHARED AND MENU]
+    ---
+    --- Task class.
+    ---
     ---@class gpm.std.futures.TaskClass : gpm.std.futures.Task
     ---@field __base gpm.std.futures.Task
     ---@overload fun( fn: ( async fun(...): any ), ...: any ): gpm.std.futures.Task
@@ -769,9 +779,18 @@ end
 
 do
 
+    --- [SHARED AND MENU]
+    ---
+    --- A channel is a queue-type object that can be used by multiple coroutines.
+    ---
     ---@alias Channel gpm.std.futures.Channel
     ---@class gpm.std.futures.Channel : gpm.std.Object
     ---@field __class gpm.std.futures.ChannelClass
+    ---@field max_size integer Maximum size of the channel.
+    ---@field private queue gpm.std.Queue Queue of values.
+    ---@field private getters gpm.std.Queue Queue of getters.
+    ---@field private setters gpm.std.Queue Queue of setters.
+    ---@field private closed boolean `true` if the channel is closed, `false` otherwise.
     local Channel = futures.Channel and futures.Channel.__base or std.class.base( "Channel" )
 
     --[[
@@ -785,41 +804,44 @@ do
     ]]
 
     ---@protected
-    ---@param maxSize number?
-    function Channel:__init( maxSize )
-        if maxSize and maxSize < 0 then
-            std.error( "maxSize must be greater or equal to 0" )
+    ---@param max_size number? Maximum size of the channel.
+    function Channel:__init( max_size )
+        if max_size and max_size < 0 then
+            error( "maxSize must be greater or equal to 0" )
         end
 
-        self[ 0 ] = maxSize or 0
-        self[ 1 ] = Queue()
-        self[ 2 ] = Queue()
-        self[ 3 ] = Queue()
-        self[ 4 ] = false
+        self.max_size = max_size or 0
+        self.queue = Queue()
+        self.getters = Queue()
+        self.setters = Queue()
+        self.closed = false
     end
 
     --- [SHARED AND MENU]
     ---
     --- Returns the number of elements in the channel.
+    ---
     ---@return number length
     function Channel:getLength()
-        return self[ 1 ]:getLength()
+        return self.queue:getLength()
     end
 
     --- [SHARED AND MENU]
     ---
     --- Returns `true` if the channel is empty, `false` otherwise.
+    ---
     ---@return boolean isEmpty
     function Channel:isEmpty()
-        return self[ 1 ]:isEmpty()
+        return self.queue:isEmpty()
     end
 
     --- [SHARED AND MENU]
     ---
     --- Returns `true` if the channel is full, `false` otherwise.
+    ---
     ---@return boolean isFull
     function Channel:isFull()
-        local max_size = self[ 0 ]
+        local max_size = self.max_size
         if max_size == 0 then
             return false
         else
@@ -830,40 +852,45 @@ do
     --- [SHARED AND MENU]
     ---
     --- Closes the channel.
+    ---
     function Channel:close()
-        self[ 4 ] = true
+        self.closed = true
 
         -- wake up all getters and setters
-        while not self[ 2 ]:isEmpty() do
-            coroutine_resume( self[ 2 ]:pop() )
+        local getters = self.getters
+        while not getters:isEmpty() do
+            coroutine_resume( getters:pop() )
         end
 
-        while not self[ 3 ]:isEmpty() do
-            coroutine_resume( self[ 3 ]:pop() )
+        local setters = self.setters
+        while not setters:isEmpty() do
+            coroutine_resume( setters:pop() )
         end
     end
 
     --- [SHARED AND MENU]
     ---
     --- Returns `true` if the channel is closed, `false` otherwise.
+    ---
     ---@return boolean isClosed
     function Channel:isClosed()
-        return self[ 4 ]
+        return self.closed
     end
 
     --- [SHARED AND MENU]
     ---
     --- Puts a value into the channel, without waiting.
+    ---
     ---@param value any
     ---@return boolean success
     function Channel:putNow( value )
-        if self:isFull() or self[ 4 ] or value == nil then
+        if self:isFull() or self.closed or value == nil then
             return false
         end
 
-        self[ 1 ]:push( value )
+        self.queue:push( value )
 
-        local getter = self[ 2 ]:pop()
+        local getter = self.getters:pop()
         if getter then
             coroutine_resume( getter )
         end
@@ -874,13 +901,14 @@ do
     --- [SHARED AND MENU]
     ---
     --- Puts a value into the channel.
+    ---
     ---@async
     ---@param value any
     ---@param wait boolean?
     ---@return boolean success
     function Channel:put( value, wait )
-        while wait ~= false and ( self:isFull() and not self[ 4 ] ) do
-            self[ 3 ]:push( coroutine_running() )
+        while wait ~= false and ( self:isFull() and not self.closed ) do
+            self.setters:push( coroutine_running() )
             futures_pending()
         end
 
@@ -890,14 +918,15 @@ do
     --- [SHARED AND MENU]
     ---
     --- Gets a value from the channel, without waiting.
+    ---
     function Channel:getNow()
-        if self:isEmpty() or self[ 4 ] then
+        if self:isEmpty() or self.closed then
             return nil
         end
 
-        local value = self[ 1 ]:pop()
+        local value = self.queue:pop()
 
-        local setter = self[ 3 ]:pop()
+        local setter = self.setters:pop()
         if setter then
             coroutine_resume( setter )
         end
@@ -908,17 +937,22 @@ do
     --- [SHARED AND MENU]
     ---
     --- Gets a value from the channel.
+    ---
     ---@async
     ---@param wait boolean?
     function Channel:get( wait )
-        while wait ~= false and self:isEmpty() and not self[ 4 ] do
-            self[ 2 ]:push( coroutine_running() )
+        while wait ~= false and self:isEmpty() and not self.closed do
+            self.getters:push( coroutine_running() )
             futures_pending()
         end
 
         return self:getNow()
     end
 
+    --- [SHARED AND MENU]
+    ---
+    --- A channel is a queue-type class that can be used by multiple coroutines.
+    ---
     ---@class gpm.std.futures.ChannelClass : gpm.std.futures.Channel
     ---@field __base gpm.std.futures.Channel
     ---@overload fun( maxsize: number? ): gpm.std.futures.Channel
@@ -928,7 +962,8 @@ end
 
 --- [SHARED AND MENU]
 ---
---- Awaits concurrently all given `awaitables` and returns results in table
+--- Awaits concurrently all given `awaitables` and returns results in table.
+---
 ---@async
 ---@param awaitables Awaitable[]
 ---@return any[]
@@ -944,6 +979,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Cancels all given awaitables.
+---
 ---@param awaitables (Awaitable | { cancel: function })[]
 local function cancelList( awaitables )
     for i = 1, #awaitables do
@@ -963,6 +999,7 @@ end
 --- if any of awaitables if function, it will be asynchronously executed with given vararg
 ---
 --- On error also cancels all other awaitables.
+---
 ---@async
 ---@param awaitables Awaitable[]
 ---@return any[]
@@ -972,16 +1009,16 @@ function futures.all( awaitables )
         return result
     else
         cancelList( awaitables )
-        std.error( result )
-        ---@diagnostic disable-next-line: missing-return
+        error( result )
     end
 end
 
 --- [SHARED AND MENU]
 ---
---- Returns first result of futures, or error
+--- Returns first result of futures, or error.
 ---
---- Other awaitables will be cancelled after first result or error
+--- Other awaitables will be cancelled after first result or error.
+---
 ---@async
 ---@param futureList Future[]
 ---@return any

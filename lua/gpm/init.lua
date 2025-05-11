@@ -63,7 +63,7 @@ raw.tonumber = raw.tonumber or _G.tonumber
 raw.ipairs = raw.ipairs or _G.ipairs
 raw.pairs = raw.pairs or _G.pairs
 
-raw.error = raw.error or _G.error
+-- raw.error = raw.error or _G.error
 raw.type = raw.type or _G.type
 
 raw.equal = raw.equal or _G.rawequal
@@ -301,6 +301,9 @@ do
 
 end
 
+-- TODO: thread manager?
+
+---@diagnostic disable-next-line : undefined-field
 local istable = _G.istable
 if istable == nil then
 
@@ -610,7 +613,6 @@ do
     local debug_getinfo = debug.getinfo
     local string_rep = string.rep
     local tostring = std.tostring
-    local raw_error = raw.error
 
     ---@diagnostic disable-next-line: undefined-field
     local ErrorNoHalt = _G.ErrorNoHalt or std.print
@@ -647,8 +649,8 @@ do
     ---
     --- Throws a Lua error.
     ---
-    ---@param message string | Error: The error message to throw.
-    ---@param level gpm.std.ErrorType?: The error level to throw.
+    ---@param message string | Error The error message to throw.
+    ---@param level gpm.std.ErrorType? The error level to throw.
     function std.error( message, level )
         -- async functions support
         if not coroutine_running() then
@@ -661,7 +663,7 @@ do
         elseif level == -2 then
             return ErrorNoHaltWithStack( message )
         else
-            return raw_error( message, level )
+            return error( message, level )
         end
     end
 
@@ -793,19 +795,19 @@ do
 
     local developer = std.console.Variable.get( "developer", "number" )
 
-    local getDeveloper
+    local get_developer
     if developer == nil then
-        getDeveloper = function() return 1 end
+        get_developer = function() return 1 end
     elseif std.DEDICATED then
         local value = developer:get()
         developer:addChangeCallback( "gpm::init", function( _, __, new ) value = new end )
-        getDeveloper = function() return value end
+        get_developer = function() return value end
     else
-        getDeveloper = function() return developer:get() end
+        get_developer = function() return developer:get() end
     end
 
     local key2call = {
-        DEVELOPER = getDeveloper
+        DEVELOPER = get_developer
     }
 
     std.setmetatable( std, {
@@ -865,7 +867,7 @@ do
     function std.sleep( seconds )
         local co = futures.running()
         if co == nil then
-            std.error( "sleep cannot be called from main thread", 2 )
+            error( "sleep cannot be called from main thread", 2 )
         end
 
         ---@cast co thread
@@ -893,7 +895,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- Converts a URL to a file path.
-    ---@param url string | URL: The URL to convert.
+    ---@param url string | URL The URL to convert.
     ---@return string path The file path.
     function path.fromURL( url )
         if not is_url( url ) then
@@ -1085,57 +1087,28 @@ do
 
         --- [SHARED AND MENU]
         ---
-        --- Loads a string or function as
-        --- a chunk in the specified environment
+        --- Loads a string as
+        --- a lua code chunk in the specified environment
         --- and returns function as a compile result.
         ---
-        ---@param chunk string | function The lua code chunk.
-        ---@param chunkName string The lua code chunk name.
+        ---@param lua_code string The lua code chunk.
+        ---@param chunk_name string | nil The lua code chunk name.
         ---@param env table | nil The environment of compiled function.
         ---@return function | nil fn The compiled function.
         ---@return string | nil msg The error message.
-        local function loadstring( chunk, chunkName, env )
-            if env == nil then
-                env = getfenv( 2 )
-            end
-
-            if isstring( chunk ) then
-                ---@cast chunk string
-
-                local fn = CompileString( chunk, chunkName, false )
-
-                if fn == nil then
-                    return nil, "failed to compile chunk"
-                elseif isstring( fn ) then
-                    ---@diagnostic disable-next-line: cast-type-mismatch
-                    ---@cast fn string
-                    return nil, fn
-                else
-                    setfenv( fn, env )
-                    return fn
-                end
-            elseif isfunction( chunk ) then
-                ---@cast chunk function
-
-                local segment = chunk()
-                if segment == nil then
-                    return nil, "first chunk segment cannot be nil"
-                end
-
-                local segments, length = {}, 0
-                while segment ~= nil do
-                    length = length + 1
-                    segments[ length ] = segment
-                    segment = chunk()
-                end
-
-                return loadstring( table_concat( segments, "", 1, length ), chunkName, env )
+        function std.loadstring( lua_code, chunk_name, env )
+            local fn = CompileString( lua_code, chunk_name or "=(loadstring)", false )
+            if fn == nil then
+                return nil, "lua code compilation failed"
+            elseif isstring( fn ) then
+                ---@diagnostic disable-next-line  cast-type-mismatch
+                ---@cast fn string
+                return nil, fn
             else
-                return nil, "bad argument #1 to 'loadstring' ('string/function' expected, got '" .. type( chunk ) .. "')"
+                setfenv( fn, env or getfenv( 2 ) )
+                return fn
             end
         end
-
-        std.loadstring = loadstring
 
     end
 
@@ -1146,55 +1119,28 @@ do
 
         --- [SHARED AND MENU]
         ---
-        --- Loads a string or function as
+        --- Loads a string as
         --- a bytecode chunk in the specified environment
         --- and returns function as a compile result.
         ---
-        ---@param chunk string | function The luajit bytecode chunk.
+        ---@param bytecode string The luajit bytecode chunk.
         ---@param env table | nil The environment of compiled function.
         ---@return function | nil fn The compiled function.
         ---@return string | nil msg The error message.
-        local function loadbytecode( chunk, env )
-            if env == nil then
-                env = getfenv( 2 )
-            end
-
-            if isstring( chunk ) then
-                ---@cast chunk string
-
-                local success, result = pcall( gmbc_load_bytecode, chunk )
-                if success then
-                    setfenv( result, env )
-                    return result
-                else
-                    return nil, result
-                end
-            elseif isfunction( chunk ) then
-                ---@cast chunk function
-
-                local segment = chunk()
-                if segment == nil then
-                    return nil, "first chunk segment cannot be nil"
-                end
-
-                local segments, length = {}, 0
-                while segment ~= nil do
-                    length = length + 1
-                    segments[ length ] = segment
-                    segment = chunk()
-                end
-
-                return loadbytecode( table_concat( segments, "", 1, length ), env )
+        function std.loadbytecode( bytecode, env )
+            local success, result = pcall( gmbc_load_bytecode, bytecode )
+            if success then
+                setfenv( result, env or getfenv( 2 ) )
+                return result
             else
-                return nil, "bad argument #1 to 'loadbytecode' ('string/function' expected, got '" .. type( chunk ) .. "')"
+                return nil, result
             end
         end
-
-        std.loadbytecode = loadbytecode
 
     end
 
 end
+
 
 dofile( "std/http.lua" )
 dofile( "std/http.github.lua" )

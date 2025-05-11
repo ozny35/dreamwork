@@ -31,6 +31,7 @@ do
     table.pack = table.pack or glua_table.pack
 
     if table.pack == nil then
+        ---@diagnostic disable-next-line: duplicate-set-field
         function table.pack( ... )
             return { n = select( "#", ... ), ... }
         end
@@ -42,6 +43,7 @@ do
     table.move = table.move or glua_table.move
 
     if table.move == nil then
+        ---@diagnostic disable-next-line: duplicate-set-field
         function table.move( source, first, last, offset, destination )
             if destination == nil then
                 destination = source

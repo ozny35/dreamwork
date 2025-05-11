@@ -49,7 +49,8 @@ local string_rep = string.rep
 ---
 ---@param str string The input string.
 ---@param index number String cutting index.
----@return string, string: The first part of the string, the second part of the string.
+---@return string The first part of the string.
+---@return string The second part of the string.
 function string.cut( str, index )
     return string_sub( str, 1, index - 1 ), string_sub( str, index, string_len( str ) )
 end
@@ -62,7 +63,8 @@ end
 ---@param pattern string The pattern to divide by.
 ---@param from number? The start index.
 ---@param with_pattern boolean? If set to true, the pattern will be included in the resulting strings.
----@return string, string: The first part of the string, the second part of the string.
+---@return string The first part of the strin.
+---@return string The second part of the string.
 function string.divide( str, pattern, from, with_pattern )
     local startPos, endPos = string_find( str, pattern, from or 1, with_pattern ~= true )
     if startPos == nil then
@@ -79,7 +81,7 @@ end
 ---@param str string The input string.
 ---@param index number The string insertion index.
 ---@param value string The string value to insert.
----@return string: The resulting string.
+---@return string result The resulting string.
 function string.insert( str, index, value )
     if value == nil then
         return str .. index
@@ -95,7 +97,7 @@ end
 ---@param str string The input string.
 ---@param from number The start index.
 ---@param to number The end index.
----@return string: The resulting string.
+---@return string result The resulting string.
 function string.remove( str, from, to )
     if from == nil then from = string_len( str ) end
     if to == nil then to = from end
@@ -108,7 +110,7 @@ end
 ---
 ---@param str string The input string.
 ---@param startStr string The start string.
----@return boolean: `true` if the string starts with the start string, otherwise `false`.
+---@return boolean is_starts `true` if the string starts with the start string, otherwise `false`.
 function string.startsWith( str, startStr )
     return str == startStr or string_sub( str, 1, string_len( startStr ) ) == startStr
 end
@@ -119,7 +121,7 @@ end
 ---
 ---@param str string The input string.
 ---@param endStr string The end string.
----@return boolean: `true` if the string ends with the end string, otherwise `false`.
+---@return boolean is_ends `true` if the string ends with the end string, otherwise `false`.
 function string.endsWith( str, endStr )
     if endStr == "" or str == endStr then
         return true
@@ -139,9 +141,9 @@ do
     ---
     ---@param str string The input string.
     ---@param searchable string The searchable string.
-    ---@param position? number: The position to start from.
-    ---@param with_pattern? boolean: If the pattern is used.
-    ---@return number: The index of the searchable string, otherwise `-1`.
+    ---@param position? number The position to start from.
+    ---@param with_pattern? boolean If the pattern is used.
+    ---@return number index The index of the searchable string, otherwise `-1`.
     function string.indexOf( str, searchable, position, with_pattern )
         if searchable == nil then
             return 0
@@ -165,7 +167,7 @@ do
     ---@param length integer The desired length of the string.
     ---@param char? string The padding compensation symbol. Space by default.
     ---@param direction? integer The compensation direction, `1` for left, `-1` for right, `0` for both.
-    ---@return string: The padded string.
+    ---@return string result The padded string.
     function string.pad( str, length, char, direction )
         local missing_length = math_max( 0, length - string_len( str ) )
         if missing_length == 0 then return str end
@@ -173,7 +175,7 @@ do
         if char == nil then
             char = " "
         elseif string_len( char ) ~= 1 then
-            std.error( "char must be a single character", 2 )
+            error( "char must be a single character", 2 )
         end
 
         if direction == 1 then
@@ -198,9 +200,10 @@ end
 --- Splits the string.
 ---
 ---@param str string The input string.
----@param pattern? string: The pattern to split by.
----@param with_pattern? boolean: If the pattern is used.
----@return string[] result, number length: The resulting string array and the length of the array.
+---@param pattern? string The pattern to split by.
+---@param with_pattern? boolean If the pattern is used.
+---@return string[] result The string array.
+---@return number length The length of the array.
 function string.split( str, pattern, with_pattern )
     if pattern == nil then
         return { str }, 1
@@ -239,8 +242,9 @@ end
 ---
 ---@param str string The input string.
 ---@param pattern string The pattern to extract by.
----@param default? string: The default value.
----@return string, string?: The resulting string and the extracted string.
+---@param default? string  The default value.
+---@return string result The resulting string.
+---@return string? extracted The extracted string.
 function string.extract( str, pattern, default )
     local startPos, endPos, matched = string_find( str, pattern, 1, false )
     if startPos == nil then
@@ -255,9 +259,9 @@ end
 --- Returns the number of matches of a string.
 ---
 ---@param str string The input string.
----@param pattern? string: The pattern to count by.
----@param with_pattern? boolean: If the pattern is used.
----@return number: The number of matches.
+---@param pattern? string The pattern to count by.
+---@param with_pattern? boolean If the pattern is used.
+---@return number count The number of matches.
 function string.count( str, pattern, with_pattern )
     if pattern == nil then
         return 0
@@ -286,9 +290,9 @@ end
 --- Splits a string by a byte.
 ---
 ---@param str string The input string.
----@param byte? number: The byte to split by.
----@return string[] result: The split string.
----@return number length: The length of the split string.
+---@param byte? number The byte to split by.
+---@return string[] result The split string.
+---@return number length The length of the split string.
 function string.byteSplit( str, byte )
     if byte == nil then
         return { str }, 1
@@ -320,8 +324,8 @@ end
 --- Returns the number of occurrences of a byte.
 ---
 ---@param str string The input string.
----@param byte? number: The byte to count.
----@return number: The number of occurrences.
+---@param byte? number The byte to count.
+---@return number byte_count The number of occurrences.
 function string.byteCount( str, byte )
     if byte == nil or str == "" then return 0 end
 
@@ -340,10 +344,10 @@ end
 --- Trims a string by a byte.
 ---
 ---@param str string The input string.
----@param byte? number: The byte to trim by.
----@param direction? number: The direction to trim. `1` for left, `-1` for right, `0` for both.
----@return string str: The trimmed string.
----@return number length: The length of the trimmed string.
+---@param byte? number The byte to trim by.
+---@param direction? number The direction to trim. `1` for left, `-1` for right, `0` for both.
+---@return string str The trimmed string.
+---@return number length The length of the trimmed string.
 function string.byteTrim( str, byte, direction )
     local startPos, endPos = 1, string_len( str )
 
@@ -370,7 +374,7 @@ end
 ---
 ---@param str string The input string.
 ---@param index number The character index.
----@return string: The character.
+---@return string char The character.
 function string.get( str, index )
     return string_sub( str, index, index )
 end
@@ -382,7 +386,7 @@ end
 ---@param str string The input string.
 ---@param index number The character index.
 ---@param value string The character.
----@return string: The resulting string.
+---@return string result The resulting string.
 function string.set( str, index, value )
     return string_sub( str, 1, index - 1 ) .. value .. string_sub( str, index + 1, string_len( str ) )
 end
@@ -402,14 +406,16 @@ do
         [ 0x39 ] = true  -- 9
     }
 
+    -- TODO: check performance diff with this and raw.tonumber ~= nil
+
     --- [SHARED AND MENU]
     ---
     --- Checks if a string is a number.
     ---
     ---@param str string The string.
-    ---@param from? number: The start position.
-    ---@param to? number: The end position.
-    ---@return boolean: `true` if the string is a number, otherwise `false`.
+    ---@param from? number The start position.
+    ---@param to? number The end position.
+    ---@return boolean is_number `true` if the string is a number, otherwise `false`.
     function string.isNumber( str, from, to )
         if from == nil then from = 1 end
         if to == nil then to = string_len( str ) end
@@ -441,8 +447,8 @@ do
     ---@param str string The input string.
     ---@param searchable string The pattern to search for.
     ---@param replaceable string The string to replace.
-    ---@param with_pattern? boolean: Whether to use pattern or not.
-    ---@return string str: The replaced string.
+    ---@param with_pattern? boolean Whether to use pattern or not.
+    ---@return string str The replaced string.
     function string.replace( str, searchable, replaceable, with_pattern )
         if with_pattern then
             ---@diagnostic disable-next-line: redundant-return-value

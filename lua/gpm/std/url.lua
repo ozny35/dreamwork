@@ -396,7 +396,7 @@ local function utf8Decode( str, startPos, endPos )
 	end
 
 	if state ~= 0 then
-		std.error( "Invalid URL: UTF-8 decoding error" )
+		error( "Invalid URL: UTF-8 decoding error" )
 	end
 
 	return output
@@ -453,7 +453,7 @@ local function punycodeEncode( str, startPos, endPos )
 
 		-- Increase delta enough to advance the decoder's <n,i> state to <m,0>, but guard against overflow
 		if m - n > (0x7FFFFFFF - delta) / (h + 1) then
-			std.error("Invalid URL: Punycode overflow")
+			error("Invalid URL: Punycode overflow")
 		end
 
 		delta = delta + ((m - n) * (h + 1))
@@ -465,7 +465,7 @@ local function punycodeEncode( str, startPos, endPos )
 			if ch < n then
 				delta = delta + 1
 				if delta + 1 > 0x7FFFFFFF then
-					std.error("Invalid URL: Punycode overflow")
+					error("Invalid URL: Punycode overflow")
 				end
 			end
 
@@ -517,7 +517,7 @@ local function parseIPv4InIPv6(str, pointer, endPos, address, pieceIndex)
 		local ch = string_byte(str, pointer)
 		if numbersSeen > 0 then
 			if not (ch == 0x2E and numbersSeen < 4) then
-				std.error("Invalid URL: IPv4 in IPv6 invalid code point")
+				error("Invalid URL: IPv4 in IPv6 invalid code point")
 			end
 
 			pointer = pointer + 1
@@ -529,13 +529,13 @@ local function parseIPv4InIPv6(str, pointer, endPos, address, pieceIndex)
 			if not ipv4Piece then
 				ipv4Piece = num
 			elseif ipv4Piece == 0 then
-				std.error( "Invalid URL: IPv4 in IPv6 invalid code point" )
+				error( "Invalid URL: IPv4 in IPv6 invalid code point" )
 			else
 				ipv4Piece = ipv4Piece * 10 + num
 			end
 
 			if ipv4Piece > 255 then
-				std.error( "Invalid URL: IPv4 in IPv6 out of range part" )
+				error( "Invalid URL: IPv4 in IPv6 out of range part" )
 			end
 
 			pointer = pointer + 1
@@ -543,7 +543,7 @@ local function parseIPv4InIPv6(str, pointer, endPos, address, pieceIndex)
 		end
 
 		if not ipv4Piece then
-			std.error( "Invalid URL: IPv4 in IPv6 invalid code point" )
+			error( "Invalid URL: IPv4 in IPv6 invalid code point" )
 		end
 
 		address[ pieceIndex ] = address[ pieceIndex ] * 0x100 + ipv4Piece
@@ -555,7 +555,7 @@ local function parseIPv4InIPv6(str, pointer, endPos, address, pieceIndex)
 	end
 
 	if numbersSeen ~= 4 then
-		std.error( "Invalid URL: IPv4 in IPv6 too few parts" )
+		error( "Invalid URL: IPv4 in IPv6 too few parts" )
 	end
 
 	return pieceIndex
@@ -569,7 +569,7 @@ local function parseIPv6( str, startPos, endPos )
 
 	if string_byte(str, startPos) == 0x3A then
 		if startPos == endPos or string_byte(str, startPos + 1) ~= 0x3A then
-			std.error("Invalid URL: IPv6 invalid compression")
+			error("Invalid URL: IPv6 invalid compression")
 		end
 
 		pointer = pointer + 2
@@ -579,13 +579,13 @@ local function parseIPv6( str, startPos, endPos )
 
 	while pointer <= endPos do
 		if pieceIndex == 9 then
-			std.error("Invalid URL: IPv6 too many pieces")
+			error("Invalid URL: IPv6 too many pieces")
 		end
 
 		local ch = string_byte(str, pointer)
 		if ch == 0x3A then
 			if compress then
-				std.error("Invalid URL: IPv6 multiple compression")
+				error("Invalid URL: IPv6 multiple compression")
 			end
 
 			pointer = pointer + 1
@@ -605,21 +605,21 @@ local function parseIPv6( str, startPos, endPos )
 
 		if ch == 0x2E then
 			if length == 0 then
-				std.error("Invalud URL: IPv4 in IPv6 invalid code point")
+				error("Invalud URL: IPv4 in IPv6 invalid code point")
 			end
 			pointer = pointer - length
 			if pieceIndex > 7 then
-				std.error("Invalid URL: IPv4 in IPv6 too many pieces")
+				error("Invalid URL: IPv4 in IPv6 too many pieces")
 			end
 			pieceIndex = parseIPv4InIPv6(str, pointer, endPos, address, pieceIndex)
 			break
 		elseif ch == 0x3A then
 			pointer = pointer + 1
 			if pointer > endPos then
-				std.error("Invalid URL: IPv6 invalid code point")
+				error("Invalid URL: IPv6 invalid code point")
 			end
 		elseif pointer <= endPos then
-			std.error("Invalid URL: IPv6 invalid code point")
+			error("Invalid URL: IPv6 invalid code point")
 		end
 
 		address[pieceIndex] = value
@@ -638,7 +638,7 @@ local function parseIPv6( str, startPos, endPos )
 			pieceIndex = pieceIndex - 1
 		end
 	elseif pieceIndex ~= 9 then
-		std.error("Invalid URL: IPv6 too few pieces")
+		error("Invalid URL: IPv6 too few pieces")
 	end
 
 	return address
@@ -707,7 +707,7 @@ local function parseIPv4( str, startPos, endPos )
 					break
 				end
 
-				std.error( "Invalid URL: IPv4 non numeric part" )
+				error( "Invalid URL: IPv4 non numeric part" )
 			end
 
 			startPos = pointer + 1
@@ -722,17 +722,17 @@ local function parseIPv4( str, startPos, endPos )
 	end
 
 	if #numbers > 4 then
-		std.error("Invalid URL: IPv4 too many parts")
+		error("Invalid URL: IPv4 too many parts")
 	end
 
 	for i = 1, #numbers - 1 do
 		if numbers[i] > 255 then
-			std.error("Invalid URL: IPv4 out of range part")
+			error("Invalid URL: IPv4 out of range part")
 		end
 	end
 
 	if numbers[#numbers] >= 256 ^ (5 - #numbers) then
-		std.error("Invalid URL: IPv4 out of range part")
+		error("Invalid URL: IPv4 out of range part")
 	end
 
 	local ipv4 = numbers[#numbers]
@@ -773,7 +773,7 @@ domainToASCII = function(domain)
 		if not ch or ch == 0x2E then
 			-- decode an find errors
 			if punycodePrefix == 4 and containsNonASCII then
-				std.error("Invalid URL: Domain invalid code point")
+				error("Invalid URL: Domain invalid code point")
 			end
 
 			local domainPart = containsNonASCII and "xn--" .. punycodeEncode(domain, partStart, pointer - 1) or string_sub(domain, partStart, pointer - 1)
@@ -808,14 +808,14 @@ end
 local function parseHostString( str, startPos, endPos, isSpecial )
 	if string_byte( str, startPos ) == 0x5B --[[ [ ]] then
 		if string_byte( str, endPos ) ~= 0x5D --[[ ] ]] then
-			std.error( "Invalid URL: IPv6 unclosed", 2 )
+			error( "Invalid URL: IPv6 unclosed", 2 )
 		end
 
 		return parseIPv6( str, startPos + 1, endPos - 1 )
 	elseif not isSpecial then
 		-- opaque host parsing
 		if containsCharacter( str, FORBIDDEN_HOST_CODE_POINTS, startPos, endPos ) then
-			std.error( "Invalid URL: Host invalid code point", 2 )
+			error( "Invalid URL: Host invalid code point", 2 )
 		end
 
 		return percentEncode( string_sub( str, startPos, endPos ), C0_ENCODE_SET )
@@ -824,7 +824,7 @@ local function parseHostString( str, startPos, endPos, isSpecial )
 		local ascii_domain = domainToASCII( domain )
 
 		if containsCharacter( ascii_domain, FORBIDDEN_DOMAIN_CODE_POINTS ) then
-			std.error( "Invalid URL: Domain invalid code point", 2 )
+			error( "Invalid URL: Domain invalid code point", 2 )
 		end
 
 		if endsInANumberChecker( ascii_domain, 1, #ascii_domain ) then
@@ -917,7 +917,7 @@ parseNoScheme = function(self, str, startPos, endPos, base)
 	local startsWithFragment = string_byte(str, startPos) == 0x23
 	local baseHasOpaquePath = base and isstring(base.path)
 	if not base or (baseHasOpaquePath and not startsWithFragment) then
-		std.error("Invalid URL: Missing scheme")
+		error("Invalid URL: Missing scheme")
 	end
 
 	if baseHasOpaquePath and startsWithFragment then
@@ -1045,7 +1045,7 @@ function parseAuthority( self, str, startPos, endPos, isSpecial )
 
 	-- After @ there is no hostname
 	if atSignSeen == endPos then
-		std.error( "Invalid URL: Missing host", 2 )
+		error( "Invalid URL: Missing host", 2 )
 	end
 
 	if atSignSeen then
@@ -1071,7 +1071,7 @@ function parseHost( self, str, startPos, endPos, isSpecial, stateOverride )
 		local ch = string_byte( str, i )
 		if ch == 0x3A and not insideBrackets then
 			if i == startPos then
-				std.error( "Invalid URL: Missing host", 2 )
+				error( "Invalid URL: Missing host", 2 )
 			end
 
 			if stateOverride == "hostname" then
@@ -1089,7 +1089,7 @@ function parseHost( self, str, startPos, endPos, isSpecial, stateOverride )
 	end
 
 	if isSpecial and startPos > endPos then
-		std.error("Invalid URL: Missing host")
+		error("Invalid URL: Missing host")
 	elseif stateOverride and startPos == endPos and (self.username or self.password or self.port) then
 		return
 	end
@@ -1106,7 +1106,7 @@ function parsePort( self, str, startPos, endPos, defaultPort, stateOverride )
 	if not port or ( port > 2 ^ 16 - 1 ) or port < 0 then
 		if stateOverride then return end
 
-		std.error( "Invalid URL: Invalid port" )
+		error( "Invalid URL: Invalid port" )
 	end
 
 	if port ~= defaultPort then
@@ -1391,7 +1391,7 @@ end
 
 local function parse( self, str, base )
 	if not isstring( str ) then
-		std.error( "Invalid URL: URL must be a string" )
+		error( "Invalid URL: URL must be a string" )
 	end
 
 	if isstring( base ) then

@@ -64,14 +64,14 @@ do
                 local addon_name, local_path = string.match( file_path, "([^/]+)/?(.*)" )
 
                 if addon_name == nil then
-                    std.error( "Wrong path '/addons/" .. file_path .. "'.", 3 )
+                    error( "Wrong path '/addons/" .. file_path .. "'.", 3 )
                 end
 
                 if mounted_addons[ addon_name ] then
                     return local_path or "", addon_name
                 end
 
-                std.error( "Addon '" .. addon_name .. "' is not mounted, path '/addons/" .. file_path .. "' is not available.", 3 )
+                error( "Addon '" .. addon_name .. "' is not mounted, path '/addons/" .. file_path .. "' is not available.", 3 )
             end
         },
         { "/garrysmod", "MOD", nil, not MENU },
@@ -113,7 +113,7 @@ do
             local mounted_path = data[ 1 ]
             if mounted_path == resolved_path or string.sub( resolved_path, 1, data[ 5 ] + 1 ) == ( mounted_path .. "/" ) then
                 if write_mode and not data[ 4 ] then
-                    std.error( "Attempt to write into read-only directory '" .. path.getDirectory( resolved_path, true ) .. "'.", ( error_level or 1 ) + 1 )
+                    error( "Attempt to write into read-only directory '" .. path.getDirectory( resolved_path, true ) .. "'.", ( error_level or 1 ) + 1 )
                 end
 
                 local local_path, path_name
@@ -127,7 +127,7 @@ do
                     ---@cast game_path function
                     local_path, path_name = game_path( string.sub( resolved_path, data[ 5 ] + 2 ) )
                 else
-                    std.error( "Game path corrupted, critical failure.", 1 )
+                    error( "Game path corrupted, critical failure.", 1 )
                 end
 
                 local mount_path = data[ 3 ]
@@ -139,7 +139,7 @@ do
             end
         end
 
-        std.error( "Path '" .. resolved_path .. "' is not mounted.", ( error_level or 1 ) + 1 )
+        error( "Path '" .. resolved_path .. "' is not mounted.", ( error_level or 1 ) + 1 )
     end
 
 end
@@ -364,7 +364,7 @@ local function file_Copy( source_local_path, source_game_path, target_local_path
 
     local source_handler = file_Open( source_local_path, "rb", source_game_path )
     if source_handler == nil then
-        std.error( "File '" .. source_local_path .. "' cannot be readed.", error_level )
+        error( "File '" .. source_local_path .. "' cannot be readed.", error_level )
     end
 
     ---@diagnostic disable-next-line: cast-type-mismatch
@@ -375,7 +375,7 @@ local function file_Copy( source_local_path, source_game_path, target_local_path
 
     local target_handler = file_Open( target_local_path, "wb", target_game_path )
     if target_handler == nil then
-        std.error( "File '" .. target_local_path .. "' cannot be written.", error_level )
+        error( "File '" .. target_local_path .. "' cannot be written.", error_level )
     end
 
     ---@diagnostic disable-next-line: cast-type-mismatch
@@ -440,7 +440,7 @@ function file.copy( source_path, target_path, forced )
         resolved_target_path = resolve_path( target_path )
         target_local_path, target_game_path = path_unpack( resolved_target_path, true, 2 )
         if target_game_path == source_game_path and target_local_path == source_local_path then
-            std.error( "Source and target paths cannot be the same.", 2 )
+            error( "Source and target paths cannot be the same.", 2 )
         end
     end
 
@@ -471,7 +471,7 @@ function file.move( source_path, target_path, forced )
     local source_local_path, source_game_path = path_unpack( resolve_path( source_path ), false, 2 )
 
     if target_game_path == source_game_path and file_IsDir( source_local_path, source_game_path ) and string.startsWith( target_local_path, source_local_path ) then
-        std.error( "Cannot move a file or directory to itself.", 2 )
+        error( "Cannot move a file or directory to itself.", 2 )
     end
 
     if file_Exists( target_local_path, target_game_path ) then
@@ -482,9 +482,9 @@ function file.move( source_path, target_path, forced )
                 file_Delete( target_local_path, target_game_path )
             end
         elseif file_IsDir( target_local_path, target_game_path ) then
-            std.error( "Directory '" .. target_local_path .. "' already exists.", 2 )
+            error( "Directory '" .. target_local_path .. "' already exists.", 2 )
         else
-            std.error( "File '" .. target_local_path .. "' already exists.", 2 )
+            error( "File '" .. target_local_path .. "' already exists.", 2 )
         end
     end
 
@@ -512,7 +512,7 @@ function file.read( file_path, length )
 
     local handler = file_Open( local_path, "rb", game_path )
     if handler == nil then
-        std.error( "File '" .. resolved_path .. "' cannot be read.", 2 )
+        error( "File '" .. resolved_path .. "' cannot be read.", 2 )
     end
 
     ---@diagnostic disable-next-line: cast-type-mismatch
@@ -544,7 +544,7 @@ function file.write( file_path, data, forced )
 
     local handler = file_Open( local_path, "wb", game_path )
     if handler == nil then
-        std.error( "File '" .. resolved_path .. "' cannot be written.", 2 )
+        error( "File '" .. resolved_path .. "' cannot be written.", 2 )
     end
 
     ---@diagnostic disable-next-line: cast-type-mismatch
@@ -574,7 +574,7 @@ function file.append( file_path, data, forced )
 
     local handler = file_Open( local_path, "ab", game_path )
     if handler == nil then
-        std.error( "File '" .. resolved_path .. "' cannot be written.", 2 )
+        error( "File '" .. resolved_path .. "' cannot be written.", 2 )
     end
 
     ---@diagnostic disable-next-line: cast-type-mismatch
@@ -593,7 +593,7 @@ do
     ---
     --- TODO
     ---@alias FileReader gpm.std.file.Reader
-    ---@class gpm.std.file.Reader: gpm.std.Object
+    ---@class gpm.std.file.Reader : gpm.std.Object
     ---@field __class gpm.std.file.ReaderClass
     local Reader = class.base( "FileReader" )
 
@@ -613,7 +613,7 @@ do
 
         local handler = file_Open( local_path, "rb", game_path )
         if handler == nil then
-            std.error( "Failed to open file '" .. resolved_path .. "'.", 4 )
+            error( "Failed to open file '" .. resolved_path .. "'.", 4 )
         end
 
         self[ 0 ] = handler
@@ -660,7 +660,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- TODO
-    ---@class gpm.std.file.ReaderClass: gpm.std.file.Reader
+    ---@class gpm.std.file.ReaderClass : gpm.std.file.Reader
     ---@field __base gpm.std.file.Reader
     ---@overload fun( file_path: string ): gpm.std.file.Reader
     local ReaderClass = class.create( Reader )
@@ -674,7 +674,7 @@ do
     ---
     --- TODO
     ---@alias FileWriter gpm.std.file.Writer
-    ---@class gpm.std.file.Writer: gpm.std.Object
+    ---@class gpm.std.file.Writer : gpm.std.Object
     ---@field __class gpm.std.file.WriterClass
     local Writer = class.base( "FileWriter" )
 
@@ -697,7 +697,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- TODO
-    ---@class gpm.std.file.WriterClass: gpm.std.file.Writer
+    ---@class gpm.std.file.WriterClass : gpm.std.file.Writer
     ---@field __base gpm.std.file.Writer
     ---@overload fun( file_path: string ): gpm.std.file.Writer
     local WriterClass = class.create( Writer )

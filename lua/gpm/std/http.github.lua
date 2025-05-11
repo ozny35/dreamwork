@@ -1,13 +1,8 @@
+local std = _G.gpm.std
 
-local _G = _G
-local gpm = _G.gpm
-
-local std = gpm.std
-
-local tonumber, tostring = std.tonumber, std.tostring
-local HTTPClientError = std.HTTPClientError
-
-local game_getSystemTime = std.game.getSystemTime
+local game_getUptime = std.game.getUptime
+local raw_tonumber = std.raw.tonumber
+local tostring = std.tostring
 
 ---@class gpm.std.http
 local http = std.http
@@ -94,18 +89,18 @@ local function request( method, pathname, headers, body, do_cache )
         if diff < 30 then
             futures_sleep( diff )
         else
-            std.error( HTTPClientError( "Github API rate limit exceeded (" .. url.href .. ")" ) )
+            error( "Github API rate limit exceeded (" .. url.href .. ")" )
         end
     end
 
     -- Rate limit mutative requests
     if method > 1 and method < 6 then
-        local diff = next_mutation_time - game_getSystemTime()
+        local diff = next_mutation_time - game_getUptime()
         if diff > 0 then
             next_mutation_time = next_mutation_time + 1000
             futures_sleep( diff )
         else
-            next_mutation_time = game_getSystemTime() + 1000
+            next_mutation_time = game_getUptime() + 1000
         end
     end
 
@@ -121,9 +116,9 @@ local function request( method, pathname, headers, body, do_cache )
     } )
 
     if ( result.status == 429 or result.status == 403 ) and headers["x-ratelimit-remaining"] == "0" then
-        local ratelimit_reset = tonumber( headers["x-ratelimit-reset"], 10 )
+        local ratelimit_reset = raw_tonumber( headers["x-ratelimit-reset"], 10 )
         if ratelimit_reset == nil then
-            std.error( HTTPClientError( "Github API rate limit exceeded (" .. tostring( result.status ) .. ") (" .. tostring( url ) .. ")" ) )
+            error( "Github API rate limit exceeded (" .. tostring( result.status ) .. ") (" .. tostring( url ) .. ")" )
         else
             ratelimit_reset_time = ratelimit_reset
         end
@@ -148,12 +143,12 @@ github.request = request
 local function apiRequest( method, pathname, headers, body, do_cache )
     local result = request( method, pathname, headers, body, do_cache )
     if not ( result.status >= 200 and result.status < 300 ) then
-        std.error( HTTPClientError( "Failed to fetch data from Github API (" .. tostring( result.status ) .. ") (" .. tostring( pathname ) .. ")" ) )
+        error( "failed to fetch data from Github API (" .. tostring( result.status ) .. ") (" .. tostring( pathname ) .. ")" )
     end
 
     local data = json_deserialize( result.body, true, true )
     if data == nil then
-        std.error( HTTPClientError( "Failed to parse JSON response from Github API (" .. tostring( result.status ) .. ") (" .. tostring( pathname ) .. ")" ) )
+        error( "failed to parse JSON response from Github API (" .. tostring( result.status ) .. ") (" .. tostring( pathname ) .. ")" )
     end
 
     ---@cast data table
@@ -349,7 +344,7 @@ function github.fetchZip( owner, repo, ref )
     } )
 
     if result.status ~= 200 then
-        std.error( HTTPClientError( "Failed to fetch zipball (" .. tostring( owner ) .. "/" .. tostring( repo ) .. "/" .. tostring( ref ) .. ") from Github API (" .. tostring( result.status ) .. ")" ) )
+        error( "failed to fetch zipball (" .. tostring( owner ) .. "/" .. tostring( repo ) .. "/" .. tostring( ref ) .. ") from Github API (" .. tostring( result.status ) .. ")" )
     end
 
     return result.body

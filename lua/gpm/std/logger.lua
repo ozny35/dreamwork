@@ -17,6 +17,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- The logger object.
+---
 ---@alias Logger gpm.std.Logger
 ---@class gpm.std.Logger : gpm.std.Object
 ---@field __class gpm.std.LoggerClass
@@ -25,9 +26,10 @@ local Logger = std.class.base( "Logger" )
 --- [SHARED AND MENU]
 ---
 --- The logger class.
+---
 ---@class gpm.std.LoggerClass : gpm.std.Logger
 ---@field __base gpm.std.Logger
----@overload fun(options: gpm.std.Logger.Options?): Logger
+---@overload fun( options: gpm.std.Logger.Options? ) : gpm.std.Logger
 local LoggerClass = std.class.create( Logger )
 std.Logger = LoggerClass
 

@@ -11,7 +11,7 @@ local std = _G.gpm.std
 ---
 --- In gpm this library has additional functions.
 ---
----@class gpm.std.debug
+---@class gpm.std.debug : debuglib
 local debug = std.debug or {}
 std.debug = debug
 
@@ -81,7 +81,7 @@ local debug_getinfo = debug.getinfo
 --- Call function with given arguments.
 ---
 ---@param func function The function to call.
----@param ... any: Arguments to be passed to the function.
+---@param ... any  Arguments to be passed to the function.
 ---@return any ... The return values of the function.
 function debug.fcall( func, ... )
     return func( ... )
@@ -92,6 +92,11 @@ do
     local FindMetaTable = _G.FindMetaTable or fempty
     local registry = debug.getregistry() or {}
 
+    --- [SHARED AND MENU]
+    ---
+    --- Returns the registry table.
+    ---
+    ---@diagnostic disable-next-line: duplicate-set-field
     function debug.getregistry()
         return registry
     end
@@ -135,6 +140,7 @@ do
             ---
             ---@param value any The value.
             ---@return table | nil meta The metatable.
+            ---@diagnostic disable-next-line: duplicate-set-field
             function debug.getmetatable( value )
                 return debug_getmetatable( value ) or registry[ type( value ) ]
             end
@@ -169,7 +175,7 @@ do
     ---
     ---@param name string The name of the metatable.
     ---@param tbl table The metatable.
-    ---@param do_full_register? boolean: If true, the metatable will be registered.
+    ---@param do_full_register? boolean If `true`, the metatable will be registered.
     ---@return integer meta_id The ID of the metatable or -1 if not fully registered.
     function debug.registermetatable( name, tbl, do_full_register )
         tbl = registry[ name ] or tbl
@@ -189,13 +195,13 @@ end
 ---
 --- Returns current stack trace as a table with strings.
 ---
----@param startPos? integer: The start position of the stack trace.
+---@param start_position? integer The start position of the stack trace.
 ---@return table stack The stack trace.
 ---@return integer length The length of the stack trace.
-function debug.getstack( startPos )
+function debug.getstack( start_position )
     local stack, length = {}, 0
 
-    for location = 1 + ( startPos or 1 ), 16, 1 do
+    for location = 1 + ( start_position or 1 ), 16, 1 do
         local info = debug_getinfo( location, "Snluf" )
         if info then
             length = length + 1
@@ -237,7 +243,7 @@ do
     ---
     --- Returns the path to the file in which it was called or an empty string if it could not be found.
     ---
-    ---@param location function | integer: The function or location to get the path from.
+    ---@param location function | integer The function or location to get the path from.
     ---@return string path The path to the file in which it was called or an [b]empty string[/b] if it could not be found.
     function debug.getfpath( location )
         local info = debug_getinfo( location, "S" )
@@ -300,7 +306,7 @@ do
     ---
     --- Returns the function package or `nil` if not found.
     ---
-    ---@param location function | integer: The function or stack level.
+    ---@param location function | integer The function or stack level.
     ---@return Package? pkg The function package or `nil` if not found.
     function debug.getfpackage( location )
         -- TODO: Check this after creating the package class
@@ -318,7 +324,7 @@ do
     ---
     --- Sets the function package.
     ---
-    ---@param location function | integer: The function or stack level.
+    ---@param location function | integer The function or stack level.
     ---@param package Package The package to set.
     function debug.setfpackage( location, package )
         -- TODO: Check this after creating the package class

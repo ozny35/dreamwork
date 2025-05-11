@@ -80,7 +80,7 @@ if std.SHARED then
     ---
     --- Returns the gravity of the current level.
     ---
-    ---@return integer: The gravity of the current level.
+    ---@return integer gravity The gravity of the current level.
     function level.getGravity()
         return console_Variable.getNumber( "sv_gravity" )
     end

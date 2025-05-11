@@ -331,15 +331,15 @@ end
 ---
 ---
 --- Empty string and string longer than 32768 bytes are not allowed.
----@return table: The dictionary used for preset dictionary compression and decompression.
+---@return table dict The dictionary used for preset dictionary compression and decompression.
 ---@raise error if 'strlen' does not match the length of 'str',
 --- or if 'adler32' does not match the Adler-32 checksum of 'str'.
 function deflate.createDictionary( str )
     local strlen = string_len( str )
     if strlen == 0 then
-        std.error( "Empty string is not allowed.", 2 )
+        error( "Empty string is not allowed.", 2 )
     elseif strlen > 32768 then
-        std.error( "String longer than 32768 bytes is not allowed. Got " .. strlen .. " bytes.", 2 )
+        error( "String longer than 32768 bytes is not allowed. Got " .. strlen .. " bytes.", 2 )
     end
 
     local string_table = { string_byte( str, 1, 2 ) }
@@ -487,29 +487,29 @@ do
         error_level = error_level + 1
 
         if not isnumber( dictionary.adler32 ) then
-            std.error( "'dictionary' - missing required field 'adler32'.", error_level )
+            error( "'dictionary' - missing required field 'adler32'.", error_level )
         end
 
         local string_table = dictionary.string_table
         if not istable( dictionary.string_table ) then
-            std.error( "'dictionary' - missing required field 'string_table'.", error_level )
+            error( "'dictionary' - missing required field 'string_table'.", error_level )
         end
 
         if not isnumber( dictionary.strlen ) then
-            std.error( "'dictionary' - missing required field 'strlen'.", error_level )
+            error( "'dictionary' - missing required field 'strlen'.", error_level )
         end
 
         local strlen = dictionary.strlen
         if strlen <= 0 or strlen > 32768 then
-            std.error( "'dictionary' - 'strlen' must be between 1 and 32768.", error_level )
+            error( "'dictionary' - 'strlen' must be between 1 and 32768.", error_level )
         end
 
         if strlen ~= #string_table then
-            std.error( "'dictionary' - 'strlen' does not match the length of 'string_table'.", error_level )
+            error( "'dictionary' - 'strlen' does not match the length of 'string_table'.", error_level )
         end
 
         if not istable( dictionary.hash_tables ) then
-            std.error( "'dictionary' - missing required field 'hash_tables'.", error_level )
+            error( "'dictionary' - missing required field 'hash_tables'.", error_level )
         end
     end
 
@@ -519,21 +519,21 @@ do
 
         local level = configs.level
         if level == nil then
-            std.error( "'configs' - missing required field 'level'.", error_level )
+            error( "'configs' - missing required field 'level'.", error_level )
         end
 
         if not _compression_level_configs[ level ] then
-            std.error( "'configs' - unsupported 'level': '" .. std.tostring( level ) .. "'.", error_level )
+            error( "'configs' - unsupported 'level': '" .. std.tostring( level ) .. "'.", error_level )
         end
 
         local strategy = configs.strategy
         if strategy == nil then
-            std.error( "'configs' - missing required field 'strategy'.", error_level )
+            error( "'configs' - missing required field 'strategy'.", error_level )
         end
 
         -- random_block_type is for testing purpose
         if not ( strategy == "fixed" or strategy == "huffman_only" or strategy == "dynamic" ) then
-            std.error( "'configs' - unsupported 'strategy': '" .. std.tostring( strategy ) .. "'.", error_level )
+            error( "'configs' - unsupported 'strategy': '" .. std.tostring( strategy ) .. "'.", error_level )
         end
     end
 
@@ -699,7 +699,7 @@ end
 --- Pop an element from a max heap
 ---@param heap table A max heap whose max element is at index 1.
 ---@param heap_size number current number of elements in the heap.
----@return any: the poped element
+---@return any top the poped element
 --- Note: This function does not change table size of "heap" to save CPU time.
 local function minHeapPop( heap, heap_size )
     local top = heap[ 1]
@@ -748,7 +748,7 @@ end
 ---@param symbol_bitlens table The bit length of a symbol
 ---@param max_symbol number The max symbol among all symbols, which is (number of symbols - 1)
 ---@param max_bitlen number The max huffman bit length among all symbols.
----@return table: The huffman code of all symbols.
+---@return table symbol_huffman_codes The huffman code of all symbols.
 local function getHuffmanCodeFromBitlen( bitlen_counts, symbol_bitlens, max_symbol, max_bitlen )
     local huffman_code = 0
     local next_codes = {}
@@ -800,8 +800,8 @@ end
 ---@param max_symbol number The maximum symbol
 ---@return table symbol_bitlens A table whose key is the symbol, and the value is the huffman bit bit length. We guarantee that all bit length <= max_bitlen.
 ---For 0<=symbol<=max_symbol, table value could be nil if the frequency of the symbol is 0 or nil.
----@return table: A table whose key is the symbol, and the value is the huffman code.
----@return number: A number indicating the maximum symbol whose bitlen is not 0.
+---@return table symbol_codes A table whose key is the symbol, and the value is the huffman code.
+---@return number max_non_zero_bitlen_symbol A number indicating the maximum symbol whose bitlen is not 0.
 local function getHuffmanBitlenAndCode( symbol_counts, max_bitlen, max_symbol )
     local heap_size
     local max_non_zero_bitlen_symbol = -1
@@ -940,9 +940,9 @@ end
 ---@param max_non_zero_bitlen_lcode number The maximum literal/LZ77_length symbol whose huffman bit length is not zero.
 ---@param dcode_bitlens table The huffman bit length of LZ77 distance.
 ---@param max_non_zero_bitlen_dcode number The maximum LZ77 distance symbol whose huffman bit length is not zero.
----@return table: The run length encoded codes.
----@return table: The extra bits. One entry for each rle code that needs extra bits. (code == 16 or 17 or 18).
----@return table: The count of appearance of each rle codes.
+---@return table rle_codes The run length encoded codes.
+---@return table rle_extra_bits The extra bits. One entry for each rle code that needs extra bits. (code == 16 or 17 or 18).
+---@return table rle_code_counts The count of appearance of each rle codes.
 local function runLengthEncodeHuffmanBitlen( lcode_bitlens, max_non_zero_bitlen_lcode, dcode_bitlens, max_non_zero_bitlen_dcode )
     local rle_code_tblsize = 0
     local rle_codes = {}
@@ -1068,7 +1068,7 @@ end
 ---			If dictionary is presented, the last 258 bytes of the dictionary
 ---			needs to be loaded into sing_table[-257..0]
 ---			(See more in the description of offset.)
----@param hash_tables table:. The table key is the hash value (0<=hash<=16777216=256^3)
+---@param hash_tables table The table key is the hash value (0<=hash<=16777216=256^3)
 ---			The table value is an array0 that stores the indexes of the
 ---			input data string to be compressed, such that
 ---			hash == str[index]*str[index+1]*str[index+2]
@@ -1079,12 +1079,12 @@ end
 ---			This offset is mainly an optimization to limit the index
 ---			of string_table, so lua can access this table quicker.
 ---@param dictionary table See deflate.createDictionary
----@return table: literal/LZ77_length deflate codes.
----@return table: the extra bits of literal/LZ77_length deflate codes.
----@return table: the count of each literal/LZ77 deflate code.
----@return table: LZ77 distance deflate codes.
----@return table: the extra bits of LZ77 distance deflate codes.
----@return table: the count of each LZ77 distance deflate code.
+---@return table lcodes literal/LZ77_length deflate codes.
+---@return table lextra_bits the extra bits of literal/LZ77_length deflate codes.
+---@return table lcodes_counts the count of each literal/LZ77 deflate code.
+---@return table dcodes LZ77 distance deflate codes.
+---@return table dextra_bits the extra bits of LZ77 distance deflate codes.
+---@return table dcodes_counts the count of each LZ77 distance deflate code.
 local function getBlockLZ77Result( level, string_table, hash_tables, block_start, block_end, offset, dictionary )
     local config = _compression_level_configs[ level ]
     local config_use_lazy, config_good_prev_length, config_max_lazy_match, config_nice_length, config_max_hash_chain = config[ 1 ], config[ 2 ], config[ 3 ], config[ 4 ], config[ 5 ]
@@ -1337,7 +1337,17 @@ end
 --- Get the header data of dynamic block.
 ---@param lcodes_counts table The count of each literal/LZ77_length codes.
 ---@param dcodes_counts table The count of each Lz77 distance codes.
----@return number, number, number, table, table, table, table, table, table, table, table:a lots of stuffs.
+---@return number HLIT The number of literal/LZ77_length codes.
+---@return number HDIST The number of LZ77 distance codes.
+---@return number HCLEN The number of Huffman codes.
+---@return table rle_codes_huffman_bitlens The huffman bit length of literal codes.
+---@return table rle_codes_huffman_codes The huffman symbol of literal codes.
+---@return table lcodes_huffman_bitlens The huffman bit length of literal codes.
+---@return table lcodes_huffman_codes The huffman symbol of literal codes.
+---@return table dcodes_huffman_bitlens The huffman bit length of distance codes.
+---@return table dcodes_huffman_codes The huffman symbol of distance codes.
+---@return table rle_deflate_codes The huffman symbol of literal codes.
+---@return table rle_extra_bits The extra bits of literal codes.
 ---@see RFC1951 Page 12
 local function getBlockDynamicHuffmanHeader( lcodes_counts, dcodes_counts )
     local lcodes_huffman_bitlens, lcodes_huffman_codes, max_non_zero_bitlen_lcode = getHuffmanBitlenAndCode( lcodes_counts, 15, 285 )
@@ -1372,7 +1382,7 @@ end
 ---@param rle_deflate_codes table
 ---@param lcodes_huffman_bitlens table
 ---@param dcodes_huffman_bitlens table
----@return number: the bit length of the dynamic block
+---@return number block_bitlen the bit length of the dynamic block
 local function getDynamicHuffmanBlockSize( lcodes, dcodes, HCLEN, rle_codes_huffman_bitlens, rle_deflate_codes, lcodes_huffman_bitlens, dcodes_huffman_bitlens )
     local block_bitlen = 17 -- 1+2+5+5+4
     block_bitlen = block_bitlen + ( HCLEN + 4 ) * 3
@@ -1486,7 +1496,7 @@ end
 --- Get the size of fixed block without writing any bits into the writer.
 ---@param lcodes table literal/LZ77_length deflate codes
 ---@param dcodes table LZ77 distance deflate codes
----@return number: the bit length of the fixed block
+---@return number block_bitlen the bit length of the fixed block
 local function getFixedHuffmanBlockSize( lcodes, dcodes )
     local block_bitlen = 3
     local length_code_count = 0
@@ -1556,7 +1566,7 @@ end
 ---@param block_start number The start index of the origin input string
 ---@param block_end number The end index of the origin input string
 ---@param total_bitlen number bit lens had been written into the compressed result before, because store block needs to shift to byte boundary.
----@return number: the bit length of the fixed block
+---@return number block_bitlen the bit length of the fixed block
 local function getStoreBlockSize( block_start, block_end, total_bitlen )
     assert( block_end - block_start + 1 <= 65535 )
 
@@ -1911,7 +1921,7 @@ local function createReader( input )
     --- check if the input has been exhausted.
     --- Use readerBitlenLeft() < 0 to check it.
     ---@param bitlen number the number of bits to read
-    ---@return number: the data is read.
+    ---@return number code the data is read.
     local function readBits( bitlen )
         local rshift_mask = _pow2[ bitlen ]
         local code
@@ -1942,7 +1952,7 @@ local function createReader( input )
     ---@param buffer table The byte read will be stored into this buffer.
     ---@param buffer_size number The buffer will be modified starting from
     ---	buffer[buffer_size+1], ending at buffer[buffer_size+bytelen-1]
-    ---@return number: the new buffer_size
+    ---@return number size the new buffer_size
     local function readBytes( bytelen, buffer, buffer_size )
         assert( cache_bitlen % 8 == 0 )
 
@@ -1979,7 +1989,7 @@ local function createReader( input )
     ---@param huffman_bitlen_counts number
     ---@param huffman_symbols number
     ---@param min_bitlen number The minimum huffman bit length of all symbols
-    ---@return number: The decoded deflate code.
+    ---@return number code The decoded deflate code.
     ---	Negative value is returned if decoding fails.
     local function decode(huffman_bitlen_counts, huffman_symbols, min_bitlen)
         local code = 0
@@ -2057,7 +2067,7 @@ end
 ---@param str string the whole string to be decompressed.
 ---@param dictionary? table The preset dictionary. nil if not provided.
 --- This dictionary should be produced by deflate.createDictionary(str)
----@return table: The decomrpess state.
+---@return table state The decomrpess state.
 local function createDecompressState( str, dictionary )
     local readBits, readBytes, decode, readerBitlenLeft, skipToByteBoundary = createReader( str )
     return {
@@ -2078,10 +2088,10 @@ end
 ---@param huffman_bitlens table The huffman bit length of the huffman codes.
 ---@param max_symbol number The maximum symbol
 ---@param max_bitlen number The min huffman bit length of all codes
----@return number: zero or positive for success, negative for failure.
----@return table: The count of each huffman bit length.
----@return table: A table to convert huffman codes to deflate codes.
----@return number: The minimum huffman bit length.
+---@return number left zero or positive for success, negative for failure.
+---@return table huffman_bitlen_counts The count of each huffman bit length.
+---@return table huffman_symbols A table to convert huffman codes to deflate codes.
+---@return number min_bitlen The minimum huffman bit length.
 local function getHuffmanForDecode( huffman_bitlens, max_symbol, max_bitlen )
     local huffman_bitlen_counts = {}
     local min_bitlen = max_bitlen
@@ -2138,7 +2148,7 @@ end
 ---@param dcodes_huffman_bitlens table The huffman bit length of distance codes.
 ---@param dcodes_huffman_symbols table The huffman symbol of distance codes.
 ---@param dcodes_huffman_min_bitlen number The minimum huffman bit length of distance codes.
----@return number: 0 on success, other value on failure.
+---@return number status 0 on success, other value on failure.
 local function decodeUntilEndOfBlock( state, lcodes_huffman_bitlens, lcodes_huffman_symbols, lcodes_huffman_min_bitlen, dcodes_huffman_bitlens, dcodes_huffman_symbols, dcodes_huffman_min_bitlen )
     local buffer, buffer_size, readBits, decode, readerBitlenLeft, result_buffer = state.buffer, state.buffer_size, state.readBits, state.decode, state.readerBitlenLeft, state.result_buffer
     local dictionary = state.dictionary
@@ -2229,7 +2239,7 @@ end
 
 --- Decompress a store block
 ---@param state table decompression state that will be modified by this function.
----@return number: 0 if succeeds, other value if fails.
+---@return number status 0 if succeeds, other value if fails.
 local function decompressStoreBlock( state )
     local buffer, buffer_size, readBits, readBytes, readerBitlenLeft, skipToByteBoundary, result_buffer = state.buffer, state.buffer_size, state.readBits, state.readBytes, state.readerBitlenLeft, state.skipToByteBoundary, state.result_buffer
     skipToByteBoundary()
@@ -2276,14 +2286,14 @@ end
 
 --- Decompress a fixed block
 ---@param state table decompression state that will be modified by this function.
----@return number: 0 if succeeds other value if fails.
+---@return number status 0 if succeeds other value if fails.
 local function decompressFixBlock( state )
     return decodeUntilEndOfBlock( state, _fix_block_literal_huffman_bitlen_count, _fix_block_literal_huffman_to_deflate_code, 7, _fix_block_dist_huffman_bitlen_count, _fix_block_dist_huffman_to_deflate_code, 5 )
 end
 
 --- Decompress a dynamic block
 ---@param state table decompression state that will be modified by this function.
----@return number: 0 if success, other value if fails.
+---@return number status 0 if success, other value if fails.
 local function decompressDynamicBlock( state )
     local readBits, decode = state.readBits, state.decode
 
@@ -2400,9 +2410,10 @@ local function decompressDynamicBlock( state )
 end
 
 --- Decompress a deflate stream
+---
 ---@param state table a decompression state
----@return string | nil: the decompressed string if succeeds. nil if fails.
----@return number | nil
+---@return string | nil str the decompressed string if succeeds. nil if fails.
+---@return number | nil status 0 if succeeds, other value if fails
 local function inflate( state )
     local readBits = state.readBits
 
@@ -2434,10 +2445,10 @@ end
 --- Decompress a raw deflate compressed data.
 ---@param str string The data to be decompressed.
 ---@param dictionary? table The dictionary to be used.
----@return string | nil: If the decompression succeeds, return the decompressed data.
+---@return string | nil data If the decompression succeeds, return the decompressed data.
 --- If the decompression fails, return nil. You should check if this return
 --- value is non-nil to know if the decompression succeeds.
----@return number | nil: If the decompression succeeds, return the number of
+---@return number | nil byte_count If the decompression succeeds, return the number of
 --- unprocessed bytes in the input compressed data. This return value is a
 --- positive integer if the input data is a valid compressed data appended by an
 --- arbitary non-empty string. This return value is 0 if the input data does not
@@ -2466,10 +2477,10 @@ end
 --- Decompress a zlib compressed data.
 ---@param str string The data to be decompressed
 ---@param dictionary? table The dictionary to be used
----@return string | nil: If the decompression succeeds, return the decompressed data.
+---@return string | nil data If the decompression succeeds, return the decompressed data.
 --- If the decompression fails, return nil. You should check if this return
 --- value is non-nil to know if the decompression succeeds.
----@return number | nil: If the decompression succeeds, return the number of
+---@return number | nil byte_count If the decompression succeeds, return the number of
 --- unprocessed bytes in the input compressed data. This return value is a
 --- positive integer if the input data is a valid compressed data appended by an
 --- arbitary non-empty string. This return value is 0 if the input data does not
@@ -2645,7 +2656,7 @@ end
 ---@param map_chars string The created encoder will map every
 --- reserved\_chars:sub(i, i) (1 <= i <= #map\_chars) to map\_chars:sub(i, i).
 --- This parameter CAN be empty string.
----@return table? codec: If the codec cannot be created, return nil.
+---@return table? codec  If the codec cannot be created, return nil.
 ---
 --- If the codec can be created according to the given
 --- parameters, return the codec, which is a encode/decode table.
@@ -2654,7 +2665,7 @@ end
 --- t:encode(str) returns the encoded string.
 ---
 --- t:decode(str) returns the decoded string if succeeds. nil if fails.
----@return string? message: If the codec is successfully created, return nil.
+---@return string? message  If the codec is successfully created, return nil.
 --- If not, return a string that describes the reason why the codec cannot be created.
 ---
 ---@usage
@@ -2811,9 +2822,10 @@ end
 do
 
     local _addon_channel_codec
-    ---@return table, string
+
+    ---@return table? codec
+    ---@return string? err_msg
     local function generateWoWAddonChannelCodec()
-        ---@diagnostic disable-next-line: return-type-mismatch
         return deflate.createCodec( "\000", "\001", "" )
     end
 
@@ -2829,6 +2841,8 @@ do
             _addon_channel_codec = generateWoWAddonChannelCodec()
         end
 
+        ---@cast _addon_channel_codec table
+
         return _addon_channel_codec:encode( str )
     end
 
@@ -2840,6 +2854,8 @@ do
         if _addon_channel_codec == nil then
             _addon_channel_codec = generateWoWAddonChannelCodec()
         end
+
+        ---@cast _addon_channel_codec table
 
         return _addon_channel_codec:decode( str )
     end
@@ -2867,14 +2883,14 @@ do
     --- 0% (average with pure ascii text)
     --- 53.5% (average with random data valued zero to 255)
     --- 100% (only encoding data that encodes to two bytes)
-    ---@return table, string
+    ---@return table? codec
+    ---@return string? err_msg
     local function generateWoWChatChannelCodec()
         local r = {}
         for i = 128, 255 do
             r[ i - 127 ] = _byte_to_char[ i ]
         end
 
-        ---@diagnostic disable-next-line: return-type-mismatch
         return deflate.createCodec( "sS\000\010\013\124%" .. table_concat( r ) , "\029\031", "\015\020" )
     end
 
@@ -2891,6 +2907,8 @@ do
             _chat_channel_codec = generateWoWChatChannelCodec()
         end
 
+        ---@cast _chat_channel_codec table
+
         return _chat_channel_codec:encode( str )
     end
 
@@ -2902,6 +2920,8 @@ do
         if _chat_channel_codec == nil then
             _chat_channel_codec = generateWoWChatChannelCodec()
         end
+
+        ---@cast _chat_channel_codec table
 
         return _chat_channel_codec:decode( str )
     end

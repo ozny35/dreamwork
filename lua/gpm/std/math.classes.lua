@@ -63,19 +63,24 @@ local math_min, math_max = math.min, math.max
 --- [SHARED AND MENU]
 ---
 --- A 2D vector object.
----@alias Vector2 gpm.std.Vector2
----@class gpm.std.Vector2: gpm.std.Object
+---
+---@class gpm.std.Vector2 : gpm.std.Object
 ---@field __class gpm.std.Vector2Class
 ---@operator add( gpm.std.Vector2 ): gpm.std.Vector2
 ---@operator sub( gpm.std.Vector2 ): gpm.std.Vector2
 ---@operator mul( gpm.std.Vector2 | number ): gpm.std.Vector2
 ---@operator div( gpm.std.Vector2 | number ): gpm.std.Vector2
 ---@operator unm: gpm.std.Vector2
+---@field x number TODO
+---@field y number TODO
 local Vector2 = class.base( "Vector2" )
+
+---@alias Vector2 gpm.std.Vector2
 
 --- [SHARED AND MENU]
 ---
 --- A 2D vector class.
+---
 ---@class gpm.std.Vector2Class: gpm.std.Vector2
 ---@field __base gpm.std.Vector2
 ---@overload fun( x: number, y: number ): gpm.std.Vector2
@@ -85,22 +90,24 @@ std.Vector2 = Vector2Class
 --- [SHARED AND MENU]
 ---
 --- A 3D vector object.
+---
 ---@alias Vector3 gpm.std.Vector3
----@class gpm.std.Vector3: gpm.std.Object
+---@class gpm.std.Vector3 : gpm.std.Object
 ---@field __class gpm.std.Vector3Class
 ---@operator add( gpm.std.Vector3 ): gpm.std.Vector3
 ---@operator sub( gpm.std.Vector3 ): gpm.std.Vector3
 ---@operator mul( gpm.std.Vector3 | number ): gpm.std.Vector3
 ---@operator div( gpm.std.Vector3 | number ): gpm.std.Vector3
 ---@operator unm: gpm.std.Vector3
----@field x number
----@field y number
----@field z number
+---@field x number TODO
+---@field y number TODO
+---@field z number TODO
 local Vector3 = class.base( "Vector3" )
 
 --- [SHARED AND MENU]
 ---
 --- A 3D vector class.
+---
 ---@class gpm.std.Vector3Class: gpm.std.Vector3
 ---@field __base gpm.std.Vector3
 ---@overload fun( x: number, y: number, z: number ): gpm.std.Vector3
@@ -111,20 +118,26 @@ std.Vector3 = Vector3Class
 --- [SHARED AND MENU]
 ---
 --- A 3D angle object.
----@alias Angle3 gpm.std.Angle3
----@class gpm.std.Angle3: gpm.std.Object
+---
+---@class gpm.std.Angle3 : gpm.std.Object
 ---@field __class gpm.std.Angle3Class
----@operator add: Angle3
----@operator sub: Angle3
----@operator mul: Angle3
----@operator div: Angle3
----@operator unm: Angle3
+---@operator add( gpm.std.Angle3 ): gpm.std.Angle3
+---@operator sub( gpm.std.Angle3 ): gpm.std.Angle3
+---@operator mul( gpm.std.Angle3 | number ): gpm.std.Angle3
+---@operator div( gpm.std.Angle3 | number ): gpm.std.Angle3
+---@operator unm: gpm.std.Angle3
+---@field pitch number TODO
+---@field yaw number TODO
+---@field roll number TODO
 local Angle3 = class.base( "Angle3" )
+
+---@alias Angle3 gpm.std.Angle3
 
 --- [SHARED AND MENU]
 ---
 --- A 3D angle class.
----@class gpm.std.Angle3Class: gpm.std.Angle3
+---
+---@class gpm.std.Angle3Class : gpm.std.Angle3
 ---@field __base gpm.std.Angle3
 ---@overload fun( pitch: number?, yaw: number?, roll: number? ): Angle3
 local Angle3Class = class.create( Angle3 )
@@ -134,16 +147,19 @@ std.Angle = Angle3Class
 --- [SHARED AND MENU]
 ---
 --- A 4x4 matrix object.
----@diagnostic disable-next-line: duplicate-doc-alias
----@alias VMatrix gpm.std.VMatrix
----@class gpm.std.VMatrix: gpm.std.Object
+---
+---@class gpm.std.VMatrix : gpm.std.Object
 ---@field __class gpm.std.VMatrixClass
 local VMatrix = class.base( "VMatrix" )
+
+---@diagnostic disable-next-line: duplicate-doc-alias
+---@alias VMatrix gpm.std.VMatrix
 
 --- [SHARED AND MENU]
 ---
 --- A 4x4 matrix class.
----@class gpm.std.VMatrixClass: gpm.std.VMatrix
+---
+---@class gpm.std.VMatrixClass : gpm.std.VMatrix
 ---@field __base gpm.std.VMatrix
 ---@overload fun( ...: number? ): VMatrix
 local VMatrixClass = class.create( VMatrix )
@@ -260,8 +276,9 @@ do
         --- [SHARED AND MENU]
         ---
         --- Returns `true` if the value is a `Vector3`.
+        ---
         ---@param value any The value.
-        ---@return boolean: `true` if the value is a `Vector3`, `false` otherwise.
+        ---@return boolean is_vector3 `true` if the value is a `Vector3`, `false` otherwise.
         function std.isvector3( value )
             return debug_getmetatable( value ) == Vector3
         end
@@ -269,8 +286,9 @@ do
         --- [SHARED AND MENU]
         ---
         --- Returns `true` if the value is an `Angle3`.
+        ---
         ---@param value any The value.
-        ---@return boolean: `true` if the value is an `Angle3`, `false` otherwise.
+        ---@return boolean is_angle3 `true` if the value is an `Angle3`, `false` otherwise.
         function std.isangle3( value )
             return debug_getmetatable( value ) == Angle3
         end
@@ -287,8 +305,9 @@ end
 --- [SHARED AND MENU]
 ---
 --- Returns the x and y coordinates of the vector.
----@return number x: The x coordinate of the vector.
----@return number y: The y coordinate of the vector.
+---
+---@return number x The x coordinate of the vector.
+---@return number y The y coordinate of the vector.
 function Vector2:unpack()
     return self[ 1 ], self[ 2 ]
 end
@@ -296,6 +315,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Sets the x and y coordinates of the vector.
+---
 ---@param x number The x coordinate of the vector.
 ---@param y number The y coordinate of the vector.
 function Vector2:setUnpacked( x, y )
@@ -306,7 +326,8 @@ end
 --- [SHARED AND MENU]
 ---
 --- Creates a copy of the vector.
----@return gpm.std.Vector2: The copy of the vector.
+---
+---@return gpm.std.Vector2 copy The copy of the vector.
 function Vector2:copy()
     return setmetatable( { self[ 1 ], self[ 2 ] }, Vector2 )
 end
@@ -314,8 +335,9 @@ end
 --- [SHARED AND MENU]
 ---
 --- Scales the vector.
+---
 ---@param scale number The scale factor.
----@return gpm.std.Vector2: The scaled vector.
+---@return gpm.std.Vector2 vec2 The scaled vector.
 function Vector2:scale( scale )
     if scale == 0 or scale ~= scale then
         self[ 1 ] = 0
@@ -334,8 +356,9 @@ end
 --- [SHARED AND MENU]
 ---
 --- Returns a scaled copy of the vector.
+---
 ---@param scale number The scale factor.
----@return gpm.std.Vector2: The scaled copy of the vector.
+---@return gpm.std.Vector2 vec2 The scaled copy of the vector.
 function Vector2:getScaled( scale )
     return self:copy():scale( scale )
 end
@@ -343,8 +366,9 @@ end
 --- [SHARED AND MENU]
 ---
 --- Adds the vector to another vector.
+---
 ---@param vector gpm.std.Vector2 The other vector.
----@return gpm.std.Vector2: The sum of the two vectors.
+---@return gpm.std.Vector2 vec2 The sum of the two vectors.
 function Vector2:add( vector )
     self[ 1 ] = self[ 1 ] + vector[ 1 ]
     self[ 2 ] = self[ 2 ] + vector[ 2 ]
@@ -354,8 +378,9 @@ end
 --- [SHARED AND MENU]
 ---
 --- Subtracts the vector from another vector.
+---
 ---@param other gpm.std.Vector2 The other vector.
----@return gpm.std.Vector2: The difference of the two vectors.
+---@return gpm.std.Vector2 vec2 The difference of the two vectors.
 function Vector2:sub( other )
     self[ 1 ] = self[ 1 ] - other[ 1 ]
     self[ 2 ] = self[ 2 ] - other[ 2 ]
@@ -365,8 +390,9 @@ end
 --- [SHARED AND MENU]
 ---
 --- Multiplies the vector by another vector or a number.
----@param other gpm.std.Vector2 | number: The other vector or a number.
----@return gpm.std.Vector2: The product of the two vectors or the vector multiplied by a number.
+---
+---@param other gpm.std.Vector2 | number The other vector or a number.
+---@return gpm.std.Vector2 vec2 The product of the two vectors or the vector multiplied by a number.
 function Vector2:mul( other )
     if isnumber( other ) then
         ---@cast other number
@@ -383,8 +409,9 @@ end
 --- [SHARED AND MENU]
 ---
 --- Divides the vector by another vector or a number.
----@param other gpm.std.Vector2 | number: The other vector or a number.
----@return gpm.std.Vector2: The quotient of the two vectors or the vector divided by a number.
+---
+---@param other gpm.std.Vector2 | number The other vector or a number.
+---@return gpm.std.Vector2 vec2 The quotient of the two vectors or the vector divided by a number.
 function Vector2:div( other )
     if isnumber( other ) then
         ---@cast other number
@@ -401,6 +428,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Negates the vector.
+---
 ---@return gpm.std.Vector2
 function Vector2:negate()
     self[ 1 ] = -self[ 1 ]
@@ -454,7 +482,8 @@ end
 --- [SHARED AND MENU]
 ---
 --- Calculates the squared length of the vector.
----@return number: The squared length of the vector.
+---
+---@return number length The squared length of the vector.
 function Vector2:getLengthSqr()
     return self[ 1 ] ^ 2 + self[ 2 ] ^ 2
 end
@@ -462,7 +491,8 @@ end
 --- [SHARED AND MENU]
 ---
 --- Calculates the length of the vector.
----@return number: The length of the vector.
+---
+---@return number length The length of the vector.
 function Vector2:getLength()
     return math_sqrt( self:getLengthSqr() )
 end
@@ -470,8 +500,9 @@ end
 --- [SHARED AND MENU]
 ---
 --- Calculates the distance between two vectors.
+---
 ---@param vector gpm.std.Vector2 The other vector.
----@return number: The distance between the two vectors.
+---@return number distance The distance between the two vectors.
 function Vector2:getDistance( vector )
     return math_sqrt( ( vector[ 1 ] - self[ 1 ] ) ^ 2 + ( vector[ 2 ] - self[ 2 ] ) ^ 2 )
 end
@@ -479,7 +510,8 @@ end
 --- [SHARED AND MENU]
 ---
 --- Normalizes the vector.
----@return gpm.std.Vector2: The normalized vector.
+---
+---@return gpm.std.Vector2 vec2 The normalized vector.
 function Vector2:normalize()
     local length = self:getLength()
     return length == 0 and self or self:scale( 1 / length )
@@ -488,7 +520,8 @@ end
 --- [SHARED AND MENU]
 ---
 --- Returns a normalized copy of the vector.
----@return gpm.std.Vector2: The normalized copy of the vector.
+---
+---@return gpm.std.Vector2 normalized_vec2 The normalized copy of the vector.
 function Vector2:getNormalized()
     return self:copy():normalize()
 end
@@ -496,7 +529,8 @@ end
 --- [SHARED AND MENU]
 ---
 --- Checks if the vector is zero.
----@return boolean: `true` if the vector is zero, `false` otherwise.
+---
+---@return boolean is_zero `true` if the vector is zero, `false` otherwise.
 function Vector2:isZero()
     return self[ 1 ] == 0 and
            self[ 2 ] == 0
@@ -505,7 +539,8 @@ end
 --- [SHARED AND MENU]
 ---
 --- Sets the vector to zero.
----@return gpm.std.Vector2: The zero vector.
+---
+---@return gpm.std.Vector2 vec2 The zero vector.
 function Vector2:zero()
     self[ 1 ] = 0
     self[ 2 ] = 0
@@ -515,8 +550,9 @@ end
 --- [SHARED AND MENU]
 ---
 --- Calculates the dot product of two vectors.
+---
 ---@param vector gpm.std.Vector2 The other vector.
----@return number: The dot product of two vectors.
+---@return number dot_product The dot product of two vectors.
 function Vector2:dot( vector )
     return self[ 1 ] * vector[ 1 ] + self[ 2 ] * vector[ 2 ]
 end
@@ -524,8 +560,9 @@ end
 --- [SHARED AND MENU]
 ---
 --- Calculates the cross product of two vectors.
+---
 ---@param vector gpm.std.Vector2 The other vector.
----@return number: The cross product of two vectors.
+---@return number cross_product The cross product of two vectors.
 function Vector2:cross( vector )
     return self[ 1 ] * vector[ 2 ] - self[ 2 ] * vector[ 1 ]
 end
@@ -533,8 +570,9 @@ end
 --- [SHARED AND MENU]
 ---
 --- Returns the angle of the vector.
----@param up? gpm.std.Vector2: The direction of the angle.
----@return number: The angle of the vector.
+---
+---@param up? gpm.std.Vector2 The direction of the angle.
+---@return number angle The angle of the vector.
 function Vector2:getAngle( up )
     if up then
         return up:getAngle() + self:getAngle()
@@ -544,9 +582,9 @@ function Vector2:getAngle( up )
 end
 
 ---@protected
----@param x number?
----@param y number?
----@param z number?
+---@param x number | nil
+---@param y number | nil
+---@param z number | nil
 ---@return gpm.std.Vector3
 function Vector3:__new( x, y, z )
     return setmetatable( { x or 0, y or 0, z or 0 }, Vector3 )
@@ -591,6 +629,8 @@ do
         z = 3
     }
 
+    -- TODO: replace 1,2,3 with x,y,z
+
     ---@protected
     function Vector3:__index( key )
         if isnumber( key ) then
@@ -614,9 +654,10 @@ end
 --- [SHARED AND MENU]
 ---
 --- Returns the x, y, and z coordinates of the vector.
----@return number x: The x coordinate of the vector.
----@return number y: The y coordinate of the vector.
----@return number z: The z coordinate of the vector.
+---
+---@return number x The x coordinate of the vector.
+---@return number y The y coordinate of the vector.
+---@return number z The z coordinate of the vector.
 function Vector3:unpack()
     return self[ 1 ], self[ 2 ], self[ 3 ]
 end
@@ -624,6 +665,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Sets the x, y, and z coordinates of the vector.
+---
 ---@param x number The x coordinate of the vector.
 ---@param y number The y coordinate of the vector.
 ---@param z number The z coordinate of the vector.
@@ -636,45 +678,42 @@ end
 --- [SHARED AND MENU]
 ---
 --- Creates a copy of the vector.
----@return gpm.std.Vector3: The copy of the vector.
+---
+---@return gpm.std.Vector3 copy The copy of the vector.
 function Vector3:copy()
     return setmetatable( { self[ 1 ], self[ 2 ], self[ 3 ] }, Vector3 )
 end
 
-do
-
-    local math_huge = math.huge
-
-    --- [SHARED AND MENU]
-    ---
-    --- Scales the vector.
-    ---@param scale number The scale factor.
-    ---@return gpm.std.Vector3: The scaled vector.
-    function Vector3:scale( scale )
-        if scale == 0 or scale ~= scale then
-            self[ 1 ] = 0
-            self[ 2 ] = 0
-            self[ 3 ] = 0
-        elseif scale == math_huge then
-            self[ 1 ] = math_huge
-            self[ 2 ] = math_huge
-            self[ 3 ] = math_huge
-        else
-            self[ 1 ] = self[ 1 ] * scale
-            self[ 2 ] = self[ 2 ] * scale
-            self[ 3 ] = self[ 3 ] * scale
-        end
-
-        return self
+--- [SHARED AND MENU]
+---
+--- Scales the vector.
+---
+---@param scale number The scale factor.
+---@return gpm.std.Vector3 vec3 The scaled vector.
+function Vector3:scale( scale )
+    if scale == 0 or scale ~= scale then
+        self[ 1 ] = 0
+        self[ 2 ] = 0
+        self[ 3 ] = 0
+    elseif scale == math_huge then
+        self[ 1 ] = math_huge
+        self[ 2 ] = math_huge
+        self[ 3 ] = math_huge
+    else
+        self[ 1 ] = self[ 1 ] * scale
+        self[ 2 ] = self[ 2 ] * scale
+        self[ 3 ] = self[ 3 ] * scale
     end
 
+    return self
 end
 
 --- [SHARED AND MENU]
 ---
 --- Returns a scaled copy of the vector.
+---
 ---@param scale number The scale factor.
----@return gpm.std.Vector3: The scaled copy of the vector.
+---@return gpm.std.Vector3 scaled_vec3 The scaled copy of the vector.
 function Vector3:getScaled( scale )
     return self:copy():scale( scale )
 end
@@ -682,8 +721,9 @@ end
 --- [SHARED AND MENU]
 ---
 --- Adds the vector to another vector.
+---
 ---@param vector gpm.std.Vector3 The other vector.
----@return gpm.std.Vector3: The sum of the two vectors.
+---@return gpm.std.Vector3 vec3 The sum of the two vectors.
 function Vector3:add( vector )
     self[ 1 ] = self[ 1 ] + vector[ 1 ]
     self[ 2 ] = self[ 2 ] + vector[ 2 ]
@@ -694,8 +734,9 @@ end
 --- [SHARED AND MENU]
 ---
 --- Subtracts the vector from another vector.
+---
 ---@param vector gpm.std.Vector3 The other vector.
----@return gpm.std.Vector3: The difference of the two vectors.
+---@return gpm.std.Vector3 vec3 The difference of the two vectors.
 function Vector3:sub( vector )
     self[ 1 ] = self[ 1 ] - vector[ 1 ]
     self[ 2 ] = self[ 2 ] - vector[ 2 ]
@@ -706,8 +747,9 @@ end
 --- [SHARED AND MENU]
 ---
 --- Multiplies the vector by another vector or a number.
----@param value gpm.std.Vector3 | number: The other vector or a number.
----@return gpm.std.Vector3: The product of the two vectors or the vector multiplied by a number.
+---
+---@param value gpm.std.Vector3 | number The other vector or a number.
+---@return gpm.std.Vector3 vec3 The product of the two vectors or the vector multiplied by a number.
 function Vector3:mul( value )
     if isnumber( value ) then
         ---@cast value number
@@ -724,8 +766,9 @@ end
 --- [SHARED AND MENU]
 ---
 --- Divides the vector by another vector or a number.
----@param value gpm.std.Vector3 | number: The other vector or a number.
----@return gpm.std.Vector3: The quotient of the two vectors or the vector divided by a number.
+---
+---@param value gpm.std.Vector3 | number The other vector or a number.
+---@return gpm.std.Vector3 vec3 The quotient of the two vectors or the vector divided by a number.
 function Vector3:div( value )
     if isnumber( value ) then
         ---@cast value number
@@ -783,38 +826,38 @@ end
 --- [SHARED AND MENU]
 ---
 --- Calculates the squared length of the vector.
----@param ignoreZ? boolean: `true` to ignore the z component of the vector, `false` otherwise.
----@return number: The squared length of the vector.
+---
+---@param ignoreZ? boolean `true` to ignore the z component of the vector, `false` otherwise.
+---@return number length The squared length of the vector.
 function Vector3:getLengthSqr( ignoreZ )
     return self[ 1 ] ^ 2 + self[ 2 ] ^ 2 + ( ignoreZ and 0 or ( self[ 3 ] ^ 2 ) )
 end
 
-do
+--- [SHARED AND MENU]
+---
+--- Calculates the length of the vector.
+---
+---@param ignoreZ? boolean `true` to ignore the z component of the vector, `false` otherwise.
+---@return number length The length of the vector.
+function Vector3:getLength( ignoreZ )
+    return math_sqrt( self:getLengthSqr( ignoreZ ) )
+end
 
-    local math_sqrt = math.sqrt
-    --- [SHARED AND MENU]
-    ---
-    --- Calculates the length of the vector.
-    ---@param ignoreZ? boolean: `true` to ignore the z component of the vector, `false` otherwise.
-    ---@return number: The length of the vector.
-    function Vector3:getLength( ignoreZ )
-        return math_sqrt( self:getLengthSqr( ignoreZ ) )
-    end
-    --- [SHARED AND MENU]
-    ---
-    --- Calculates the distance between two vectors.
-    ---@param vector Vector3 The other vector.
-    ---@return number: The distance between the two vectors.
-    function Vector3:getDistance( vector )
-        return math_sqrt( ( vector[ 1 ] - self[ 1 ] ) ^ 2 + ( vector[ 2 ] - self[ 2 ] ) ^ 2 + ( vector[ 3 ] - self[ 3 ] ) ^ 2 )
-    end
-
+--- [SHARED AND MENU]
+---
+--- Calculates the distance between two vectors.
+---
+---@param vector gpm.std.Vector3 The other vector.
+---@return number distance The distance between the two vectors.
+function Vector3:getDistance( vector )
+    return math_sqrt( ( vector[ 1 ] - self[ 1 ] ) ^ 2 + ( vector[ 2 ] - self[ 2 ] ) ^ 2 + ( vector[ 3 ] - self[ 3 ] ) ^ 2 )
 end
 
 --- [SHARED AND MENU]
 ---
 --- Normalizes the vector.
----@return Vector3: The normalized vector.
+---
+---@return gpm.std.Vector3 vec3 The normalized vector.
 function Vector3:normalize()
     local length = self:getLength()
     return length == 0 and self or self:scale( 1 / length )
@@ -823,7 +866,8 @@ end
 --- [SHARED AND MENU]
 ---
 --- Returns a normalized copy of the vector.
----@return Vector3: The normalized copy of the vector.
+---
+---@return gpm.std.Vector3 normalized_vec3 The normalized copy of the vector.
 function Vector3:getNormalized()
     return self:copy():normalize()
 end
@@ -831,7 +875,8 @@ end
 --- [SHARED AND MENU]
 ---
 --- Checks if the vector is zero.
----@return boolean: `true` if the vector is zero, `false` otherwise.
+---
+---@return boolean is_zero `true` if the vector is zero, `false` otherwise.
 function Vector3:isZero()
     return self[ 1 ] == 0 and
            self[ 2 ] == 0 and
@@ -841,7 +886,8 @@ end
 --- [SHARED AND MENU]
 ---
 --- Sets the vector to zero.
----@return Vector3: The zero vector.
+---
+---@return gpm.std.Vector3 vec3 The zero vector.
 function Vector3:zero()
     self[ 1 ] = 0
     self[ 2 ] = 0
@@ -852,8 +898,9 @@ end
 --- [SHARED AND MENU]
 ---
 --- Calculates the dot product of two vectors.
----@param vector Vector3 The other vector.
----@return number: The dot product of two vectors.
+---
+---@param vector gpm.std.Vector3 The other vector.
+---@return number dot_product The dot product of two vectors.
 function Vector3:dot( vector )
     return self[ 1 ] * vector[ 1 ] + self[ 2 ] * vector[ 2 ] + self[ 3 ] * vector[ 3 ]
 end
@@ -861,8 +908,9 @@ end
 --- [SHARED AND MENU]
 ---
 --- Calculates the cross product of two vectors.
----@param vector Vector3 The other vector.
----@return Vector3: The cross product of two vectors.
+---
+---@param vector gpm.std.Vector3 The other vector.
+---@return gpm.std.Vector3 cross_product The cross product of two vectors.
 function Vector3:cross( vector )
     local x1, y1, z1 = self:unpack()
     local x2, y2, z2 = vector:unpack()
@@ -876,8 +924,9 @@ end
 --- [SHARED AND MENU]
 ---
 --- Checks if the vector is within an axis-aligned box.
----@param vector Vector3 The other vector.
----@return boolean: `true` if the vector is within the box, `false` otherwise.
+---
+---@param vector gpm.std.Vector3 The other vector.
+---@return boolean in_box `true` if the vector is within the box, `false` otherwise.
 function Vector3:withinAABox( vector )
     if self[ 1 ] < math_min( self[ 1 ], vector[ 1 ] ) or self[ 1 ] > math_max( self[ 1 ], vector[ 1 ] ) then return false end
     if self[ 2 ] < math_min( self[ 2 ], vector[ 2 ] ) or self[ 2 ] > math_max( self[ 2 ], vector[ 2 ] ) then return false end
@@ -892,8 +941,9 @@ do
     --- [SHARED AND MENU]
     ---
     --- Returns the angle of the vector.
-    ---@param up Vector3?: The direction of the angle.
-    ---@return Angle3: The angle of the vector.
+    ---
+    ---@param up? gpm.std.Vector3 The direction of the angle.
+    ---@return gpm.std.Angle3 ang3 The angle of the vector.
     function Vector3:toAngle( up )
         if self:isZero() then
             return setmetatable( { 0, 0, 0 }, Angle3 )
@@ -923,7 +973,8 @@ do
     --- [SHARED AND MENU]
     ---
     --- Calculates the angle between two vectors.
-    ---@param vector Vector3 The other vector.
+    ---
+    ---@param vector gpm.std.Vector3 The other vector.
     ---@return number degrees The angle between two vectors.
     function Vector3:getAngle( vector )
         return math_deg( math_acos( self:dot( vector ) / ( self:getLength() * vector:getLength() ) ) )
@@ -934,9 +985,10 @@ end
 --- [SHARED AND MENU]
 ---
 --- Checks if the vector is equal to the given vector with the given tolerance.
----@param vector Vector3 The vector to check.
+---
+---@param vector gpm.std.Vector3 The vector to check.
 ---@param tolerance number The tolerance to use.
----@return boolean: `true` if the vectors are equal, otherwise `false`.
+---@return boolean is_near `true` if the vectors are equal, otherwise `false`.
 function Vector3:isNear( vector, tolerance )
     return math_abs( self[ 1 ] - vector[ 1 ] ) <= tolerance and
            math_abs( self[ 2 ] - vector[ 2 ] ) <= tolerance and
@@ -946,8 +998,9 @@ end
 --- [SHARED AND MENU]
 ---
 --- Rotates the vector by the given angle.
+---
 ---@param angle Angle3 The angle to rotate by.
----@return Vector3: The rotated vector.
+---@return gpm.std.Vector3 vec3 The rotated vector.
 function Vector3:rotate( angle )
     local pitch, yaw, roll = math_rad( angle[ 1 ] ), math_rad( angle[ 2 ] ), math_rad( angle[ 3 ] )
     local ysin, ycos, psin, pcos, rsin, rcos = math_sin( yaw ), math_cos( yaw ), math_sin( pitch ), math_cos( pitch ), math_sin( roll ), math_cos( roll )
@@ -964,8 +1017,9 @@ end
 --- [SHARED AND MENU]
 ---
 --- Returns a copy of the vector rotated by the given angle.
+---
 ---@param angle Angle3 The angle to rotate by.
----@return Vector3: The rotated vector.
+---@return gpm.std.Vector3 rotated_vec3 The rotated vector.
 function Vector3:getRotated( angle )
     return self:copy():rotate( angle )
 end
@@ -973,9 +1027,10 @@ end
 --- [SHARED AND MENU]
 ---
 --- Linear interpolation between two vectors.
----@param vector Vector3 | number: The other vector or a number.
+---
+---@param vector gpm.std.Vector3 | number The other vector or a number.
 ---@param frac number The interpolation factor.
----@return Vector3: The interpolated vector.
+---@return gpm.std.Vector3 vec3 The interpolated vector.
 function Vector3:lerp( vector, frac )
     if isnumber( vector ) then
         ---@cast vector number
@@ -983,7 +1038,7 @@ function Vector3:lerp( vector, frac )
         self[ 2 ] = math_lerp( frac, self[ 2 ], vector )
         self[ 3 ] = math_lerp( frac, self[ 3 ], vector )
     else
-        ---@cast vector Vector3
+        ---@cast vector gpm.std.Vector3
         self[ 1 ] = math_lerp( frac, self[ 1 ], vector[ 1 ] )
         self[ 2 ] = math_lerp( frac, self[ 2 ], vector[ 2 ] )
         self[ 3 ] = math_lerp( frac, self[ 3 ], vector[ 3 ] )
@@ -995,9 +1050,10 @@ end
 --- [SHARED AND MENU]
 ---
 --- Returns a copy of the vector linearly interpolated between two vectors.
----@param vector Vector3 | number: The other vector or a number.
+---
+---@param vector gpm.std.Vector3 | number The other vector or a number.
 ---@param frac number The interpolation factor.
----@return Vector3: The interpolated vector.
+---@return gpm.std.Vector3 lerped_vec3 The interpolated vector.
 function Vector3:getLerped( vector, frac )
     return self:copy():lerp( vector, frac )
 end
@@ -1005,8 +1061,9 @@ end
 --- [SHARED AND MENU]
 ---
 --- Projects the vector onto another vector.
----@param vector Vector3 The other vector.
----@return Vector3: The projected vector.
+---
+---@param vector gpm.std.Vector3 The other vector.
+---@return gpm.std.Vector3 vec3 The projected vector.
 function Vector3:project( vector )
     local normalized = vector:getNormalized()
     local dot = self:dot( normalized )
@@ -1019,8 +1076,9 @@ end
 --- [SHARED AND MENU]
 ---
 --- Returns a copy of the vector projected onto another vector.
----@param vector Vector3 The other vector.
----@return Vector3: The projected vector.
+---
+---@param vector gpm.std.Vector3 The other vector.
+---@return gpm.std.Vector3 projected_vec3 The projected vector.
 function Vector3:getProjected( vector )
     return self:copy():project( vector )
 end
@@ -1030,8 +1088,9 @@ end
 --- Modifies the given vectors so that all of vector2's axis are larger than vector1's by switching them around.
 ---
 --- Also known as ordering vectors.
----@param mins Vector3 The first vector to modify.
----@param maxs Vector3 The second vector to modify.
+---
+---@param mins gpm.std.Vector3 The first vector to modify.
+---@param maxs gpm.std.Vector3 The second vector to modify.
 function Vector3Class.order( mins, maxs )
     local x1, y1, z1 = mins:unpack()
     local x2, y2, z2 = maxs:unpack()
@@ -1043,9 +1102,10 @@ end
 --- [SHARED AND MENU]
 ---
 --- Unpacks the angle.
----@return number pitch: The pitch angle.
----@return number yaw: The yaw angle.
----@return number roll: The roll angle.
+---
+---@return number pitch The pitch angle.
+---@return number yaw The yaw angle.
+---@return number roll The roll angle.
 function Angle3:unpack()
     return self[ 1 ], self[ 2 ], self[ 3 ]
 end
@@ -1053,10 +1113,11 @@ end
 --- [SHARED AND MENU]
 ---
 --- Sets the angle from unpacked angles.
----@param pitch number?: The pitch angle.
----@param yaw number?: The yaw angle.
----@param roll number?: The roll angle.
----@return Angle3: The angle.
+---
+---@param pitch? number The pitch angle.
+---@param yaw? number The yaw angle.
+---@param roll? number The roll angle.
+---@return gpm.std.Angle3 ang3 The angle.
 function Angle3:setUnpacked( pitch, yaw, roll )
     self[ 1 ] = pitch
     self[ 2 ] = yaw
@@ -1067,7 +1128,8 @@ end
 --- [SHARED AND MENU]
 ---
 --- Returns a copy of the angle.
----@return Angle3: A copy of the angle.
+---
+---@return gpm.std.Angle3 copy A copy of the angle.
 function Angle3:copy()
     return setmetatable( { self:unpack() }, Angle3 )
 end
@@ -1080,8 +1142,9 @@ end
 --- [SHARED AND MENU]
 ---
 --- Adds the angle.
----@param angle Angle3 The angle to add.
----@return Angle3: The sum of the angles.
+---
+---@param angle gpm.std.Angle3 The angle to add.
+---@return gpm.std.Angle3 ang3 The sum of the angles.
 function Angle3:add( angle )
     self[ 1 ] = self[ 1 ] + angle[ 1 ]
     self[ 2 ] = self[ 2 ] + angle[ 2 ]
@@ -1092,8 +1155,9 @@ end
 --- [SHARED AND MENU]
 ---
 --- Subtracts the angle.
----@param angle Angle3 The angle to subtract.
----@return Angle3: The subtracted angle.
+---
+---@param angle gpm.std.Angle3 The angle to subtract.
+---@return gpm.std.Angle3 ang3 The subtracted angle.
 function Angle3:sub( angle )
     self[ 1 ] = self[ 1 ] - angle[ 1 ]
     self[ 2 ] = self[ 2 ] - angle[ 2 ]
@@ -1104,8 +1168,9 @@ end
 --- [SHARED AND MENU]
 ---
 --- Multiplies the angle with a number or angle.
----@param angle number | Angle3: The angle to multiply with.
----@return Angle3: The multiplied angle.
+---
+---@param angle number | gpm.std.Angle3 The angle to multiply with.
+---@return gpm.std.Angle3 ang3 The multiplied angle.
 function Angle3:mul( angle )
     if isnumber( angle ) then
         ---@cast angle number
@@ -1125,8 +1190,9 @@ end
 --- [SHARED AND MENU]
 ---
 --- Divides the angle with a number or angle.
----@param angle number | Angle3: The angle to divide with.
----@return Angle3: The divided angle.
+---
+---@param angle number | gpm.std.Angle3 The angle to divide with.
+---@return gpm.std.Angle3 ang3 The divided angle.
 function Angle3:div( angle )
     if isnumber( angle ) then
         self[ 1 ] = self[ 1 ] / angle
@@ -1144,7 +1210,8 @@ end
 --- [SHARED AND MENU]
 ---
 --- Negates the angle.
----@return Angle3: The negated angle.
+---
+---@return gpm.std.Angle3 ang3 The negated angle.
 function Angle3:negate()
     self[ 1 ] = -self[ 1 ]
     self[ 2 ] = -self[ 2 ]
@@ -1185,9 +1252,10 @@ end
 --- [SHARED AND MENU]
 ---
 --- Linearly interpolates the angle.
----@param angle Angle3 | number: The other angle.
+---
+---@param angle gpm.std.Angle3 | number The other angle.
 ---@param frac number The interpolation factor.
----@return Angle3: The interpolated angle.
+---@return gpm.std.Angle3 ang3 The interpolated angle.
 function Angle3:lerp( angle, frac )
     if isnumber( angle ) then
         ---@cast angle number
@@ -1207,9 +1275,10 @@ end
 --- [SHARED AND MENU]
 ---
 --- Returns a copy of the angle linearly interpolated between two angles.
----@param angle Angle3 | number: The other angle.
+---
+---@param angle gpm.std.Angle3 | number  The other angle.
 ---@param frac number The interpolation factor.
----@return Angle3: The interpolated angle.
+---@return gpm.std.Angle3 lerped_vec3 The interpolated angle.
 function Angle3:getLerped( angle, frac )
     return self:copy():lerp( angle, frac )
 end
@@ -1217,7 +1286,8 @@ end
 --- [SHARED AND MENU]
 ---
 --- Returns the forward direction of the angle.
----@return Vector3: The forward direction of the angle.
+---
+---@return gpm.std.Vector3 forward_dir The forward direction of the angle.
 function Angle3:getForward()
     return setmetatable( { 1, 0, 0 }, Vector3 ):rotate( self )
 end
@@ -1225,7 +1295,8 @@ end
 --- [SHARED AND MENU]
 ---
 --- Returns the backward direction of the angle.
----@return Vector3: The backward direction of the angle.
+---
+---@return gpm.std.Vector3 backward_dir The backward direction of the angle.
 function Angle3:getBackward()
     return setmetatable( { -1, 0, 0 }, Vector3 ):rotate( self )
 end
@@ -1233,7 +1304,8 @@ end
 --- [SHARED AND MENU]
 ---
 --- Returns the left direction of the angle.
----@return Vector3: The left direction of the angle.
+---
+---@return gpm.std.Vector3 left_dir The left direction of the angle.
 function Angle3:getLeft()
     return setmetatable( { 0, 1, 0 }, Vector3 ):rotate( self )
 end
@@ -1241,7 +1313,8 @@ end
 --- [SHARED AND MENU]
 ---
 --- Returns the right direction of the angle.
----@return Vector3: The right direction of the angle.
+---
+---@return gpm.std.Vector3 right_dir The right direction of the angle.
 function Angle3:getRight()
     return setmetatable( { 0, -1, 0 }, Vector3 ):rotate( self )
 end
@@ -1249,7 +1322,8 @@ end
 --- [SHARED AND MENU]
 ---
 --- Returns the up direction of the angle.
----@return Vector3: The up direction of the angle.
+---
+---@return gpm.std.Vector3 up_dir The up direction of the angle.
 function Angle3:getUp()
     return setmetatable( { 0, 0, 1 }, Vector3 ):rotate( self )
 end
@@ -1257,7 +1331,8 @@ end
 --- [SHARED AND MENU]
 ---
 --- Returns the down direction of the angle.
----@return Vector3: The down direction of the angle.
+---
+---@return gpm.std.Vector3 down_dir The down direction of the angle.
 function Angle3:getDown()
     return setmetatable( { 0, 0, -1 }, Vector3 ):rotate( self )
 end
@@ -1269,7 +1344,8 @@ do
     --- [SHARED AND MENU]
     ---
     --- Normalizes the angle.
-    ---@return Angle3: The normalized angle.
+    ---
+    ---@return gpm.std.Angle3 ang3 The normalized angle.
     function Angle3:normalize()
         self[ 1 ] = math_angleNormalize( self[ 1 ] )
         self[ 2 ] = math_angleNormalize( self[ 2 ] )
@@ -1280,7 +1356,8 @@ do
     --- [SHARED AND MENU]
     ---
     --- Returns a normalized copy of the angle.
-    ---@return Angle3: A normalized copy of the angle.
+    ---
+    ---@return gpm.std.Angle3 normalized_ang3 A normalized copy of the angle.
     function Angle3:getNormalized()
         return self:copy():normalize()
     end
@@ -1290,9 +1367,10 @@ end
 --- [SHARED AND MENU]
 ---
 --- Checks if the angle is within the given tolerance of the given angle.
----@param angle Angle3 The angle to check against.
+---
+---@param angle gpm.std.Angle3 The angle to check against.
 ---@param tolerance number The tolerance.
----@return boolean: `true` if the angle is within the given tolerance of the given angle.
+---@return boolean is_near `true` if the angle is within the given tolerance of the given angle.
 function Angle3:isNear( angle, tolerance )
     return math_abs( self[ 1 ] - angle[ 1 ] ) <= tolerance and
            math_abs( self[ 2 ] - angle[ 2 ] ) <= tolerance and
@@ -1302,7 +1380,8 @@ end
 --- [SHARED AND MENU]
 ---
 --- Checks if the angle is zero.
----@return boolean: `true` if the angle is zero, `false` otherwise.
+---
+---@return boolean is_zero `true` if the angle is zero, `false` otherwise.
 function Angle3:isZero()
     return self[ 1 ] == 0 and self[ 2 ] == 0 and self[ 3 ] == 0
 end
@@ -1310,7 +1389,8 @@ end
 --- [SHARED AND MENU]
 ---
 --- Sets the angle to zero.
----@return Angle3: The angle.
+---
+---@return gpm.std.Angle3 ang3 The angle.
 function Angle3:zero()
     self[ 1 ] = 0
     self[ 2 ] = 0
@@ -1321,7 +1401,8 @@ end
 --- [SHARED AND MENU]
 ---
 --- Rotates the angle around the specified axis by the specified degrees.
----@param axis Vector3 The axis to rotate around as a normalized unit vector. When argument is not a unit vector, you will experience numerical offset errors in the rotated angle.
+---
+---@param axis gpm.std.Vector3 The axis to rotate around as a normalized unit vector. When argument is not a unit vector, you will experience numerical offset errors in the rotated angle.
 ---@param rotation number The degrees to rotate around the specified axis.
 function Angle3:rotate( axis, rotation )
 
@@ -1333,12 +1414,13 @@ end
 --- [SHARED AND MENU]
 ---
 --- Returns a new vector from world position and world angle.
----@param position Vector3 The local position.
----@param angle Angle3 The local angle.
----@param world_position Vector3 The world position.
----@param world_angle Angle3 The world angle.
----@return Vector3: The new vector.
----@return Angle3: The new angle.
+---
+---@param position gpm.std.Vector3 The local position.
+---@param angle gpm.std.Angle3 The local angle.
+---@param world_position gpm.std.Vector3 The world position.
+---@param world_angle gpm.std.Angle3 The world angle.
+---@return gpm.std.Vector3 vec3 The new vector.
+---@return gpm.std.Angle3 ang3 The new angle.
 function Vector3Class.translateToLocal( position, angle, world_position, world_angle )
     -- TODO: implement this function
 
@@ -1348,12 +1430,13 @@ end
 --- [SHARED AND MENU]
 ---
 --- Returns a new vector from local position and local angle.
----@param local_position Vector3 The local position.
----@param local_angle Angle3 The local angle.
----@param world_position Vector3 The world position.
----@param world_angle Angle3 The world angle.
----@return Vector3: The new vector.
----@return Angle3: The new angle.
+---
+---@param local_position gpm.std.Vector3 The local position.
+---@param local_angle gpm.std.Angle3 The local angle.
+---@param world_position gpm.std.Vector3 The world position.
+---@param world_angle gpm.std.Angle3 The world angle.
+---@return gpm.std.Vector3 vec3 The new vector.
+---@return gpm.std.Angle3 ang3 The new angle.
 function Vector3Class.translateToWorld( local_position, local_angle, world_position, world_angle )
     -- TODO: implement this function
 
@@ -1362,13 +1445,14 @@ end
 --- [SHARED AND MENU]
 ---
 --- Returns a new vector from screen position.
----@param view_angle Angle3 The view angle.
+---
+---@param view_angle gpm.std.Angle3 The view angle.
 ---@param view_fov number The view fov.
 ---@param x number The x position.
 ---@param y number The y position.
 ---@param screen_width number The screen width.
 ---@param screen_height number The screen height.
----@return Vector3: The view direction.
+---@return gpm.std.Vector3 direction The view direction.
 function Vector3Class.fromScreen( view_angle, view_fov, x, y, screen_width, screen_height )
     -- TODO: implement this function
 end
@@ -1467,7 +1551,7 @@ function VMatrix:__tostring()
     return string.format( "VMatrix: %p\n[\n%.2f %.2f %.2f %.2f,\n%.2f %.2f %.2f %.2f,\n%.2f %.2f %.2f %.2f,\n%.2f %.2f %.2f %.2f\n]", self, self[ 1 ], self[ 2 ], self[ 3 ], self[ 4 ], self[ 5 ], self[ 6 ], self[ 7 ], self[ 8 ], self[ 9 ], self[ 10 ], self[ 11 ], self[ 12 ], self[ 13 ], self[ 14 ], self[ 15 ], self[ 16 ] )
 end
 
----@return VMatrix
+---@return gpm.std.VMatrix
 function VMatrix:identity()
     self[  1 ], self[  2 ], self[  3 ], self[  4 ] = 1, 0, 0, 0
     self[  5 ], self[  6 ], self[  7 ], self[  8 ] = 0, 1, 0, 0
@@ -1484,13 +1568,13 @@ function VMatrix:isIdentity()
         self[ 13 ] == 0 and self[ 14 ] == 0 and self[ 15 ] == 0 and self[ 16 ] == 1
 end
 
----@return VMatrix
+---@return gpm.std.VMatrix
 function VMatrix:copy()
     return VMatrixClass( self[ 1 ], self[ 2 ], self[ 3 ], self[ 4 ], self[ 5 ], self[ 6 ], self[ 7 ], self[ 8 ], self[ 9 ], self[ 10 ], self[ 11 ], self[ 12 ], self[ 13 ], self[ 14 ], self[ 15 ], self[ 16 ] )
 end
 
----@param matrix VMatrix
----@return VMatrix
+---@param matrix gpm.std.VMatrix
+---@return gpm.std.VMatrix
 function VMatrix:multiply( matrix )
     self[ 1 ] = self[ 1 ] * matrix[ 1 ] + self[ 2 ] * matrix[ 5 ] + self[ 3 ] * matrix[ 9 ] + self[ 4 ] * matrix[ 13 ]
 	self[ 2 ] = self[ 1 ] * matrix[ 2 ] + self[ 2 ] * matrix[ 6 ] + self[ 3 ] * matrix[ 10 ] + self[ 4 ] * matrix[ 14 ]
@@ -1515,56 +1599,56 @@ function VMatrix:multiply( matrix )
     return self
 end
 
----@return Vector3
+---@return gpm.std.Vector3
 function VMatrix:getForward()
     return std.Vector3( self[ 1 ], self[ 5 ], self[ 9 ] )
 end
 
----@param vector Vector3
----@return VMatrix
+---@param vector gpm.std.Vector3
+---@return gpm.std.VMatrix
 function VMatrix:setForward( vector )
     self[ 1 ], self[ 5 ], self[ 9 ] = vector[ 1 ], vector[ 2 ], vector[ 3 ]
     return self
 end
 
----@return Vector3
+---@return gpm.std.Vector3
 function VMatrix:getLeft()
     return std.Vector3( self[ 2 ], self[ 6 ], self[ 10 ] )
 end
 
----@param vector Vector3
----@return VMatrix
+---@param vector gpm.std.Vector3
+---@return gpm.std.VMatrix
 function VMatrix:setLeft( vector )
     self[ 2 ], self[ 6 ], self[ 10 ] = vector[ 1 ], vector[ 2 ], vector[ 3 ]
     return self
 end
 
----@return Vector3
+---@return gpm.std.Vector3
 function VMatrix:getUp()
     return std.Vector3( self[ 3 ], self[ 7 ], self[ 11 ] )
 end
 
----@param vector Vector3
----@return VMatrix
+---@param vector gpm.std.Vector3
+---@return gpm.std.VMatrix
 function VMatrix:setUp( vector )
     self[ 3 ], self[ 7 ], self[ 11 ] = vector[ 1 ], vector[ 2 ], vector[ 3 ]
     return self
 end
 
----@return Vector3
+---@return gpm.std.Vector3
 function VMatrix:getTranslation()
     return std.Vector3( self[ 4 ], self[ 8 ], self[ 12 ] )
 end
 
----@param vector Vector3
----@return VMatrix
+---@param vector gpm.std.Vector3
+---@return gpm.std.VMatrix
 function VMatrix:setTranslation( vector )
     self[ 4 ], self[ 8 ], self[ 12 ] = vector[ 1 ], vector[ 2 ], vector[ 3 ]
     return self
 end
 
----@param vector Vector3
----@return VMatrix
+---@param vector gpm.std.Vector3
+---@return gpm.std.VMatrix
 function VMatrix:translate( vector )
     return self:multiply( VMatrixClass():identity():setTranslation( vector ) )
 end
@@ -1579,7 +1663,7 @@ end
 ---@param row integer
 ---@param column integer
 ---@param value number
----@return VMatrix
+---@return gpm.std.VMatrix
 function VMatrix:setField( row, column, value )
     self[ ( math.clamp( row, 1, 4 ) - 1 ) * 4 + math.clamp( column, 1, 4 ) ] = value
     return self

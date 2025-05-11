@@ -98,7 +98,7 @@ local function parse_pre_release( str, error_level )
 		if error_level == nil then error_level = 1 end
 		error_level = error_level + 1
 
-		std.error( "the pre-release '" .. str .. "' is not valid", error_level )
+		error( "the pre-release '" .. str .. "' is not valid", error_level )
 	end
 
 	return pre_release
@@ -114,7 +114,7 @@ local function parse_build( str, error_level )
 		if error_level == nil then error_level = 1 end
 		error_level = error_level + 1
 
-		std.error( "the build '" .. str .. "' is not valid", error_level )
+		error( "the build '" .. str .. "' is not valid", error_level )
 	end
 
 	return build
@@ -141,7 +141,7 @@ do
 			elseif byte == 0x2B --[[ + ]] then
 				build = parse_build( str, error_level )
 			else
-				std.error( "the parameter '" .. str .. "' must begin with + or - to denote a pre-release or a build", error_level )
+				error( "the parameter '" .. str .. "' must begin with + or - to denote a pre-release or a build", error_level )
 			end
 		end
 
@@ -186,14 +186,14 @@ local function parse( major, minor, patch, pre_release, build, error_level )
 	error_level = error_level + 1
 
 	if major == nil then
-		std.error( "at least one parameter is needed", error_level )
+		error( "at least one parameter is needed", error_level )
 	end
 
 	if isnumber( major ) then
 		---@cast major number
 
 		if not math_isuint( major ) then
-			std.error( "major version must be unsigned integer", error_level )
+			error( "major version must be unsigned integer", error_level )
 		end
 
 		---@cast major integer
@@ -201,8 +201,8 @@ local function parse( major, minor, patch, pre_release, build, error_level )
 		if minor == nil then
 			minor = 0
 		elseif not ( isnumber( minor ) and math_isuint( minor ) ) then
-			std.error( "minor version must be unsigned integer number", error_level )
-			std.error( "minor version must be a number", error_level )
+			error( "minor version must be unsigned integer number", error_level )
+			error( "minor version must be a number", error_level )
 		end
 
 		---@cast minor integer
@@ -210,7 +210,7 @@ local function parse( major, minor, patch, pre_release, build, error_level )
 		if patch == nil then
 			patch = 0
 		elseif not ( isnumber( patch ) and math_isuint( patch ) ) then
-			std.error( "patch version must be unsigned integer number", error_level )
+			error( "patch version must be unsigned integer number", error_level )
 		end
 
 		---@cast patch integer
@@ -236,7 +236,7 @@ local function parse( major, minor, patch, pre_release, build, error_level )
 		major, minor, patch, extra = string_match( tostring( major ), "^(%d+)%.?(%d*)%.?(%d*)(.-)$" )
 
 		if major == nil then
-			std.error( "the major version is missing", 2 )
+			error( "the major version is missing", 2 )
 		end
 
 		major = tonumber( major, 10 )
@@ -263,9 +263,9 @@ local function parse( major, minor, patch, pre_release, build, error_level )
 	end
 
 	if major > 0x3ff or minor > 0x7ff or patch > 0x7ff then
-		std.error( "version is too large (max 1023.2047.2047)", 2 )
+		error( "version is too large (max 1023.2047.2047)", 2 )
 	elseif major < 0 or minor < 0 or patch < 0 then
-		std.error( "version is too small (min 0.0.0)", 2 )
+		error( "version is too small (min 0.0.0)", 2 )
 	end
 
 	return major, minor, patch, pre_release or "", build or ""
@@ -277,7 +277,7 @@ local VersionClass
 ---
 --- The Version object.
 ---@alias Version gpm.std.Version
----@class gpm.std.Version: gpm.std.Object
+---@class gpm.std.Version : gpm.std.Object
 ---@field __class gpm.std.VersionClass
 local Version = std.class.base( "Version" )
 
@@ -315,17 +315,17 @@ Version.nextPatch = nextPatch
 function Version:__tonumber()
 	local major = tonumber( self[ 1 ], 10 )
 	if major > 0x3ff then
-		std.error( "major version is too large (max 1023)", 2 )
+		error( "major version is too large (max 1023)", 2 )
 	end
 
 	local minor = tonumber( self[ 2 ], 10 )
 	if minor > 0x7ff then
-		std.error( "minor version is too large (max 2047)", 2 )
+		error( "minor version is too large (max 2047)", 2 )
 	end
 
 	local patch = tonumber( self[ 3 ], 10 )
 	if patch > 0x7ff then
-		std.error( "patch version is too large (max 2047)", 2 )
+		error( "patch version is too large (max 2047)", 2 )
 	end
 
 	return bit_bor( bit_lshift( patch, 21 ), bit_lshift( minor, 10 ), major )
@@ -545,7 +545,7 @@ do
 
 		local pos = string_find( str, "%d" )
 		if pos == nil then
-			std.error( "Version range must starts with number: " .. str, 2 )
+			error( "Version range must starts with number: " .. str, 2 )
 		end
 
 		---@cast pos integer
@@ -569,7 +569,7 @@ do
 
 		local fn = operators[ operator ]
 		if fn == nil then
-			std.error( "Invaild operator: '" .. operator .. "'", 2 )
+			error( "Invaild operator: '" .. operator .. "'", 2 )
 		else
 			return fn( self, VersionClass( name ), xrange )
 		end
@@ -617,10 +617,11 @@ end
 
 --- [SHARED AND MENU]
 ---
---- The Version class.
----@class gpm.std.VersionClass: gpm.std.Version
+--- Version class.
+---
+---@class gpm.std.VersionClass : gpm.std.Version
 ---@field __base gpm.std.Version
----@overload fun( major: string | number | Version, minor: number?, patch: number?, pre_release: string?, build: string? ): Version
+---@overload fun( major: string | number | Version, minor: number?, patch: number?, pre_release: string?, build: string? ) : gpm.std.Version
 VersionClass = std.class.create( Version )
 std.Version = VersionClass
 
@@ -654,7 +655,7 @@ do
 	---
 	--- Selects the first version in `tbl` that matches `target`.
 	---@param target string The version selector.
-	---@param tbl table<string|gpm.std.Version>: The table to search.
+	---@param tbl table<string | gpm.std.Version> The table to search.
 	---@return gpm.std.Version? version The first version that matches `target`.
 	---@return integer index The index of the version in `tbl`.
 	function VersionClass.select( target, tbl )
@@ -669,4 +670,3 @@ do
 	end
 
 end
-

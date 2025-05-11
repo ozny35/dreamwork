@@ -235,7 +235,7 @@ if std.CLIENT_MENU then
             --- Get the name of a key.
             ---
             ---@param key_code integer The key code of the key.
-            ---@return string: The name of the key.
+            ---@return string key_code The name of the key.
             function key.getName( key_code )
                 return key2name[ key_code ]
             end

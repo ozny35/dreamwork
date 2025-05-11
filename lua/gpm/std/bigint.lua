@@ -24,7 +24,7 @@ local math_floor, math_max, math_clamp = math.floor, math.max, math.clamp
 --- The big integer object.
 ---
 ---@alias BigInt gpm.std.BigInt
----@class gpm.std.BigInt: gpm.std.Object
+---@class gpm.std.BigInt : gpm.std.Object
 ---@field __class gpm.std.BigIntClass
 ---@operator add(any): gpm.std.BigInt
 ---@operator sub(any): gpm.std.BigInt
@@ -120,15 +120,6 @@ end
 
 BigInt.copy = copy
 
---- [SHARED AND MENU]
----
---- Creates a new big integer object that equals zero.
----
----@return gpm.std.BigInt
-local function new()
-    return setmetatable( { [ 0 ] = 0 }, BigInt )
-end
-
 local one = setmetatable( { [ 0 ] = 1, 1 }, BigInt )
 local negaive_one = setmetatable( { [ 0 ] = -1, 1 }, BigInt )
 
@@ -180,7 +171,7 @@ do
                 return self
             end
 
-            std.error( "invalid sign", 2 )
+            error( "invalid sign", 2 )
         end
 
         raw_set( self, key, value )
@@ -248,7 +239,15 @@ BigInt.rstrip = rstrip
 ---@param number integer The number to convert to a big integer.
 ---@return gpm.std.BigInt object
 local function from_number( object, number )
-    if number < 0 then
+    if number == 0 then
+        object[ 0 ] = 0
+
+        for i = 1, #object, 1 do
+            object[ i ] = nil
+        end
+
+        return object
+    elseif number < 0 then
         number = -number
         object[ 0 ] = -1
     elseif number > 0 then
@@ -273,7 +272,7 @@ BigInt.fromNumber = from_number
 ---@param value integer
 ---@return gpm.std.BigInt
 function BigIntClass.fromNumber( value )
-    return from_number( new(), value )
+    return from_number( setmetatable( {}, BigInt ), value )
 end
 
 local from_string
@@ -479,56 +478,106 @@ do
 
             --- [SHARED AND MENU]
             ---
-            --- Creates a new big integer object from an byte array and a sign.
-            ---
-            ---@param sign gpm.std.BigInt.Sign
-            ---@param ... integer
-            ---@return BigInt
-            function BigIntClass.fromBytes( sign, ... )
-                return setmetatable( { [ 0 ] = sign or 0, ... }, BigInt )
-            end
-
-            --- [SHARED AND MENU]
-            ---
             --- Sets a big integer object from an byte array and a sign.
             ---
-            ---@param object gpm.std.BigInt
-            ---@param sing gpm.std.BigInt.Sign
-            ---@param ... integer
-            ---@return BigInt
-            local function fromBytes( object, sing, ... )
-                object[ 0 ] = sing
+            ---@param object gpm.std.BigInt The big integer object to set.
+            ---@param bytes integer[] The byte array.
+            ---@param byte_count integer The number of bytes.
+            ---@param signed boolean If `true`, the big integer object will be signed.
+            ---@param big_endian boolean If `true`, the big integer object will be in bit endian.
+            ---@return BigInt object The big integer object.
+            local function fromBytes( object, bytes, byte_count, signed, big_endian )
+                local is_zero = true
 
-                local bytes = { ... }
-                for index = 1, select( "#", ... ), 1 do
-                    object[ index ] = bytes[ index ]
+                for i = big_endian and byte_count or 1, big_endian and 1 or byte_count, big_endian and -1 or 1 do
+                    local byte = bytes[ i ]
+                    if byte ~= 0 then
+                        is_zero = false
+                    end
+
+                    object[ i ] = byte
+                end
+
+                if is_zero then
+                    object[ 0 ] = 0
+                else
+                    object[ 0 ] = 1
+
+                    if signed then
+                        object:toSigned( byte_count )
+                    end
                 end
 
                 return object
             end
 
-            BigInt.fromBytes = fromBytes
+            --- [SHARED AND MENU]
+            ---
+            --- Creates a new big integer object from an byte array and a sign.
+            ---
+            ---@param bytes integer[] The byte array.
+            ---@param byte_count? integer The number of bytes.
+            ---@param signed? boolean If `true`, the big integer object will be signed.
+            ---@param big_endian? boolean If `true`, the big integer object will be in bit endian.
+            ---@return BigInt object The big integer object.
+            function BigIntClass.fromBytes( bytes, byte_count, signed, big_endian )
+                return fromBytes( setmetatable( {}, BigInt ), bytes, byte_count or #bytes, signed == true, big_endian == true )
+            end
 
             --- [SHARED AND MENU]
             ---
-            --- Creates a new big integer object from a binary data string.
+            --- Creates a new big integer object from an byte array and a sign.
             ---
-            ---@param str string
-            ---@param big_endian? boolean
-            ---@return BigInt
-            function BigIntClass.fromBinary( str, big_endian )
-                return fromBytes( new(), 1, string_byte( big_endian and string_reverse( str ) or str, 1, string_len( str ) ) )
+            ---@param bytes integer[] The byte array.
+            ---@param byte_count? integer The number of bytes.
+            ---@param signed? boolean If `true`, the big integer object will be signed.
+            ---@param big_endian? boolean If `true`, the big integer object will be in bit endian.
+            ---@return BigInt object The big integer object.
+            function BigInt:fromBytes( bytes, byte_count, signed, big_endian )
+                return fromBytes( self, bytes, byte_count or #bytes, signed == true, big_endian == true )
             end
 
             --- [SHARED AND MENU]
             ---
             --- Sets a big integer object from a binary data string.
             ---
-            ---@param str string
-            ---@param big_endian? boolean
-            ---@return BigInt
-            function BigInt:fromBinary( str, big_endian )
-                return fromBytes( new(), 1, string_byte( big_endian and string_reverse( str ) or str, 1, string_len( str ) ) )
+            ---@param object gpm.std.BigInt The big integer object to set.
+            ---@param str string The binary data string.
+            ---@param byte_count integer The number of bytes.
+            ---@param big_endian boolean If `true`, the big integer object will be in big endian.
+            ---@param signed boolean If `true`, the big integer object will be signed.
+            ---@param start_position? integer The start position in the binary data string.
+            ---@return BigInt object The big integer object.
+            local function fromBinary( object, str, byte_count, big_endian, start_position, signed )
+                return fromBytes( object, { string_byte( str, start_position, ( start_position + byte_count ) - 1 ) }, byte_count, signed == true, big_endian == true )
+            end
+
+            --- [SHARED AND MENU]
+            ---
+            --- Creates a new big integer object from a binary data string.
+            ---
+            ---@param str string The binary data string.
+            ---@param byte_count? integer The number of bytes.
+            ---@param big_endian? boolean If `true`, the big integer object will be in big endian.
+            ---@param start_position? integer The start position in the binary data string.
+            ---@param signed? boolean If `true`, the big integer object will be signed.
+            ---@return BigInt object The big integer object.
+            function BigIntClass.fromBinary( str, byte_count, big_endian, start_position, signed )
+                return fromBinary( setmetatable( {}, BigInt ), str, byte_count or string_len( str ), big_endian == true, start_position or 1, signed == true )
+            end
+
+            --- [SHARED AND MENU]
+            ---
+            --- Creates a new big integer object from a binary data string.
+            ---
+            ---@param str string The binary data string.
+            ---@param byte_count? integer The number of bytes.
+            ---@param big_endian? boolean If `true`, the big integer object will be in big endian.
+            ---@param start_position? integer The start position in the binary data string.
+            ---@param signed? boolean If `true`, the big integer object will be signed.
+            ---@return BigInt object The big integer object.
+            function BigInt:fromBinary( str, byte_count, big_endian, start_position, signed )
+                return fromBinary( self, str, byte_count or string_len( str ), big_endian == true, start_position or 1, signed == true )
             end
 
         end
@@ -671,7 +720,7 @@ do
     ---@param base? integer
     ---@return gpm.std.BigInt
     function BigIntClass.fromString( value, base )
-        return from_string( new(), value, base )
+        return from_string( setmetatable( {}, BigInt ), value, base )
     end
 
     do
@@ -690,19 +739,17 @@ do
             if debug_getmetatable( value ) == BigInt then
                 return value
             elseif isstring( value ) then
-                return from_string( new(), value, base )
+                return from_string( setmetatable( {}, BigInt ), value, base )
             elseif isnumber( value ) then
-                return from_number( new(), value )
+                return from_number( setmetatable( {}, BigInt ), value )
             end
 
             local number = tonumber( value, base )
             if number == nil then
-                std.error( "value must be a string or number to be converted to big integer", 2 )
+                error( "value must be a string or number to be converted to big integer", 2 )
             end
 
-            ---@cast number integer
-
-            return from_number( new(), number )
+            return from_number( setmetatable( {}, BigInt ), number )
         end
 
         ---@param value any
@@ -724,9 +771,9 @@ do
 
     -- determine the max accurate integer supported by this build of Lua
     if 0x1000000 == 0x1000001 then
-        max_number = from_string( new(), "0xffffff" )
+        max_number = from_string( setmetatable( { [ 0 ] = 0 }, BigInt ), "0xffffff" )
     else
-        max_number = from_string( new(), "0x1FFFFFFFFFFFFF" )
+        max_number = from_string( setmetatable( { [ 0 ] = 0 }, BigInt ), "0x1FFFFFFFFFFFFF" )
     end
 
     --- [SHARED AND MENU]
@@ -737,7 +784,7 @@ do
     ---@return integer number The number that the big integer object represents.
     function toInteger( object )
         if compare_unsigned( object, max_number ) == 1 then
-            std.error( "big integer is too big to be converted to lua number", 2 )
+            error( "big integer is too big to be converted to lua number", 2 )
         end
 
         local result = 0
@@ -1607,25 +1654,25 @@ do
                 negate( object )
             end
 
-            return object, new()
+            return object, setmetatable( { [ 0 ] = 0 }, BigInt )
         end
 
         -- division by bigger number or object
         local compare_result = compare_unsigned( object, other )
         if compare_result == -1 then
             if object[ 0 ] == other[ 0 ] then
-                return new(), object
+                return setmetatable( { [ 0 ] = 0 }, BigInt ), object
             elseif ignore_remainder then
-                return new(), object
+                return setmetatable( { [ 0 ] = 0 }, BigInt ), object
             end
 
-            return new(), add( object, other )
+            return setmetatable( { [ 0 ] = 0 }, BigInt ), add( object, other )
         elseif compare_result == 0 then
             if object[ 0 ] == other[ 0 ] then
-                return setmetatable( { [ 0 ] = 1, 1 }, BigInt ), new()
+                return setmetatable( { [ 0 ] = 1, 1 }, BigInt ), setmetatable( { [ 0 ] = 0 }, BigInt )
             end
 
-            return setmetatable( { [ 0 ] = -1, 1 }, BigInt ), new()
+            return setmetatable( { [ 0 ] = -1, 1 }, BigInt ), setmetatable( { [ 0 ] = 0 }, BigInt )
         end
 
         -- general division
@@ -1773,7 +1820,7 @@ do
             byte = byte * 0.5
         end
 
-        return from_number( new(), byte_number - 1 )
+        return from_number( setmetatable( {}, BigInt ), byte_number - 1 )
     end
 
 end
@@ -1886,7 +1933,7 @@ function BigInt:toSigned( byte_amt )
 
     local size = math_max( byte_amt or byte_count, 1 )
     if byte_count > size then
-        std.error( "twos complement overflow", 2 )
+        error( "twos complement overflow", 2 )
     end
 
     if self[ 0 ] == 1 and ( self[ size ] or 0 ) > 0x7f then
@@ -1909,7 +1956,7 @@ function BigInt:toUnsigned( byte_amt )
 
     local size = math_max( byte_amt or byte_count, 1 )
     if byte_count > size then
-        std.error( "twos complement overflow", 2 )
+        error( "twos complement overflow", 2 )
     end
 
     if self[ 0 ] == -1 then

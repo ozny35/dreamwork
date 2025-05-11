@@ -2,6 +2,8 @@
 
 ⚠ **ATTENTION THE PROJECT IS STILL IN DEVELOPMENT, EXPECT A STABLE RELEASE. UNSTABLE OPERATION, BUGS AND UNPREDICTABLE EXECUTION OF FUNCTIONS ARE POSSIBLE.**
 
+![under-construction](https://user-images.githubusercontent.com/2846578/50296605-d76e5780-0448-11e9-9e16-39917d203b98.gif)
+
 ## Description
 Garry's Mod Lua project aimed at expanding the game's functionality and improving performance.
 

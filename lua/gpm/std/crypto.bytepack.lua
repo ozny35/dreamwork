@@ -460,15 +460,34 @@ do
 	function writeUInt( value, byte_count )
 		if byte_count == nil then
 			byte_count = 4
+		elseif byte_count < 1 then
+			error( "invalid byte count", 2 )
 		end
 
 		if value == 0 then
-			---@diagnostic disable-next-line: return-type-mismatch
-			return table_create( 0, byte_count )
+			if byte_count == 1 then
+				return 0
+			elseif byte_count == 2 then
+				return 0, 0
+			elseif byte_count == 3 then
+				return 0, 0, 0
+			elseif byte_count == 4 then
+				return 0, 0, 0, 0
+			elseif byte_count == 5 then
+				return 0, 0, 0, 0, 0
+			elseif byte_count == 6 then
+				return 0, 0, 0, 0, 0, 0
+			elseif byte_count == 7 then
+				return 0, 0, 0, 0, 0, 0, 0
+			elseif byte_count == 8 then
+				return 0, 0, 0, 0, 0, 0, 0, 0
+			else
+				error( "unsupported byte count", 2 )
+			end
 		elseif value < 0 then
-			std.error( "integer is too small to write", 2 )
+			error( "integer is too small to write", 2 )
 		elseif value > max_values[ byte_count ] then
-			std.error( "integer is too large to write", 2 )
+			error( "integer is too large to write", 2 )
 		elseif byte_count == 1 then
 			return value
 		elseif byte_count == 2 then
@@ -486,8 +505,7 @@ do
 		elseif byte_count == 8 then
 			return writeUInt64( value )
 		else
-			std.error( "unsupported byte count", 2 )
-			return 0
+			error( "unsupported byte count", 2 )
 		end
 	end
 
@@ -537,7 +555,7 @@ end
 function bytepack.writeUnsignedFixedPoint( value, m, n )
 	local byte_count = ( m + n ) * 0.125
 	if byte_count % 1 ~= 0 then
-		std.error( "invalid number of integer or fractional bits", 2 )
+		error( "invalid number of integer or fractional bits", 2 )
 	end
 
 	return writeUInt( value * ( 2 ^ n ), byte_count )
@@ -926,15 +944,34 @@ do
 	function writeInt( value, byte_count )
 		if byte_count == nil then
 			byte_count = 4
+		elseif byte_count < 1 then
+			error( "invalid byte count", 2 )
 		end
 
 		if value == 0 then
-			---@diagnostic disable-next-line: return-type-mismatch
-			return table_create( 0, byte_count )
+			if byte_count == 1 then
+				return 0
+			elseif byte_count == 2 then
+				return 0, 0
+			elseif byte_count == 3 then
+				return 0, 0, 0
+			elseif byte_count == 4 then
+				return 0, 0, 0, 0
+			elseif byte_count == 5 then
+				return 0, 0, 0, 0, 0
+			elseif byte_count == 6 then
+				return 0, 0, 0, 0, 0, 0
+			elseif byte_count == 7 then
+				return 0, 0, 0, 0, 0, 0, 0
+			elseif byte_count == 8 then
+				return 0, 0, 0, 0, 0, 0, 0, 0
+			else
+				error( "unsupported byte count", 2 )
+			end
 		elseif value < min_values[ byte_count ] then
-			std.error( "integer is too small to write", 2 )
+			error( "integer is too small to write", 2 )
 		elseif value > max_values[ byte_count ] then
-			std.error( "integer is too large to write", 2 )
+			error( "integer is too large to write", 2 )
 		elseif byte_count == 1 then
 			return writeInt8( value )
 		elseif byte_count == 2 then
@@ -952,8 +989,7 @@ do
 		elseif byte_count == 8 then
 			return writeInt64( value )
 		else
-			std.error( "unsupported byte count", 2 )
-			return 0
+			error( "unsupported byte count", 2 )
 		end
 	end
 
@@ -1003,7 +1039,7 @@ end
 function bytepack.writeFixedPoint( value, m, n )
 	local byte_count = ( m + n ) * 0.125
 	if byte_count % 1 ~= 0 then
-		std.error( "invalid byte count", 2 )
+		error( "invalid byte count", 2 )
 	end
 
 	return writeInt( value * ( 2 ^ n ), byte_count )
@@ -1196,99 +1232,4 @@ function bytepack.writeDouble( value )
 		math_floor( mant / 0x10000 ) % 0x100,
 		math_floor( mant / 0x100 ) % 0x100,
 		mant % 0x100
-end
-
-do
-
-	local string_byte = string.byte
-	local string_len = string.len
-
-	--- [SHARED AND MENU]
-	---
-	--- Reads a binary string as a stream of bytes.
-	---
-	--- Can be used as iterator in for loops.
-	---
-	---@param str string The binary string.
-	---@param big_endian? boolean The endianness of the binary string.
-	---@return fun(): integer?, integer? reader A reader function that returns the byte position and the byte value or `nil` if there are no more bytes.
-	function bytepack.reader( str, big_endian )
-		local byte_count = string_len( str )
-		local byte_index = big_endian and 1 or byte_count
-		local bytes = { string_byte( str, 1, byte_count ) }
-
-		if big_endian then
-			return function()
-				if byte_index > byte_count then return nil end
-
-				local value = bytes[ byte_index ]
-				byte_index = byte_index + 1
-				return byte_index, value
-			end
-		else
-			return function()
-				if byte_index == 0 then return nil end
-
-				local value = bytes[ byte_index ]
-				byte_index = byte_index - 1
-				return byte_index, value
-			end
-		end
-	end
-
-end
-
---- [SHARED AND MENU]
----
---- Writes a stream of bytes to a binary string.
----
---- If the number of bytes is not specified and
---- big endian is `true` then `writer_fn` will
---- not be limited by the number of bytes
---- it will be able to write them indefinitely.
----
----@param byte_count? integer The number of bytes to write.
----@param big_endian? boolean The endianness of the binary string.
----@return fun( byte: integer ): integer? writer_fn A write function that writes a byte to a binary string and returns the position of the written byte or `nil` if the binary string is full.
----@return integer[] bytes The stream of bytes.
-function bytepack.writer( byte_count, big_endian )
-	if byte_count == nil then
-		if not big_endian then
-			std.error( "byte count must be specified for little endian", 2 )
-		end
-
-		local bytes, byte_index = {}, 1
-
-		return function( value )
-			bytes[ byte_index ] = value
-			byte_index = byte_index + 1
-			return byte_index
-		end, bytes
-	end
-
-	local bytes = {}
-
-	for i = 1, byte_count, 1 do
-		bytes[ i ] = 0
-	end
-
-	if big_endian then
-		local byte_index = 1
-
-		return function( value )
-			if byte_index > byte_count then return nil end
-			bytes[ byte_index ] = value
-			byte_index = byte_index + 1
-			return byte_index
-		end, bytes
-	else
-		local byte_index = byte_count
-
-		return function( value )
-			if byte_index == 0 then return nil end
-			bytes[ byte_index ] = value
-			byte_index = byte_index - 1
-			return byte_index
-		end, bytes
-	end
 end

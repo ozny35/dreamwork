@@ -62,7 +62,7 @@ do
     --- Checks whether or not a game is currently mounted.
     ---
     ---@param folder_name string The folder name of the game.
-    ---@return boolean: Returns `true` if the game is mounted, `false` otherwise.
+    ---@return boolean is_mounted Returns `true` if the game is mounted, `false` otherwise.
     function game.isMounted( folder_name )
         if folder_name == "episodic" or folder_name == "ep2" or folder_name == "lostcoast" then
             folder_name = "hl2"
@@ -134,8 +134,8 @@ if std.CLIENT_MENU then
         ---
         --- Returns information about an achievement (name, description, value, etc.)
         ---
-        ---@param id number The ID of achievement to retrieve name of. Note: IDs start from 0, not 1.
-        ---@return table | nil: Returns nil if the ID is invalid.
+        ---@param id number The ID of achievement to retrieve name of. Note  IDs start from 0, not 1.
+        ---@return table | nil table Returns nil if the ID is invalid.
         local function get( id )
             local goal = achievements_GetGoal( id )
             if goal == nil then return nil end
@@ -151,14 +151,22 @@ if std.CLIENT_MENU then
             }
         end
 
+        --- [CLIENT AND MENU]
+        ---
+        --- The game achievement library.
+        ---
+        ---@class gpm.std.game.achievement
         local achievement = {
             getCount = achievements_Count,
             get = get
         }
 
+        --- [CLIENT AND MENU]
+        ---
         --- Checks if an achievement with the given ID exists.
+        ---
         ---@param id number
-        ---@return boolean: Returns true if the achievement exists.
+        ---@return boolean exist Returns true if the achievement exists.
         function achievement.exists( id )
             return achievements_IsAchieved( id ) ~= nil
         end
@@ -167,8 +175,8 @@ if std.CLIENT_MENU then
         ---
         --- Returns information about all achievements.
         ---
-        ---@return table: The list of all achievements.
-        ---@return number: The count of achievements.
+        ---@return table achievement_list The list of all achievements.
+        ---@return number achievement_count The count of achievements.
         function achievement.getAll()
             local tbl, count = {}, achievements_Count()
             for index = 0, count - 1 do
@@ -249,7 +257,7 @@ if std.SHARED then
     ---
     --- Checks if Half-Life 2 aux suit power stuff is enabled.
     ---
-    ---@return boolean: `true` if Half-Life 2 aux suit power stuff is enabled, `false` if not.
+    ---@return boolean enabled `true` if Half-Life 2 aux suit power stuff is enabled, `false` if not.
     function game.getHL2Suit()
         return console_Variable.getBoolean( "gmod_suit" )
     end

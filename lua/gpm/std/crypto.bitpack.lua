@@ -39,7 +39,7 @@ local function bitpack_readUInt( bits, bit_count, start_position )
 	elseif bit_count == 0 then
 		return 0
 	elseif bit_count < 0 then
-		std.error( "bit count cannot be negative", 2 )
+		error( "bit count cannot be negative", 2 )
 	end
 
 	local value = 0
@@ -70,9 +70,9 @@ local function bitpack_writeUInt( value, bit_count )
 	end
 
 	if value < 0 then
-		std.error( "integer is too small to write", 1 )
+		error( "integer is too small to write", 1 )
 	elseif value > ( 2 ^ bit_count ) - 1 then
-		std.error( "integer is too large to write", 2 )
+		error( "integer is too large to write", 2 )
 	end
 
 	local bits = {}
@@ -126,7 +126,7 @@ function bitpack.pack( bits, bit_count, big_endian )
 	if bit_count == nil then
 		bit_count = len( bits )
 	elseif bit_count < 1 then
-		std.error( "bit count cannot be less than 1", 1 )
+		error( "bit count cannot be less than 1", 1 )
 	end
 
 	local byte_count = math.ceil( bit_count * 0.125 )
@@ -177,124 +177,4 @@ function bitpack.unpack( big_endian, ... )
 	end
 
 	return bits, bit_count
-end
-
---- [SHARED AND MENU]
----
---- Creates a reader function from table of bytes (integers<0-255>).
----
---- Can be used as iterator in for loops.
----
----@param big_endian? boolean `true` for big endian, `false` for little endian.
----@param bytes integer[] The table of bytes (integers<0-255>).
----@return fun(): integer?, boolean? reader A reader function that returns the bit position and the bit (boolean) value or `nil` if there are no more bits.
-function bitpack.reader( big_endian, bytes )
-	local byte_count = len( bytes )
-
-	local byte_index = big_endian and 1 or byte_count
-	local byte = bytes[ byte_index ]
-	local bit_index = 8
-
-	if big_endian then
-		return function()
-			if bit_index == 0 then
-				byte_index, bit_index = byte_index + 1, 8
-				byte = bytes[ byte_index ]
-				if byte == nil then return nil end
-			end
-
-			bit_index = bit_index - 1
-			return ( byte_index - 1 ) * 8 + bit_index + 1, math_floor( byte / ( 2 ^ bit_index ) ) % 2 == 1
-		end
-	else
-		return function()
-			if bit_index == 0 then
-				byte_index, bit_index = byte_index - 1, 8
-				byte = bytes[ byte_index ]
-				if byte == nil then return nil end
-			end
-
-			bit_index = bit_index - 1
-			return ( byte_index - 1 ) * 8 + bit_index + 1, math_floor( byte / ( 2 ^ bit_index ) ) % 2 == 1
-		end
-	end
-end
-
---- [SHARED AND MENU]
----
---- Creates a writer function to table of bytes (integers<0-255>).
----
----@param byte_count? integer The number of bytes to write.
----@param big_endian? boolean `true` for big endian, `false` for little endian.
----@return fun( bit: boolean ): integer? writer A write function that writes a bit to a binary string and returns the position of the written bit or `nil` if the binary string is full.
----@return integer[] bytes Result table of bytes (integers<0-255>).
-function bitpack.writer( byte_count, big_endian )
-	if byte_count == nil then
-		if not big_endian then
-			std.error( "byte count must be specified for little endian", 2 )
-		end
-
-		local bytes, byte_index = {}, 1
-		local bit_index = 7
-
-		return function( value )
-			if value then
-				bytes[ byte_index ] = bytes[ byte_index ] + ( 2 ^ bit_index )
-			end
-
-			bit_index = ( bit_index - 1 ) % 8
-
-			if bit_index == 7 then
-				byte_index = byte_index + 1
-			end
-
-			return byte_index * 8 - ( 6 - bit_index )
-		end, bytes
-	end
-
-	local bit_index = 7
-	local bytes = {}
-
-	for i = 1, byte_count, 1 do
-		bytes[ i ] = 0
-	end
-
-	if big_endian then
-		local byte_index = 1
-
-		return function( value )
-			if byte_index > byte_count then return nil end
-
-			if value then
-				bytes[ byte_index ] = bytes[ byte_index ] + ( 2 ^ bit_index )
-			end
-
-			bit_index = ( bit_index - 1 ) % 8
-
-			if bit_index == 7 then
-				byte_index = byte_index + 1
-			end
-
-			return byte_index * 8 - ( 6 - bit_index )
-		end, bytes
-	else
-
-		local byte_index = byte_count
-
-		return function( value )
-			if byte_index == 0 then return nil end
-
-			if value then
-				bytes[ byte_index ] = bytes[ byte_index ] + ( 2 ^ bit_index )
-			end
-
-			bit_index = ( bit_index - 1 ) % 8
-
-			if bit_index == 7 then
-				byte_index = byte_index - 1
-			end
-
-			return byte_index * 8 - ( 6 - bit_index )
-		end, bytes
-	end
 end

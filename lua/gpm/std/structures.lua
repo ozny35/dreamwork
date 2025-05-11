@@ -7,11 +7,13 @@ do
     --- [SHARED AND MENU]
     ---
     --- A stack is a last-in-first-out (LIFO) data structure object.
-    ---@diagnostic disable-next-line: duplicate-doc-alias
-    ---@alias Stack gpm.std.Stack
-    ---@class gpm.std.Stack: gpm.std.Object
+    ---
+    ---@class gpm.std.Stack : gpm.std.Object
     ---@field __class gpm.std.StackClass
     local Stack = std.class.base( "Stack" )
+
+    ---@diagnostic disable-next-line: duplicate-doc-alias
+    ---@alias Stack gpm.std.Stack
 
     ---@protected
     function Stack:__init()
@@ -21,6 +23,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- Checks if the stack is empty.
+    ---
     ---@return boolean
     function Stack:isEmpty()
         return self[ 0 ] == 0
@@ -29,6 +32,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- Pushes a value onto the stack.
+    ---
     ---@param value any The value to push onto the stack.
     ---@return integer position The position of the value in the stack.
     function Stack:push( value )
@@ -40,6 +44,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- Pops the value from the top of the stack.
+    ---
     ---@return any value The value that was removed from the stack.
     function Stack:pop()
         local position = self[ 0 ]
@@ -57,6 +62,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- Returns the value at the top of the stack.
+    ---
     ---@return any value The value at the top of the stack.
     function Stack:peek()
         return self[ self[ 0 ] ]
@@ -65,6 +71,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- Empties the stack.
+    ---
     function Stack:empty()
         for i = 1, self[ 0 ], 1 do
             self[ i ] = nil
@@ -76,6 +83,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- Returns an iterator for the stack.
+    ---
     ---@return function iterator The iterator function.
     ---@return Stack stack The stack being iterated over.
     function Stack:iterator()
@@ -85,9 +93,10 @@ do
     --- [SHARED AND MENU]
     ---
     --- A stack class.
-    ---@class gpm.std.StackClass: gpm.std.Stack
+    ---
+    ---@class gpm.std.StackClass : gpm.std.Stack
     ---@field __base gpm.std.Stack
-    ---@overload fun(): Stack
+    ---@overload fun(): gpm.std.Stack
     local StackClass = std.class.create( Stack )
     std.Stack = StackClass
 
@@ -98,10 +107,12 @@ do
     --- [SHARED AND MENU]
     ---
     --- A queue is a first-in-first-out (FIFO) data structure object.
-    ---@alias Queue gpm.std.Queue
-    ---@class gpm.std.Queue: gpm.std.Object
+    ---
+    ---@class gpm.std.Queue : gpm.std.Object
     ---@field __class gpm.std.QueueClass
     local Queue = std.class.base( "Queue" )
+
+    ---@alias Queue gpm.std.Queue
 
     ---@protected
     function Queue:__init()
@@ -112,6 +123,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- Returns the length of the queue.
+    ---
     ---@return integer
     function Queue:getLength()
         return self.front - self.back
@@ -120,6 +132,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- Checks if the queue is empty.
+    ---
     ---@return boolean isEmpty Returns true if the queue is empty.
     function Queue:isEmpty()
         return self.front == self.back
@@ -128,6 +141,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- Empties the queue.
+    ---
     function Queue:empty()
         for i = self.back + 1, self.front, 1 do
             self[ i ] = nil
@@ -140,6 +154,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- Returns the value at the front of the queue or the back if `fromBack` is `true`.
+    ---
     ---@param fromBack? boolean If `true`, returns the value at the back of the queue.
     ---@return any
     function Queue:peek( fromBack )
@@ -149,6 +164,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- Appends a value to the end of the queue or the front if `toFront` is `true`.
+    ---
     ---@param value any The value to append.
     ---@param toFront? boolean If `true`, appends the value to the front of the queue.
     function Queue:push( value, toFront )
@@ -166,6 +182,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- Removes and returns the value at the back of the queue or the front if `fromBack` is `true`.
+    ---
     ---@param fromBack? boolean If `true`, removes and returns the value at the front of the queue.
     ---@return any value The value at the back of the queue or the front if `fromBack` is `true`.
     function Queue:pop( fromBack )
@@ -204,6 +221,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- Returns an iterator for the queue.
+    ---
     ---@param fromBack? boolean If `true`, returns an iterator for the back of the queue.
     ---@return function iterator The iterator function.
     ---@return Queue queue The queue being iterated over.
@@ -215,9 +233,10 @@ do
     --- [SHARED AND MENU]
     ---
     --- A queue class.
-    ---@class gpm.std.QueueClass: gpm.std.Queue
+    ---
+    ---@class gpm.std.QueueClass : gpm.std.Queue
     ---@field __base gpm.std.Queue
-    ---@overload fun(): Queue
+    ---@overload fun(): gpm.std.Queue
     local QueueClass = std.class.create( Queue )
     std.Queue = QueueClass
 

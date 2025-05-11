@@ -195,7 +195,7 @@ local VECTOR = debug_findmetatable( "Vector" )
 local ANGLE = debug_findmetatable( "Angle" )
 
 --- Reads a boolean from the received net message.
----@return boolean: `true` or `false`, or `false` if the bool could not be read.
+---@return boolean `true` or `false`, or `false` if the bool could not be read.
 local function readBool()
     return readBit() == 1
 end

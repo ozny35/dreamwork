@@ -43,18 +43,19 @@ local getmetatable = std.getmetatable
 ---
 --- Hook object.
 ---
----@alias Hook gpm.std.Hook
----@class gpm.std.Hook: gpm.std.Object
+---@class gpm.std.Hook : gpm.std.Object
 ---@field __class gpm.std.HookClass
 local Hook = std.class.base( "Hook" )
+
+---@alias Hook gpm.std.Hook
 
 --- [SHARED AND MENU]
 ---
 --- Hook class.
 ---
----@class gpm.std.HookClass: gpm.std.Hook
+---@class gpm.std.HookClass : gpm.std.Hook
 ---@field __base gpm.std.Hook
----@overload fun( name: string?, returns_vararg: boolean? ): Hook
+---@overload fun( name: string?, returns_vararg: boolean? ): gpm.std.Hook
 local HookClass = std.class.create( Hook )
 std.Hook = HookClass
 
@@ -124,13 +125,13 @@ do
     ---@param hook_type gpm.std.Hook.Type | nil The type of the hook, default is `0`.
     function Hook:attach( identifier, fn, hook_type )
         if identifier == nil then
-            std.error( "callback identifier cannot be nil", 2 )
+            error( "callback identifier cannot be nil", 2 )
             return
         end
 
         local metatable = getmetatable( identifier )
         if metatable == nil then
-            std.error( "callback identifier has no metatable", 2 )
+            error( "callback identifier has no metatable", 2 )
             return
         end
 
@@ -145,7 +146,7 @@ do
 
                 local isvalid = metatable.__isvalid
                 if isvalid == nil then
-                    std.error( "callback identifier has no `__isvalid` function", 2 )
+                    error( "callback identifier has no `__isvalid` function", 2 )
                     return
                 end
 

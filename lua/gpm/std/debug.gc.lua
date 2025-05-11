@@ -36,7 +36,7 @@ end
 ---
 --- The value has a fractional part, so that it multiplied by 1024 gives the exact number of bytes in use by Lua (except for overflows).
 ---
----@return number: The total memory in use by Lua in Kbytes.
+---@return number count The total memory in use by Lua in Kbytes.
 function gc.getMemory()
     return collectgarbage( "count" )
 end
@@ -62,7 +62,7 @@ end
 ---
 --- Returns a boolean that tells whether the collector is running (i.e., not stopped).
 ---
----@return boolean: Returns true if the collector is running, false otherwise.
+---@return boolean is_running Returns true if the collector is running, false otherwise.
 function gc.isRunning()
     return collectgarbage( "isrunning" )
 end
@@ -76,7 +76,7 @@ end
 --- A value of 200 means that the collector waits for the total memory in use to double before starting a new cycle.
 ---
 ---@param value number The new value for the pause of the collector.
----@return number: The previous value for pause.
+---@return number pause_value The previous value for pause.
 function gc.setPause( value )
     return collectgarbage( "setpause", value )
 end
@@ -90,7 +90,7 @@ end
 --- The default is 200, which means that the collector runs at "twice" the speed of memory allocation.
 ---
 ---@param size number With a zero value, the collector will perform one basic (indivisible) step. For non-zero values, the collector will perform as if that amount of memory (in KBytes) had been allocated by Lua.
----@return boolean: Returns `true` if the step finished a collection cycle.
+---@return boolean finished Returns `true` if the step finished a collection cycle.
 function gc.setStep( size )
     return collectgarbage( "step", size )
 end
@@ -101,7 +101,7 @@ end
 --- If you then set the pause to 200, the collector behaves as in old Lua versions, doing a complete collection every time Lua doubles its memory usage.
 ---
 ---@param value number The new value for the step multiplier of the collector.
----@return number: The previous value for step.
+---@return number previous_value The previous value for step.
 function gc.setStepMultiplier( value )
     return collectgarbage( "setstepmul", value )
 end
