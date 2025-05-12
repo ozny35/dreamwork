@@ -141,7 +141,7 @@ setmetatable( transducers, {
     end
 } )
 
-if _G.util ~= nil then
+if std.CLIENT_SERVER and _G.util ~= nil then
 
     local fn = _G.util.GetActivityIDByName
     if fn ~= nil then

@@ -1,4 +1,3 @@
-
 local std = _G.gpm.std
 local len = std.len
 
@@ -152,12 +151,14 @@ end
 --- Reads bytecodes as table of bits (booleans).
 ---
 ---@param big_endian? boolean `true` for big endian, `false` for little endian.
----@param ... integer The bytecodes (bytes as integers<0-255>).
+---@param bytes integer[] The bytecodes (bytes as integers<0-255>).
+---@param byte_count? integer The number of bytes.
 ---@return boolean[] bits The table of bits (booleans).
 ---@return integer bit_count The size of the bit table.
-function bitpack.unpack( big_endian, ... )
-	local byte_count = select( "#", ... )
-	local bytes = { ... }
+function bitpack.unpack( big_endian, bytes, byte_count )
+	if byte_count == nil then
+		byte_count = len( bytes )
+	end
 
 	local bits, bit_count = {}, 0
 

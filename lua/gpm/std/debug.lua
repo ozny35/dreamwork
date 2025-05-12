@@ -193,16 +193,17 @@ end
 
 --- [SHARED AND MENU]
 ---
---- Returns current stack trace as a table with strings.
+--- Returns current stack trace as a debuginfo list.
 ---
 ---@param start_position? integer The start position of the stack trace.
----@return table stack The stack trace.
+---@param fields? string The fields of the stack trace.
+---@return debuginfo[] stack The stack trace.
 ---@return integer length The length of the stack trace.
-function debug.getstack( start_position )
+function debug.getstack( start_position, fields )
     local stack, length = {}, 0
 
     for location = 1 + ( start_position or 1 ), 16, 1 do
-        local info = debug_getinfo( location, "Snluf" )
+        local info = debug_getinfo( location, fields or "Snluf" )
         if info then
             length = length + 1
             stack[ length ] = info

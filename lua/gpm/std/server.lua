@@ -340,9 +340,9 @@ end
 
 if std.MENU then
 
+    local futures_Future = std.futures.Future
     local glua_serverlist = _G.serverlist
     local Timer_wait = std.Timer.wait
-    local Future = std.Future
 
     do
 
@@ -357,7 +357,7 @@ if std.MENU then
         ---@return gpm.std.server.Info info The server information.
         ---@async
         function server.ping( address, timeout )
-            local f = Future()
+            local f = futures_Future()
 
             serverlist_PingServer( address, function( server_ping, server_name, gamemode_title, level_name, player_count, player_limit, bot_count, has_password, last_played_time, server_address, gamemode_name, gamemode_workshopid, is_anonymous_server, gmod_version, server_localization, gamemode_category )
                 f:setResult( {
@@ -406,7 +406,7 @@ if std.MENU then
         ---@param timeout number? The timeout in seconds. Set to `false` to disable the timeout.
         ---@async
         function server.getPlayers( address, timeout )
-            local f = Future()
+            local f = futures_Future()
 
             serverlist_PlayerList( address, function( data )
                 if data == nil then

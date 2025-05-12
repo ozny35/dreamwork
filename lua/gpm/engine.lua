@@ -115,7 +115,7 @@ if engine.hookCatch == nil then
                 local json = _G.LoadAddonPresets()
                 if not json then return end
 
-                local tbl = json_deserialize( json, true, true )
+                local tbl = json_deserialize( json )
                 if not tbl then return end
 
                 -- aka GM:AddonPresetsLoaded( tbl )

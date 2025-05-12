@@ -100,6 +100,7 @@ else
     ---
     --- NOTE: It always returns `true` on the client.
     ---@return boolean bool The `true` if connected, `false` if not.
+    ---@diagnostic disable-next-line: duplicate-set-field
     function client.isConnected() return true end
 
     --- [CLIENT AND MENU]
@@ -108,6 +109,7 @@ else
     ---
     --- NOTE: It always returns `false` on the client.
     ---@return boolean bool The `true` if connecting, `false` if not.
+    ---@diagnostic disable-next-line: duplicate-set-field
     function client.isConnecting() return false end
 
 end
@@ -151,7 +153,7 @@ do
     ---@param quality integer The quality of the screenshot (0-100), only used if `useTGA` is `false`.
     ---@param fileName string The name of the screenshot.
     function client.screencap( quality, fileName )
-        if std.menu.isVisible() then
+        if std.menu.visible then
             return false, "The menu is open, can't take a screenshot."
         end
 
@@ -176,7 +178,8 @@ do
         --- [CLIENT AND MENU]
         ---
         --- Connects client to the specified server.
-        ---@param address string?: The address of the server. ( IP:Port like `127.0.0.1:27015` )
+        ---
+        ---@param address string? The address of the server. ( IP:Port like `127.0.0.1:27015` )
         client.connect = _G.permissions.AskToConnect or function( address ) command_run( "connect", address ) end
     else
         client.connect = _G.JoinServer or _G.permissions.Connect

@@ -7,18 +7,12 @@ local tostring = std.tostring
 ---@class gpm.std.http
 local http = std.http
 
+local json_deserialize = std.crypto.json.deserialize
+local base64_decode = std.crypto.base64.decode
+local string_gsub = std.string.gsub
 local http_request = http.request
 local futures_sleep = std.sleep
 local os_time = std.os.time
-
-local base64_decode, json_deserialize
-do
-    local crypto = std.crypto
-    base64_decode = crypto.base64.decode
-    json_deserialize = crypto.json.deserialize
-end
-
-local string_gsub = std.string.gsub
 
 local api_token
 if std.SERVER then
@@ -146,7 +140,7 @@ local function apiRequest( method, pathname, headers, body, do_cache )
         error( "failed to fetch data from Github API (" .. tostring( result.status ) .. ") (" .. tostring( pathname ) .. ")" )
     end
 
-    local data = json_deserialize( result.body, true, true )
+    local data = json_deserialize( result.body or "" )
     if data == nil then
         error( "failed to parse JSON response from Github API (" .. tostring( result.status ) .. ") (" .. tostring( pathname ) .. ")" )
     end

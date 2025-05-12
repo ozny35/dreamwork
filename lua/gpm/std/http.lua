@@ -11,7 +11,7 @@ local Timer_wait = std.Timer.wait
 local string_gmatch = std.string.gmatch
 local isnumber, isstring, istable = std.isnumber, std.isstring, std.istable
 
-local Future = std.Future
+local futures_Future = std.futures.Future
 
 local http_client, client_name
 if std.loadbinary( "reqwest" ) then
@@ -189,7 +189,7 @@ local function request( options )
     -- TODO: add package logger searching
     Logger:debug( "%s HTTP request to '%s', using '%s', with timeout %f seconds.", method, url, client_name, timeout )
 
-    local f = Future()
+    local f = futures_Future()
 
     ---@diagnostic disable-next-line: inject-field
     function options.success( status, body, headers )
@@ -308,11 +308,11 @@ if std.MENU then
     ---@return table data The data returned from the API.
     ---@async
     function http.getFacepunchManifest( timeout )
-        local f = Future()
+        local f = futures_Future()
 
         GetAPIManifest( function( json )
             if isstring( json ) then
-                local data = json_deserialize( json, false, false )
+                local data = json_deserialize( json )
                 if data ~= nil then
                     f:setResult( data )
                     return

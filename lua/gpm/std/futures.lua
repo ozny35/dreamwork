@@ -721,7 +721,6 @@ do
     ---@overload fun(): gpm.std.futures.Future
     local FutureClass = std.class.create( Future )
     futures.Future = FutureClass
-    std.Future = FutureClass
 
 end
 

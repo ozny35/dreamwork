@@ -451,21 +451,25 @@ do
 
 end
 
-local Future = std.Future
+do
 
---- [SHARED AND MENU]
----
---- Waits for the hook to finish.
----
----@param hook_type gpm.std.Hook.Type? The type of the hook, default is `0`.
----@return any ... The return values from the hook.
----@async
-function Hook:wait( hook_type )
-    local f = Future()
+    local futures_Future = std.futures.Future
 
-    self:once( function( ... )
-        f:setResult( { ... } )
-    end, hook_type )
+    --- [SHARED AND MENU]
+    ---
+    --- Waits for the hook to finish.
+    ---
+    ---@param hook_type gpm.std.Hook.Type? The type of the hook, default is `0`.
+    ---@return any ... The return values from the hook.
+    ---@async
+    function Hook:wait( hook_type )
+        local f = futures_Future()
 
-    return f:await()
+        self:once( function( ... )
+            f:setResult( { ... } )
+        end, hook_type )
+
+        return f:await()
+    end
+
 end

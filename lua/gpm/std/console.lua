@@ -5,7 +5,7 @@ local gpm = _G.gpm
 local std = gpm.std
 
 local debug = std.debug
-local Future = std.Future
+local futures_Future = std.futures.Future
 
 local isstring = std.isstring
 local string_format = std.string.format
@@ -407,7 +407,7 @@ do
     ---
     ---@async
     function Command:wait()
-        local future = Future()
+        local future = futures_Future()
 
         self:addCallback( future, function( ... )
             return future:setResult( { ... } )
@@ -979,7 +979,7 @@ do
     ---@return boolean | string | number
     ---@async
     function Variable:waitForChange()
-        local f = Future()
+        local f = futures_Future()
 
         ---@diagnostic disable-next-line: param-type-mismatch
         self:addChangeCallback( nil, function( _, __, value )
