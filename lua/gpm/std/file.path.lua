@@ -10,12 +10,7 @@ local string_byte, string_sub, string_len, string_match, string_byteSplit, strin
 
 -- References: https://github.com/luvit/luvit/blob/master/deps/path/base.lua
 
-local debug_getfmain, debug_getfpath
-do
-    local debug = std.debug
-    debug_getfmain, debug_getfpath = debug.getfmain, debug.getfpath
-end
-
+local debug_getfmain, debug_getfpath = std.debug.getfmain, std.debug.getfpath
 local getfenv, raw_get, select = std.getfenv, std.raw.get, std.select
 
 ---@class gpm.std.file

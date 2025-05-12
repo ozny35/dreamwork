@@ -11,6 +11,8 @@ end
 
 ---@class gpm.std.AddonClass: gpm.std.Addon
 ---@field __base gpm.std.Addon
----@overload fun(): Addon
+---@overload fun(): gpm.std.Addon
 local AddonClass = std.class.create(Addon)
 std.Addon = AddonClass
+
+---@alias Addon gpm.std.Addon

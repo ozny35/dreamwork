@@ -13,10 +13,12 @@ https://wiki.facepunch.com/gmod/vgui
 
 ]]
 
----@alias Panel gpm.std.Panel
 ---@class gpm.std.Panel : gpm.std.Object
 ---@field __class gpm.std.PanelClass
 local Panel = std.class.base( "Panel" )
+
+---@diagnostic disable-next-line: duplicate-doc-alias
+---@alias Panel gpm.std.Panel
 
 ---@protected
 function Panel:__init()

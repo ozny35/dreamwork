@@ -76,6 +76,7 @@ if bit.tohex == nil then
     ---@param value integer The value to be converted.
     ---@param length integer? The number of digits. Defaults to 8.
     ---@return string str The hexadecimal representation.
+    ---@diagnostic disable-next-line: duplicate-set-field
     function bit.tohex( value, length )
         return string_format( "%0" .. ( length or 8 ) .. "X", value )
     end
@@ -90,6 +91,7 @@ if bit.tobit == nil then
     ---
     ---@param value integer The value to be normalized.
     ---@return integer result The normalized value.
+    ---@diagnostic disable-next-line: duplicate-set-field
     function bit.tobit( value )
         value = value % 0x100000000
         return ( value >= 0x80000000 ) and ( value - 0x100000000 ) or value
@@ -108,6 +110,7 @@ if bit.arshift == nil then
     ---@param value integer The value to be manipulated.
     ---@param shift integer Amounts of bits to shift.
     ---@return integer result The arithmetically shifted value.
+    ---@diagnostic disable-next-line: duplicate-set-field
     function bit.arshift( value, shift )
         return bit_tobit( math_floor( value / ( 2 ^ shift ) ) * ( value >= 0x80000000 and -1 or 1 ) )
     end
@@ -122,6 +125,7 @@ if bit.lshift == nil then
     ---@param value integer The value to be manipulated.
     ---@param shift integer Amounts of bits to shift left by.
     ---@return integer result The left shifted value.
+    ---@diagnostic disable-next-line: duplicate-set-field
     function bit.lshift( value, shift )
         if shift > 31 then
             return 0
@@ -141,6 +145,7 @@ if bit.rshift == nil then
     ---@param value integer The value to be manipulated.
     ---@param shift integer Amounts of bits to shift right by.
     ---@return integer result The right shifted value.
+    ---@diagnostic disable-next-line: duplicate-set-field
     function bit.rshift( value, shift )
         if shift > 31 then
             return 0
@@ -159,6 +164,7 @@ if bit.bswap == nil then
     ---
     ---@param value integer The 32-bit integer to be byte-swapped.
     ---@return integer result The byte-swapped value.
+    ---@diagnostic disable-next-line: duplicate-set-field
     function bit.bswap( value )
         return bit_tobit( ( ( value % 0x100 ) * 0x1000000 ) + ( ( math_floor( value / 0x100 ) % 0x100 ) * 0x10000 ) + ( ( math_floor( value / 0x10000 ) % 0x100 ) * 0x100 ) + ( math_floor( value / 0x1000000 ) % 0x100 ) )
     end
@@ -173,6 +179,7 @@ if bit.bnot == nil then
     ---
     ---@param value integer The value to be manipulated.
     ---@return integer result The bitwise `not` of the value.
+    ---@diagnostic disable-next-line: duplicate-set-field
     function bit.bnot( value )
         local result = 0
         for i = 0, 31, 1 do
@@ -197,6 +204,7 @@ if bit.band == nil then
     ---@param value integer The value to be manipulated.
     ---@param ... integer? Values bit and with.
     ---@return integer result The bitwise `and` result between all values.
+    ---@diagnostic disable-next-line: duplicate-set-field
     function bit.band( value, ... )
         local args = { value, ... }
         local result = 0xFFFFFFFF
@@ -228,6 +236,7 @@ if bit.bor == nil then
     ---@param value integer The value to be manipulated.
     ---@param ... integer? Values bit or with.
     ---@return integer result The bitwise `or` result between all values.
+    ---@diagnostic disable-next-line: duplicate-set-field
     function bit.bor( value, ... )
         local args = { value, ... }
         local result = 0
@@ -259,6 +268,7 @@ if bit.bxor == nil then
     ---@param value integer The value to be manipulated.
     ---@param ... integer? Values bit xor with.
     ---@return integer result Result of bitwise `xor` operation.
+    ---@diagnostic disable-next-line: duplicate-set-field
     function bit.bxor( value, ... )
         local args = { value, ... }
 
@@ -298,6 +308,7 @@ if bit.rol == nil then
     ---@param value integer The value to be manipulated.
     ---@param shift integer Amounts of bits to rotate left by.
     ---@return integer result The left rotated value.
+    ---@diagnostic disable-next-line: duplicate-set-field
     function bit.rol( value, shift )
         return bit_bor( bit_lshift( value, shift ), bit_rshift( value, 32 - shift ) )
     end
@@ -313,6 +324,7 @@ if bit.ror == nil then
     ---@param value integer The value to be manipulated.
     ---@param shift integer Amounts of bits to rotate right by.
     ---@return integer result The right rotated value.
+    ---@diagnostic disable-next-line: duplicate-set-field
     function bit.ror( value, shift )
         return bit_bor( bit_rshift( value, shift ), bit_lshift( value, 32 - shift ) )
     end

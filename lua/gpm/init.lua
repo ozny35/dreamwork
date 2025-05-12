@@ -159,6 +159,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Returns the length of the given value.
+---
 ---@param value any The value to get the length of.
 ---@return integer length The length of the given value.
 function std.len( value )
@@ -178,6 +179,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- Returns an iterator `next` for a for loop that will return the values of the specified table in an arbitrary order.
+    ---
     ---@param tbl table The table to iterate over.
     ---@return function iter The iterator function.
     ---@return table tbl The table being iterated over.
@@ -821,6 +823,7 @@ do
 
 end
 
+-- TODO: move to pack or crypto
 -- dofile( "std/crypto.byte_reader.lua" )
 -- dofile( "std/crypto.byte_writer.lua" )
 
@@ -887,6 +890,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- Converts a URL to a file path.
+    ---
     ---@param url string | URL The URL to convert.
     ---@return string path The file path.
     function path.fromURL( url )
@@ -899,6 +903,8 @@ do
 
         return url.scheme .. "/" .. ( ( url.hostname and url.hostname ~= "" ) and table_concat( table_flipped( string_byteSplit( string_lower( url.hostname ), 0x2E --[[ . ]] ) ), "/" ) or "" ) .. string_lower( url.pathname )
     end
+
+    -- TODO: move to URL class base
 
 end
 

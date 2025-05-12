@@ -37,6 +37,8 @@ local math_floor, math_max, math_clamp = math.floor, math.max, math.clamp
 ---@field size integer The number of bytes that make up the big integer.
 local BigInt = std.class.base( "BigInt" )
 
+---@alias BigInt gpm.std.BigInt
+
 ---@return integer
 ---@protected
 function BigInt:__bitcount()
