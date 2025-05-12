@@ -1,3 +1,5 @@
+---@class gpm
+local gpm = _G.gpm
 
 ---@class gpm.std
 local std = gpm.std
@@ -248,12 +250,6 @@ do
     local debug_getmetatable = std.debug.getmetatable
     local debug_newproxy = std.debug.newproxy
     local string_format = std.string.format
-    local raw_get = std.raw.get
-
-    local function __tostring( self )
-        ---@diagnostic disable-next-line: param-type-mismatch
-        return string_format( "%s: %p", raw_get( debug_getmetatable( self ), "__type" ), self )
-    end
 
     --- [SHARED AND MENU]
     ---
@@ -263,6 +259,29 @@ do
 
     ---@alias Symbol gpm.std.Symbol
 
+    local base = gpm.__symbol or debug_newproxy( true )
+    gpm.__symbol = base
+
+    local metatable = debug_getmetatable( base )
+    if metatable == nil then
+        error( "userdata metatable is missing, lol wtf" )
+    end
+
+    metatable.__type = "Symbol"
+
+    ---@type table<gpm.std.Symbol, string>
+    local names = metatable.__names
+    if names == nil then
+        names = {}
+        metatable.__names = names
+        std.setmetatable( names, { __mode = "k" } )
+    end
+
+    ---@private
+    function metatable:__tostring()
+        return names[ self ]
+    end
+
     --- [SHARED AND MENU]
     ---
     --- Creates a new symbol.
@@ -270,12 +289,18 @@ do
     ---@param name string The name of the symbol.
     ---@return gpm.std.Symbol obj The new symbol.
     function std.Symbol( name )
-        ---@class gpm.std.Symbol
-        local obj = debug_newproxy( true )
-        local metatable = debug_getmetatable( obj )
-        metatable.__type = name .. " Symbol"
-        metatable.__tostring = __tostring
+        local obj = debug_newproxy( base )
+        names[ obj ] = string_format( "%s Symbol: %p", name, obj )
         return obj
+    end
+
+    --- [SHARED AND MENU]
+    ---
+    --- Checks if a value is a symbol.
+    ---
+    ---@param value any The value to check.
+    function std.issymbol( value )
+        return debug_getmetatable( value ) == metatable
     end
 
 end
