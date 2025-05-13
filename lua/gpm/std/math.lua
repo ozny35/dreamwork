@@ -1,5 +1,6 @@
 ---@class gpm.std
 local std = _G.gpm.std
+local len = std.len
 
 --- [SHARED AND MENU]
 ---
@@ -165,6 +166,7 @@ if std.debug.getmetatable( math ) == nil then
 
     local math_randomseed = glua_math.randomseed
     local raw_set = std.raw.set
+
     local seed = 0
 
     std.setmetatable( math, {
@@ -308,18 +310,6 @@ end
 
 --- [SHARED AND MENU]
 ---
---- Checks if two numbers are equal with a given tolerance.
----
----@param a number The first number to check.
----@param b number The second number to check.
----@param tolerance number The maximum difference between the numbers.
----@return boolean is_equal `true` if the numbers are equal within the tolerance, otherwise `false`.
-function math.isequalwith( a, b, tolerance )
-    return math_abs( a - b ) <= tolerance
-end
-
---- [SHARED AND MENU]
----
 --- Checks if a number is divisible by another number without remainder.
 ---
 ---@param a number The first number to check.
@@ -327,16 +317,6 @@ end
 ---@return boolean is_divideable `true` if the first number is divisible by the second number, otherwise `false`.
 function math.isdivideable( a, b )
     return ( a % b ) == 0
-end
-
---- [SHARED AND MENU]
----
---- Checks if a number is a boolean.
----
----@param x number The number to check.
----@return boolean is_bool `true` if the number is a boolean, otherwise `false`.
-function math.isbool( x )
-    return x == 0 or x == 1
 end
 
 --- [SHARED AND MENU]
@@ -366,7 +346,7 @@ end
 ---@param x number The number to check.
 ---@return boolean is_positive `true` if the number is positive, otherwise `false`.
 function math.ispositive( x )
-    return x > 0 or ( 1 / x ) == math_huge
+    return ( 1 / x ) > 0
 end
 
 --- [SHARED AND MENU]
@@ -376,35 +356,23 @@ end
 ---@param x number The number to check.
 ---@return boolean is_negative `true` if the number is negative, otherwise `false`.
 function math.isnegative( x )
-    return x < 0 or ( 1 / x ) == math_tiny
+    return ( 1 / x ) < 0
 end
-
---- [SHARED AND MENU]
----
---- Returns the sign of a number as 1 or -1.
----
----@param x number The number to check.
----@return number sign `1` if the number is positive, `-1` if the number is negative.
-local function sign( x )
-    return x > 0 and 1 or -1
-end
-
-math.sign = sign
 
 --- [SHARED AND MENU]
 ---
 --- Rounds the given value to the nearest whole number or to the given decimal places.
 ---
 ---@param number number The number to round.
----@param decimals? number The number of decimal places to round to.
+---@param decimals? integer The number of decimal places to round to.
 ---@return number rounded The rounded number.
 function math.round( number, decimals )
-    if decimals then
+    if decimals == nil then
+        return math_floor( number + 0.5 )
+    else
         local multiplier = 10 ^ decimals
         return math_floor( ( number * multiplier ) + 0.5 ) / multiplier
     end
-
-    return math_floor( number + 0.5 )
 end
 
 --- [SHARED AND MENU]
@@ -482,75 +450,19 @@ do
 
 end
 
---- [SHARED AND MENU]
----
---- Returns floor addition of two numbers.
----
----@param a number The first number.
----@param b number The second number.
----@return number result The floor of the addition.
-function math.fadd( a, b )
-    return math_floor( a + b )
-end
-
---- [SHARED AND MENU]
----
---- Returns floor subtraction of two numbers.
----
----@param a number The first number.
----@param b number The second number.
----@return number result The floor of the subtraction.
-function math.fsub( a, b )
-    return math_floor( a - b )
-end
-
---- [SHARED AND MENU]
----
---- Returns floor division of two numbers. ( // from Lua 5.3 )
----
----@param a number The dividend.
----@param b number The divisor.
----@return number result The floor of the division.
-function math.fdiv( a, b )
-    return math_floor( a / b )
-end
-
---- [SHARED AND MENU]
----
---- Returns floor multiplication of two numbers.
----
----@param a number The first number.
----@param b number The second number.
----@return number result The floor of the multiplication.
-function math.fmul( a, b )
-    return math_floor( a * b )
-end
-
---- [SHARED AND MENU]
----
---- Returns floor exponentiation of two numbers.
----
----@param a number The base.
----@param b number The exponent.
----@return number result The floor of the exponentiation.
-function math.fpow( a, b )
-    return math_floor( a ^ b )
-end
-
 do
-
-    local select = std.select
 
     --- [SHARED AND MENU]
     ---
     --- Returns the square root of the sum of squares of its arguments.
     ---
-    ---@param ... number The numbers to calculate the square root of.
-    ---@return number result The square root of the sum of squares of its arguments.
-    function math.hypot( ... )
-        local number, args = 0, { ... }
-        for index = 1, select( "#", ... ), 1 do
-            number = number + ( args[ index ] ^ 2 )
+    ---@param numbers number[] The numbers to calculate the square root of.
+    ---@param number_count integer? The number of numbers to calculate the square root of.
+    ---@return number value The square root of the sum of squares of its arguments.
+    function math.hypot( numbers, number_count )
+        local number = 0
+        for index = 1, ( number_count or len( numbers ) ), 1 do
+            number = number + ( numbers[ index ] ^ 2 )
         end
 
         return math_sqrt( number )
@@ -587,18 +499,6 @@ end
 
 --- [SHARED AND MENU]
 ---
---- Returns the fraction of where the current time is relative to the start and end times.
----
----@param from number The start time.
----@param to number The end time.
----@param time number The current time.
----@return number fraction The fraction of the way between the start and end times.
-function math.timef( from, to, time )
-    return ( from - to ) / ( time - to )
-end
-
---- [SHARED AND MENU]
----
 --- Gradually approaches the target value by the specified amount.
 ---
 ---@param current number The current value.
@@ -607,7 +507,11 @@ end
 ---@return number approached The approached value.
 function math.approach( current, target, change )
     local diff = target - current
-    return current + sign( diff ) * math_min( math_abs( diff ), change )
+    if diff < 0 then
+        return -( current + math_min( -diff, change ) )
+    else
+        return current + math_min( diff, change )
+    end
 end
 
 --- [SHARED AND MENU]
@@ -680,28 +584,8 @@ end
 ---@param from number The minimum value of the range.
 ---@param to number The maximum value of the range.
 ---@return boolean in_range `true` if the number is in the range, otherwise `false`.
-function math.inrange( number, from, to )
+function math.inRange( number, from, to )
     return number >= from and number <= to
-end
-
-do
-
-    local isnumber = std.isnumber
-
-    --- [SHARED AND MENU]
-    ---
-    --- Returns "integer" if x is an integer, "float" if it is a float, or nil if x is not a number.
-    ---
-    ---@param x number The number to get the type of.
-    ---@return "integer" | "float" | nil type The type of the number.
-    function math.type( x )
-        if isnumber( x ) then
-            return ( x % 1 ) == 0 and "integer" or "float"
-        end
-
-        return nil
-    end
-
 end
 
 do
@@ -795,19 +679,25 @@ end
 ---@return number mod The euclidean modulus.
 function math.euclideanMod( numerator, denominator )
     local result = numerator % denominator
-    return result < 0 and result + denominator or result
+    if result < 0 then
+        return result + denominator
+    else
+        return result
+    end
 end
 
 --- [SHARED AND MENU]
 ---
---- Checks if a number is near another number.
+--- Checks if two floating point numbers are nearly equal.
 ---
----@param a number The first number.
----@param b number? The second number.
----@param tolerance number? The maximum difference between the numbers.
----@return boolean is_near `true` if the numbers are near, otherwise `false`.
-function math.isnear( a, b, tolerance )
-    return math_abs( a - ( b or 0 ) ) <= ( tolerance or 0 )
+--- This is useful to mitigate [accuracy issues in floating point numbers](https://en.wikipedia.org/wiki/Floating-point_arithmetic#Accuracy_problems).
+---
+---@param a number The first number to compare.
+---@param b number The second number to compare.
+---@param tolerance number? The maximum difference between the two numbers to consider them equal, default is `1e-8`.
+---@return boolean is_nearly_equal `true` if the numbers are near, otherwise `false`.
+function math.isNear( a, b, tolerance )
+    return math_abs( a - b ) <= ( tolerance or 1e-8 )
 end
 
 --- [SHARED AND MENU]
@@ -817,42 +707,35 @@ end
 ---@param x number The number to copy the sign of.
 ---@param y number The number to get the sign from.
 ---@return number number The number with the sign of y.
-function math.copysign( x, y )
-    return ( ( x > 0 and y > 0 ) or ( x < 0 and y < 0 ) ) and x or -x
+function math.copySign( x, y )
+    -- return ( ( x > 0 and y > 0 ) or ( x < 0 and y < 0 ) ) and x or -x -- x2 faster but miss -0 cases
+    return ( ( 1 / x ) > 0 ) == ( ( 1 / y ) > 0 ) and x or -x
 end
 
 --- [SHARED AND MENU]
 ---
---- Converts a bits number to a byte number.
+--- Converts an integer with a sign to an unsigned integer.
 ---
----@param x number The bits number.
----@return number bytes The byte number.
-function math.bit2byte( x )
-    return math_ceil( x / 8 )
+---@param signed integer The integer with a sign.
+---@param bit_count integer The bit count of the unsigned integer.
+---@return integer unsigned The unsigned integer.
+function math.toUInt( signed, bit_count )
+    local max_uint = 2 ^ bit_count
+    return signed % max_uint
 end
 
 --- [SHARED AND MENU]
 ---
---- Converts a byte number to a bits number.
+--- Converts an unsigned integer with a sign to an integer.
 ---
----@param x number The byte number.
----@return number bits The bits number.
-function math.byte2bit( x )
-    return math_ceil( x ) * 8
-end
-
---- [SHARED AND MENU]
----
---- Returns the variance of a list.
----
----@param lst number[] The list.
----@param mean number The mean of the list.
----@return number result The variance of the list.
-function math.variance( lst, mean )
-    local summary, length = 0, #lst
-    for i = 1, length, 1 do
-        summary = summary + ( lst[ i ] - mean ) ^ 2
+---@param unsigned integer The unsigned integer.
+---@param bit_count integer The bit count of the unsigned integer.
+---@return integer signed The integer with a sign.
+function math.toInt( unsigned, bit_count )
+    local sign_bit = 2 ^ ( bit_count - 1 )
+    if unsigned >= sign_bit then
+        return unsigned - 2 ^ bit_count
+    else
+        return unsigned
     end
-
-    return summary / length
 end

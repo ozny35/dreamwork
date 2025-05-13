@@ -27,6 +27,9 @@ local DIV255_CONST = 1 / 255
 ---@operator unm(): gpm.std.Color
 local Color = std.Color and std.Color.__base or std.class.base( "Color" )
 
+---@diagnostic disable-next-line: duplicate-doc-alias
+---@alias Color gpm.std.Color
+
 --- [SHARED AND MENU]
 ---
 --- The color class.

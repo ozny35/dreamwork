@@ -1,7 +1,9 @@
----@class gpm.std
 local std = _G.gpm.std
-local scheme = std.Color.scheme
 
+---@class gpm.std.console
+local console = std.console
+
+local scheme = std.Color.scheme
 local realm_text, realm_color
 
 if std.MENU then
@@ -18,20 +20,25 @@ end
 ---
 --- The logger object.
 ---
----@alias Logger gpm.std.Logger
----@class gpm.std.Logger : gpm.std.Object
----@field __class gpm.std.LoggerClass
-local Logger = std.class.base( "Logger" )
+---@alias Logger gpm.std.console.Logger
+---@class gpm.std.console.Logger : gpm.std.Object
+---@field __class gpm.std.console.LoggerClass
+---@field title string The logger title.
+---@field title_color gpm.std.Color The logger title color.
+---@field text_color gpm.std.Color The logger text color.
+---@field interpolation boolean The logger interpolation.
+---@field debug_fn fun( gpm.std.console.Logger ): boolean The logger debug function.
+local Logger = std.class.base( "console.Logger" )
 
 --- [SHARED AND MENU]
 ---
 --- The logger class.
 ---
----@class gpm.std.LoggerClass : gpm.std.Logger
----@field __base gpm.std.Logger
----@overload fun( options: gpm.std.Logger.Options? ) : gpm.std.Logger
+---@class gpm.std.console.LoggerClass : gpm.std.console.Logger
+---@field __base gpm.std.console.Logger
+---@overload fun( options: gpm.std.console.Logger.Options? ) : gpm.std.console.Logger
 local LoggerClass = std.class.create( Logger )
-std.Logger = LoggerClass
+console.Logger = LoggerClass
 
 local function default_debug_fn()
     return std.DEVELOPER > 0
@@ -40,11 +47,11 @@ end
 --[[
 
     Logger:
-        [ 1 ] - Title
-        [ 2 ] - Color
-        [ 3 ] - Text color
-        [ 4 ] - Interpolation
-        [ 5 ] - Debug function
+        .title - Title
+        .title_color - Color
+        .text_color - Text color
+        .interpolation - Interpolation
+        .debug_fn - Debug function
 
 --]]
 
@@ -55,45 +62,45 @@ local secondary_text_color = scheme.text_secondary
 ---@protected
 function Logger:__init( options )
     if options == nil then
-        self[ 1 ] = "unknown"
-        self[ 2 ] = white_color
-        self[ 3 ] = primary_text_color
-        self[ 4 ] = true
-        self[ 5 ] = default_debug_fn
+        self.title = "unknown"
+        self.title_color = white_color
+        self.text_color = primary_text_color
+        self.interpolation = true
+        self.debug_fn = default_debug_fn
     else
         local title = options.title
         if title == nil then
-            self[ 1 ] = "unknown"
+            self.title = "unknown"
         else
-            self[ 1 ] = title
+            self.title = title
         end
 
         local color = options.color
         if color == nil then
-            self[ 2 ] = color_white
+            self.title_color = color_white
         else
-            self[ 2 ] = color
+            self.title_color = color
         end
 
         local text_color = options.text_color
         if text_color == nil then
-            self[ 3 ] = primary_text_color
+            self.text_color = primary_text_color
         else
-            self[ 3 ] = text_color
+            self.text_color = text_color
         end
 
         local interpolation = options.interpolation
         if interpolation == nil then
-            self[ 4 ] = true
+            self.interpolation = true
         else
-            self[ 4 ] = interpolation == true
+            self.interpolation = interpolation == true
         end
 
         local debug_fn = options.debug
         if debug_fn == nil then
-            self[ 5 ] = default_debug_fn
+            self.debug_fn = default_debug_fn
         else
-            self[ 5 ] = debug_fn
+            self.debug_fn = debug_fn
         end
     end
 end
@@ -101,7 +108,7 @@ end
 local write_log
 do
 
-    local console_write = std.console.write
+    local console_write = console.write
     local tostring = std.tostring
     local os_date = std.os.date
 
@@ -117,7 +124,7 @@ do
     ---@param str string The log message.
     ---@param ... any The log message arguments to format/interpolate.
     function write_log( object, color, level, str, ... )
-        if object[ 4 ] then
+        if object.interpolation then
             local args = { ... }
             for index = 1, select( '#', ... ), 1 do
                 args[ tostring( index ) ] = tostring( args[ index ] )
@@ -128,20 +135,20 @@ do
             str = string_format( str, ... )
         end
 
-        local title = object[ 1 ]
+        local title = object.title
 
         local title_length = string_len( title )
         if title_length > 64 then
             title = string_sub( title, 1, 64 )
             title_length = 64
-            object[ 1 ] = title
+            object.title = title
         end
 
         if ( string_len( str ) + title_length ) > 950 then
             str = string_sub( str, 1, 950 - title_length ) .. "..."
         end
 
-        console_write( secondary_text_color, os_date( "%d-%m-%Y %H:%M:%S " ), realm_color, realm_text, color, level, secondary_text_color, " --> ", object[ 2 ], title, secondary_text_color, " : ", object[ 3 ], str .. "\n")
+        console_write( secondary_text_color, os_date( "%d-%m-%Y %H:%M:%S " ), realm_color, realm_text, color, level, secondary_text_color, " --> ", object.title_color, title, secondary_text_color, " : ", object.text_color, str .. "\n")
     end
 
     Logger.log = write_log
@@ -195,7 +202,7 @@ do
     ---
     --- Logs a debug message.
     function Logger:debug( ... )
-        if self[ 5 ]( self ) then
+        if self.debug_fn( self ) then
             return write_log( self, debug_color, "DEBUG", ... )
         end
     end

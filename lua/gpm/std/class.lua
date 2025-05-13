@@ -17,8 +17,10 @@ local raw_get, raw_pairs = std.raw.get, std.raw.pairs
 local class = {}
 std.class = class
 
+-- TODO: re-view/work private classes metatable cloning maybe make name tables and userdata colying
+
 ---@alias Object gpm.std.Object
----@class gpm.std.Object : table
+---@class gpm.std.Object
 ---@field private __type string The name of object type.
 ---@field __class gpm.std.Class The class of the object.
 ---@field __parent gpm.std.Object | nil The parent of the object.

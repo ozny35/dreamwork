@@ -178,7 +178,7 @@ if std.CLIENT_MENU then
             local input_StartKeyTrapping = glua_input.StartKeyTrapping
             local input_CheckKeyTrapping = glua_input.CheckKeyTrapping
             local input_IsKeyTrapping = glua_input.IsKeyTrapping
-            local Future = std.Future
+            local futures_Future = std.futures.Future
 
             local captures = std.Stack()
 
@@ -204,7 +204,7 @@ if std.CLIENT_MENU then
             ---@return integer key_code The key code of the key that was pressed.
             ---@async
             function key.capture()
-                local f = Future()
+                local f = futures_Future()
                 captures:push( f )
                 return f:await()
             end

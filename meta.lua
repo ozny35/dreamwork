@@ -7,8 +7,9 @@ do
 
     --- [SHARED AND MENU]
     ---
-    --- Table used by `Logger` constructor.
-    ---@class gpm.std.Logger.Options
+    --- Table used by `console.Logger` constructor.
+    ---
+    ---@class gpm.std.console.Logger.Options
     local logger_options = {}
 
     --- The title of the logger.
@@ -119,18 +120,22 @@ do
     --- [SHARED AND MENU]
     ---
     --- The success callback.
+    ---
     ---@class gpm.std.http.Response
     local response = {}
 
     --- The response status code.
-    ---@type number
+    ---
+    ---@type integer
     response.status = nil
 
     --- The response body.
+    ---
     ---@type string
     response.body = nil
 
     --- The response headers.
+    ---
     ---@type table
     response.headers = nil
 
@@ -669,7 +674,7 @@ do
     user.url = nil
 
     --- Not a standard GitHub field in public APIs;
-    --- possibly a custom or deprecated one
+    ---
     --- (likely indicates visibility like `"public"` or `"private"` view).
     ---
     ---@type string

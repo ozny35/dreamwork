@@ -14,6 +14,8 @@ if gpm == nil then
     _G.gpm = gpm
 end
 
+-- TODO: globally replace all versions, steamids, url, etc. with their classes in gpm, e.g. std.URL, steam.Identifier
+
 --- [SHARED AND MENU]
 ---
 --- gpm standard environment
@@ -342,15 +344,17 @@ do
         NIL.__type = "nil"
         NIL.__typeid = 0
 
+        ---@private
         function NIL.__tobool()
             return false
         end
 
+        ---@private
         function NIL.__tonumber()
             return 0
         end
 
-        NIL.__bitcount = NIL.__tonumber
+        NIL.__len = NIL.__tonumber
 
     end
 
@@ -368,15 +372,18 @@ do
         BOOLEAN.__type = "boolean"
         BOOLEAN.__typeid = 1
 
+        ---@private
         function BOOLEAN.__tobool( value )
             return value
         end
 
+        ---@private
         function BOOLEAN.__tonumber( value )
             return value == true and 1 or 0
         end
 
-        function BOOLEAN.__bitcount()
+        ---@private
+        function BOOLEAN.__len()
             return 1
         end
 
@@ -405,10 +412,12 @@ do
         NUMBER.__type = "number"
         NUMBER.__typeid = 3
 
+        ---@private
         function NUMBER.__tobool( value )
             return value ~= 0
         end
 
+        ---@private
         function NUMBER.__tonumber( value )
             return value
         end
@@ -438,6 +447,7 @@ do
         STRING.__type = "string"
         STRING.__typeid = 4
 
+        ---@private
         function STRING.__tobool( value )
             return value ~= "" and value ~= "0" and value ~= "false"
         end
@@ -528,7 +538,8 @@ do
     local math_ceil, math_log, math_isfinite = math.ceil, math.log, math.isfinite
     local math_ln2 = math.ln2
 
-    function NUMBER.__bitcount( value )
+    ---@private
+    function NUMBER.__len( value )
         if math_isfinite( value ) then
             if ( value % 1 ) == 0 then
                 return math_ceil( math_log( value + 1 ) / math_ln2 ) + ( value < 0 and 1 or 0 )
@@ -547,15 +558,7 @@ end
 dofile( "std/string.lua" )
 
 local string = std.string
-
-do
-    local string_len = string.len
-
-    function STRING.__bitcount( value )
-        return string_len( value ) * 8
-    end
-
-end
+STRING.__len = string.len
 
 local string_format = string.format
 
@@ -722,7 +725,9 @@ dofile( "std/math.classes.lua" )
 dofile( "std/string.utf8.lua" )
 dofile( "std/structures.lua" )
 
+dofile( "std/futures.lua" )
 dofile( "std/version.lua" )
+dofile( "std/bigint.lua" )
 dofile( "std/color.lua" )
 
 do
@@ -760,6 +765,16 @@ end
 dofile( "engine.lua" )
 
 dofile( "std/console.lua" )
+dofile( "std/console.logger.lua")
+
+local logger = std.console.Logger( {
+    title = gpm.PREFIX,
+    color = std.Color( 180, 180, 255 ),
+    interpolation = false
+} )
+
+gpm.Logger = logger
+
 dofile( "std/game.lua" )
 
 do
@@ -790,9 +805,6 @@ do
     } )
 
 end
-
-dofile( "std/futures.lua" )
-dofile( "std/bigint.lua" )
 
 dofile( "std/crypto.lua" )
 dofile( "std/crypto.uuid.lua" )
@@ -979,16 +991,6 @@ do
 
 end
 
-dofile( "std/logger.lua" )
-
-local logger = std.Logger( {
-    title = gpm.PREFIX,
-    color = std.Color( 180, 180, 255 ),
-    interpolation = false
-} )
-
-gpm.Logger = logger
-
 if math.randomseed == 0 then
     math.randomseed = std.os.time()
     logger:info( "Random seed was re-synchronized with unix time." )
@@ -1144,17 +1146,29 @@ end
     TODO:
 
     StringReader   StringWriter     __init( str: string )
+    crypto.pack.Reader     crypto.pack.Writer
+    string.Reader          string.Writer
+
     FileReader     FileWriter       __init( file_path: string )
+    file.Reader            file.Writer
+
     NetworkReader  NetworkWriter    __init( network_name: string )
+    network.Reader         network.Writer
+    net.Reader             net.Writer
+
+    network.Message
+    NetworkMessage
+    net.Message
+
+    net.MessageReader       net.MessageWriter
 
 ]]
 
 dofile( "std/http.lua" )
 dofile( "std/http.github.lua" )
 
-dofile( "std/steam.identifier.lua" )
-dofile( "std/steam.workshop_item.lua" )
 dofile( "std/steam.lua" )
+dofile( "std/steam.identifier.lua" )
 
 dofile( "std/addon.lua" )
 

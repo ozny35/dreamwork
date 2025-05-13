@@ -613,7 +613,7 @@ end
 
 do
 
-    local math_fmul = std.math.fmul
+    local math_floor = std.math.floor
 
     --- [SHARED AND MENU]
     ---
@@ -629,7 +629,7 @@ do
         if length == nil then length = #tbl end
         length = length + 1
 
-        for i = 1, math_fmul( length - 1, 0.5 ), 1 do
+        for i = 1, math_floor( ( length - 1 ) * 0.5 ), 1 do
             local j = length - i
             tbl[ i ], tbl[ j ] = tbl[ j ], tbl[ i ]
         end

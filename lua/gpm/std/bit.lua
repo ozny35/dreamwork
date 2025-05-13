@@ -37,35 +37,6 @@ if _G.bit ~= nil then
 
 end
 
-if bit.size == nil then
-
-    local debug_getmetavalue = std.debug.getmetavalue
-    local math_ceil = math.ceil
-
-    --- [SHARED AND MENU]
-    ---
-    --- Returns the bit count of the given value.
-    ---
-    ---@param value any The value to get the bit count of.
-    ---@param in_bytes boolean? Whether to return the bit count in bytes.
-    ---@return number size The count of bits or bytes in the value.
-    function bit.size( value, in_bytes )
-        local fn = debug_getmetavalue( value, "__bitcount" )
-        if fn == nil then
-            return 0
-        end
-
-        local bits = fn( value )
-
-        if in_bytes then
-            return math_ceil( bits * 0.125 )
-        else
-            return bits
-        end
-    end
-
-end
-
 if bit.tohex == nil then
 
     local string_format = std.string.format

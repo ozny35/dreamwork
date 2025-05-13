@@ -41,7 +41,7 @@ local BigInt = std.class.base( "BigInt" )
 
 ---@return integer
 ---@protected
-function BigInt:__bitcount()
+function BigInt:__len()
     return #self * 8
 end
 
