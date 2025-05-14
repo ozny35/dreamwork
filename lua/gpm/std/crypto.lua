@@ -173,11 +173,84 @@ do
 
 end
 
-crypto.crc32 = crypto.crc32 or glua_util.CRC
+local string_byte, string_len = std.string.byte, std.string.len
+
+do
+
+    local bit = std.bit
+    local bit_band = bit.band
+    local bit_rshift = bit.rshift
+    local bit_bnot, bit_bxor = bit.bnot, bit.bxor
+
+    --- [SHARED AND MENU]
+    ---
+    --- FNV-1 32-bit hash function.
+    ---
+    ---@param str string The string to hash.
+    ---@return integer hash The hash value.
+    function crypto.fnv1( str )
+        local hash = 0x811c9dc5
+
+        for i = 1, string_len( str ), 1 do
+            hash = bit_band( hash * 0x01000193, 0xffffffff )
+            hash = bit_bxor( hash, string_byte( str, i ) )
+        end
+
+        return bit_band( hash, 0xffffffff )
+    end
+
+    --- [SHARED AND MENU]
+    ---
+    --- FNV-1a 32-bit hash function.
+    ---
+    ---@param str string The string to hash.
+    ---@return integer hash The hash value.
+    function crypto.fnv1a( str )
+        local hash = 0x811c9dc5
+
+        for i = 1, string_len( str ), 1 do
+            hash = bit_bxor( hash, string_byte( str, i ) )
+            hash = bit_band( hash * 0x01000193, 0xffffffff )
+        end
+
+        return hash
+    end
+
+    local crc32_lookup = {}
+
+    for i = 0, 255, 1 do
+        local crc = i
+
+        for _ = 1, 8 do
+            if bit_band( crc, 1 ) == 1 then
+                crc = bit_bxor( bit_rshift( crc, 1 ), 0xedb88320 )
+            else
+                crc = bit_rshift( crc, 1 )
+            end
+        end
+
+        crc32_lookup[ i ] = crc
+    end
+
+    --- [SHARED AND MENU]
+    ---
+    --- Calculates the CRC-32 checksum of a string.
+    ---
+    ---@param str string The string to calculate the CRC-32 checksum of.
+    ---@return integer checksum The CRC-32 checksum of the string.
+    function crypto.crc32( str )
+        local crc = 0xFFFFFFFF
+
+        for i = 1, string_len( str ), 1 do
+            crc = bit_bxor( bit_rshift( crc, 8 ), crc32_lookup[ bit_band( bit_bxor( crc, string_byte( str, i ) ), 0xFF ) ] )
+        end
+
+        return bit_band( bit_bnot( crc ), 0xffffffff )
+    end
+
+end
 
 if crypto.adler32 == nil then
-
-    local string_byte, string_len = std.string.byte, std.string.len
 
     --- [SHARED AND MENU]
     ---
