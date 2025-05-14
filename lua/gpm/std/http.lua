@@ -83,10 +83,66 @@ end
 
 --- [SHARED AND MENU]
 ---
---- http library
+--- The http library allows either the server or client to communicate with external websites via HTTP.
+---
 ---@class gpm.std.http
 local http = std.http or {}
 std.http = http
+
+if http.StatusCodes == nil then
+
+    --- [SHARED AND MENU]
+    ---
+    --- The table that converts HTTP status codes into their descriptions.
+    ---
+    ---@type table<integer, string>
+    http.StatusCodes = {
+        [ 100 ] = "Continue - Request received, please continue",
+        [ 101 ] = "Switching Protocols - Switching to new protocol; obey Upgrade header",
+        [ 102 ] = "Processing - WebDAV; request received and processing",
+
+        [ 200 ] = "OK - Request succeeded",
+        [ 201 ] = "Created - Resource successfully created",
+        [ 202 ] = "Accepted - Request accepted but not completed",
+        [ 203 ] = "Non-Authoritative Information - Returned meta info is from a third party",
+        [ 204 ] = "No Content - No content to send for this request",
+        [ 205 ] = "Reset Content - Reset the document view",
+        [ 206 ] = "Partial Content - Partial GET successful",
+
+        [ 300 ] = "Multiple Choices - Multiple options available",
+        [ 301 ] = "Moved Permanently - Resource has been permanently moved",
+        [ 302 ] = "Found - Resource temporarily moved",
+        [ 303 ] = "See Other - See another URI using GET",
+        [ 304 ] = "Not Modified - Resource not modified since last request",
+        [ 307 ] = "Temporary Redirect - Resource temporarily moved, use original method",
+        [ 308 ] = "Permanent Redirect - Resource moved permanently, use original method",
+
+        [ 400 ] = "Bad Request - Malformed syntax or invalid request",
+        [ 401 ] = "Unauthorized - Authentication required",
+        [ 402 ] = "Payment Required - Reserved for future use",
+        [ 403 ] = "Forbidden - Server understands but refuses to authorize",
+        [ 404 ] = "Not Found - Resource not found",
+        [ 405 ] = "Method Not Allowed - HTTP method not allowed",
+        [ 406 ] = "Not Acceptable - No acceptable representation available",
+        [ 408 ] = "Request Timeout - Client took too long",
+        [ 409 ] = "Conflict - Request conflicts with current state",
+        [ 410 ] = "Gone - Resource permanently unavailable",
+        [ 418 ] = "I'm a teapot - April Fools joke / RFC 2324",
+        [ 429 ] = "Too Many Requests - Rate limit exceeded",
+
+        [ 500 ] = "Internal Server Error - Generic server error",
+        [ 501 ] = "Not Implemented - Server doesn't support requested feature",
+        [ 502 ] = "Bad Gateway - Invalid response from upstream server",
+        [ 503 ] = "Service Unavailable - Server temporarily overloaded or down",
+        [ 504 ] = "Gateway Timeout - Upstream server failed to respond in time",
+        [ 505 ] = "HTTP Version Not Supported - Unsupported HTTP version"
+    }
+
+    std.setmetatable( http.StatusCodes, { __index = function( _, code )
+        return "Unknown - Unexpected status code: " .. code
+    end } )
+
+end
 
 local gpm_http_timeout, gpm_http_lifetime
 do
