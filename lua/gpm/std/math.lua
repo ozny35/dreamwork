@@ -720,8 +720,7 @@ end
 ---@param bit_count integer The bit count of the unsigned integer.
 ---@return integer unsigned The unsigned integer.
 function math.toUInt( signed, bit_count )
-    local max_uint = 2 ^ bit_count
-    return signed % max_uint
+    return signed % ( 2 ^ bit_count )
 end
 
 --- [SHARED AND MENU]
@@ -732,8 +731,7 @@ end
 ---@param bit_count integer The bit count of the unsigned integer.
 ---@return integer signed The integer with a sign.
 function math.toInt( unsigned, bit_count )
-    local sign_bit = 2 ^ ( bit_count - 1 )
-    if unsigned >= sign_bit then
+    if unsigned >= ( 2 ^ ( bit_count - 1 ) ) then
         return unsigned - 2 ^ bit_count
     else
         return unsigned

@@ -475,7 +475,7 @@ do
 
     local maxplayers_bits = bit_size( std.player.getLimit() )
 
-    PLAYER.__bitcount = function()
+    PLAYER.__len = function()
         return maxplayers_bits
     end
 
