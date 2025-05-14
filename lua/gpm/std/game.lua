@@ -55,7 +55,7 @@ do
         return items, item_count
     end
 
-    local mounted_games = engine.mounted_games
+    local name2game = engine.name2game
 
     --- [SHARED AND MENU]
     ---
@@ -68,7 +68,7 @@ do
             folder_name = "hl2"
         end
 
-        return mounted_games[ folder_name ] == true
+        return name2game[ folder_name ] == true
     end
 
 end

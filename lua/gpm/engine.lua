@@ -86,12 +86,14 @@ if engine.hookCatch == nil then
 
         local hook_Call = hook.Call
         if hook_Call == nil then
+            ---@diagnostic disable-next-line: duplicate-set-field
             function hook.Call( event_name, _, ... )
                 local lst = engine_hooks[ event_name ]
                 if lst == nil then return end
                 return lst( ... )
             end
         else
+            ---@diagnostic disable-next-line: duplicate-set-field
             hook.Call = detour_attach( hook_Call, function( fn, event_name, gamemode_table, ... )
                 local lst = engine_hooks[ event_name ]
                 if lst ~= nil then
@@ -191,10 +193,12 @@ if engine.consoleCommandCatch == nil then
 
     local concommand_Run = concommand.Run
     if concommand_Run == nil then
+        ---@diagnostic disable-next-line: duplicate-set-field
         function concommand.Run( ply, cmd, args, argument_string )
             return lst( ply, cmd, args, argument_string ) == true
         end
     else
+        ---@diagnostic disable-next-line: duplicate-set-field
         concommand.Run = detour_attach( concommand_Run, function( fn, ply, cmd, args, argument_string )
             local result = lst( ply, cmd, args, argument_string )
             if result == nil then
@@ -232,10 +236,12 @@ if engine.consoleVariableCatch == nil then
 
     local OnConVarChanged = cvars.OnConVarChanged
     if OnConVarChanged == nil then
+        ---@diagnostic disable-next-line: duplicate-set-field
         function cvars.OnConVarChanged( name, old, new )
             lst( name, old, new )
         end
     else
+        ---@diagnostic disable-next-line: duplicate-set-field
         cvars.OnConVarChanged = detour_attach( OnConVarChanged, function( fn, name, old, new )
             lst( name, old, new )
             return fn( name, old, new )
@@ -302,10 +308,12 @@ if engine.entityCreationCatch == nil then
 
     local Get = scripted_ents.Get
     if Get == nil then
+        ---@diagnostic disable-next-line: duplicate-set-field
         function scripted_ents.Get( name )
             return lst( name )
         end
     else
+        ---@diagnostic disable-next-line: duplicate-set-field
         scripted_ents.Get = detour_attach( Get, function( fn, name )
             local tbl = lst( name )
             if tbl == nil then
@@ -318,10 +326,12 @@ if engine.entityCreationCatch == nil then
 
     local OnLoaded = scripted_ents.OnLoaded
     if OnLoaded == nil then
+        ---@diagnostic disable-next-line: duplicate-set-field
         function scripted_ents.OnLoaded( name )
             engine_hookCall( "EntityLoaded", name )
         end
     else
+        ---@diagnostic disable-next-line: duplicate-set-field
         scripted_ents.OnLoaded = detour_attach( OnLoaded, function( fn, name )
             engine_hookCall( "EntityLoaded", name )
             return fn( name )
@@ -356,10 +366,12 @@ if engine.weaponCreationCatch == nil then
 
     local Get = weapons.Get
     if Get == nil then
+        ---@diagnostic disable-next-line: duplicate-set-field
         function weapons.Get( name )
             return lst( name )
         end
     else
+        ---@diagnostic disable-next-line: duplicate-set-field
         weapons.Get = detour_attach( Get, function( fn, name )
             local tbl = lst( name )
             if tbl == nil then
@@ -372,10 +384,12 @@ if engine.weaponCreationCatch == nil then
 
     local OnLoaded = weapons.OnLoaded
     if OnLoaded == nil then
+        ---@diagnostic disable-next-line: duplicate-set-field
         function weapons.OnLoaded( name )
             engine_hookCall( "WeaponLoaded", name )
         end
     else
+        ---@diagnostic disable-next-line: duplicate-set-field
         weapons.OnLoaded = detour_attach( OnLoaded, function( fn, name )
             engine_hookCall( "WeaponLoaded", name )
             return fn( name )
@@ -410,10 +424,12 @@ if engine.effectCreationCatch == nil then
 
     local Create = effects.Create
     if Create == nil then
+        ---@diagnostic disable-next-line: duplicate-set-field
         function effects.Create( name )
             return lst( name )
         end
     else
+        ---@diagnostic disable-next-line: duplicate-set-field
         effects.Create = detour_attach( Create, function( fn, name )
             local tbl = lst( name )
             if tbl == nil then
@@ -452,88 +468,54 @@ end
 
 do
 
-
     local engine_GetGames, engine_GetAddons
-    do
-        local glua_engine = _G.engine
-        engine_GetGames, engine_GetAddons = glua_engine.GetGames, glua_engine.GetAddons
+
+    if _G.engine == nil then
+        engine_GetGames, engine_GetAddons = _G.engine.GetGames, _G.engine.GetAddons
+    else
+        engine_GetGames, engine_GetAddons = std.debug.fempty, std.debug.fempty
     end
 
-    local games, addons, game_count, addon_count
+    local title2addon = {}
+    engine.title2addon = title2addon
 
-    --- [SHARED AND MENU]
-    ---
-    --- Returns all mounted addons.
-    ---@return table, integer
-    function engine.getAddons()
-        local lst, length = {}, 0
+    local wsid2addon = {}
+    engine.wsid2addon = wsid2addon
 
-        for i = 1, addon_count, 1 do
-            local data = addons[ i ]
-            length = length + 1
-            lst[ length ] = {
-                downloaded = data.downloaded,
-                timeadded = data.timeadded,
-                updated = data.updated,
-                mounted = data.mounted,
-                models = data.models,
-                title = data.title,
-                file = data.file,
-                size = data.size,
-                tags = data.tags,
-                wsid = data.wsid
-            }
-        end
-
-        return lst, length
-    end
+    local name2game = {}
+    engine.name2game = name2game
 
     -- TODO: make somewhere Addon is mounted function by addon titile
 
-    local mounted_addons = {}
-    engine.mounted_addons = mounted_addons
-
-    local mounted_games = {}
-    engine.mounted_games = mounted_games
+    local addons, addon_count
+    local games, game_count
 
     local function update_mounted()
-        games, addons = engine_GetGames(), engine_GetAddons()
+        games, addons = engine_GetGames() or {}, engine_GetAddons() or {}
         game_count, addon_count = #games, #addons
 
         engine.games, engine.game_count = games, game_count
         engine.addons, engine.addon_count = addons, addon_count
 
-        local mounted, mounted_count = {}, 0
-
-        for key in pairs( mounted_games ) do
-            mounted_games[ key ] = nil
-        end
+        std.table.empty( name2game )
 
         for i = 1, game_count, 1 do
             local data = games[ i ]
             if data.mounted then
-                local name = data.folder
-                mounted_games[ name ] = true
-                mounted_count = mounted_count + 1
-                mounted[ mounted_count ] = name
+                name2game[ data.folder ] = true
             end
         end
 
-        for key in pairs( mounted_addons ) do
-            mounted_addons[ key ] = nil
-        end
+        std.table.empty( title2addon )
+        std.table.empty( wsid2addon )
 
         for i = 1, addon_count, 1 do
             local data = addons[ i ]
             if data.mounted then
-                local name = data.title
-                mounted_addons[ name ] = true
-                mounted_count = mounted_count + 1
-                mounted[ mounted_count ] = name
+                title2addon[ data.title ] = true
+                wsid2addon[ data.wsid ] = true
             end
         end
-
-        engine.mounted, engine.mounted_count = mounted, mounted_count
     end
 
     engine.hookCatch( "GameContentChanged", update_mounted )

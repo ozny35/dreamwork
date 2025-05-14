@@ -40,8 +40,8 @@ local engine = gpm.engine
 local path_unpack
 do
 
-    local mounted_addons = engine.mounted_addons
-    local mounted_games = engine.mounted_games
+    local title2addon = engine.title2addon
+    local name2game = engine.name2game
 
     local fstab = {
         { "/lua", ( SERVER and "lsv" or ( CLIENT and "lcl" or ( MENU and "LuaMenu" or "LUA" ) ) ) },
@@ -67,7 +67,7 @@ do
                     error( "Wrong path '/addons/" .. file_path .. "'.", 3 )
                 end
 
-                if mounted_addons[ addon_name ] then
+                if title2addon[ addon_name ] then
                     return local_path or "", addon_name
                 end
 
@@ -90,7 +90,7 @@ do
 
                 if game_folder == nil then
                     return "", "BASE_PATH"
-                elseif mounted_games[ game_folder ] then
+                elseif name2game[ game_folder ] then
                     return local_path, game_folder
                 else
                     return local_path, "BASE_PATH"
