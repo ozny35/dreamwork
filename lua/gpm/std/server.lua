@@ -88,27 +88,28 @@ do
 
 end
 
-local sv_hostname = console_Variable( {
-    name = "sv_hostname",
+local gpm_server_hostname = console_Variable( {
+    name = "gpm.server.hostname",
     description = "The publicly visible name of the server.",
-    type = "string",
-    flags = 8192
+    replicated = true,
+    type = "string"
 } )
 
 do
 
     local hostname = console_Variable.get( "hostname", "string" )
     if hostname ~= nil then
-        sv_hostname:set( hostname:get() )
+        gpm_server_hostname:set( hostname:get() )
 
-        sv_hostname:addChangeCallback( "hostname", function( _, __, str )
+        gpm_server_hostname:addChangeCallback( "hostname", function( _, __, str )
             if hostname:get() == str then return end
             hostname:set( str )
         end )
 
-        hostname:addChangeCallback( "sv_hostname", function( _, __, str )
-            if sv_hostname:get() == str then return end
-            sv_hostname:set( str )
+        hostname:addChangeCallback( gpm_server_hostname.name, function( _, __, str )
+            if gpm_server_hostname:get() ~= str then
+                gpm_server_hostname:set( str )
+            end
         end )
     end
 
@@ -119,7 +120,7 @@ do
     ---@return string hostname The name of the server.
     function server.getName()
         ---@diagnostic disable-next-line: return-type-mismatch
-        return sv_hostname:get()
+        return gpm_server_hostname:get()
     end
 
 end

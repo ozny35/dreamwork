@@ -541,5 +541,106 @@ do
 
 end
 
+if engine.consoleVariableGet == nil or engine.consoleVariableCreate == nil or engine.consoleVariableExists == nil then
+
+    local GetConVar_Internal = _G.GetConVar_Internal or std.debug.fempty
+    local ConVarExists = _G.ConVarExists or std.debug.fempty
+    local CreateConVar = _G.CreateConVar or std.debug.fempty
+
+    local cache = {}
+
+    std.setmetatable( cache, { __mode = "v" } )
+
+    --- [SHARED AND MENU]
+    ---
+    --- Get console variable C object (userdata).
+    ---
+    ---@param name string The name of the console variable.
+    ---@return ConVar? cvar The console variable object.
+    function engine.consoleVariableGet( name )
+        local value = cache[ name ]
+        if value == nil then
+            value = GetConVar_Internal( name )
+            cache[ name ] = value
+        end
+
+        return value
+    end
+
+    --- [SHARED AND MENU]
+    ---
+    --- Create console variable C object (userdata).
+    ---
+    ---@param name string The name of the console variable.
+    ---@param default string The default value of the console variable.
+    ---@param flags? integer The flags of the console variable.
+    ---@param description? string The description of the console variable.
+    ---@param min? number The minimum value of the console variable.
+    ---@param max? number The maximum value of the console variable.
+    ---@return ConVar? cvar The console variable object.
+    function engine.consoleVariableCreate( name, default, flags, description, min, max )
+        local value = cache[ name ]
+        if value == nil then
+            ---@diagnostic disable-next-line: param-type-mismatch
+            value = CreateConVar( name, default, flags, description, min, max )
+            cache[ name ] = value
+        end
+
+        return value
+    end
+
+    --- [SHARED AND MENU]
+    ---
+    --- Checks if the console variable exists.
+    ---
+    ---@param name string The name of the console variable.
+    ---@return boolean exists `true` if the console variable exists, `false` otherwise.
+    function engine.consoleVariableExists( name )
+        return cache[ name ] ~= nil or ConVarExists( name )
+    end
+
+end
+
+if engine.consoleCommandAdd == nil or engine.consoleCommandExists == nil then
+
+    local commands = {}
+
+    if _G.AddConsoleCommand == nil then
+        _G.AddConsoleCommand = std.debug.fempty
+    else
+        _G.AddConsoleCommand = detour_attach( _G.AddConsoleCommand, function( fn, name, description, flags )
+            if commands[ name ] == nil then
+                commands[ name ] = true
+                fn( name, description, flags )
+            end
+        end )
+    end
+
+    engine.consoleCommandAdd = _G.AddConsoleCommand
+
+    --- [SHARED AND MENU]
+    ---
+    --- Checks if the console command exists.
+    ---
+    ---@param name string The name of the console command.
+    ---@return boolean exists `true` if the console command exists, `false` otherwise.
+    function engine.consoleCommandExists( name )
+        return commands[ name ] ~= nil
+    end
+
+end
+
+if engine.consoleCommandRun == nil then
+
+    --- [SHARED AND MENU]
+    ---
+    --- Run console command.
+    ---
+    ---@param name string The name of the console command.
+    ---@param ... string? The arguments of the console command.
+    engine.consoleCommandRun = _G.RunConsoleCommand or function( name, ... ) std.print( "engine.consoleCommandRun", name, ... ) end
+
+end
+
 -- TODO: matproxy
 -- TODO: effects | particles?

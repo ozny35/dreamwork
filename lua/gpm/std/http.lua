@@ -91,25 +91,25 @@ std.http = http
 local gpm_http_timeout, gpm_http_lifetime
 do
 
-    local cvar_data = {
-        name = "gpm_http_timeout",
-        description = "Default http timeout for gpm http library.",
+    local cvar_options = {
+        name = "gpm.http.timeout",
+        description = "Default timeout for http requests.",
+        replicated = not std.MENU,
         type = "number",
+        archive = true,
         default = 10,
         min = 0,
-        max = 300,
-        flags = std.MENU and 128 or std.bit.bor( 8192, 128 )
+        max = 300
     }
 
-    gpm_http_timeout = std.console.Variable( cvar_data )
+    gpm_http_timeout = std.console.Variable( cvar_options )
 
-    cvar_data.name = "gpm_http_lifetime"
-    cvar_data.description = "Cache lifetime for gpm http library in minutes."
-    cvar_data.default = 1
-    cvar_data.min = 0
-    cvar_data.max = 40320
+    cvar_options.name = "gpm.http.lifetime"
+    cvar_options.description = "Cache lifetime for gpm http library in minutes."
+    cvar_options.default = 1
+    cvar_options.max = 40320
 
-    gpm_http_lifetime = std.console.Variable( cvar_data )
+    gpm_http_lifetime = std.console.Variable( cvar_options )
 
 end
 

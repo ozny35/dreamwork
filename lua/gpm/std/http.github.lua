@@ -19,8 +19,9 @@ if std.SERVER then
     local gpm_github_token = std.console.Variable( {
         name = "gpm.github.token",
         description = "https://github.com/settings/tokens",
-        flags = std.bit.bor( 16, 32, 128 ),
-        type = "string"
+        protected = true,
+        type = "string",
+        hidden = true
     } )
 
     gpm_github_token:addChangeCallback( "http.github", function( _, __, str ) api_token = str end )
