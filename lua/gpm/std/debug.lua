@@ -1,8 +1,9 @@
 local _G = _G
+local gpm = _G.gpm
 local glua_string = _G.string
 
 ---@class gpm.std
-local std = _G.gpm.std
+local std = gpm.std
 
 --- [SHARED AND MENU]
 ---
@@ -122,17 +123,62 @@ do
         return nil
     end
 
+    --- [SHARED AND MENU]
+    ---
+    --- Returns all upvalues of the given function.
+    ---
+    ---@param fn function The function to get upvalues from.
+    ---@param start_position? integer The start position of the upvalues, default is `0`.
+    ---@return table<string, any> values A table with the upvalues.
+    ---@return integer value_count The count of upvalues.
+    function debug.getupvalues( fn, start_position )
+        if start_position == nil then
+            start_position = 0
+        end
+
+        start_position = start_position + 1
+
+        local values = {}
+
+        local i = start_position
+        while true do
+            local name, value = debug.getupvalue( fn, i )
+            if not name then break end
+            values[ name ] = value
+            i = i + 1
+        end
+
+        return values, i - start_position
+    end
+
+    ---@class gpm.std.raw
+    local raw = std.raw
+
+    if raw.type == nil then
+
+        local glua_type = _G.type
+
+        local values, count = debug.getupvalues( glua_type )
+
+        if count == 0 or values.C_type == nil then
+            raw.type = glua_type
+        else
+            raw.type = values.C_type
+        end
+
+    end
+
     do
 
         local debug_getmetatable = debug.getmetatable
-        local raw_get = std.raw.get
+        local raw_get = raw.get
 
         -- in case the game gets killed (thanks Garry)
         if debug_getmetatable( fempty ) == nil and
             not debug.setmetatable( fempty, {} ) and
             debug_getmetatable( fempty ) == nil then
 
-            local type = _G.type
+            local raw_type = raw.type
 
             --- [SHARED AND MENU]
             ---
@@ -142,7 +188,7 @@ do
             ---@return table | nil meta The metatable.
             ---@diagnostic disable-next-line: duplicate-set-field
             function debug.getmetatable( value )
-                return debug_getmetatable( value ) or registry[ type( value ) ]
+                return debug_getmetatable( value ) or registry[ raw_type( value ) ]
             end
 
             std.print( "at any cost, but it will work..." )
@@ -151,15 +197,19 @@ do
 
         --- [SHARED AND MENU]
         ---
-        --- Returns the value of the given key in the metatable of the given value or `nil` if not found.
+        --- Returns the value of the given key in the metatable of the given value.
         ---
-        ---@param value any The value.
-        ---@param key string The key.
-        ---@return any | nil value The value.
-        function debug.getmetavalue( value, key )
+        --- Returns `nil` if not found.
+        ---
+        ---@param value any The value to get the metatable from.
+        ---@param key string The searchable key.
+        ---@return any | nil value The value of the given key.
+        function debug.getmetavalue( value, key, allow_index )
             local metatable = debug_getmetatable( value )
             if metatable == nil then
                 return nil
+            elseif allow_index then
+                return metatable[ key ]
             else
                 return raw_get( metatable, key )
             end
@@ -278,23 +328,6 @@ else
 
     function debug.isjitcompilable()
         return false
-    end
-
-end
-
-do
-
-    local string_format = glua_string.format
-    local tonumber = std.tonumber
-
-    --- [SHARED AND MENU]
-    ---
-    --- Returns the memory address of the value.
-    ---
-    ---@param value any The value to get the memory address of.
-    ---@return integer | nil address The memory address or `nil` if not found.
-    function debug.getpointer( value )
-        return tonumber( string_format( "%p", value ), 16 )
     end
 
 end
