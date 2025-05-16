@@ -65,9 +65,6 @@ raw.tonumber = raw.tonumber or _G.tonumber
 raw.ipairs = raw.ipairs or _G.ipairs
 raw.pairs = raw.pairs or _G.pairs
 
--- raw.error = raw.error or _G.error
-raw.type = raw.type or _G.type
-
 raw.equal = raw.equal or _G.rawequal
 raw.get = raw.get or _G.rawget
 raw.set = raw.set or _G.rawset
@@ -128,6 +125,7 @@ dofile( "std/debug.gc.lua" )
 local debug = std.debug
 local debug_fempty = debug.fempty
 local debug_getmetatable = debug.getmetatable
+local debug_getmetavalue = debug.getmetavalue
 
 local setmetatable = std.setmetatable
 
@@ -195,88 +193,82 @@ end
 
 do
 
-    local debug_getmetavalue = debug.getmetavalue
-
-    do
-
-        local inext = std.inext
-
-        --- [SHARED AND MENU]
-        ---
-        --- Returns a [Stateless Iterator](https://www.lua.org/pil/7.3.html) for a [Generic For Loops](https://www.lua.org/pil/4.3.5.html), to return ordered key-value pairs from a table.
-        ---
-        --- This will only iterate though <b>numerical keys</b>, and these must also be sequential; starting at 1 with no gaps.
-        ---
-        ---@param tbl table The table to iterate over.
-        ---@return function iter The iterator function.
-        ---@return table lst The table being iterated over.
-        ---@return number index The origin index =0.
-        function std.ipairs( tbl )
-            if debug_getmetavalue( tbl, "__index" ) == nil then
-                return inext, tbl, 0
-            else
-                local index = 0
-                return function()
-                    index = index + 1
-                    local value = tbl[ index ]
-                    if value == nil then return end
-                    return index, value
-                end, tbl, index
-            end
-        end
-
-    end
+    local inext = std.inext
 
     --- [SHARED AND MENU]
     ---
-    --- Attempts to convert the value to a number.
-    ---@param value any The value to convert.
-    ---@param base? integer The base used in the value. Can be any integer between 2 and 36, inclusive. (Default: 10)
-    ---@return number result The numeric representation of the value with the given base, or `0` if the conversion failed or not possible.
-    function std.tonumber( value, base )
-        local fn = debug_getmetavalue( value, "__tonumber" )
-        if fn == nil then
-            return 0
-        else
-            return fn( value, base or 10 )
-        end
-    end
-
-    --- [SHARED AND MENU]
+    --- Returns a [Stateless Iterator](https://www.lua.org/pil/7.3.html) for a [Generic For Loops](https://www.lua.org/pil/4.3.5.html), to return ordered key-value pairs from a table.
     ---
-    --- Attempts to convert the value to a boolean.
-    ---@param value any The value to convert.
-    ---@return boolean bool The boolean representation of the value, or `false` if the conversion failed.
-    function std.toboolean( value )
-        if value == nil or value == false then
-            return false
-        end
-
-        local fn = debug_getmetavalue( value, "__toboolean" )
-        if fn == nil then
-            return true
-        else
-            return fn( value )
-        end
-    end
-
-    -- Alias for lazy developers
-    std.tobool = std.toboolean
-
-    --- [SHARED AND MENU]
+    --- This will only iterate though <b>numerical keys</b>, and these must also be sequential; starting at 1 with no gaps.
     ---
-    --- Checks if the value is valid.
-    ---@param value any The value to check.
-    ---@return boolean is_valid Returns `true` if the value is valid, otherwise `false`.
-    function std.isvalid( value )
-        local fn = debug_getmetavalue( value, "__isvalid" )
-        if fn == nil then
-            return false
+    ---@param tbl table The table to iterate over.
+    ---@return function iter The iterator function.
+    ---@return table lst The table being iterated over.
+    ---@return number index The origin index =0.
+    function std.ipairs( tbl )
+        if debug_getmetavalue( tbl, "__index" ) == nil then
+            return inext, tbl, 0
         else
-            return fn( value )
+            local index = 0
+            return function()
+                index = index + 1
+                local value = tbl[ index ]
+                if value == nil then return end
+                return index, value
+            end, tbl, index
         end
     end
 
+end
+
+--- [SHARED AND MENU]
+---
+--- Attempts to convert the value to a number.
+---@param value any The value to convert.
+---@param base? integer The base used in the value. Can be any integer between 2 and 36, inclusive. (Default: 10)
+---@return number result The numeric representation of the value with the given base, or `0` if the conversion failed or not possible.
+function std.tonumber( value, base )
+    local fn = debug_getmetavalue( value, "__tonumber" )
+    if fn == nil then
+        return 0
+    else
+        return fn( value, base or 10 )
+    end
+end
+
+--- [SHARED AND MENU]
+---
+--- Attempts to convert the value to a boolean.
+---@param value any The value to convert.
+---@return boolean bool The boolean representation of the value, or `false` if the conversion failed.
+function std.toboolean( value )
+    if value == nil or value == false then
+        return false
+    end
+
+    local fn = debug_getmetavalue( value, "__toboolean" )
+    if fn == nil then
+        return true
+    else
+        return fn( value )
+    end
+end
+
+-- Alias for lazy developers
+std.tobool = std.toboolean
+
+--- [SHARED AND MENU]
+---
+--- Checks if the value is valid.
+---@param value any The value to check.
+---@return boolean is_valid Returns `true` if the value is valid, otherwise `false`.
+function std.isvalid( value )
+    local fn = debug_getmetavalue( value, "__isvalid" )
+    if fn == nil then
+        return false
+    else
+        return fn( value )
+    end
 end
 
 do
@@ -676,46 +668,49 @@ end
 
 dofile( "std/class.lua" )
 
-local type
 do
 
-    local debug_getinfo = debug.getinfo
-    local raw_type = raw.type
+    local type
+    do
 
-    --- [SHARED AND MENU]
-    ---
-    --- Returns a string representing the name of the type of the passed object.
-    ---
-    ---@param value any The value to get the type of.
-    ---@return string type_name The type name of the given value.
-    function type( value )
-        local metatable = debug_getmetatable( value )
-        if metatable ~= nil then
-            local name = raw_get( metatable, "__type" )
-            if isstring( name ) then return name end
+        local raw_type = raw.type
+
+        --- [SHARED AND MENU]
+        ---
+        --- Returns a string representing the name of the type of the passed object.
+        ---
+        ---@param value any The value to get the type of.
+        ---@return string type_name The type name of the given value.
+        function type( value )
+            return debug_getmetavalue( value, "__type" ) or raw_type( value )
         end
 
-        return raw_type( value )
+        std.type = type
+
     end
 
-    std.type = type
+    do
 
-    --- [SHARED AND MENU]
-    ---
-    --- Validates the type of the argument and returns a boolean and an error message.
-    ---
-    ---@param value any The argument value.
-    ---@param arg_num number The argument number.
-    ---@param expected_type string The expected type name.
-    ---@return boolean ok Returns `true` if the argument is of the expected type, `false` otherwise.
-    ---@return string? msg The error message.
-    function std.arg( value, arg_num, expected_type )
-        local got = type( value )
-        if got == expected_type or expected_type == "any" then
-            return true, nil
-        else
-            return false, string_format( "bad argument #%d to \'%s\' ('%s' expected, got '%s')", arg_num, debug_getinfo( 2, "n" ).name or "unknown", expected_type, got )
+        local debug_getinfo = debug.getinfo
+
+        --- [SHARED AND MENU]
+        ---
+        --- Validates the type of the argument and returns a boolean and an error message.
+        ---
+        ---@param value any The argument value.
+        ---@param arg_num number The argument number.
+        ---@param expected_type string The expected type name.
+        ---@return boolean ok Returns `true` if the argument is of the expected type, `false` otherwise.
+        ---@return string? msg The error message.
+        function std.arg( value, arg_num, expected_type )
+            local got = type( value )
+            if got == expected_type or expected_type == "any" then
+                return true, nil
+            else
+                return false, string_format( "bad argument #%d to \'%s\' ('%s' expected, got '%s')", arg_num, debug_getinfo( 2, "n" ).name or "unknown", expected_type, got )
+            end
         end
+
     end
 
 end
@@ -1101,7 +1096,7 @@ do
             if fn == nil then
                 return nil, "lua code compilation failed"
             elseif isstring( fn ) then
-                ---@diagnostic disable-next-line  cast-type-mismatch
+                ---@diagnostic disable-next-line: cast-type-mismatch
                 ---@cast fn string
                 return nil, fn
             else

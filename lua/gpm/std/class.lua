@@ -4,6 +4,7 @@ local std = _G.gpm.std
 local debug = std.debug
 local string = std.string
 
+local string_sub = string.sub
 local string_format = string.format
 local setmetatable = std.setmetatable
 local debug_getmetatable = debug.getmetatable
@@ -37,7 +38,6 @@ std.class = class
 do
 
     local debug_getmetavalue = debug.getmetavalue
-    local string_sub = string.sub
 
     ---@param obj gpm.std.Object The object to convert to a string.
     ---@return string str The string representation of the object.
@@ -201,7 +201,7 @@ do
             end
         end
 
-        if private == true then
+        if private then
             cls.__private = true
 
             local template = debug_newproxy( true )
@@ -212,13 +212,16 @@ do
                 error( "userdata metatable is missing, lol how", 2 )
             end
 
-            ---@cast metatable table
+            setmetatable( metatable, { __index = base } )
 
             for key, value in raw_pairs( base ) do
-                metatable[ key ] = value
+                if string_sub( key, 1, 2 ) == "__" and not ( key == "__index" and value == base ) then
+                    metatable[ key ] = value
+                end
             end
 
-            setmetatable( metatable, debug_getmetatable( base ) )
+            cls.__base = metatable
+            base = metatable
         else
             cls.__private = false
         end

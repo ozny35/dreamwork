@@ -7,7 +7,6 @@ local engine = gpm.engine
 local std = gpm.std
 
 local debug = std.debug
-local console_Variable = std.console.Variable
 
 local glua_engine = _G.engine
 local glua_game = _G.game
@@ -196,31 +195,6 @@ if std.CLIENT then
 
     game.getTimeoutInfo = _G.GetTimeoutInfo
 
-    do
-
-        local closecaption = console_Variable.get( "closecaption", "boolean" )
-
-        --- [CLIENT]
-        ---
-        --- Returns whether or not close captions are enabled.
-        ---
-        ---@return boolean result `true` if close captions are enabled, `false` otherwise.
-        function game.getCloseCaptions()
-            ---@diagnostic disable-next-line: return-type-mismatch
-            return closecaption:get()
-        end
-
-        --- [CLIENT]
-        ---
-        --- Enables/disables close captions.
-        ---
-        ---@param enable boolean `true` to enable close captions, `false` to disable them.
-        function game.setCloseCaptions( enable )
-            closecaption:set( enable )
-        end
-
-    end
-
 end
 
 if std.SHARED then
@@ -253,57 +227,13 @@ if std.SHARED then
 
     game.getFrameNumber = _G.FrameNumber
 
-    --- [SHARED]
-    ---
-    --- Checks if Half-Life 2 aux suit power stuff is enabled.
-    ---
-    ---@return boolean enabled `true` if Half-Life 2 aux suit power stuff is enabled, `false` if not.
-    function game.getHL2Suit()
-        return console_Variable.getBoolean( "gmod_suit" )
-    end
-
 end
 
 if std.SERVER then
 
     game.setDifficulty = glua_game.SetSkillLevel
     game.setTimeScale = glua_game.SetTimeScale
-    game.print = _G.PrintMessage
-
-    --- [SERVER]
-    ---
-    --- Enables Half-Life 2 aux suit power stuff.
-    ---
-    ---@param bool boolean `true` to enable Half-Life 2 aux suit power stuff, `false` to disable it.
-    function game.setHL2Suit( bool )
-        console_Variable.set( "gmod_suit", bool == true )
-    end
-
     game.exit = glua_engine.CloseServer
-
-    do
-
-        local closecaption_mp = console_Variable.get( "closecaption_mp", "boolean" )
-
-        --- [SERVER]
-        ---
-        --- Returns whether or not close captions are allowed in multiplayer.
-        ---
-        ---@return boolean result `true` if close captions are allowed, `false` otherwise.
-        function game.getCloseCaptions()
-            ---@diagnostic disable-next-line: return-type-mismatch
-            return closecaption_mp:get()
-        end
-
-        --- [SERVER]
-        ---
-        --- Allow/disallow closecaptions in multiplayer (for dedicated servers).
-        ---
-        ---@param enable boolean `true` to enable close captions, `false` to disable them.
-        function game.setCloseCaptions( enable )
-            closecaption_mp:set( enable )
-        end
-
-    end
+    game.print = _G.PrintMessage
 
 end

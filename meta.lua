@@ -3,6 +3,8 @@
 ---@class gpm.std
 std = {}
 
+---@alias bool boolean
+
 --- [SHARED AND MENU]
 ---
 --- HTTP request method.
@@ -355,9 +357,9 @@ do
 
     --- In multiplayer, prevents this command/variable from being used unless the server has `sv_cheats` turned on.
     ---
-    --- If a client connects to a server where cheats are disabled (which is the default), all client side console variables labeled as FCVAR_CHEAT are reverted to their default values and can't be changed as long as the client stays connected.
+    --- If a client connects to a server where cheats are disabled (which is the default), all client side console variables labeled as `cheat` are reverted to their default values and can't be changed as long as the client stays connected.
     ---
-    --- Console commands marked as `CHEAT` can't be executed either.
+    --- Console commands marked as `cheat` can't be executed either.
     ---
     --- As a general rule of thumb, any client-side command that isn't specifically meant to be configured by users should be marked with this flag, as even the most harmless looking commands can sometimes be misused to cheat.
     ---
@@ -371,7 +373,7 @@ do
     ---@type boolean?
     options.printable_only = nil
 
-    --- If this is a `SERVER`, don't log changes to the log file / console if we are creating a log.
+    --- If this is a server-side, don't log changes to the log file / console if we are creating a log.
     ---
     ---@type boolean?
     options.unlogged = nil
@@ -422,9 +424,11 @@ do
     ---@type boolean?
     options.material_system_thread = nil
 
-    --- Like `ARCHIVE`, but for Xbox 360. Needless to say, this is not particularly useful to most modders.
+    --- Like `archive`, but for [Xbox 360](https://de.wikipedia.org/wiki/Xbox_360).
     ---
-    --- Save the cvar value into config.vdf on XBox.
+    --- Needless to say, this is not particularly useful to most modders.
+    ---
+    --- Save the cvar value into `config.vdf` on XBox.
     ---
     ---@type boolean?
     options.archive_xbox = nil
@@ -449,21 +453,17 @@ do
     ---@type boolean?
     options.clientcmd_can_execute = nil
 
-    --- Summary of `RELOAD_MATERIALS`, `RELOAD_TEXTURES` and `MATERIAL_SYSTEM_THREAD`.
+    --- Summary of `reload_materials`, `reload_textures` and `material_system_thread`.
     ---
     ---@type boolean?
     options.material_thread_mask = nil
 
     --- Set automatically on all cvars and console commands created by the `client` Lua state.
     ---
-    --- **Garry's Mod only**
-    ---
     ---@type boolean?
     options.lua_client = nil
 
     --- Set automatically on all cvars and console commands created by the `server` Lua state.
-    ---
-    --- **Garry's Mod only**
     ---
     ---@type boolean?
     options.lua_server = nil

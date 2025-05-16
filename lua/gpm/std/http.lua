@@ -175,18 +175,6 @@ local game_getUptime = std.game.getUptime
 
 local session_cache = {}
 
---[[
-
-    todo
-
-        http method as string luals
-        http success and failure as one
-
-        add private request structures
-        add private response structures
-
-]]
-
 --- [SHARED AND MENU]
 ---
 --- Executes an asynchronous http request with the given options.

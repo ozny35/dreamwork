@@ -40,7 +40,7 @@ do
     table.unpack = table.unpack or glua_table.unpack or _G.unpack
 
     -- Lua 5.3
-    table.move = table.move or glua_table.move
+    -- table.move = table.move or glua_table.move
 
     if table.move == nil then
         ---@diagnostic disable-next-line: duplicate-set-field

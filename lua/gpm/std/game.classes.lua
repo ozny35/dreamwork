@@ -18,6 +18,7 @@ std.Model = ModelClass
 
     https://wiki.facepunch.com/gmod/Global.DynamicMaterial
 
+    https://wiki.facepunch.com/gmod/Material_Parameters
 
 ]]
 

@@ -116,7 +116,9 @@ end
 
 do
 
-    local command_run = std.console.Command.run
+    local console = std.console
+    local console_Command = console.Command
+    local console_Variable = console.Variable
 
     if std.CLIENT then
 
@@ -125,7 +127,7 @@ do
         --- Disconnects the client from the server.
         ---
         function client.disconnect()
-            command_run( "disconnect" )
+            console_Command.run( "disconnect" )
         end
 
     else
@@ -144,7 +146,7 @@ do
     ---
     --- Retry connection to last server.
     function client.retry()
-        command_run( "retry" )
+        console_Command.run( "retry" )
     end
 
     --- [CLIENT AND MENU]
@@ -170,19 +172,46 @@ do
         end
 
         fileName = std.string.format( "%s_%04d", fileName, count )
-        command_run( "jpeg", fileName, quality or 90 )
+        console_Command.run( "jpeg", fileName, quality or 90 )
         return true, "/screenshots/" .. fileName .. ".jpg"
     end
 
     if std.CLIENT then
+        client.connect = client.connect or _G.permissions.AskToConnect
+    else
+        client.connect = client.connect or _G.JoinServer or _G.permissions.Connect
+    end
+
+    if client.connect == nil then
+
         --- [CLIENT AND MENU]
         ---
         --- Connects client to the specified server.
         ---
         ---@param address string? The address of the server. ( IP:Port like `127.0.0.1:27015` )
-        client.connect = _G.permissions.AskToConnect or function( address ) command_run( "connect", address ) end
-    else
-        client.connect = _G.JoinServer or _G.permissions.Connect
+        ---@diagnostic disable-next-line: duplicate-set-field
+        function client.connect( address )
+            console_Command.run( "connect", address )
+        end
+
+    end
+
+    --- [CLIENT AND MENU]
+    ---
+    --- Checks if close captions are enabled.
+    ---
+    ---@return boolean result `true` if close captions are enabled, `false` otherwise.
+    function game.getCloseCaptions()
+        console_Variable.getBoolean( "closecaption" )
+    end
+
+    --- [CLIENT AND MENU]
+    ---
+    --- Enables or disables close captions.
+    ---
+    ---@param enable boolean `true` to enable close captions, `false` to disable them.
+    function game.setCloseCaptions( enable )
+        console_Variable.set( "closecaption", enable )
     end
 
 end
