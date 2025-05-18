@@ -1,76 +1,334 @@
 local timer = _G.timer
 if timer == nil then
-    _G.gpm.Logger:error( "gpm.std.Timer: timer library not found" )
+    error( "timer library not found" )
 end
 
 ---@class gpm.std
 local std = _G.gpm.std
 
---- [SHARED AND MENU]
----
---- Timer object.
----
----@alias Timer gpm.std.Timer
----@class gpm.std.Timer : gpm.std.Object
----@field __class gpm.std.TimerClass
-local Timer = std.Timer and std.Timer.__base or std.class.base( "Timer" )
+local gc_setTableRules = std.debug.gc.setTableRules
+local game_getUptime = std.game.getUptime
+local timer_RepsLeft = timer.RepsLeft
+local timer_UnPause = timer.UnPause
+local timer_Exists = timer.Exists
+local timer_Create = timer.Create
+local timer_Adjust = timer.Adjust
 
 --- [SHARED AND MENU]
 ---
---- Timer class.
+--- The timer object.
+---
+---@class gpm.std.Timer : gpm.std.Object
+---@field __class gpm.std.TimerClass
+---@field name string The internal name of the timer. **Read-only.**
+---@field state gpm.std.Timer.state The current state of the timer. **Read-only.**
+---@field delay number The delay between repetitions of the timer in seconds.
+---@field repetition_index integer The current repetition index of the timer. **Read-only.**
+---@field repetitions_total integer The total amount of repetitions of the timer.
+---@field repetitions_remaining integer The remaining amount of repetitions of the timer. **Read-only.**
+---@field time_total number The total running time of the timer in seconds. **Read-only.**
+---@field time_remaining number The remaining running time of the timer in seconds. **Read-only.**
+---@field time_elapsed number The total elapsed time of the timer in seconds. **Read-only.**
+---@field time_left number The remaining time until the next run of timer callbacks in seconds, or `nil` if the timer is stopped. **Read-only.**
+---@field start_time number The start time of the timer in seconds. **Read-only.**
+local Timer = std.Timer and std.Timer.__base or std.class.base( "Timer", true )
+
+--- [SHARED AND MENU]
+---
+--- The timer class.
 ---
 ---@class gpm.std.TimerClass : gpm.std.Timer
 ---@field __base gpm.std.Timer
----@overload fun( name: string?, delay: number?, repetitions: integer? )  Timer
+---@overload fun( delay: number?, repetitions_total: integer?, name: string? ): gpm.std.Timer
 local TimerClass = std.Timer or std.class.create( Timer )
 std.Timer = TimerClass
 
+---@diagnostic disable-next-line: duplicate-doc-alias
+---@alias Timer gpm.std.Timer
+
+---@type table<gpm.std.Timer, string>
+local names = {}
+
+gc_setTableRules( names, true, false )
+
 do
 
-    local string_format = std.string.format
-
-    local status2string = {
-        [ 0 ] = "removed",
-        [ 1 ] = "stopped",
-        [ 2 ] = "paused",
-        [ 3 ] = "running"
-    }
+    local timer_Remove = timer.Remove
 
     ---@protected
-    function Timer:__tostring()
-        return string_format( "Timer: %p [%s][%s]", self, self[ -2 ], status2string[ self[ -1 ] ] or "unknown" )
+    function Timer:__gc()
+        local name = names[ self ]
+        if name ~= nil and timer_Exists( name ) then
+            timer_Remove( name )
+        end
     end
 
 end
 
----@alias gpm.std.Timer.Status
----| number # The timer status code.
----| `0` # Timer removed.
----| `1` # Timer stopped.
----| `2` # Timer paused.
----| `3` # Timer running.
+---@alias gpm.std.Timer.state
+---| `0` # Timer stopped.
+---| `1` # Timer paused.
+---| `2` # Timer running.
+
+---@type table<gpm.std.Timer, gpm.std.Timer.state>
+local states = {}
+
+gc_setTableRules( states, true, false )
 
 do
 
-    local crypto_UUIDv7 = std.crypto.UUIDv7
-    local timer_Create = timer.Create
+    local status2string = {
+        [ 0 ] = "stopped",
+        [ 1 ] = "paused",
+        [ 2 ] = "running"
+    }
 
-    local function call( self )
-        self[ -5 ] = true
+    ---@protected
+    function Timer:__tostring()
+        return std.string.format( "Timer: %p [%s][%s]", self, self.name, status2string[ self.state ] or "unknown" )
+    end
 
-        for i = 2, self[ 0 ], 2 do
-            if self[ -5 ] then
-                self[ i ]( self )
+end
+
+--- [SHARED AND MENU]
+---
+--- Checks if the timer is stopped.
+---
+---@return boolean is_stopped Returns `true` if the timer is stopped, otherwise `false`.
+function Timer:isStopped()
+    return self.state == 0
+end
+
+--- [SHARED AND MENU]
+---
+--- Checks if the timer is paused.
+---
+---@return boolean is_paused Returns `true` if the timer is paused, otherwise `false`.
+function Timer:isPaused()
+    return self.state == 1
+end
+
+--- [SHARED AND MENU]
+---
+--- Checks if the timer is running.
+---
+---@return boolean is_running Returns `true` if the timer is running, otherwise `false`.
+function Timer:isRunning()
+    return self.state == 2
+end
+
+---@type table<gpm.std.Timer, boolean>
+local in_call = {}
+
+gc_setTableRules( in_call, true, false )
+
+---@class gpm.std.Timer.Callback
+
+---@type table<gpm.std.Timer, table>
+local callbacks = {}
+
+std.setmetatable( callbacks, {
+    __index = function( _, self )
+        local t = {}
+        callbacks[ self ] = t
+        return t
+    end,
+    __mode = "k"
+} )
+
+---@type table<gpm.std.Timer, table>
+local queues = {}
+
+gc_setTableRules( queues, true, false )
+
+---@type table<gpm.std.Timer, number>
+local delays = {}
+
+gc_setTableRules( delays, true, false )
+
+---@type table<gpm.std.Timer, integer>
+local repetitions_total = {}
+
+gc_setTableRules( repetitions_total, true, false )
+
+---@type table<gpm.std.Timer, integer>
+local repetition_indexes = {}
+
+gc_setTableRules( repetition_indexes, true, false )
+
+---@type table<gpm.std.Timer, number>
+local start_times = {}
+
+gc_setTableRules( start_times, true, false )
+
+---@type table<gpm.std.Timer, boolean | nil>
+local running_timers = {}
+
+do
+
+    local debug_getmetatable = std.debug.getmetatable
+    local timer_TimeLeft = timer.TimeLeft
+    local raw_get = std.raw.get
+
+    local math = std.math
+    local math_abs = math.abs
+    local math_huge = math.huge
+
+    ---@protected
+    function Timer:__index( key )
+        if key == "name" then
+            return names[ self ] or "unknown"
+        elseif key == "state" then
+            local name = names[ self ]
+            if name ~= nil and timer_Exists( name ) and ( timer_TimeLeft( name ) or 0 ) < 0 then
+                return 1
+            else
+                return states[ self ] or 0
+            end
+        elseif key == "delay" then
+            return delays[ self ] or 0
+        elseif key == "start_time" then
+            return start_times[ self ] or 0
+        elseif key == "repetition_index" then
+            if self.repetitions_total == -1 then
+                return repetition_indexes[ self ] or 0
+            else
+                return self.repetitions_total - self.repetitions_remaining
+            end
+        elseif key == "repetitions_total" then
+            return repetitions_total[ self ] or 1
+        elseif key == "repetitions_remaining" then
+            local name = names[ self ]
+            if name == nil or self.state == 0 then
+                return self.repetitions_total
+            elseif repetitions_total[ self ] == -1 then
+                return math_huge
+            end
+
+            local repetitions_left = timer_RepsLeft( name )
+            if repetitions_left == nil then
+                return 0
+            elseif repetitions_left == -1 then
+                return math_huge
+            else
+                return repetitions_left
+            end
+        elseif key == "time_total" then
+            local repetitions = self.repetitions_total
+            if repetitions == 0 then
+                return math_huge
+            else
+                return self.delay * repetitions
+            end
+        elseif key == "time_left" then
+            if self.state == 0 then
+                return self.delay
+            end
+
+            local name = names[ self ]
+            if name == nil or not timer_Exists( name ) then
+                return self.delay
+            end
+
+            local time_left = timer_TimeLeft( name )
+            if time_left == nil then
+                return self.delay
+            end
+
+            return math_abs( time_left )
+        elseif key == "time_remaining" then
+            if self.state == 0 then
+                return self.time_total
+            elseif self.repetitions_total == -1 then
+                return math_huge
+            else
+                return self.time_total - self.time_elapsed
+            end
+        elseif key == "time_elapsed" then
+            local delay = self.delay
+            return ( self.repetition_index * delay ) - ( self.time_left - delay )
+        else
+            return raw_get( Timer, key )
+        end
+    end
+
+end
+
+do
+
+    local tonumber = std.tonumber
+    local math_max = math.max
+
+    ---@protected
+    function Timer:__newindex( key, value )
+        if key == "delay" then
+            local delay = math_max( 0, tonumber( value, 10 ) or 0 )
+            delays[ self ] = delay
+
+            local name = names[ self ]
+            if name ~= nil and timer_Exists( name ) then
+                timer_Adjust( name, delay )
+            end
+        elseif key == "repetitions_total" then
+            local repetitions = math_max( 0, tonumber( value, 10 ) or 1 )
+            repetitions_total[ self ] = repetitions
+
+            if repetitions == 0 then
+                running_timers[ self ] = nil
+            end
+
+            if self.state == 0 then
+                local name = names[ self ]
+                if name ~= nil and timer_Exists( name ) then
+                    timer_Adjust( name, self.delay, repetitions )
+                end
+            end
+        else
+            error( "attempt to modify unknown timer property", 2 )
+        end
+    end
+
+end
+
+local timer_call
+do
+
+    local pcall = std.pcall
+
+    ---@param self gpm.std.Timer
+    function timer_call( self )
+        if self.repetitions_total == -1 then
+            local repetition_index = self.repetition_index + 1
+            repetition_indexes[ self ] = repetition_index
+
+            if start_times[ self ] == nil and repetition_index == 1 then
+                start_times[ self ] = game_getUptime() - self.delay
+            end
+        elseif start_times[ self ] == nil and self.repetition_index == 1 then
+            start_times[ self ] = game_getUptime() - self.delay
+        end
+
+        in_call[ self ] = true
+
+        local lst = callbacks[ self ]
+
+        for i = 2, #lst, 2 do
+            if in_call[ self ] then
+                local success, err_msg = pcall( lst[ i ], self )
+                if not success then
+                    -- TODO: replace with cool new errors that i make later
+                    print( "[gpm] timer error: " .. err_msg )
+                end
             else
                 break
             end
         end
 
-        self[ -5 ] = false
+        in_call[ self ] = nil
 
-        local queue = self[ -6 ]
+        local queue = queues[ self ]
         if queue ~= nil then
-            self[ -6 ] = nil
+            queues[ self ] = nil
 
             for i = 1, #queue, 1 do
                 local args = queue[ i ]
@@ -81,47 +339,26 @@ do
                 end
             end
         end
+
+        local name = names[ self ]
+        if name ~= nil and timer_RepsLeft( name ) == 0 then
+            self:stop()
+        end
     end
 
-    --[[
+end
 
-        Timer:
-            -6 - post run queue for attach/detach
-            -5 - is running
-            -4 - repetitions
-            -3 - delay
-            -2 - name
-            -1 - status code
-             0 - callback count
+do
 
-    --]]
+    local crypto_UUIDv7 = std.crypto.UUIDv7
 
     ---@protected
-    function Timer:__init( name, delay, repetitions )
-        if name == nil then
-            name = crypto_UUIDv7()
-        end
+    function Timer:__init( delay, repetition_count, name )
+        names[ self ] = name or crypto_UUIDv7()
+        states[ self ] = 0
 
-        if delay == nil then
-            delay = 0
-        end
-
-        if repetitions == nil then
-            repetitions = 1
-        end
-
-        self[ 0 ] = 0
-        self[ -1 ] = 1
-        self[ -2 ] = name
-        self[ -3 ] = delay
-        self[ -4 ] = repetitions
-        self[ -5 ] = false
-
-        timer_Create( name, delay, repetitions, function()
-            return call( self )
-        end )
-
-        self:stop()
+        delays[ self ] = delay or 0
+        repetitions_total[ self ] = repetition_count or 1
     end
 
 end
@@ -130,15 +367,19 @@ end
 ---
 --- Attaches a callback to the timer.
 ---
----@param fn function The callback function.
+---@param fn fun( timer: gpm.std.Timer ) The callback function.
 ---@param name string? The name of the callback, default is `unnamed`.
 function Timer:attach( fn, name )
-    if name == nil then name = "unnamed" end
+    if name == nil then
+        name = "unnamed"
+    end
 
-    if self[ -5 ] then
-        local queue = self[ -6 ]
+    if in_call[ self ] then
+        local queue = queues[ self ]
         if queue == nil then
-            self[ -6 ] = { { true, name, fn } }
+            queues[ self ] = {
+                { true, name, fn }
+            }
         else
             queue[ #queue + 1 ] = { true, name, fn }
         end
@@ -146,20 +387,21 @@ function Timer:attach( fn, name )
         return
     end
 
-    for i = 1, self[ 0 ], 2 do
-        if self[ i ] == name then
-            self[ i + 1 ] = fn
+    local lst = callbacks[ self ]
+    local lst_length = #lst
+
+    for i = 1, lst_length, 2 do
+        if lst[ i ] == name then
+            lst[ i + 1 ] = fn
             return
         end
     end
 
-    local index = self[ 0 ] + 1
-    self[ index ] = name
+    local index = lst_length + 1
+    lst[ index ] = name
 
     index = index + 1
-    self[ index ] = fn
-
-    self[ 0 ] = index
+    lst[ index ] = fn
 end
 
 do
@@ -173,20 +415,27 @@ do
     ---
     ---@param name string The name of the callback to detach.
     function Timer:detach( name )
-        for i = 1, self[ 0 ], 2 do
-            if self[ i ] == name then
-                if self[ -5 ] then
-                    self[ i + 1 ] = debug_fempty
+        if name == nil then
+            name = "unnamed"
+        end
 
-                    local queue = self[ -6 ]
+        local lst = callbacks[ self ]
+
+        for i = 1, #lst, 2 do
+            if lst[ i ] == name then
+                if in_call[ self ] then
+                    lst[ i + 1 ] = debug_fempty
+
+                    local queue = queues[ self ]
                     if queue == nil then
-                        self[ -6 ] = { { false, name } }
+                        queues[ self ] = {
+                            { false, name }
+                        }
                     else
                         queue[ #queue + 1 ] = { false, name }
                     end
                 else
-                    table_eject( self, i, i + 1 )
-                    self[ 0 ] = self[ 0 ] - 2
+                    table_eject( lst, i, i + 1 )
                 end
 
                 break
@@ -201,18 +450,8 @@ end
 --- Detaches all timer callbacks.
 ---
 function Timer:clear()
-    self[ -5 ] = false
-
-    for i = 1, self[ 0 ], 1 do
-        self[ i ] = nil
-    end
-
-    self[ 0 ] = 0
-end
-
----@protected
-function Timer:__isvalid()
-    return self[ -1 ] ~= 0
+    callbacks[ self ] = nil
+    in_call[ self ] = nil
 end
 
 do
@@ -221,36 +460,30 @@ do
 
     --- [SHARED AND MENU]
     ---
-    --- Start the timer.
+    --- Restarts the timer.
     ---
-    ---@return boolean success Returns `true` if successful, otherwise `false`.
     function Timer:start()
-        local status = self[ -1 ]
-        if status == 0 or status == 3 then
-            return false
+        local repetitions = self.repetitions_total
+
+        local name = names[ self ]
+        if name ~= nil then
+            if timer_Exists( name ) then
+                timer_Adjust( name, self.delay, repetitions )
+                timer_Start( name )
+            else
+                timer_Create( name, self.delay, repetitions, function()
+                    return timer_call( self )
+                end )
+            end
         end
 
-        if status == 2 then
-            self:setPause( false )
+        if repetitions > 0 then
+            running_timers[ self ] = true
+        else
+            running_timers[ self ] = nil
         end
 
-        timer_Start( self[ -2 ] )
-        self[ -1 ] = 3
-        return true
-    end
-
-    --- [SHARED AND MENU]
-    ---
-    --- Restart the timer.
-    ---
-    ---@return boolean success Returns `true` if successful, otherwise `false`.
-    function Timer:restart()
-        if self[ -1 ] == 0 then return false end
-        self:setPause( false )
-
-        timer_Start( self[ -2 ] )
-        self[ -1 ] = 3
-        return true
+        states[ self ] = 2
     end
 
 end
@@ -263,216 +496,71 @@ do
     ---
     --- Stops the timer.
     ---
-    ---@return boolean success Returns `true` if successful, otherwise `false`.
     function Timer:stop()
-        local status = self[ -1 ]
-        if status == 0 or status == 1 then
-            return false
-        end
+        repetition_indexes[ self ] = nil
+        running_timers[ self ] = nil
+        start_times[ self ] = nil
 
-        if status == 2 then
-            self:setPause( false )
-        end
-
-        timer_Stop( self[ -2 ] )
-        self[ -1 ] = 1
-        return true
-    end
-
-end
-
-do
-
-    local timer_Adjust = timer.Adjust
-
-    --- [SHARED AND MENU]
-    ---
-    --- Returns the delay between repetitions of the timer in seconds.
-    ---
-    ---@return number delay The delay between repetitions in seconds.
-    function Timer:getDelay()
-        return self[ -3 ]
-    end
-
-    --- [SHARED AND MENU]
-    ---
-    --- Sets the delay between repetitions of the timer in seconds.
-    ---
-    ---@param delay number | nil The delay between repetitions in seconds.
-    ---@return boolean success Returns `true` if successful, otherwise `false`.
-    function Timer:setDelay( delay )
-        if self[ -1 ] == 0 then
-            return false
-        end
-
-        if delay == nil then
-            delay = self[ -3 ]
-        else
-            self[ -3 ] = delay
-        end
-
-        timer_Adjust( self[ -2 ], delay )
-        return true
-    end
-
-    --- [SHARED AND MENU]
-    ---
-    --- Returns the number of timer repetitions.
-    ---
-    ---@return integer repetitions The number of timer repetitions.
-    function Timer:getRepetitions()
-        return self[ -4 ]
-    end
-
-    --- [SHARED AND MENU]
-    ---
-    --- Sets the number of timer repetitions.
-    ---
-    ---@param repetitions integer | nil The number of timer repetitions, `0` is infinite.
-    ---@return boolean success Returns `true` if successful, otherwise `false`.
-    function Timer:setRepetitions( repetitions )
-        if self[ -1 ] == 0 then
-            return false
-        end
-
-        if repetitions == nil then
-            repetitions = self[ -4 ]
-        else
-            self[ -4 ] = repetitions
-        end
-
-        timer_Adjust( self[ -2 ], self[ -3 ], repetitions )
-        return true
-    end
-
-end
-
-do
-
-    local timer_TimeLeft = timer.TimeLeft
-    local math_huge = std.math.huge
-
-    --- [SHARED AND MENU]
-    ---
-    --- Returns the time left to the next callbacks call in seconds.
-    ---
-    ---@return number timef The time left in seconds.
-    function Timer:getTimeLeft()
-        if self[ -1 ] == 3 then
-            return timer_TimeLeft( self[ -2 ] )
-        else
-            return math_huge
-        end
-    end
-
-end
-
-do
-
-    local timer_RepsLeft = timer.RepsLeft
-
-    --- [SHARED AND MENU]
-    ---
-    --- Returns the number of timer repetitions left.
-    ---
-    ---@return integer repetitions The number of timer repetitions left.
-    function Timer:getRepetitionsLeft()
-        if self[ -1 ] == 0 then
-            return 0
-        else
-            return timer_RepsLeft( self[ -1 ] )
-        end
-    end
-
-end
-
-do
-
-    local timer_Remove = timer.Remove
-
-    --- [SHARED AND MENU]
-    ---
-    --- Removes the timer.
-    ---
-    ---@return boolean success Returns `true` if successful, `false` if timer already removed.
-    function Timer:remove()
-        if self[ -1 ] == 0 then return false end
-        self[ -1 ] = 0
-        self:clear()
-
-        timer_Remove( self[ -1 ] )
-        return true
-    end
-
-end
-
---- [SHARED AND MENU]
----
---- Checks if the timer is valid.
----
----@return boolean is_valid Returns `true` if the timer is valid (not removed), otherwise `false`.
-function Timer:isValid()
-    return self[ -1 ] ~= 0
-end
-
---- [SHARED AND MENU]
----
---- Checks if the timer is stopped.
----
----@return boolean is_stopped Returns `true` if the timer is stopped, otherwise `false`.
-function Timer:isStopped()
-    return self[ -1 ] == 1
-end
-
---- [SHARED AND MENU]
----
---- Checks if the timer is paused.
----
----@return boolean is_paused Returns `true` if the timer is paused, otherwise `false`.
-function Timer:isPaused()
-    return self[ -1 ] == 2
-end
-
---- [SHARED AND MENU]
----
---- Checks if the timer is running.
----
----@return boolean is_running Returns `true` if the timer is running, otherwise `false`.
-function Timer:isRunning()
-    return self[ -1 ] == 3
-end
-
-do
-
-    local timer_Pause, timer_UnPause = timer.Pause, timer.UnPause
-
-    --- [SHARED AND MENU]
-    ---
-    --- Pauses/unpauses the timer.
-    ---
-    ---@param value boolean `true` to pause, `false` to unpause.
-    ---@return boolean success Returns `true` if successful, otherwise `false`.
-    function Timer:setPause( value )
-        local status = self[ -1 ]
-        if status == 0 or status == 1 then return false end
-
-        if value then
-            if status == 2 then
-                return false
-            else
-                timer_Pause( self[ -2 ] )
-                self[ -1 ] = 2
+        local name = names[ self ]
+        if name ~= nil then
+            if self.state == 1 then
+                timer_UnPause( name )
             end
-        elseif status == 3 then
-            return false
-        else
-            timer_UnPause( self[ -2 ] )
-            self[ -1 ] = 3
+
+            timer_Stop( name )
         end
 
-        return true
+        states[ self ] = 0
     end
 
+end
+
+---@type table<gpm.std.Timer, number>
+local pause_times = {}
+
+gc_setTableRules( pause_times, true, false )
+
+do
+
+    local timer_Pause = timer.Pause
+
+    --- [SHARED AND MENU]
+    ---
+    --- Pauses the timer.
+    ---
+    function Timer:pause()
+        if self.state ~= 2 then
+            return
+        end
+
+        local name = names[ self ]
+        if name == nil then
+            return
+        end
+
+        pause_times[ self ] = game_getUptime()
+        timer_Pause( name )
+        states[ self ] = 1
+    end
+
+end
+
+--- [SHARED AND MENU]
+---
+--- Resumes/unpauses the timer.
+---
+function Timer:resume()
+    if self.state ~= 1 then
+        return
+    end
+
+    local name = names[ self ]
+    if name == nil then
+        return
+    end
+
+    timer_UnPause( name )
+    states[ self ] = 2
 end
 
 do
@@ -481,28 +569,12 @@ do
 
     --- [SHARED AND MENU]
     ---
-    --- Creates a simple timer.
+    --- Creates a timer with a single callback.
     ---
     ---@param fn function The callback function.
-    ---@param seconds number? The delay in seconds.
-    function TimerClass.wait( fn, seconds )
-        return timer_Simple( seconds or 0, fn )
-    end
-
-end
-
-do
-
-    local timer_Exists = timer.Exists
-
-    --- [SHARED AND MENU]
-    ---
-    --- Checks if the timer exists.
-    ---
-    ---@param name string The name of the timer.
-    ---@return boolean exists Returns `true` if the timer exists, otherwise `false`.
-    function TimerClass.exists( name )
-        return timer_Exists( name )
+    ---@param delay? number The delay in seconds, default is `0`.
+    function TimerClass.simple( fn, delay )
+        timer_Simple( delay or 0, fn )
     end
 
 end
