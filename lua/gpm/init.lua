@@ -805,47 +805,7 @@ end
 
 dofile( "engine.lua" )
 
-dofile( "std/console.lua" )
-dofile( "std/console.logger.lua")
-
-local logger = std.console.Logger( {
-    title = gpm.PREFIX,
-    color = std.Color( 180, 180, 255 ),
-    interpolation = false
-} )
-
-gpm.Logger = logger
-
 dofile( "std/game.lua" )
-
-do
-
-    local developer = std.console.Variable.get( "developer", "number" )
-
-    local get_developer
-    if developer == nil then
-        get_developer = function() return 1 end
-    elseif std.DEDICATED then
-        local value = developer:get()
-        developer:addChangeCallback( "gpm::init", function( _, __, new ) value = new end )
-        get_developer = function() return value end
-    else
-        get_developer = function() return developer:get() end
-    end
-
-    local key2call = {
-        DEVELOPER = get_developer
-    }
-
-    std.setmetatable( std, {
-        __index = function( _, key )
-            local func = key2call[ key ]
-            if func == nil then return end
-            return func()
-        end
-    } )
-
-end
 
 dofile( "std/crypto.lua" )
 dofile( "std/crypto.uuid.lua" )
@@ -891,6 +851,42 @@ dofile( "std/crypto.chacha20.lua" )
 dofile( "std/timer.lua" )
 dofile( "std/hook.lua" )
 dofile( "std/url.lua" )
+
+if gpm.TickTimer0_05 == nil then
+    local timer = std.Timer( 0.05, -1, gpm.PREFIX .. "::TickTimer0_05" )
+    gpm.TickTimer0_05 = timer
+    timer:start()
+end
+
+if gpm.TickTimer0_1 == nil then
+    local timer = std.Timer( 0.1, -1, gpm.PREFIX .. "::TickTimer0_1" )
+    gpm.TickTimer0_1 = timer
+    timer:start()
+end
+
+if gpm.TickTimer0_25 == nil then
+    local timer = std.Timer( 0.25, -1, gpm.PREFIX .. "::TickTimer0_25" )
+    gpm.TickTimer0_25 = timer
+    timer:start()
+end
+
+if gpm.TickTimer1 == nil then
+    local timer = std.Timer( 1, -1, gpm.PREFIX .. "::TickTimer1" )
+    gpm.TickTimer1 = timer
+    timer:start()
+end
+
+dofile( "std/console.lua" )
+dofile( "std/console.logger.lua")
+
+local logger = std.console.Logger( {
+    title = gpm.PREFIX,
+    color = std.Color( 180, 180, 255 ),
+    interpolation = false
+} )
+
+gpm.Logger = logger
+
 
 dofile( "std/file.path.lua" )
 dofile( "std/file.lua" )
@@ -1186,6 +1182,97 @@ if std.CLIENT_MENU then
     dofile( "std/menu.lua" )
     dofile( "std/client.lua" )
     dofile( "std/render.lua" )
+end
+
+do
+
+    ---@class gpm.std.os
+    local os = std.os
+
+    ---@class gpm.std.os.window
+    local window = os.window
+
+    local has_battery = false
+    local level = 100
+
+    --- [SHARED AND MENU]
+    ---
+    --- Returns the current battery level.
+    ---
+    ---@return number level The battery level, between 0 and 100.
+    function os.getBatteryLevel()
+        return level
+    end
+
+    --- [SHARED AND MENU]
+    ---
+    --- Checks if the system has a battery.
+    ---
+    ---@return boolean has `true` if the system has a battery, `false` if not.
+    function os.hasBattery()
+        return has_battery
+    end
+
+    local glua_system = _G.system
+    if glua_system ~= nil then
+
+        os.country = os.country or glua_system.GetCountry or function() return "gb" end
+
+        if glua_system.BatteryPower ~= nil then
+
+            local system_BatteryPower = glua_system.BatteryPower
+
+            local function update_battery()
+                local battery_power = system_BatteryPower()
+                has_battery = battery_power ~= 255
+                level = has_battery and battery_power or 100
+            end
+
+            update_battery()
+
+            gpm.TickTimer1:attach( update_battery, "std.os.battery" )
+
+        end
+
+        if std.CLIENT_MENU then
+
+            window.isWindowed = window.isWindowed or glua_system.IsWindowed or function() return true end
+            window.flash = window.flash or glua_system.FlashWindow or debug_fempty
+
+            local system_HasFocus = glua_system.HasFocus
+            if system_HasFocus ~= nil then
+
+                local has_focus = system_HasFocus()
+                window.focus = has_focus
+
+                gpm.TickTimer0_05:attach( function()
+                    if has_focus ~= system_HasFocus() then
+                        has_focus = not has_focus
+                        window.focus = has_focus
+                    end
+                end, "std.os.window.focus" )
+
+            end
+
+            if window.isFullscreen == nil then
+
+                local system_IsWindowed = window.isWindowed
+
+                --- [CLIENT AND MENU]
+                ---
+                --- Returns whether the game window is fullscreen.
+                ---
+                ---@return boolean is_on `true` if the game window is fullscreen, `false` if not.
+                function window.isFullscreen()
+                    return not system_IsWindowed()
+                end
+
+            end
+
+        end
+
+    end
+
 end
 
 dofile( "std/server.lua" )

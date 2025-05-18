@@ -19,45 +19,6 @@ os.window = window
 local width, height = _G.ScrW(), _G.ScrH()
 window.width, window.height = width, height
 
-do
-
-    local glua_system = _G.system
-
-    window.isWindowed = window.isWindowed or glua_system.IsWindowed
-    window.flash = window.flash or glua_system.FlashWindow
-
-    if glua_system.HasFocus ~= nil then
-
-        local system_HasFocus = glua_system.HasFocus
-
-        local has_focus = system_HasFocus()
-        window.focus = has_focus
-
-        _G.timer.Create( gpm.PREFIX .. " - system.HasFocus", 0.05, 0, function()
-            if system_HasFocus() == has_focus then return end
-            has_focus = not has_focus
-            window.focus = has_focus
-        end )
-
-    end
-
-end
-
-if window.isFullscreen == nil then
-
-    local system_IsWindowed = window.isWindowed
-
-    --- [CLIENT AND MENU]
-    ---
-    --- Returns whether the game window is fullscreen.
-    ---
-    ---@return boolean is_on `true` if the game window is fullscreen, `false` if not.
-    function window.isFullscreen()
-        return not system_IsWindowed()
-    end
-
-end
-
 if window.SizeChanged == nil then
 
     local SizeChanged = std.Hook( "os.window.SizeChanged" )

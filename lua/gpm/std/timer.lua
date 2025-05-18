@@ -6,6 +6,10 @@ end
 ---@class gpm.std
 local std = _G.gpm.std
 
+if std.Timer ~= nil then
+    return
+end
+
 local gc_setTableRules = std.debug.gc.setTableRules
 local game_getUptime = std.game.getUptime
 local timer_RepsLeft = timer.RepsLeft
@@ -31,7 +35,7 @@ local timer_Adjust = timer.Adjust
 ---@field time_elapsed number The total elapsed time of the timer in seconds. **Read-only.**
 ---@field time_left number The remaining time until the next run of timer callbacks in seconds, or `nil` if the timer is stopped. **Read-only.**
 ---@field start_time number The start time of the timer in seconds. **Read-only.**
-local Timer = std.Timer and std.Timer.__base or std.class.base( "Timer", true )
+local Timer = std.class.base( "Timer", true )
 
 --- [SHARED AND MENU]
 ---
@@ -40,7 +44,7 @@ local Timer = std.Timer and std.Timer.__base or std.class.base( "Timer", true )
 ---@class gpm.std.TimerClass : gpm.std.Timer
 ---@field __base gpm.std.Timer
 ---@overload fun( delay: number?, repetitions_total: integer?, name: string? ): gpm.std.Timer
-local TimerClass = std.Timer or std.class.create( Timer )
+local TimerClass = std.class.create( Timer )
 std.Timer = TimerClass
 
 ---@diagnostic disable-next-line: duplicate-doc-alias

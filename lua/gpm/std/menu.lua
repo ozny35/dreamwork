@@ -27,11 +27,15 @@ do
 
         local gui_IsGameUIVisible = gui.IsGameUIVisible
 
-        menu.visible = gui_IsGameUIVisible()
+        local visible = gui_IsGameUIVisible()
+        menu.visible = visible
 
-        _G.timer.Create( gpm.PREFIX .. " - gui.IsGameUIVisible", 0.1, 0, function()
-            menu.visible = gui_IsGameUIVisible()
-        end )
+        gpm.TickTimer0_1:attach( function()
+            if visible ~= gui_IsGameUIVisible() then
+                visible = not visible
+                menu.visible = visible
+            end
+        end, "std.menu.visible" )
 
     end
 

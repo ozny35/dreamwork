@@ -21,7 +21,7 @@ do
 
     local glua_os = _G.os
     if glua_os == nil then
-        error( "os library not found" )
+        error( "os library not found, it's over" )
     end
 
     ---@cast glua_os oslib
@@ -34,54 +34,6 @@ do
 end
 
 os.endianness = std.string.byte( std.string.dump( std.debug.fempty ), 7 ) == 0x00
-
-do
-
-    local has_battery = false
-    local level = 100
-
-    --- [SHARED AND MENU]
-    ---
-    --- Returns the current battery level.
-    ---
-    ---@return number level The battery level, between 0 and 100.
-    function os.getBatteryLevel()
-        return level
-    end
-
-    --- [SHARED AND MENU]
-    ---
-    --- Checks if the system has a battery.
-    ---
-    ---@return boolean has `true` if the system has a battery, `false` if not.
-    function os.hasBattery()
-        return has_battery
-    end
-
-    if _G.system ~= nil then
-        local system = _G.system
-
-        os.country = os.country or system.GetCountry
-
-        if system.BatteryPower ~= nil then
-
-            local system_BatteryPower = system.BatteryPower
-
-            local function update_battery()
-                local battery_power = system_BatteryPower()
-                has_battery = battery_power ~= 255
-                level = has_battery and battery_power or 100
-            end
-
-            update_battery()
-
-            _G.timer.Create( gpm.PREFIX .. " - system.BatteryPower", 1, 0, update_battery )
-
-        end
-
-    end
-
-end
 
 if std.MENU then
     os.openFolder = _G.OpenFolder
