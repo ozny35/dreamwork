@@ -3,6 +3,7 @@
 ---@class gpm.std
 local std = gpm.std
 
+local gc_setTableRules = std.debug.gc.setTableRules
 local pcall, xpcall = std.pcall, std.xpcall
 local isfunction = std.isfunction
 local tostring = std.tostring
@@ -48,8 +49,8 @@ local ACTION_RESUME = futures.ACTION.RESUME
 local listeners = futures.listeners
 if listeners == nil then
     listeners = {}
-    std.setmetatable( listeners, { __mode = "kv" } )
     futures.listeners = listeners
+    gc_setTableRules( listeners, true, true )
 end
 
 ---@private
@@ -57,8 +58,8 @@ end
 local coroutine_listeners = futures.coroutine_listeners
 if coroutine_listeners == nil then
     coroutine_listeners = {}
-    std.setmetatable( coroutine_listeners, { __mode = "kv" } )
     futures.coroutine_listeners = coroutine_listeners
+    gc_setTableRules( coroutine_listeners, true, true )
 end
 
 --- Abstract type that is used to type hint async functions
@@ -749,7 +750,7 @@ do
     ---@field __parent gpm.std.futures.Future
     ---@field private setResult fun( self, result )
     ---@field private setError fun( self, error )
-    local Task = futures.Task and futures.Task.__base or std.class.base( "Task", futures.Future )
+    local Task = futures.Task and futures.Task.__base or std.class.base( "Task", false, futures.Future )
 
     ---@diagnostic disable-next-line: duplicate-doc-alias
     ---@alias Task gpm.std.futures.Task

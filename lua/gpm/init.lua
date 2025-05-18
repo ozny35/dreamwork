@@ -16,13 +16,14 @@ end
 
 -- TODO: globally replace all versions, steamids, url, etc. with their classes in gpm, e.g. std.URL, steam.Identifier
 
---- [SHARED AND MENU]
----
---- gpm standard environment
----
+
 ---@class gpm.std
 local std = gpm.std
 if std == nil then
+    --- [SHARED AND MENU]
+    ---
+    --- gpm standard environment
+    ---
     ---@class gpm.std
     std = {}
     gpm.std = std
@@ -43,14 +44,6 @@ gpm.VERSION = version
 gpm.PREFIX = "gpm@" .. version
 
 dofile( "detour.lua" )
-
--- TODO: make direct functions for transducers instead of metatable checks
-
---- object transducers
----@class gpm.transducers
-local transducers = {}
-gpm.transducers = transducers
-
 dofile( "std/constants.lua" )
 
 --- [SHARED AND MENU]
@@ -129,31 +122,47 @@ local debug_getmetavalue = debug.getmetavalue
 
 local setmetatable = std.setmetatable
 
-setmetatable( transducers, {
-    __index = function( self, value )
-        local metatable = debug_getmetatable( value )
-        if metatable == nil then return value end
+---@class gpm.transducers
+local transducers = gpm.transducers
+if transducers == nil then
 
-        local fn = raw_get( self, metatable )
-        if fn == nil then return value end
+    --- [SHARED AND MENU]
+    ---
+    --- The magical table that transform glua objects into gpm objects.
+    ---
+    ---@class gpm.transducers : table
+    transducers = {}
 
-        return fn( value )
+    setmetatable( transducers, {
+        __index = function( self, value )
+            local metatable = debug_getmetatable( value )
+            if metatable == nil then return value end
+
+            local fn = raw_get( self, metatable )
+            if fn == nil then return value end
+
+            return fn( value )
+        end
+    } )
+
+    gpm.transducers = transducers
+
+end
+
+if std.CLIENT_SERVER then
+    local glua_util = _G.util
+    if glua_util ~= nil then
+        local fn = glua_util.GetActivityIDByName
+        if fn ~= nil then
+            setmetatable( std.ACT, {
+                __index = function( tbl, key )
+                    local value = fn( "ACT_" .. key )
+                    tbl[ key ] = value
+                    return value
+                end
+            } )
+        end
     end
-} )
-
-if std.CLIENT_SERVER and _G.util ~= nil then
-
-    local fn = _G.util.GetActivityIDByName
-    if fn ~= nil then
-        setmetatable( std.ACT, {
-            __index = function( tbl, key )
-                local value = fn( "ACT_" .. key )
-                tbl[ key ] = value
-                return value
-            end
-        } )
-    end
-
 end
 
 --- [SHARED AND MENU]
@@ -164,12 +173,17 @@ end
 ---@return integer length The length of the given value.
 function std.len( value )
     local metatable = debug_getmetatable( value )
-    if metatable == nil then return #value end
+    if metatable == nil then
+        return #value
+    end
 
+    ---@type function?
     local fn = raw_get( metatable, "__len" )
-    if fn == nil then return #value end
-
-    return fn( value )
+    if fn == nil then
+        return #value
+    else
+        return fn( value )
+    end
 end
 
 do
@@ -178,15 +192,30 @@ do
 
     --- [SHARED AND MENU]
     ---
-    --- Returns an iterator `next` for a for loop that will return the values of the specified table in an arbitrary order.
+    --- If `t` has a metamethod `__pairs`, calls it with t as argument and returns the first three results from the call.
     ---
-    ---@param tbl table The table to iterate over.
-    ---@return function iter The iterator function.
-    ---@return table tbl The table being iterated over.
-    ---@return any prev The previous key in the table (by default `nil`).
-    function std.pairs( tbl )
-        local metatable = debug_getmetatable( tbl )
-        return ( metatable ~= nil and metatable.__pairs or raw_pairs )( tbl )
+    --- Otherwise, returns three values: the [next](command:extension.lua.doc?["en-us/54/manual.html/pdf-next"]) function, the table `t`, and `nil`, so that the construction
+    --- ```lua
+    ---     for k,v in pairs(t) do body end
+    --- ```
+    --- will iterate over all key–value pairs of table `t`.
+    ---
+    --- See function [next](command:extension.lua.doc?["en-us/54/manual.html/pdf-next"]) for the caveats of modifying the table during its traversal.
+    ---
+    ---
+    --- [View documents](command:extension.lua.doc?["en-us/54/manual.html/pdf-pairs"])
+    ---
+    ---@generic T: table, K, V
+    ---@param t T
+    ---@return fun( table: table<K, V>, index?: K ):K, V
+    ---@return T
+    function std.pairs( t )
+        local fn = debug_getmetavalue( t, "__pairs" )
+        if fn == nil then
+            return raw_pairs( t )
+        else
+            return fn( t )
+        end
     end
 
 end
@@ -197,25 +226,31 @@ do
 
     --- [SHARED AND MENU]
     ---
-    --- Returns a [Stateless Iterator](https://www.lua.org/pil/7.3.html) for a [Generic For Loops](https://www.lua.org/pil/4.3.5.html), to return ordered key-value pairs from a table.
+    --- Returns three values (an iterator function, the table `t`, and `0`) so that the construction
+    --- ```lua
+    ---     for i,v in ipairs(t) do body end
+    --- ```
+    --- will iterate over the key–value pairs `(1,t[1]), (2,t[2]), ...`, up to the first absent index.
     ---
-    --- This will only iterate though <b>numerical keys</b>, and these must also be sequential; starting at 1 with no gaps.
     ---
-    ---@param tbl table The table to iterate over.
-    ---@return function iter The iterator function.
-    ---@return table lst The table being iterated over.
-    ---@return number index The origin index =0.
-    function std.ipairs( tbl )
-        if debug_getmetavalue( tbl, "__index" ) == nil then
-            return inext, tbl, 0
+    --- [View documents](command:extension.lua.doc?["en-us/51/manual.html/pdf-ipairs"])
+    ---
+    ---@generic T: table, V
+    ---@param t T
+    ---@return fun( table: V[], i?: integer ): integer, V
+    ---@return T
+    ---@return integer i
+    function std.ipairs( t )
+        if debug_getmetavalue( t, "__index" ) == nil then
+            return inext, t, 0
         else
             local index = 0
             return function()
                 index = index + 1
-                local value = tbl[ index ]
+                local value = t[ index ]
                 if value == nil then return end
                 return index, value
-            end, tbl, index
+            end, t, index
         end
     end
 
@@ -223,34 +258,45 @@ end
 
 --- [SHARED AND MENU]
 ---
---- Attempts to convert the value to a number.
----@param value any The value to convert.
----@param base? integer The base used in the value. Can be any integer between 2 and 36, inclusive. (Default: 10)
----@return number result The numeric representation of the value with the given base, or `0` if the conversion failed or not possible.
-function std.tonumber( value, base )
-    local fn = debug_getmetavalue( value, "__tonumber" )
+--- If `e` has a metamethod `__tonumber`, calls it with `e` and `base` as arguments and returns its result.
+---
+--- When called with no `base`, `tonumber` tries to convert its argument to a number. If the argument is already a number or a string convertible to a number, then `tonumber` returns this number; otherwise, it returns `fail`.
+---
+--- The conversion of strings can result in integers or floats, according to the lexical conventions of Lua (see [§3.1](command:extension.lua.doc?["en-us/51/manual.html/3.1"])). The string may have leading and trailing spaces and a sign.
+---
+---
+--- [View documents](command:extension.lua.doc?["en-us/51/manual.html/pdf-tonumber"])
+---
+---@param e any
+---@param base? number
+---@return number?
+function std.tonumber( e, base )
+    local fn = debug_getmetavalue( e, "__tonumber" )
     if fn == nil then
-        return 0
+        return nil
     else
-        return fn( value, base or 10 )
+        return fn( e, base or 10 )
     end
 end
 
 --- [SHARED AND MENU]
 ---
---- Attempts to convert the value to a boolean.
----@param value any The value to convert.
----@return boolean bool The boolean representation of the value, or `false` if the conversion failed.
-function std.toboolean( value )
-    if value == nil or value == false then
+--- If `e` has a metamethod `__toboolean`, calls it with `e` as argument and returns its result.
+---
+--- Otherwise, returns `nil`.
+---
+---@param e any
+---@return boolean?
+function std.toboolean( e )
+    if e == nil or e == false then
         return false
     end
 
-    local fn = debug_getmetavalue( value, "__toboolean" )
+    local fn = debug_getmetavalue( e, "__toboolean" )
     if fn == nil then
-        return true
+        return nil
     else
-        return fn( value )
+        return fn( e )
     end
 end
 
@@ -857,7 +903,7 @@ dofile( "package/init.lua" )
 
 do
 
-    local Timer_wait = std.Timer.wait
+    local Timer_simple = std.Timer.simple
     local futures = std.futures
 
     --- Puts current thread to sleep for given amount of seconds.
@@ -874,44 +920,12 @@ do
 
         ---@cast co thread
 
-        Timer_wait( function()
+        Timer_simple( function()
             futures.wakeup( co )
         end, seconds )
 
         return futures.pending()
     end
-
-end
-
--- Additional `file.path` function
-do
-
-    local string_byteSplit, string_lower = string.byteSplit, string.lower
-    local table_flipped = std.table.flipped
-    local is_url = std.isurl
-    local URL = std.URL
-
-    ---@class gpm.std.file.path
-    local path = std.file.path
-
-    --- [SHARED AND MENU]
-    ---
-    --- Converts a URL to a file path.
-    ---
-    ---@param url string | URL The URL to convert.
-    ---@return string path The file path.
-    function path.fromURL( url )
-        if not is_url( url ) then
-            ---@cast url string
-            url = URL( url )
-        end
-
-        ---@cast url URL
-
-        return url.scheme .. "/" .. ( ( url.hostname and url.hostname ~= "" ) and table_concat( table_flipped( string_byteSplit( string_lower( url.hostname ), 0x2E --[[ . ]] ) ), "/" ) or "" ) .. string_lower( url.pathname )
-    end
-
-    -- TODO: move to URL class base
 
 end
 

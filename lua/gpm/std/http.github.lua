@@ -46,7 +46,7 @@ local ratelimit_reset_time = 0
 ---
 --- Sends a request to the Github API.
 ---
----@param method gpm.std.http.Request.Method The request method.
+---@param method gpm.std.http.Request.method The request method.
 ---@param pathname string The path to send the request to.
 ---@param headers? table The headers to send with the request.
 ---@param body? string The body to send with the request.
@@ -54,29 +54,23 @@ local ratelimit_reset_time = 0
 ---@return gpm.std.http.Response response The response.
 ---@async
 local function request( method, pathname, headers, body, do_cache )
-    local url = std.URL( pathname, "https://api.github.com" )
-
     if headers == nil then
-        headers = {
-            ["Authorization"] = "Bearer " .. api_token,
-            ["Accept"] = "application/vnd.github+json",
-            ["X-GitHub-Api-Version"] = "2022-11-28"
-        }
-    else
-
-        if headers["Authorization"] == nil and api_token ~= "" then
-            headers["Authorization"] = "Bearer " .. api_token
-        end
-
-        if headers["Accept"] == nil then
-            headers["Accept"] = "application/vnd.github+json"
-        end
-
-        if headers["X-GitHub-Api-Version"] == nil then
-            headers["X-GitHub-Api-Version"] = "2022-11-28"
-        end
-
+        headers = {}
     end
+
+    if headers.Authorization == nil and api_token ~= "" then
+        headers.Authorization = "Bearer " .. api_token
+    end
+
+    if headers.Accept == nil then
+        headers.Accept = "application/vnd.github+json"
+    end
+
+    if headers["X-GitHub-Api-Version"] == nil then
+        headers["X-GitHub-Api-Version"] = "2022-11-28"
+    end
+
+    local href = "https://api.github.com" .. pathname
 
     local current_time = os_time()
     if ratelimit_reset_time > current_time then
@@ -84,7 +78,7 @@ local function request( method, pathname, headers, body, do_cache )
         if diff < 30 then
             futures_sleep( diff )
         else
-            error( "Github API rate limit exceeded (" .. url.href .. ")" )
+            error( "Github API rate limit exceeded (" .. href .. ")" )
         end
     end
 
@@ -102,7 +96,7 @@ local function request( method, pathname, headers, body, do_cache )
     -- i believe there is no reason to implement queue, since requests are queued by the engine
     ---@diagnostic disable-next-line: missing-fields
     local result = http_request( {
-        url = url,
+        url = href,
         method = method,
         headers = headers,
         body = body,
@@ -113,7 +107,7 @@ local function request( method, pathname, headers, body, do_cache )
     if ( result.status == 429 or result.status == 403 ) and headers["x-ratelimit-remaining"] == "0" then
         local ratelimit_reset = raw_tonumber( headers["x-ratelimit-reset"], 10 )
         if ratelimit_reset == nil then
-            error( "Github API rate limit exceeded (" .. tostring( result.status ) .. ") (" .. tostring( url ) .. ")" )
+            error( "Github API rate limit exceeded (" .. tostring( result.status ) .. ") (" .. href .. ")" )
         else
             ratelimit_reset_time = ratelimit_reset
         end
@@ -128,7 +122,7 @@ github.request = request
 ---
 --- Makes a request to the Github API.
 ---
----@param method gpm.std.http.Request.Method The request method.
+---@param method gpm.std.http.Request.method The request method.
 ---@param pathname string The path to send the request to.
 ---@param headers? table The headers to send with the request.
 ---@param body? string The body to send with the request.
@@ -173,7 +167,7 @@ github.template = template
 ---
 --- Replaces all occurrences of `{name}` in `pathname` with `tbl[name]` and makes a request to the Github API.
 ---
----@param method gpm.std.http.Request.Method The request method.
+---@param method gpm.std.http.Request.method The request method.
 ---@param pathname string The path to send the request to.
 ---@param replaces table<string, any> The table to replace placeholders with.
 ---@return table data The data returned from the API.

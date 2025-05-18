@@ -251,9 +251,10 @@ if engine.consoleVariableGet == nil or engine.consoleVariableCreate == nil or en
     local ConVarExists = _G.ConVarExists or debug_fempty
     local CreateConVar = _G.CreateConVar or debug_fempty
 
+    ---@type table<string, ConVar>
     local cache = {}
 
-    std.setmetatable( cache, { __mode = "v" } )
+    std.debug.gc.setTableRules( cache, false, true )
 
     --- [SHARED AND MENU]
     ---

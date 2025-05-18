@@ -9,13 +9,24 @@ std = {}
 ---
 --- HTTP request method.
 ---
----@alias gpm.std.http.Request.Method "HEAD" | "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "OPTIONS"
+---@alias gpm.std.http.Request.method
+---| "HEAD" # Same as `GET`, but only retrieves headers (no body).
+---| "GET" # Retrieve data from a server.
+---| "POST" # Send data to the server to create a resource.
+---| "PUT" # Replace a resource entirely at the given URL.
+---| "PATCH" # Partially update a resource.
+---| "DELETE" # Remove a resource from the server.
+---| "OPTIONS" # Describe communication options for the target resource.
 
 --- [SHARED AND MENU]
 ---
 --- HTTP request URL.
 ---
----@alias gpm.std.http.Request.URL string | gpm.std.URL | "http://" | "https://"
+---@alias gpm.std.http.Request.url
+---| string # Absolute URL as a string.
+---| gpm.std.URL # Absolute URL object.
+---| "http://" # Default protocol.
+---| "https://" # Default secure protocol.
 
 do
 
@@ -28,12 +39,12 @@ do
 
     --- Request method.
     ---
-    ---@type gpm.std.http.Request.Method
+    ---@type gpm.std.http.Request.method
     request.method = nil
 
     --- Request URL.
     ---
-    ---@type gpm.std.http.Request.URL
+    ---@type gpm.std.http.Request.url
     request.url = nil
 
     --- KeyValue table for parameters.

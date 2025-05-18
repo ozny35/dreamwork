@@ -41,7 +41,7 @@ print( car.speed ) -- 0
 ---@class gpm.std.Truck : gpm.std.Car
 ---@field __class gpm.std.TruckClass
 ---@field __parent gpm.std.Car               <-- now we need to define the parent, so LuaLS can know how to access our parent
-local Truck = std.class.base( "Truck", std.Car )
+local Truck = std.class.base( "Truck", false, std.Car )
 
 ---@alias Truck gpm.std.Truck
 
@@ -77,7 +77,7 @@ std.Car = CarClass
 ---@class gpm.std.Truck : gpm.std.Car
 ---@field __class gpm.std.TruckClass
 ---@field __parent gpm.std.Car
-local Truck = std.class.base( "Truck", std.Car )
+local Truck = std.class.base( "Truck", false, std.Car )
 
 ---@alias Truck gpm.std.Truck
 

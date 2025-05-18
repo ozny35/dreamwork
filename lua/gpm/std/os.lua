@@ -8,6 +8,9 @@ local std = _G.gpm.std
 --- Library for interacting with the operating system.
 ---
 ---@class gpm.std.os
+---@field name string The name of the operating system.
+---@field arch string The architecture of the operating system.
+---@field endianness boolean `true` if the operating system is big endianness, `false` if not.
 local os = std.os or {}
 std.os = os
 

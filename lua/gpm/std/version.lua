@@ -33,6 +33,8 @@ local math_isuint, math_max = std.math.isuint, std.math.max
 local string = std.string
 local string_match, string_gsub, string_find, string_sub = string.match, string.gsub, string.find, string.sub
 
+-- TODO: update and replace trash keys
+
 local smallerPreRelease
 do
 
@@ -582,9 +584,10 @@ do
 	local debug_getmetatable = std.debug.getmetatable
 	local setmetatable = std.setmetatable
 
+	---@type table<string, gpm.std.Version>
 	local versions = {}
 
-	setmetatable( versions, { __mode = "v" } )
+	std.debug.gc.setTableRules( versions, false, true )
 
 	---@protected
 	function Version:__new( major, minor, patch, pre_release, build )
@@ -597,6 +600,7 @@ do
 
 		local object = versions[ name ]
 		if object == nil then
+			---@diagnostic disable-next-line: missing-fields
 			object = {
 				[ 0 ] = name,
 				[ 1 ] = major,

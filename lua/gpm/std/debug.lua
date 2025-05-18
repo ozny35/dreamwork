@@ -76,7 +76,6 @@ end
 
 local debug_getinfo = debug.getinfo
 
-
 --- [SHARED AND MENU]
 ---
 --- Call function with given arguments.

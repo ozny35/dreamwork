@@ -247,9 +247,11 @@ end
 -- symbol class
 do
 
-    local debug_getmetatable = std.debug.getmetatable
-    local debug_newproxy = std.debug.newproxy
+    local debug = std.debug
+
+    local debug_getmetatable = debug.getmetatable
     local string_format = std.string.format
+    local debug_newproxy = debug.newproxy
 
     --- [SHARED AND MENU]
     ---
@@ -274,7 +276,7 @@ do
     if names == nil then
         names = {}
         metatable.__names = names
-        std.setmetatable( names, { __mode = "k" } )
+        debug.gc.setTableRules( names, true, false )
     end
 
     ---@private

@@ -1,3 +1,6 @@
+local _G = _G
+local std = _G.gpm.std
+
 local collectgarbage = _G.collectgarbage
 
 if collectgarbage == nil then
@@ -11,7 +14,7 @@ if collectgarbage == nil then
 end
 
 ---@class gpm.std.debug
-local debug = _G.gpm.std.debug
+local debug = std.debug
 
 --- [SHARED AND MENU]
 ---
@@ -104,4 +107,80 @@ end
 ---@return number previous_value The previous value for step.
 function gc.setStepMultiplier( value )
     return collectgarbage( "setstepmul", value )
+end
+
+local debug_getmetatable = std.debug.getmetatable
+
+do
+
+    local raw_get = std.raw.get
+
+    --- [SHARED AND MENU]
+    ---
+    --- Returns info about the garbage collector rules for the given table.
+    ---
+    ---@param tbl table The table to query.
+    ---@return boolean key_mode `true` if key c ollection is allowed, `false` otherwise.
+    ---@return boolean value_mode `true` if value collection is allowed, `false` otherwise.
+    function gc.getTableRules( tbl )
+        local metatable = debug_getmetatable( tbl )
+        if metatable == nil then
+            return false, false
+        end
+
+        local mode = raw_get( metatable, "__mode" )
+
+        if mode == nil then
+            return false, false
+        elseif mode == "kv" then
+            return true, true
+        else
+            return mode == "k", mode == "v"
+        end
+    end
+
+end
+
+do
+
+    local setmetatable = std.setmetatable
+
+    local presets = {
+        kv = { __mode = "kv" },
+        k = { __mode = "k" },
+        v = { __mode = "v" }
+    }
+
+    --- [SHARED AND MENU]
+    ---
+    --- Sets the garbage-collector rules for the given table.
+    ---
+    ---@param tbl table The table to set the rules for.
+    ---@param key? boolean `true` if key collection is allowed, `false` otherwise.
+    ---@param value? boolean `true` if value collection is allowed, `false` otherwise.
+    function gc.setTableRules( tbl, key, value )
+        local metatable = debug_getmetatable( tbl )
+        if metatable == nil then
+            if key and value then
+                setmetatable( tbl, presets.kv )
+            elseif key then
+                setmetatable( tbl, presets.k )
+            elseif value then
+                setmetatable( tbl, presets.v )
+            end
+
+            return
+        end
+
+        if key and value then
+            metatable.__mode = "kv"
+        elseif key then
+            metatable.__mode = "k"
+        elseif value then
+            metatable.__mode = "v"
+        else
+            metatable.__mode = nil
+        end
+    end
+
 end

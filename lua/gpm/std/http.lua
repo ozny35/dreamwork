@@ -7,7 +7,7 @@ local Logger = gpm.Logger
 local std = gpm.std
 
 local tonumber = std.tonumber
-local Timer_wait = std.Timer.wait
+local Timer_simple = std.Timer.simple
 local string_gmatch = std.string.gmatch
 local isnumber, isstring, istable = std.isnumber, std.isstring, std.istable
 
@@ -67,7 +67,7 @@ do
         queue[ length ] = { parameters }
     end
 
-    Timer_wait( function()
+    Timer_simple( function()
         make_request = http_client
 
         for i = 1, length, 1 do
@@ -151,8 +151,8 @@ do
         name = "gpm.http.timeout",
         description = "Default timeout for http requests.",
         replicated = not std.MENU,
+        archive = std.SERVER_MENU,
         type = "number",
-        archive = true,
         default = 10,
         min = 0,
         max = 300
@@ -366,7 +366,7 @@ if std.MENU then
             f:setError( "failed to get facepunch manifest" )
         end )
 
-        Timer_wait( function()
+        Timer_simple( function()
             if f:isPending() then
                 f:setError( "timed out getting facepunch manifest" )
             end

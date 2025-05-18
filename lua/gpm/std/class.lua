@@ -34,9 +34,7 @@ std.class = class
 ---@type table<gpm.std.Object, userdata>
 local templates = {}
 
-setmetatable( templates, {
-    __mode = "k"
-} )
+debug.gc.setTableRules( templates, true, false )
 
 do
 
@@ -65,10 +63,10 @@ do
     --- Creates a new class base ( metatable ).
     ---
     ---@param name string The name of the class.
-    ---@param parent gpm.std.Class? The parent of the class.
     ---@param private boolean? If the class is private.
+    ---@param parent gpm.std.Class? The parent of the class.
     ---@return gpm.std.Object base The base of the class.
-    function class.base( name, parent, private )
+    function class.base( name, private, parent )
         local base
 
         if private then
@@ -93,7 +91,7 @@ do
 
         base.__index = base
 
-        if parent then
+        if parent ~= nil then
             local parent_base = raw_get( parent, "__base" )
             if parent_base == nil then
                 error( "parent class has no base", 2 )

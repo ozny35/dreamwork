@@ -278,11 +278,20 @@ if std.SERVER then
 
     --- [SERVER]
     ---
-    --- Sets the name of the server.
+    --- Returns whether or not close captions are allowed in multiplayer.
     ---
-    ---@param name string The name to set.
-    function server.setName( name )
-        return sv_hostname:set( name )
+    ---@return boolean result `true` if close captions are allowed, `false` otherwise.
+    function server.isCloseCaptionsAllowed()
+        return console_Variable.getBoolean( "closecaption_mp" )
+    end
+
+    --- [SERVER]
+    ---
+    --- Allow/disallow closecaptions in multiplayer (for dedicated servers).
+    ---
+    ---@param enable boolean `true` to enable close captions, `false` to disable them.
+    function game.allowCloseCaptions( enable )
+        console_Variable.set( "closecaption_mp", enable )
     end
 
     --[[
@@ -343,7 +352,7 @@ if std.MENU then
 
     local futures_Future = std.futures.Future
     local glua_serverlist = _G.serverlist
-    local Timer_wait = std.Timer.wait
+    local Timer_simple = std.Timer.simple
 
     do
 
@@ -383,7 +392,7 @@ if std.MENU then
             end )
 
             if timeout ~= false then
-                Timer_wait( function()
+                Timer_simple( function()
                     if f:isPending() then
                         f:setError( "timed out" )
                     end
@@ -418,7 +427,7 @@ if std.MENU then
             end )
 
             if timeout ~= false then
-                Timer_wait( function()
+                Timer_simple( function()
                     if f:isPending() then
                         f:setError( "timed out" )
                     end
