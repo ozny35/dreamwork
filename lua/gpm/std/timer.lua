@@ -10,13 +10,22 @@ if std.Timer ~= nil then
     return
 end
 
+local string = std.string
+
 local gc_setTableRules = std.debug.gc.setTableRules
 local game_getUptime = std.game.getUptime
+local table_eject = std.table.eject
+
 local timer_RepsLeft = timer.RepsLeft
 local timer_UnPause = timer.UnPause
 local timer_Exists = timer.Exists
 local timer_Create = timer.Create
 local timer_Adjust = timer.Adjust
+
+---@alias gpm.std.Timer.state
+---| `0` # Timer stopped.
+---| `1` # Timer paused.
+---| `2` # Timer running.
 
 --- [SHARED AND MENU]
 ---
@@ -69,11 +78,6 @@ do
 
 end
 
----@alias gpm.std.Timer.state
----| `0` # Timer stopped.
----| `1` # Timer paused.
----| `2` # Timer running.
-
 ---@type table<gpm.std.Timer, gpm.std.Timer.state>
 local states = {}
 
@@ -89,14 +93,14 @@ do
 
     ---@protected
     function Timer:__tostring()
-        return std.string.format( "Timer: %p [%s][%s]", self, self.name, status2string[ self.state ] or "unknown" )
+        return string.format( "Timer: %p [%s][%s]", self, self.name, status2string[ self.state ] or "unknown" )
     end
 
 end
 
 --- [SHARED AND MENU]
 ---
---- Checks if the timer is stopped.
+--- Checks if the timer object is stopped.
 ---
 ---@return boolean is_stopped Returns `true` if the timer is stopped, otherwise `false`.
 function Timer:isStopped()
@@ -105,7 +109,7 @@ end
 
 --- [SHARED AND MENU]
 ---
---- Checks if the timer is paused.
+--- Checks if the timer object is paused.
 ---
 ---@return boolean is_paused Returns `true` if the timer is paused, otherwise `false`.
 function Timer:isPaused()
@@ -114,7 +118,7 @@ end
 
 --- [SHARED AND MENU]
 ---
---- Checks if the timer is running.
+--- Checks if the timer object is running.
 ---
 ---@return boolean is_running Returns `true` if the timer is running, otherwise `false`.
 function Timer:isRunning()
@@ -126,21 +130,20 @@ local in_call = {}
 
 gc_setTableRules( in_call, true, false )
 
----@class gpm.std.Timer.Callback
-
 ---@type table<gpm.std.Timer, table>
 local callbacks = {}
 
-std.setmetatable( callbacks, {
-    __index = function( _, self )
-        local t = {}
-        callbacks[ self ] = t
-        return t
-    end,
-    __mode = "k"
-} )
+gc_setTableRules( callbacks, true, false )
 
----@type table<gpm.std.Timer, table>
+---@alias gpm.std.Timer.callback fun( timer: gpm.std.Timer )
+
+---@class gpm.std.Timer.query_data
+---@field [1] boolean `true` to attach, `false` to detach.
+---@field [2] any The identifier of the callback.
+---@field [3] nil | gpm.std.Timer.callback The callback function.
+---@field [4] nil | boolean `true` to run once, `false` to run forever.
+
+---@type table<gpm.std.Timer, gpm.std.Timer.query_data[]>
 local queues = {}
 
 gc_setTableRules( queues, true, false )
@@ -170,8 +173,8 @@ local running_timers = {}
 
 do
 
-    local debug_getmetatable = std.debug.getmetatable
     local timer_TimeLeft = timer.TimeLeft
+    local string_sub = string.sub
     local raw_get = std.raw.get
 
     local math = std.math
@@ -251,6 +254,8 @@ do
         elseif key == "time_elapsed" then
             local delay = self.delay
             return ( self.repetition_index * delay ) - ( self.time_left - delay )
+        elseif string_sub( key, 1, 2 ) == "__" then
+            error( "unknown key '" .. key .. "'", 2 )
         else
             return raw_get( Timer, key )
         end
@@ -315,16 +320,20 @@ do
         in_call[ self ] = true
 
         local lst = callbacks[ self ]
-
-        for i = 2, #lst, 2 do
-            if in_call[ self ] then
-                local success, err_msg = pcall( lst[ i ], self )
-                if not success then
-                    -- TODO: replace with cool new errors that i make later
-                    print( "[gpm] timer error: " .. err_msg )
+        if lst ~= nil then
+            for i = #lst - 1, 1, -3 do
+                if in_call[ self ] then
+                    local success, err_msg = pcall( lst[ i ], self )
+                    if not success then
+                        -- TODO: replace with cool new errors that i make later
+                        print( "[gpm] timer callback error: " .. err_msg )
+                        table_eject( lst, i - 1, i + 1 )
+                    elseif lst[ i + 1 ] then
+                        table_eject( lst, i - 1, i + 1 )
+                    end
+                else
+                    break
                 end
-            else
-                break
             end
         end
 
@@ -335,11 +344,11 @@ do
             queues[ self ] = nil
 
             for i = 1, #queue, 1 do
-                local args = queue[ i ]
-                if args[ 1 ] then
-                    self:attach( args[ 3 ], args[ 2 ] )
+                local tbl = queue[ i ]
+                if tbl[ 1 ] then
+                    self:attach( tbl[ 2 ], tbl[ 3 ], tbl[ 4 ] )
                 else
-                    self:detach( args[ 2 ] )
+                    self:detach( tbl[ 2 ] )
                 end
             end
         end
@@ -358,88 +367,100 @@ do
 
     ---@protected
     function Timer:__init( delay, repetition_count, name )
-        names[ self ] = name or crypto_UUIDv7()
-        states[ self ] = 0
+        if name == nil then
+            names[ self ] = crypto_UUIDv7()
+        else
+            names[ self ] = name
+        end
 
         delays[ self ] = delay or 0
         repetitions_total[ self ] = repetition_count or 1
+
+        states[ self ] = 0
+        callbacks[ self ] = {}
     end
 
 end
 
 --- [SHARED AND MENU]
 ---
---- Attaches a callback to the timer.
+--- Attaches a callback to the timer object.
 ---
----@param fn fun( timer: gpm.std.Timer ) The callback function.
----@param name string? The name of the callback, default is `unnamed`.
-function Timer:attach( fn, name )
-    if name == nil then
-        name = "unnamed"
+---@param fn gpm.std.Timer.callback The callback function.
+---@param identifier? any The identifier of the callback, default is `unnamed`.
+---@param once? boolean `true` to run once, `false` to run forever, default is `false`.
+function Timer:attach( fn, identifier, once )
+    if identifier == nil then
+        identifier = "nil"
     end
 
     if in_call[ self ] then
         local queue = queues[ self ]
         if queue == nil then
             queues[ self ] = {
-                { true, name, fn }
+                { true, identifier, fn, once == true }
             }
         else
-            queue[ #queue + 1 ] = { true, name, fn }
+            queue[ #queue + 1 ] = { true, identifier, fn, once == true }
         end
 
         return
     end
 
     local lst = callbacks[ self ]
+    if lst == nil then
+        return
+    end
+
     local lst_length = #lst
 
-    for i = 1, lst_length, 2 do
-        if lst[ i ] == name then
+    for i = 1, lst_length, 3 do
+        if lst[ i ] == identifier then
             lst[ i + 1 ] = fn
+            lst[ i + 2 ] = once == true
             return
         end
     end
 
-    local index = lst_length + 1
-    lst[ index ] = name
-
-    index = index + 1
-    lst[ index ] = fn
+    lst[ lst_length + 1 ] = identifier
+    lst[ lst_length + 2 ] = fn
+    lst[ lst_length + 3 ] = once == true
 end
 
 do
 
     local debug_fempty = std.debug.fempty
-    local table_eject = std.table.eject
 
     --- [SHARED AND MENU]
     ---
-    --- Detaches a callback from the timer.
+    --- Detaches a callback from the timer object.
     ---
-    ---@param name string The name of the callback to detach.
-    function Timer:detach( name )
-        if name == nil then
-            name = "unnamed"
+    ---@param identifier any The identifier of the callback to detach.
+    function Timer:detach( identifier )
+        if identifier == nil then
+            identifier = "nil"
         end
 
         local lst = callbacks[ self ]
+        if lst == nil then
+            return
+        end
 
-        for i = 1, #lst, 2 do
-            if lst[ i ] == name then
+        for i = 1, #lst, 3 do
+            if lst[ i ] == identifier then
                 if in_call[ self ] then
                     lst[ i + 1 ] = debug_fempty
 
                     local queue = queues[ self ]
                     if queue == nil then
                         queues[ self ] = {
-                            { false, name }
+                            { false, identifier }
                         }
                     else
-                        queue[ #queue + 1 ] = { false, name }
+                        queue[ #queue + 1 ] = { false, identifier }
                     end
                 else
-                    table_eject( lst, i, i + 1 )
+                    table_eject( lst, i, i + 2 )
                 end
 
                 break
@@ -451,10 +472,10 @@ end
 
 --- [SHARED AND MENU]
 ---
---- Detaches all timer callbacks.
+--- Detaches all callbacks from the timer object.
 ---
 function Timer:clear()
-    callbacks[ self ] = nil
+    callbacks[ self ] = {}
     in_call[ self ] = nil
 end
 
@@ -464,7 +485,7 @@ do
 
     --- [SHARED AND MENU]
     ---
-    --- Restarts the timer.
+    --- Starts/restarts the timer object.
     ---
     function Timer:start()
         local repetitions = self.repetitions_total
@@ -498,7 +519,7 @@ do
 
     --- [SHARED AND MENU]
     ---
-    --- Stops the timer.
+    --- Stops the timer object.
     ---
     function Timer:stop()
         repetition_indexes[ self ] = nil
@@ -530,7 +551,7 @@ do
 
     --- [SHARED AND MENU]
     ---
-    --- Pauses the timer.
+    --- Pauses the timer object.
     ---
     function Timer:pause()
         if self.state ~= 2 then
@@ -551,7 +572,7 @@ end
 
 --- [SHARED AND MENU]
 ---
---- Resumes/unpauses the timer.
+--- Resumes/unpauses the timer object.
 ---
 function Timer:resume()
     if self.state ~= 1 then
@@ -573,7 +594,7 @@ do
 
     --- [SHARED AND MENU]
     ---
-    --- Creates a timer with a single callback.
+    --- Calls the `fn` function after `delay` seconds.
     ---
     ---@param fn function The callback function.
     ---@param delay? number The delay in seconds, default is `0`.
