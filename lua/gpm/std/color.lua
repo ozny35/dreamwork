@@ -988,7 +988,7 @@ do
     setmetatable( scheme, metatable )
 
     ---@diagnostic disable-next-line: undefined-field
-    local NamedColor = _G.NamedColor or function( name ) end
+    local NamedColor = _G.NamedColor or std.debug.fempty
 
     ---@protected
     function metatable:__index( name )

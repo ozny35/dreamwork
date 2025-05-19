@@ -744,7 +744,7 @@ do
         --- Validates the type of the argument and returns a boolean and an error message.
         ---
         ---@param value any The argument value.
-        ---@param arg_num number The argument number.
+        ---@param arg_num any The argument number/key.
         ---@param expected_type string The expected type name.
         ---@return boolean ok Returns `true` if the argument is of the expected type, `false` otherwise.
         ---@return string? msg The error message.
@@ -753,7 +753,7 @@ do
             if got == expected_type or expected_type == "any" then
                 return true, nil
             else
-                return false, string_format( "bad argument #%d to \'%s\' ('%s' expected, got '%s')", arg_num, debug_getinfo( 2, "n" ).name or "unknown", expected_type, got )
+                return false, string_format( "bad argument #%s to \'%s\' ('%s' expected, got '%s')", arg_num, debug_getinfo( 2, "n" ).name or "unknown", expected_type, got )
             end
         end
 
@@ -887,6 +887,30 @@ local logger = std.console.Logger( {
 
 gpm.Logger = logger
 
+do
+
+    local developer_mode = 1
+
+    local developer = std.console.Variable.get( "developer", "number" )
+    if developer ~= nil then
+        developer:attach( function( _, value )
+            ---@cast value number
+            developer_mode = math.floor( value )
+        end, "gpm::std" )
+
+        ---@diagnostic disable-next-line: param-type-mismatch
+        developer_mode = math.floor( developer.value )
+    end
+
+    std.setmetatable( std, {
+        __index = function( _, key )
+            if key == "DEVELOPER" then
+                return developer_mode
+            end
+        end
+    } )
+
+end
 
 dofile( "std/file.path.lua" )
 dofile( "std/file.lua" )
@@ -934,8 +958,10 @@ do
     if cvar == nil then
         name = "stranger"
     else
-        name = cvar:get()
-        if name == "" or name == "unnamed" then name = "stranger" end
+        name = cvar.value
+        if name == "" or name == "unnamed" then
+            name = "stranger"
+        end
     end
 
     local splashes = {
@@ -1054,8 +1080,8 @@ do
     ---@protected
     function loadbinary( name )
         if lookupbinary( name ) then
-            if sv_allowcslua ~= nil and sv_allowcslua:get() then
-                sv_allowcslua:set( false )
+            if sv_allowcslua ~= nil and sv_allowcslua.value then
+                sv_allowcslua.value = false
             end
 
             require( name )

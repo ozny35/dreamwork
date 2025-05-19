@@ -19,17 +19,13 @@ if _G.render ~= nil then
 
     local glua_render = _G.render
 
-    do
+    client.SupportsPixelShadersV1 = ( glua_render.SupportsPixelShaders_1_4 or std.debug.fempty )() or false
+    client.SupportsPixelShadersV2 = ( glua_render.SupportsPixelShaders_2_0 or std.debug.fempty )() or false
+    client.SupportedVertexShaders = ( glua_render.SupportsVertexShaders_2_0 or std.debug.fempty )() or false
 
-        local directx_level = glua_render.GetDXLevel() * 0.1
-        client.SupportedDirectX = directx_level
-        client.SupportsHDR = directx_level >= 8
-
-    end
-
-    client.SupportsPixelShadersV1 = glua_render.SupportsPixelShaders_1_4()
-    client.SupportsPixelShadersV2 = glua_render.SupportsPixelShaders_2_0()
-    client.SupportedVertexShaders = glua_render.SupportsVertexShaders_2_0()
+    local directx_level = ( ( glua_render.GetDXLevel() or std.debug.fempty ) or 80 ) * 0.1
+    client.SupportedDirectX = directx_level
+    client.SupportsHDR = directx_level >= 8
 
 end
 

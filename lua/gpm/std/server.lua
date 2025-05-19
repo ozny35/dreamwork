@@ -88,30 +88,14 @@ do
 
 end
 
-local gpm_server_hostname = console_Variable( {
-    name = "gpm.server.hostname",
-    description = "The publicly visible name of the server.",
-    replicated = true,
-    type = "string"
-} )
+if server.getName == nil then
 
-do
-
-    local hostname = console_Variable.get( "hostname", "string" )
-    if hostname ~= nil then
-        gpm_server_hostname:set( hostname:get() )
-
-        gpm_server_hostname:addChangeCallback( "hostname", function( _, __, str )
-            if hostname:get() == str then return end
-            hostname:set( str )
-        end )
-
-        hostname:addChangeCallback( gpm_server_hostname.name, function( _, __, str )
-            if gpm_server_hostname:get() ~= str then
-                gpm_server_hostname:set( str )
-            end
-        end )
-    end
+    local gpm_server_hostname = console_Variable( {
+        name = "gpm.server.hostname",
+        description = "The publicly visible name of the server.",
+        replicated = true,
+        type = "string"
+    } )
 
     --- [SHARED AND MENU]
     ---
@@ -120,7 +104,38 @@ do
     ---@return string hostname The name of the server.
     function server.getName()
         ---@diagnostic disable-next-line: return-type-mismatch
-        return gpm_server_hostname:get()
+        return gpm_server_hostname.value
+    end
+
+    if std.SERVER then
+
+        local hostname = console_Variable.get( "hostname", "string" )
+
+        if hostname ~= nil then
+            gpm_server_hostname.value = hostname.value
+
+            gpm_server_hostname:attach( function( _, value )
+                if hostname.value ~= value then
+                   hostname.value = value
+                end
+            end, hostname.name )
+
+            hostname:attach( function( _, value )
+                if gpm_server_hostname.value ~= value then
+                    gpm_server_hostname.value = value
+                end
+            end, gpm_server_hostname.name )
+        end
+
+        --- [SERVER]
+        ---
+        --- Sets the name of the server.
+        ---
+        ---@param name string The name to set.
+        function server.setName( name )
+            gpm_server_hostname.value = name
+        end
+
     end
 
 end

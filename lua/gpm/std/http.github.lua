@@ -14,9 +14,11 @@ local http_request = http.request
 local futures_sleep = std.sleep
 local os_time = std.os.time
 
+---@type string
 local api_token
-if std.SERVER then
-    local gpm_github_token = std.console.Variable( {
+do
+
+    local variable = std.console.Variable( {
         name = "gpm.github.token",
         description = "https://github.com/settings/tokens",
         protected = true,
@@ -24,10 +26,14 @@ if std.SERVER then
         hidden = true
     } )
 
-    gpm_github_token:addChangeCallback( "http.github", function( _, __, str ) api_token = str end )
-    api_token = gpm_github_token:get()
-else
-    api_token = ""
+    variable:attach( function( _, value )
+        ---@cast value string
+        api_token = value
+    end, "http.github" )
+
+    ---@diagnostic disable-next-line: cast-local-type
+    api_token = variable.value
+
 end
 
 --- [SHARED AND MENU]

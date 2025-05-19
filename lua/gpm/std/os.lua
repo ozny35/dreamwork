@@ -40,5 +40,3 @@ if std.MENU then
 else
     os.openFolder = std.debug.fempty
 end
-
-return os

@@ -224,7 +224,7 @@ local function request( options )
     local timeout = options.timeout
     if timeout == nil or not isnumber( timeout ) then
         ---@diagnostic disable-next-line: cast-local-type
-        timeout = gpm_http_timeout:get()
+        timeout = gpm_http_timeout.value
         ---@cast timeout number
     end
 
@@ -265,7 +265,7 @@ local function request( options )
         options.lifetime = nil
 
         if not isnumber( lifetime ) then
-            lifetime = gpm_http_lifetime:get() * 60
+            lifetime = gpm_http_lifetime.value * 60
         end
 
         -- future, start, age
