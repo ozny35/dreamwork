@@ -280,6 +280,269 @@ end
 
 do
 
+    ---@class gpm.std.console.Command : gpm.std.Object
+    local command = {}
+
+    --- **READ-ONLY**
+    ---
+    --- The name of the console command/variable.
+    ---
+    ---@type string
+    command.name = nil
+
+    --- **READ-ONLY**
+    ---
+    --- The help text of the console command/variable.
+    ---
+    ---@type string?
+    command.description = nil
+
+    --- **READ-ONLY**
+    ---
+    --- The console command/variable flags.
+    ---
+    --- Used in engine internally.
+    ---
+    --- [C++ Code](https://github.com/ValveSoftware/source-sdk-2013/blob/0d8dceea4310fde5706b3ce1c70609d72a38efdf/sp/src/public/tier1/iconvar.h#L39)
+    ---
+    --- [Valve Wiki](https://developer.valvesoftware.com/wiki/Developer_Console_Control#The_FCVAR_flags)
+    ---
+    --- [Facepunch Wiki](https://wiki.facepunch.com/gmod/Enums/FCVAR)
+    ---
+    ---@type integer?
+    command.flags = nil
+
+    --- **READ-ONLY**
+    ---
+    --- If this is set, don't add to linked list, etc.
+    ---
+    ---@type boolean?
+    command.unregistered = nil
+
+    --- **READ-ONLY**
+    ---
+    --- Hidden in released products.
+    ---
+    --- Flag is removed automatically if `ALLOW_DEVELOPMENT_CVARS` is defined in C++.
+    ---
+    ---@type boolean?
+    command.development_only = nil
+
+    --- **READ-ONLY**
+    ---
+    --- Defined by the game DLL.
+    ---
+    ---@type boolean?
+    command.game_dll = nil
+
+    --- **READ-ONLY**
+    ---
+    --- Defined by the client DLL.
+    ---
+    ---@type boolean?
+    command.client_dll = nil
+
+    --- **READ-ONLY**
+    ---
+    --- Doesn't appear in find or autocomplete.
+    ---
+    --- Like `development_only`, but can't be compiled out.
+    ---
+    ---@type boolean?
+    command.hidden = nil
+
+    --- **READ-ONLY**
+    ---
+    --- It's a server cvar, but we don't send the data since it's a password, etc.
+    ---
+    --- Sends `1` if it's not bland/zero, `0` otherwise as value.
+    ---
+    ---@type boolean?
+    command.protected = nil
+
+    --- **READ-ONLY**
+    ---
+    --- This cvar cannot be changed by clients connected to a multiplayer server.
+    ---
+    ---@type boolean?
+    command.sponly = nil
+
+    --- **READ-ONLY**
+    ---
+    --- Save the cvar value into either `client.vdf` or `server.vdf`.
+    ---
+    ---@type boolean?
+    command.archive = nil
+
+    --- **READ-ONLY**
+    ---
+    --- For server-side cvars, notifies all players with blue chat text when the value gets changed, also makes the convar appear in [A2S_RULES](https://developer.valvesoftware.com/wiki/Server_queries#A2S_RULES).
+    ---
+    ---@type boolean?
+    command.notify = nil
+
+    --- **READ-ONLY**
+    ---
+    --- For client-side commands, sends the value to the server.
+    ---
+    ---@type boolean?
+    command.userinfo = nil
+
+    --- **READ-ONLY**
+    ---
+    --- In multiplayer, prevents this command/variable from being used unless the server has `sv_cheats` turned on.
+    ---
+    --- If a client connects to a server where cheats are disabled (which is the default), all client side console variables labeled as `cheat` are reverted to their default values and can't be changed as long as the client stays connected.
+    ---
+    --- Console commands marked as `cheat` can't be executed either.
+    ---
+    --- As a general rule of thumb, any client-side command that isn't specifically meant to be configured by users should be marked with this flag, as even the most harmless looking commands can sometimes be misused to cheat.
+    ---
+    --- For server-side only commands you can be more lenient, since these would have no effect when changed by connected clients anyway.
+    ---
+    ---@type boolean?
+    command.cheat = nil
+
+    --- **READ-ONLY**
+    ---
+    --- This cvar's string cannot contain unprintable characters ( e.g., used for player name etc ).
+    ---
+    ---@type boolean?
+    command.printable_only = nil
+
+    --- **READ-ONLY**
+    ---
+    --- If this is a server-side, don't log changes to the log file / console if we are creating a log.
+    ---
+    ---@type boolean?
+    command.unlogged = nil
+
+    --- **READ-ONLY**
+    ---
+    --- Tells the engine to never print this console variable as a string.
+    ---
+    --- This is used for variables which may contain control characters.
+    ---
+    ---@type boolean?
+    command.never_as_string = nil
+
+    --- **READ-ONLY**
+    ---
+    --- When set on a console variable, all connected clients will be forced to match the server-side value.
+    ---
+    --- This should be used for shared code where it's important that both sides run the exact same path using the same data.
+    ---
+    --- (e.g. predicted movement/weapons, game rules)
+    ---
+    ---@type boolean?
+    command.replicated = nil
+
+    --- **READ-ONLY**
+    ---
+    --- When starting to record a demo file, explicitly adds the value of this console variable to the recording to ensure a correct playback.
+    ---
+    ---@type boolean?
+    command.demo = nil
+
+    --- **READ-ONLY**
+    ---
+    --- Opposite of `DEMO`, ensures the cvar is not recorded in demos.
+    ---
+    ---@type boolean?
+    command.dont_record = nil
+
+    --- **READ-ONLY**
+    ---
+    --- If set and this variable changes, it forces a material reload.
+    ---
+    ---@type boolean?
+    command.reload_materials = nil
+
+    --- **READ-ONLY**
+    ---
+    --- If set and this variable changes, it forces a texture reload.
+    ---
+    ---@type boolean?
+    command.reload_textures = nil
+
+    --- **READ-ONLY**
+    ---
+    --- Prevents this variable from being changed while the client is currently in a server, due to the possibility of exploitation of the command (e.g. `fps_max`).
+    ---
+    ---@type boolean?
+    command.not_connected = nil
+
+    --- **READ-ONLY**
+    ---
+    --- Indicates this cvar is read from the material system thread.
+    ---
+    ---@type boolean?
+    command.material_system_thread = nil
+
+    --- **READ-ONLY**
+    ---
+    --- Like `archive`, but for [Xbox 360](https://de.wikipedia.org/wiki/Xbox_360).
+    ---
+    --- Needless to say, this is not particularly useful to most modders.
+    ---
+    --- Save the cvar value into `config.vdf` on XBox.
+    ---
+    ---@type boolean?
+    command.archive_xbox = nil
+
+    --- **READ-ONLY**
+    ---
+    --- Used as a debugging tool necessary to check material system thread convars.
+    ---
+    ---@type boolean?
+    command.accessible_from_threads = nil
+
+    --- **READ-ONLY**
+    ---
+    --- The server is allowed to execute this command on clients via `ClientCommand/NET_StringCmd/CBaseClientState::ProcessStringCmd`.
+    ---
+    ---@type boolean?
+    command.server_can_execute = nil
+
+    --- **READ-ONLY**
+    ---
+    --- If this is set, then the server is not allowed to query this cvar's value (via `IServerPluginHelpers::StartQueryCvarValue`).
+    ---
+    ---@type boolean?
+    command.server_cannot_query = nil
+
+    --- **READ-ONLY**
+    ---
+    --- `IVEngineClient::ClientCmd` is allowed to execute this command.
+    ---
+    ---@type boolean?
+    command.clientcmd_can_execute = nil
+
+    --- **READ-ONLY**
+    ---
+    --- Summary of `reload_materials`, `reload_textures` and `material_system_thread`.
+    ---
+    ---@type boolean?
+    command.material_thread_mask = nil
+
+    --- **READ-ONLY**
+    ---
+    --- Set automatically on all cvars and console commands created by the `client` Lua state.
+    ---
+    ---@type boolean?
+    command.lua_client = nil
+
+    --- **READ-ONLY**
+    ---
+    --- Set automatically on all cvars and console commands created by the `server` Lua state.
+    ---
+    ---@type boolean?
+    command.lua_server = nil
+
+end
+
+do
+
     --- [SHARED AND MENU]
     ---
     --- Table used by `console.Command` class constructor.
@@ -317,7 +580,7 @@ do
 
     --- Hidden in released products.
     ---
-    --- Flag is removed automatically if `ALLOW_DEVELOPMENT_CVARS` is defined.
+    --- Flag is removed automatically if `ALLOW_DEVELOPMENT_CVARS` is defined in C++.
     ---
     ---@type boolean?
     options.development_only = nil
@@ -361,7 +624,7 @@ do
     ---@type boolean?
     options.notify = nil
 
-    --- For clientside commands, sends the value to the server.
+    --- For client-side commands, sends the value to the server.
     ---
     ---@type boolean?
     options.userinfo = nil
@@ -481,10 +744,10 @@ do
 
 end
 
+---@alias gpm.std.console.Variable.type "boolean" | "number" | "string"
+---@alias gpm.std.console.Variable.value boolean | number | string
+
 do
-
-
-    ---@alias gpm.std.console.Variable.Options.default string | number | boolean | nil
 
     --- [SHARED AND MENU]
     ---
@@ -495,12 +758,12 @@ do
 
     --- The type of the console variable.
     ---
-    ---@type gpm.std.console.Variable.Type?
+    ---@type gpm.std.console.Variable.type?
     options.type = nil
 
     --- The default value of the console variable.
     ---
-    ---@type gpm.std.console.Variable.Options.default
+    ---@type gpm.std.console.Variable.value?
     options.default = nil
 
     --- The minimal value of the console variable.
@@ -512,6 +775,46 @@ do
     ---
     ---@type number?
     options.max = nil
+
+end
+
+do
+
+    ---@class gpm.std.console.Variable : gpm.std.console.Command
+    local variable = {}
+
+    --- The type of the console variable.
+    ---
+    ---@type gpm.std.console.Variable.type
+    variable.type = nil
+
+    --- **READ-ONLY**
+    ---
+    --- The default value of the console variable.
+    ---
+    ---@type gpm.std.console.Variable.value
+    variable.default = nil
+
+    --- [SHARED AND MENU]
+    ---
+    --- The value of the console variable.
+    ---
+    ---@type gpm.std.console.Variable.value
+    variable.value = nil
+
+    --- **READ-ONLY**
+    ---
+    --- The minimal value of the console variable.
+    ---
+    ---@type number | nil
+    variable.min = nil
+
+    --- **READ-ONLY**
+    ---
+    --- The maximum value of the console variable.
+    ---
+    ---@type number | nil
+    variable.max = nil
 
 end
 

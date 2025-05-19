@@ -1,53 +1,17 @@
 local _G = _G
+
+---@class gpm
 local gpm = _G.gpm
-local engine = gpm.engine
 
 ---@class gpm.std
 local std = gpm.std
 
-local debug = std.debug
-local futures_Future = std.futures.Future
+if std.console ~= nil then
+    return
+end
 
-local isstring = std.isstring
-local string_format = std.string.format
-local debug_getfpackage = debug.getfpackage
+local engine = gpm.engine
 local engine_consoleCommandRun = engine.consoleCommandRun
-local bit_bor, setmetatable = std.bit.bor, std.setmetatable
-local table_insert, table_remove = std.table.insert, std.table.remove
-
-local convar_flags = {
-    { "unregistered", 1 },
-    { "development_only", 2 },
-    { "game_dll", 4 },
-    { "client_dll", 8 },
-    { "hidden", 16 },
-    { "protected", 32 },
-    { "sponly", 64 },
-    { "archive", 128 },
-    { "notify", 256 },
-    { "userinfo", 512 },
-    { "cheat", 16384 },
-    { "printable_only", 1024 },
-    { "unlogged", 2048 },
-    { "never_as_string", 4096 },
-    { "replicated", 8192 },
-    { "demo", 65536 },
-    { "dont_record", 131072 },
-    { "reload_materials", 1048576 },
-    { "reload_textures", 2097152 },
-    { "not_connected", 4194304 },
-    { "material_system_thread", 8388608 },
-    { "archive_xbox", 16777216 },
-    { "accessible_from_threads", 33554432 },
-    { "server_can_execute", 268435456 },
-    { "server_cannot_query", 536870912 },
-    { "clientcmd_can_execute", 1073741824 },
-    { "material_thread_mask", 11534336 },
-    { "lua_client", 262144 },
-    { "lua_server", 524288 }
-}
-
-local convar_flag_count = #convar_flags
 
 --- [SHARED AND MENU]
 ---
@@ -90,11 +54,15 @@ if std.CLIENT_MENU then
 
     local gui_IsConsoleVisible = _G.gui.IsConsoleVisible
 
-    console.visible = gui_IsConsoleVisible()
+    local visible = gui_IsConsoleVisible()
+    console.visible = visible
 
-    _G.timer.Create( gpm.PREFIX .. " - gui.IsConsoleVisible", 0.25, 0, function()
-        console.visible = gui_IsConsoleVisible()
-    end )
+    gpm.TickTimer0_25:attach( function()
+        if visible ~= gui_IsConsoleVisible() then
+            visible = not visible
+            console.visible = visible
+        end
+    end, "std.console.visible" )
 
 end
 
@@ -108,6 +76,11 @@ do
         local table_concat = std.table.concat
         local print = std.print
 
+        --- [SHARED AND MENU]
+        ---
+        --- Writes a message to the console.
+        ---
+        ---@param ... string The message to write to the console.
         function console_write( ... )
             local buffer, buffer_size = {}, 0
             local args = { ... }
@@ -141,9 +114,89 @@ do
 
 end
 
+local existing_flags = {
+    { "unregistered", 1 },
+    { "development_only", 2 },
+    { "game_dll", 4 },
+    { "client_dll", 8 },
+    { "hidden", 16 },
+    { "protected", 32 },
+    { "sponly", 64 },
+    { "archive", 128 },
+    { "notify", 256 },
+    { "userinfo", 512 },
+    { "cheat", 16384 },
+    { "printable_only", 1024 },
+    { "unlogged", 2048 },
+    { "never_as_string", 4096 },
+    { "replicated", 8192 },
+    { "demo", 65536 },
+    { "dont_record", 131072 },
+    { "reload_materials", 1048576 },
+    { "reload_textures", 2097152 },
+    { "not_connected", 4194304 },
+    { "material_system_thread", 8388608 },
+    { "archive_xbox", 16777216 },
+    { "accessible_from_threads", 33554432 },
+    { "server_can_execute", 268435456 },
+    { "server_cannot_query", 536870912 },
+    { "clientcmd_can_execute", 1073741824 },
+    { "material_thread_mask", 11534336 },
+    { "lua_client", 262144 },
+    { "lua_server", 524288 }
+}
+
+local existing_flag_count = #existing_flags
+
+---@type table<string, integer>
+local flag2integer = {}
+
+for i = 1, existing_flag_count, 1 do
+    local flag = existing_flags[ i ]
+    flag2integer[ flag[ 1 ] ] = flag[ 2 ]
+end
+
+local bit_band = std.bit.band
+
+local string_format = std.string.format
+local string_sub = std.string.sub
+
+local debug = std.debug
+local debug_fempty = debug.fempty
+local gc_setTableRules = debug.gc.setTableRules
+
+local futures_Future = std.futures.Future
+local setmetatable = std.setmetatable
+local table_eject = std.table.eject
+local raw_get = std.raw.get
+local pcall = std.pcall
+
 do
 
-    local engine_consoleCommandAdd = engine.consoleCommandAdd
+    ---@type table<gpm.std.console.Command | gpm.std.console.Variable, string>
+    local names = {}
+
+    gc_setTableRules( names, true, false )
+
+    ---@type table<gpm.std.console.Command | gpm.std.console.Variable, string>
+    local descriptions = {}
+
+    gc_setTableRules( descriptions, true, false )
+
+    ---@type table<gpm.std.console.Command | gpm.std.console.Variable, integer>
+    local flags = {}
+
+    gc_setTableRules( flags, true, false )
+
+    ---@type table<gpm.std.console.Command | gpm.std.console.Variable, table>
+    local callbacks = {}
+
+    gc_setTableRules( callbacks, true, false )
+
+    ---@type table<string, gpm.std.console.Command>
+    local commands = {}
+
+    gc_setTableRules( commands, false, true )
 
     --- [SHARED AND MENU]
     ---
@@ -151,56 +204,73 @@ do
     ---
     ---@class gpm.std.console.Command : gpm.std.Object
     ---@field __class gpm.std.console.Command
-    ---@field name string The name of the console command.
-    ---@field description string The help text of the console command.
-    ---@field flags integer The flags of the console command.
-    local Command = std.class.base( "console.Command" )
+    local Command = std.class.base( "console.Command", true )
 
-    local commands = {}
-
-    ---@param options gpm.std.console.Command.Options
     ---@protected
-    function Command:__init( options )
-        local name = options.name
-        self.name = name
+    function Command:__index( str_key )
+        if str_key == "name" then
+            return names[ self ] or "unknown"
+        elseif str_key == "description" then
+            return descriptions[ self ] or "unknown"
+        elseif str_key == "flags" then
+            return flags[ self ] or 0
+        elseif flag2integer[ str_key ] ~= nil then
+            return bit_band( flags[ self ], flag2integer[ str_key ] ) ~= 0
+        elseif string_sub( str_key, 1, 2 ) == "__" then
+            error( "unknown key '" .. str_key .. "'", 2 )
+        else
+            return raw_get( Command, str_key )
+        end
+    end
 
-        local description = options.description or ""
-        self.description = description
+    do
 
-        local flags = options.flags or 0
+        local engine_consoleCommandAdd = engine.consoleCommandAdd
 
-        for i = 1, convar_flag_count, 1 do
-            local flag = convar_flags[ i ]
-            local flag_name = flag[ 1 ]
-            if options[ flag_name ] then
-                flags = bit_bor( flags, flag[ 2 ] )
-                self[ flag_name ] = true
-            else
-                self[ flag_name ] = false
+        ---@param options gpm.std.console.Command.Options
+        ---@private
+        function Command:__init( options )
+            local name = options.name
+            local description = options.description or "description not provided"
+
+            local int32_flags = options.flags or 0
+
+            for i = 1, existing_flag_count, 1 do
+                local flag = existing_flags[ i ]
+                if options[ flag[ 1 ] ] then
+                    int32_flags = int32_flags + flag[ 2 ]
+                end
             end
+
+            engine_consoleCommandAdd( name, description, int32_flags )
+
+            names[ self ] = name
+            descriptions[ self ] = description
+            flags[ self ] = int32_flags
+            callbacks[ self ] = {}
+            commands[ name ] = self
         end
 
-        self.flags = flags
-
-        engine_consoleCommandAdd( name, description, flags )
-
-        self.callbacks = {}
-
-        commands[ name ] = self
     end
 
     ---@param name string
-    ---@return gpm.std.console.Command?
+    ---@return gpm.std.console.Command
     ---@protected
     function Command:__new( name )
         return commands[ name ]
+    end
+
+    ---@return string
+    ---@protected
+    function Command:__tostring()
+        return string_format( "console.Command: %p [%s][%s]", self, names[ self ], descriptions[ self ] )
     end
 
     --- [SHARED AND MENU]
     ---
     --- The console command class.
     ---
-    ---@class gpm.std.console.CommandClass : gpm.std.console.Command
+    ---@class gpm.std.console.CommandClass : gpm.std.Class
     ---@field __base gpm.std.console.Command
     ---@overload fun( options: gpm.std.console.Command.Options ): gpm.std.console.Command
     local CommandClass = std.class.create( Command )
@@ -216,27 +286,6 @@ do
     end
 
     CommandClass.exists = engine.consoleCommandExists
-
-    ---@diagnostic disable-next-line: undefined-field
-    if std.CLIENT_MENU then
-        local glua_input = _G.input
-        if glua_input ~= nil and glua_input.TranslateAlias ~= nil then
-            ---@diagnostic disable-next-line: undefined-field
-            CommandClass.translateAlias = glua_input.TranslateAlias
-        else
-
-            --- [CLIENT AND MENU]
-            ---
-            --- Translates a console command alias, basically reverse of the `alias` console command.
-            ---
-            ---@param str string The alias to lookup.
-            ---@return string | nil cmd The command(s) this alias will execute if ran, or nil if the alias doesn't exist.
-            ---@diagnostic disable-next-line: duplicate-set-field
-            function CommandClass.translateAlias( str ) end
-
-        end
-    end
-
     CommandClass.run = engine_consoleCommandRun
 
     --- [SHARED AND MENU]
@@ -245,22 +294,50 @@ do
     ---
     ---@param ... string The arguments to pass to the console command.
     function Command:run( ... )
-        engine_consoleCommandRun( self.name, ... )
+        local name = names[ self ]
+        if name ~= nil then
+            engine_consoleCommandRun( name, ... )
+        end
+    end
+
+    if std.CLIENT_MENU then
+
+        local translateAlias = _G.input ~= nil and _G.input.TranslateAlias
+
+        --- [CLIENT AND MENU]
+        ---
+        --- Translates a console command alias, basically reverse of the `alias` console command.
+        ---
+        ---@param str string The alias to lookup.
+        ---@return string | nil cmd The command(s) this alias will execute if ran, or nil if the alias doesn't exist.
+        function CommandClass.translateAlias( str )
+            if translateAlias ~= nil then
+                return translateAlias( str )
+            end
+        end
+
     end
 
     do
 
         ---@diagnostic disable-next-line: undefined-field
-        local is_blacklisted = _G.IsConCommandBlocked
+        local IsConCommandBlocked = _G.IsConCommandBlocked
 
-        if is_blacklisted == nil then
-            ---@param str string
-            function is_blacklisted( str )
+        --- [SHARED AND MENU]
+        ---
+        --- Checks if the console command is blacklisted.
+        ---
+        ---@param name string The name of the console command.
+        ---@return boolean is_blacklisted `true` if the console command is blacklisted, `false` otherwise.
+        local function isBlacklisted( name )
+            if IsConCommandBlocked == nil then
                 return false
+            else
+                return IsConCommandBlocked( name )
             end
         end
 
-        CommandClass.isBlacklisted = is_blacklisted
+        CommandClass.isBlacklisted = isBlacklisted
 
         --- [SHARED AND MENU]
         ---
@@ -268,43 +345,125 @@ do
         ---
         ---@return boolean is_blacklisted `true` if the console command is blacklisted, `false` otherwise.
         function Command:isBlacklisted()
-            return is_blacklisted( self.name )
-        end
-
-    end
-
-    --- [SHARED AND MENU]
-    ---
-    --- Adds a callback to the console command.
-    ---
-    ---@param identifier any The identifier of the callback.
-    ---@param fn function The callback function.
-    ---@param once boolean? Whether the callback should be called only once.
-    function Command:addCallback( identifier, fn, once )
-        local data = { fn, identifier, once }
-
-        local package = debug_getfpackage( 2 )
-        if package then
-            data[ 2 ], data[ 4 ] = package.prefix .. data[ 2 ], package
-            table_insert( package.console_commands, data )
-        end
-
-        table_insert( self.callbacks, data )
-    end
-
-    --- [SHARED AND MENU]
-    ---
-    --- Removes a callback from the console command.
-    ---
-    ---@param identifier string The identifier of the callback.
-    function Command:removeCallback( identifier )
-        local callbacks = self.callbacks
-        for i = #callbacks, 1, -1 do
-            local value = callbacks[ i ][ 2 ]
-            if value and value == identifier then
-                table_remove( callbacks, i )
+            local name = names[ self ]
+            if name == nil then
+                return false
+            else
+                return isBlacklisted( name )
             end
         end
+
+    end
+
+    ---@type table<gpm.std.console.Variable, boolean>
+    local in_call = {}
+
+    gc_setTableRules( in_call, true, false )
+
+    -- TODO: remove later
+    ---@diagnostic disable-next-line: undefined-doc-name
+    ---@alias gpm.std.console.Command.callback fun( command: gpm.std.console.Command, ply: gpm.std.Player, args: string[], argument_string: string )
+
+    ---@class gpm.std.console.Command.query_data
+    ---@field [1] boolean `true` to attach, `false` to detach.
+    ---@field [2] any The identifier of the callback.
+    ---@field [3] nil | gpm.std.console.Command.callback The callback function.
+    ---@field [4] nil | boolean `true` to run once, `false` to run forever.
+
+    ---@type table<gpm.std.console.Command, gpm.std.console.Command.query_data[]>
+    local queues = {}
+
+    gc_setTableRules( queues, true, false )
+
+    --- [SHARED AND MENU]
+    ---
+    --- Adds a callback to the console command object.
+    ---
+    ---@param fn gpm.std.console.Command.callback The callback function.
+    ---@param identifier? any The identifier of the callback, default is `unnamed`.
+    ---@param once? boolean `true` to run once, `false` to run forever, default is `false`.
+    function Command:attach( fn, identifier, once )
+        if identifier == nil then
+            identifier = "nil"
+        end
+
+        if in_call[ self ] then
+            local queue = queues[ self ]
+            if queue == nil then
+                queues[ self ] = {
+                    { true, identifier, fn, once == true }
+                }
+            else
+                queue[ #queue + 1 ] = { true, identifier, fn, once == true }
+            end
+
+            return
+        end
+
+        local lst = callbacks[ self ]
+        if lst == nil then
+            return
+        end
+
+        local lst_length = #lst
+
+        for i = 1, lst_length, 3 do
+            if lst[ i ] == identifier then
+                lst[ i + 1 ] = fn
+                lst[ i + 2 ] = once == true
+                return
+            end
+        end
+
+        lst[ lst_length + 1 ] = identifier
+        lst[ lst_length + 2 ] = fn
+        lst[ lst_length + 3 ] = once == true
+    end
+
+    --- [SHARED AND MENU]
+    ---
+    --- Removes a callback from the console command object.
+    ---
+    ---@param identifier any The identifier of the callback to detach.
+    function Command:detach( identifier )
+        if identifier == nil then
+            identifier = "nil"
+        end
+
+        local lst = callbacks[ self ]
+        if lst == nil then
+            return
+        end
+
+        for i = 1, #lst, 3 do
+            if lst[ i ] == identifier then
+                if in_call[ self ] then
+                    lst[ i + 1 ] = debug_fempty
+
+                    local queue = queues[ self ]
+                    if queue == nil then
+                        queues[ self ] = {
+                            { false, identifier }
+                        }
+                    else
+                        queue[ #queue + 1 ] = { false, identifier }
+                    end
+                else
+                    table_eject( lst, i, i + 2 )
+                end
+
+                break
+            end
+        end
+    end
+
+    --- [SHARED AND MENU]
+    ---
+    --- Clears all callbacks from the `console.Command` object.
+    ---
+    function Command:clear()
+        callbacks[ self ] = {}
+        in_call[ self ] = nil
     end
 
     --- [SHARED AND MENU]
@@ -315,56 +474,296 @@ do
     function Command:wait()
         local future = futures_Future()
 
-        self:addCallback( future, function( ... )
+        self:attach( function( ... )
             return future:setResult( { ... } )
-        end, true )
+        end, future, true )
 
         return future:await()
     end
 
     engine.consoleCommandCatch( function( ply, cmd, args, argument_string )
         local command = commands[ cmd ]
-        if command == nil then return end
+        if command == nil then
+            return
+        end
 
-        local callbacks = command.callbacks
-        if callbacks == nil then return end
+        in_call[ command ] = true
 
-        for index = #callbacks, 1, -1 do
-            local data = callbacks[ index ]
-
-            data[ 1 ]( command, ply, args, argument_string )
-
-            if data[ 3 ] then
-                table_remove( callbacks, index )
+        local lst = callbacks[ command ]
+        if lst ~= nil then
+            for i = #lst - 1, 1, -3 do
+                if in_call[ command ] then
+                    local success, err_msg = pcall( lst[ i ], command, ply, args, argument_string )
+                    if not success then
+                        -- TODO: replace with cool new errors that i make later
+                        std.printf( "[GPM] console command callback error: %s", err_msg )
+                        table_eject( lst, i - 1, i + 1 )
+                    elseif lst[ i + 1 ] then
+                        table_eject( lst, i - 1, i + 1 )
+                    end
+                else
+                    break
+                end
             end
         end
+
+        in_call[ command ] = nil
+
+        local queue = queues[ command ]
+        if queue ~= nil then
+            queues[ command ] = nil
+
+            for i = 1, #queue, 1 do
+                local tbl = queue[ i ]
+                if tbl[ 1 ] then
+                    command:attach( tbl[ 2 ], tbl[ 3 ], tbl[ 4 ] )
+                else
+                    command:detach( tbl[ 2 ] )
+                end
+            end
+        end
+
     end, 1 )
 
 end
 
--- Console Variable
 do
 
-    local engine_consoleVariableCreate = engine.consoleVariableCreate
     local engine_consoleVariableGet = engine.consoleVariableGet
 
-    local tostring, tonumber, toboolean = std.tostring, std.tonumber, std.toboolean
-    local isnumber = std.isnumber
-    local type = std.type
+    local toboolean = std.toboolean
+    local tonumber = std.tonumber
+    local tostring = std.tostring
 
-    ---@alias gpm.std.console.Variable.Type
-    ---| string # The type of value of the console variable.
-    ---| "boolean"
-    ---| "number"
-    ---| "string"
-
-    local CONVAR = debug.findmetatable( "ConVar" )
+    local CONVAR = debug.findmetatable( "ConVar" ) or {}
     ---@cast CONVAR ConVar
 
+    local getMin, getMax = CONVAR.GetMin, CONVAR.GetMax
     local getDefault = CONVAR.GetDefault
     local getString = CONVAR.GetString
     local getFloat = CONVAR.GetFloat
     local getBool = CONVAR.GetBool
+
+    local raw_type = std.raw.type
+
+    ---@type table<gpm.std.console.Variable, ConVar>
+    local variable2convar = {}
+
+    ---@type table<gpm.std.console.Variable, string>
+    local names = {}
+
+    do
+
+        local getName = CONVAR.GetName
+
+        setmetatable( names, {
+            __index = function( _, self )
+                local cvar = variable2convar[ self ]
+                if cvar == nil then
+                    return "unknown"
+                end
+
+                local name = getName( cvar )
+                names[ self ] = name
+                return name
+            end,
+            __mode = "k"
+        } )
+
+    end
+
+    setmetatable( variable2convar, {
+        __index = function( _,  self )
+            local name = raw_get( names, self )
+            if name ~= nil then
+                local cvar = engine_consoleVariableGet( name )
+                variable2convar[ self ] = cvar
+                return cvar
+            end
+        end,
+        __mode = "k"
+    } )
+
+    ---@type table<gpm.std.console.Variable, string>
+    local descriptions = {}
+
+    do
+
+        local getDescription = CONVAR.GetHelpText
+
+        setmetatable( descriptions, {
+            __index = function( _, self )
+                local cvar = variable2convar[ self ]
+                if cvar == nil then
+                    return "unknown"
+                end
+
+                local description = getDescription( cvar )
+                descriptions[ self ] = description
+                return description
+            end,
+            __mode = "k"
+        } )
+
+    end
+
+    ---@type table<gpm.std.console.Variable, gpm.std.console.Variable.type>
+    local types = {}
+
+    do
+
+        local raw_set = std.raw.set
+
+        ---@type table<gpm.std.console.Variable.type, boolean>
+        local supported_types = {
+            boolean = true,
+            number = true,
+            string = true
+        }
+
+        setmetatable( types, {
+            __index = function()
+                return "string"
+            end,
+            __newindex = function( _, self, name )
+                if supported_types[ name ] then
+                    raw_set( types, self, name )
+                end
+            end,
+            __mode = "k"
+        } )
+
+    end
+
+    ---@type table<gpm.std.console.Variable, integer>
+    local flags = {}
+
+    do
+
+        local getFlags = CONVAR.GetFlags
+
+        setmetatable( flags, {
+            __index = function( _, self )
+                local cvar = variable2convar[ self ]
+                if cvar == nil then
+                    return 0
+                end
+
+                local int32_flags = getFlags( cvar )
+                flags[ self ] = int32_flags
+                return int32_flags
+            end,
+            __mode = "k"
+        } )
+
+    end
+
+    ---@type table<gpm.std.console.Variable, gpm.std.console.Variable.value>
+    local defaults = {}
+
+    setmetatable( defaults, {
+        __index = function( _, variable )
+            local type = types[ variable ]
+
+            local cvar = variable2convar[ variable ]
+            if cvar == nil then
+                if type == "number" then
+                    return 0
+                elseif type == "boolean" then
+                    return false
+                end
+
+                return ""
+            end
+
+            local str_default = getDefault( cvar )
+            if type == "number" then
+                local float_default = tonumber( str_default, 10 )
+                defaults[ variable ] = float_default
+                return float_default
+            elseif type == "boolean" then
+                local bool_default = toboolean( str_default )
+                defaults[ variable ] = bool_default
+                return bool_default
+            else
+                defaults[ variable ] = str_default
+                return str_default
+            end
+        end,
+        __mode = "k"
+    } )
+
+    ---@type table<gpm.std.console.Variable, gpm.std.console.Variable.value>
+    local values = {}
+
+    setmetatable( values, {
+        __index = function( _, variable )
+            local cvar = variable2convar[ variable ]
+            if cvar == nil then
+                return defaults[ variable ]
+            end
+
+            local type = types[ variable ]
+            if type == "number" then
+                local float_value = getFloat( cvar )
+                values[ variable ] = float_value
+                return float_value
+            elseif type == "boolean" then
+                local bool_value = getBool( cvar )
+                values[ variable ] = bool_value
+                return bool_value
+            else
+                local str_value = getString( cvar )
+                values[ variable ] = str_value
+                return str_value
+            end
+        end,
+        __mode = "k"
+    } )
+
+    ---@type table<gpm.std.console.Variable, number>
+    local mins = {}
+
+    setmetatable( mins, {
+        __index = function( _, variable )
+            local cvar = variable2convar[ variable ]
+            if cvar == nil then
+                return nil
+            end
+
+            local float_min = getMin( cvar )
+            mins[ variable ] = float_min
+            return float_min
+        end,
+        __mode = "k"
+    } )
+
+    ---@type table<gpm.std.console.Variable, number>
+    local maxs = {}
+
+    setmetatable( maxs, {
+        __index = function( _, variable )
+            local cvar = variable2convar[ variable ]
+            if cvar == nil then
+                return nil
+            end
+
+            local float_max = getMax( cvar )
+            maxs[ variable ] = float_max
+            return float_max
+        end,
+        __mode = "k"
+    } )
+
+    ---@type table<string, gpm.std.console.Variable>
+    local variables = {}
+
+    gc_setTableRules( variables, false, true )
+
+    ---@type table<gpm.std.console.Variable, table>
+    local callbacks = {}
+
+    gc_setTableRules( callbacks, true, false )
 
     --- [SHARED AND MENU]
     ---
@@ -372,81 +771,146 @@ do
     ---
     ---@class gpm.std.console.Variable : gpm.std.Object
     ---@field __class gpm.std.console.Variable
-    ---@field protected object ConVar The `ConVar` object.
-    ---@field protected type gpm.std.console.Variable.Type The type of the console variable.
-    ---@field name string The name of the console variable.
-    local Variable = std.class.base( "console.Variable" )
+    local Variable = std.class.base( "console.Variable", true )
 
-    local variables = {}
-
-    ---@param options gpm.std.console.Variable.Options The data of the console variable.
     ---@protected
-    function Variable:__init( options )
-        local name = options.name
-        self.name = name
-
-        local cvar_type = options.type or "string"
-        self.type = cvar_type
-
-        local object = engine_consoleVariableGet( name )
-        if object == nil then
-            local default = options.default
-            if default == nil then
-                default = ""
-            elseif type( default ) ~= cvar_type then
-                error( "default value must match console variable options type (" .. cvar_type .. ").", 3 )
-            elseif cvar_type == "boolean" then
-                default = default and "1" or "0"
-            elseif cvar_type == "number" then
-                default = tostring( default ) or "0"
-            end
-
-            ---@cast default string
-
-            ---@type string
-            local description = options.description or ""
-            self.description = description
-
-            ---@type integer
-            local flags = options.flags or 0
-
-            for i = 1, convar_flag_count, 1 do
-                local flag = convar_flags[ i ]
-                local flag_name = flag[ 1 ]
-                if options[ flag_name ] then
-                    flags = bit_bor( flags, flag[ 2 ] )
-                    self[ flag_name ] = true
-                else
-                    self[ flag_name ] = false
-                end
-            end
-
-            self.flags = flags
-
-            local min = options.min
-            self.min = min
-
-            local max = options.max
-            self.max = max
-
-            object = engine_consoleVariableCreate( name, default, flags, description, min, max )
-        end
-
-        if object == nil then
-            error( "failed to create console variable, unknown error", 3 )
+    function Variable:__index( str_key )
+        if str_key == "type" then
+            return types[ self ]
+        elseif str_key == "name" then
+            return names[ self ]
+        elseif str_key == "description" then
+            return descriptions[ self ]
+        elseif str_key == "flags" then
+            return flags[ self ]
+        elseif str_key == "default" then
+            return defaults[ self ]
+        elseif str_key == "min" then
+            return mins[ self ]
+        elseif str_key == "max" then
+            return maxs[ self ]
+        elseif str_key == "value" then
+            return values[ self ]
+        elseif flag2integer[ str_key ] ~= nil then
+            return bit_band( flags[ self ], flag2integer[ str_key ] ) ~= 0
+        elseif string_sub( str_key, 1, 2 ) == "__" then
+            error( "unknown key '" .. str_key .. "'", 2 )
         else
-            self.object = object
+            return raw_get( Variable, str_key )
         end
-
-        self.callbacks = {}
-
-        variables[ name ] = self
     end
 
-    ---@param name string
+
+    ---@protected
+    function Variable:__newindex( str_key, value )
+        if str_key == "value" then
+            local str_type = types[ self ]
+            if str_type == "boolean" then
+                local bool_value = toboolean( value )
+                engine_consoleCommandRun( names[ self ], bool_value and "1" or "0" )
+                values[ self ] = bool_value
+            elseif str_type == "number" then
+                local float_value = tonumber( value, 10 )
+                engine_consoleCommandRun( names[ self ], string_format( "%f", float_value ) )
+                values[ self ] = float_value
+            else
+                local str_value = tostring( value )
+                engine_consoleCommandRun( names[ self ], str_value )
+                values[ self ] = str_value
+            end
+        elseif str_key == "type" then
+            types[ self ] = value
+        else
+            error( "attempt to modify unknown console variable property", 2 )
+        end
+    end
+
+    do
+
+        local engine_consoleVariableCreate = engine.consoleVariableCreate
+        local arg = std.arg
+
+        ---@param options gpm.std.console.Variable.Options
+        ---@protected
+        function Variable:__init( options )
+            local str_name = options.name
+            names[ self ] = str_name
+
+            local str_type = options.type or "string"
+            types[ self ] = str_type
+
+            local cvar = engine_consoleVariableGet( str_name )
+            if cvar == nil then
+                local str_description = options.description or ""
+                descriptions[ self ] = str_description
+
+                local str_default = options.default
+
+                if str_default == nil then
+                    if str_type == "boolean" then
+                        str_default = false
+                    elseif str_type == "number" then
+                        str_default = 0
+                    else
+                        str_default = ""
+                    end
+                end
+
+                local ok, err = arg( str_default, "default", str_type )
+                if not ok then
+                    error( err, 3 )
+                end
+
+                if str_type == "boolean" then
+                    str_default = str_default and "1" or "0"
+                elseif str_type == "number" then
+                    str_default = tostring( str_default ) or "0"
+                end
+
+                ---@cast str_default string
+
+                local int32_flags = options.flags or 0
+
+                for i = 1, existing_flag_count, 1 do
+                    local flag = existing_flags[ i ]
+                    if options[ flag[ 1 ] ] then
+                        int32_flags = int32_flags + flag[ 2 ]
+                    end
+                end
+
+                flags[ self ] = int32_flags
+
+                local int32_min = options.min
+                mins[ self ] = int32_min
+
+                local int32_max = options.max
+                maxs[ self ] = int32_max
+
+                cvar = engine_consoleVariableCreate( str_name, str_default, int32_flags, str_description, int32_min, int32_max )
+            end
+
+            if cvar == nil then
+                error( "failed to create console variable, unknown error", 3 )
+            else
+                variable2convar[ self ] = cvar
+            end
+
+            callbacks[ self ] = {}
+            variables[ str_name ] = self
+        end
+    end
+
+    ---@param str_name string
     ---@return gpm.std.console.Variable?
-    function Variable:__new( name )
-        return variables[ name ]
+    ---@protected
+    function Variable:__new( str_name )
+        return variables[ str_name ]
+    end
+
+    ---@return string
+    ---@protected
+    function Variable:__tostring()
+        return string_format( "console.Variable: %p [%s][%s]", self, names[ self ], values[ self ] )
     end
 
     --- [SHARED AND MENU]
@@ -456,106 +920,69 @@ do
     ---@class gpm.std.console.VariableClass : gpm.std.console.Variable
     ---@field __base gpm.std.console.Variable
     ---@overload fun( options: gpm.std.console.Variable.Options ): gpm.std.console.Variable
-    local VariableClass = std.class.create( Variable )
+    local VariableClass = console.Variable or gpm.std.class.create( Variable )
     console.Variable = VariableClass
 
     VariableClass.exists = engine.consoleVariableExists
 
-    do
-
-        local type2fn = {
-            boolean = getBool,
-            number = getFloat,
-            string = getString
-        }
-
-        --- [SHARED AND MENU]
-        ---
-        --- Gets the value of the `ConsoleVariable` object.
-        ---
-        ---@return boolean | string | number value The value of the `ConsoleVariable` object.
-        function Variable:get()
-            return type2fn[ self.type ]( self.object )
-        end
-
-    end
-
     --- [SHARED AND MENU]
     ---
-    --- Gets a `ConsoleVariable` object by its name.
+    --- Gets a `console.Variable` object by its name.
     ---
-    ---@param name string The name of the console variable.
-    ---@param cvar_type gpm.std.console.Variable.Type? The type of the console variable.
-    ---@return gpm.std.console.Variable variable The `ConsoleVariable` object.
-    function VariableClass.get( name, cvar_type )
-        local value = variables[ name ]
-        if value == nil then
-            local object = engine_consoleVariableGet( name )
-            if object == nil then
-                error( "console variable '" .. name .. "' does not exist.", 2 )
+    ---@param str_name string The name of the console variable.
+    ---@param str_type gpm.std.console.Variable.type The type of the console variable.
+    ---@return gpm.std.console.Variable variable The `console.Variable` object.
+    function VariableClass.get( str_name, str_type )
+        local variable = variables[ str_name ]
+        if variable == nil then
+            local cvar = engine_consoleVariableGet( str_name )
+            if cvar == nil then
+                error( "console variable '" .. str_name .. "' does not exist.", 2 )
             end
 
-            value = {
-                name = name,
-                type = cvar_type or "string",
-                object = object,
-                callbacks = {}
+            local options = {
+                type = str_type,
+                name = str_name
             }
 
-            setmetatable( value, Variable )
-            variables[ name ] = value
-        end
+            if str_type == "boolean" or str_type == "number" then
+                options.default = 0
+            else
+                options.default = ""
+            end
 
-        return value
-    end
-
-    --- [SHARED AND MENU]
-    ---
-    --- Sets the value of the `ConsoleVariable` object.
-    ---
-    ---@param value any The value to set.
-    function Variable:set( value )
-        local cvar_type = self.type
-        if cvar_type == "boolean" then
-            engine_consoleCommandRun( self.name, toboolean( value ) and "1" or "0" )
-        elseif cvar_type == "string" then
-            engine_consoleCommandRun( self.name, tostring( value ) )
-        elseif cvar_type == "number" then
-            engine_consoleCommandRun( self.name, string_format( "%f", tonumber( value, 10 ) ) )
+            return VariableClass( options )
+        else
+            variable.type = str_type
+            return variable
         end
     end
 
     --- [SHARED AND MENU]
     ---
-    --- Sets the value of the `ConsoleVariable` object.
+    --- Sets the value of the `console.Variable` object.
     ---
     ---@param name string The name of the console variable.
-    ---@param value boolean | string | number The value to set.
+    ---@param value gpm.std.console.Variable.value The value to set.
     function VariableClass.set( name, value )
-        local value_type = type( value )
-        if value_type == "boolean" then
+        local str_type = raw_type( value )
+        if str_type == "boolean" then
             engine_consoleCommandRun( name, value and "1" or "0" )
-        elseif value_type == "string" then
+        elseif str_type == "string" then
             engine_consoleCommandRun( name, value )
-        elseif value_type == "number" then
+        elseif str_type == "number" then
             engine_consoleCommandRun( name, string_format( "%f", tonumber( value, 10 ) ) )
         else
             error( "invalid value type, must be boolean, string or number.", 2 )
         end
     end
 
-    ---@return string
-    ---@protected
-    function Variable:__tostring()
-        return string_format( "Console Variable: %s [%s]", self.name, getString( self.object ) )
-    end
-
     --- [SHARED AND MENU]
     ---
-    --- Gets the value of the `ConsoleVariable` object as a string.
+    --- Gets the value of the `console.Variable` object as a string.
     ---
     ---@param name string The name of the console variable.
-    ---@return string value The value of the `ConsoleVariable` object.
+    ---@return string value The value of the `console.Variable` object.
     function VariableClass.getString( name )
         local object = engine_consoleVariableGet( name )
         if object == nil then
@@ -567,10 +994,10 @@ do
 
     --- [SHARED AND MENU]
     ---
-    --- Gets the value of the `ConsoleVariable` object as a number.
+    --- Gets the value of the `console.Variable` object as a number.
     ---
     ---@param name string The name of the console variable.
-    ---@return number value The value of the `ConsoleVariable` object.
+    ---@return number value The value of the `console.Variable` object.
     function VariableClass.getNumber( name )
         local object = engine_consoleVariableGet( name )
         if object == nil then
@@ -582,10 +1009,10 @@ do
 
     --- [SHARED AND MENU]
     ---
-    --- Gets the value of the `ConsoleVariable` object as a boolean.
+    --- Gets the value of the `console.Variable` object as a boolean.
     ---
     ---@param name string The name of the console variable.
-    ---@return boolean value The value of the `ConsoleVariable` object.
+    ---@return boolean value The value of the `console.Variable` object.
     function VariableClass.getBoolean( name )
         local object = engine_consoleVariableGet( name )
         if object == nil then
@@ -599,21 +1026,24 @@ do
 
     --- [SHARED AND MENU]
     ---
-    --- Reverts the value of the `ConsoleVariable` object to its default value.
+    --- Reverts the value of the `console.Variable` object to its default value.
     ---
     function Variable:revert()
-        engine_consoleCommandRun( self.name, getDefault( self.object ) )
+        local name = names[ self ]
+        if name ~= nil then
+            engine_consoleCommandRun( name, self.default )
+        end
     end
 
     --- [SHARED AND MENU]
     ---
-    --- Reverts the value of the `ConsoleVariable` object to its default value.
+    --- Reverts the value of the `console.Variable` object to its default value.
     ---
     ---@param name string The name of the console variable.
     function VariableClass.revert( name )
         local object = engine_consoleVariableGet( name )
         if object == nil then
-            error( "Variable '" .. name .. "' does not available.", 2 )
+            error( "Variable '" .. name .. "' does not exist.", 2 )
         else
             engine_consoleCommandRun( name, getDefault( object ) )
         end
@@ -625,20 +1055,11 @@ do
 
         --- [SHARED AND MENU]
         ---
-        --- Gets the help text of the `ConsoleVariable` object.
-        ---
-        ---@return string help The help text of the `ConsoleVariable` object.
-        function Variable:getHelpText()
-            return getHelpText( self.object )
-        end
-
-        --- [SHARED AND MENU]
-        ---
-        --- Gets the help text of the `ConsoleVariable` object.
+        --- Gets the help text of the `console.Variable` object.
         ---
         ---@param name string The name of the console variable.
-        ---@return string help The help text of the `ConsoleVariable` object.
-        function VariableClass.getHelpText( name )
+        ---@return string help The help text of the `console.Variable` object.
+        function VariableClass.getDescription( name )
             local object = engine_consoleVariableGet( name )
             if object == nil then
                 return ""
@@ -651,19 +1072,10 @@ do
 
     --- [SHARED AND MENU]
     ---
-    --- Gets the default value of the `ConsoleVariable` object.
-    ---
-    ---@return string default The default value of the `ConsoleVariable` object.
-    function Variable:getDefault()
-        return getDefault( self.object )
-    end
-
-    --- [SHARED AND MENU]
-    ---
-    --- Gets the default value of the `ConsoleVariable` object.
+    --- Gets the default value of the `console.Variable` object.
     ---
     ---@param name string The name of the console variable.
-    ---@return string default The default value of the `ConsoleVariable` object.
+    ---@return string default The default value of the `console.Variable` object.
     function VariableClass.getDefault( name )
         local object = engine_consoleVariableGet( name )
         if object == nil then
@@ -679,19 +1091,10 @@ do
 
         --- [SHARED AND MENU]
         ---
-        --- Gets the flags of the `ConsoleVariable` object.
-        ---
-        ---@return integer flags The flags of the `ConsoleVariable` object.
-        function Variable:getFlags()
-            return getFlags( self.object )
-        end
-
-        --- [SHARED AND MENU]
-        ---
-        --- Gets the flags of the `ConsoleVariable` object.
+        --- Gets the flags of the `console.Variable` object.
         ---
         ---@param name string The name of the console variable.
-        ---@return integer flags The flags of the `ConsoleVariable` object.
+        ---@return integer flags The flags of the `console.Variable` object.
         function VariableClass.getFlags( name )
             local object = engine_consoleVariableGet( name )
             if object == nil then
@@ -709,206 +1112,241 @@ do
 
         --- [SHARED AND MENU]
         ---
-        --- Checks if the flag is set on the `ConsoleVariable` object.
-        ---
-        ---@param flag integer The flag to check.
-        ---@return boolean is_set `true` if the flag is set on the `ConsoleVariable` object, `false` otherwise.
-        function Variable:isFlagSet( flag )
-            return isFlagSet( self.object, flag )
-        end
-
-        --- [SHARED AND MENU]
-        ---
-        --- Checks if the flag is set on the `ConsoleVariable` object.
+        --- Checks if the flag is set on the `console.Variable` object.
         ---
         ---@param name string The name of the console variable.
-        ---@param flag integer The flag to check.
-        ---@return boolean is_set `true` if the flag is set on the `ConsoleVariable` object, `false` otherwise.
-        function VariableClass.isFlagSet( name, flag )
+        ---@param flags integer The flags to check.
+        ---@return boolean is_set `true` if the flag is set on the `console.Variable` object, `false` otherwise.
+        function VariableClass.isFlagSet( name, flags )
             local object = engine_consoleVariableGet( name )
             if object == nil then
                 return false
             else
-                return isFlagSet( object, flag )
+                return isFlagSet( object, flags )
             end
         end
 
     end
 
-    do
-
-        local getMin, getMax = CONVAR.GetMin, CONVAR.GetMax
-
-        --- [SHARED AND MENU]
-        ---
-        --- Gets the minimum value of the `ConsoleVariable` object.
-        ---
-        ---@return number
-        function Variable:getMin()
-            return getMin( self.object )
+    --- [SHARED AND MENU]
+    ---
+    --- Gets the minimum value of the `console.Variable` object.
+    ---
+    ---@param name string The name of the console variable.
+    ---@return number
+    function VariableClass.getMin( name )
+        local object = engine_consoleVariableGet( name )
+        if object == nil then
+            return 0
+        else
+            return getMin( object )
         end
+    end
 
-        --- [SHARED AND MENU]
-        ---
-        --- Gets the minimum value of the `ConsoleVariable` object.
-        ---
-        ---@param name string The name of the console variable.
-        ---@return number
-        function VariableClass.getMin( name )
-            local object = engine_consoleVariableGet( name )
-            if object == nil then
-                return 0
-            else
-                return getMin( object )
-            end
+    --- [SHARED AND MENU]
+    ---
+    --- Gets the maximum value of the `console.Variable` object.
+    ---
+    ---@param name string The name of the console variable.
+    ---@return number
+    function VariableClass.getMax( name )
+        local object = engine_consoleVariableGet( name )
+        if object == nil then
+            return 0
+        else
+            return getMax( object )
         end
+    end
 
-        --- [SHARED AND MENU]
-        ---
-        --- Gets the maximum value of the `ConsoleVariable` object.
-        ---
-        ---@return number
-        function Variable:getMax()
-            return getMax( self.object )
-        end
-
-        --- [SHARED AND MENU]
-        ---
-        --- Gets the maximum value of the `ConsoleVariable` object.
-        ---
-        ---@param name string The name of the console variable.
-        ---@return number
-        function VariableClass.getMax( name )
-            local object = engine_consoleVariableGet( name )
-            if object == nil then
-                return 0
-            else
-                return getMax( object )
-            end
-        end
-
-        --- [SHARED AND MENU]
-        ---
-        --- Gets the minimum and maximum values of the `ConsoleVariable` object.
-        ---
-        ---@return number, number
-        function Variable:getBounds()
-            local object = self.object
+    --- [SHARED AND MENU]
+    ---
+    --- Returns the minimum and maximum values of the `console.Variable` object.
+    ---
+    ---@param name string The name of the console variable.
+    ---@return number, number
+    function VariableClass.getBounds( name )
+        local object = engine_consoleVariableGet( name )
+        if object == nil then
+            return 0, 0
+        else
             return getMin( object ), getMax( object )
         end
+    end
 
-        --- [SHARED AND MENU]
-        ---
-        --- Gets the minimum and maximum values of the `ConsoleVariable` object.
-        ---
-        ---@param name string The name of the console variable.
-        ---@return number, number
-        function VariableClass.getBounds( name )
-            local object = engine_consoleVariableGet( name )
-            if object == nil then
-                return 0, 0
+    ---@type table<gpm.std.console.Variable, boolean>
+    local in_call = {}
+
+    gc_setTableRules( in_call, true, false )
+
+    ---@alias gpm.std.console.Variable.callback fun( variable: gpm.std.console.Variable, new_value: gpm.std.console.Variable.value )
+
+    ---@class gpm.std.console.Variable.query_data : gpm.std.console.Command.query_data
+    ---@field [3] nil | gpm.std.console.Variable.callback The callback function.
+
+    ---@type table<gpm.std.console.Variable, gpm.std.console.Variable.query_data[]>
+    local queues = {}
+
+    gc_setTableRules( queues, true, false )
+
+    --- [SHARED AND MENU]
+    ---
+    --- Attaches a callback to the `console.Variable` object.
+    ---
+    ---@param fn gpm.std.console.Variable.callback The callback function.
+    ---@param identifier? any The identifier of the callback, default is `unnamed`.
+    ---@param once? boolean `true` to run once, `false` to run forever, default is `false`.
+    function Variable:attach( fn, identifier, once )
+        if identifier == nil then
+            identifier = "nil"
+        end
+
+        if in_call[ self ] then
+            local queue = queues[ self ]
+            if queue == nil then
+                queues[ self ] = {
+                    { true, identifier, fn, once == true }
+                }
             else
-                return getMin( object ), getMax( object )
+                queue[ #queue + 1 ] = { true, identifier, fn, once == true }
+            end
+
+            return
+        end
+
+        local lst = callbacks[ self ]
+        if lst == nil then
+            return
+        end
+
+        local lst_length = #lst
+
+        for i = 1, lst_length, 3 do
+            if lst[ i ] == identifier then
+                lst[ i + 1 ] = fn
+                lst[ i + 2 ] = once == true
+                return
             end
         end
 
+        lst[ lst_length + 1 ] = identifier
+        lst[ lst_length + 2 ] = fn
+        lst[ lst_length + 3 ] = once == true
     end
 
     --- [SHARED AND MENU]
     ---
-    --- Adds a callback to the `ConsoleVariable` object.
+    --- Detaches a callback from the `console.Variable` object.
     ---
-    ---@param identifier string The identifier of the callback.
-    ---@param fn fun( object: gpm.std.console.Variable, old: boolean | string | number, new: boolean | string | number ) The callback function.
-    function Variable:addChangeCallback( identifier, fn, once )
-        self:removeChangeCallback( identifier )
-        local data = { fn, identifier, once }
-
-        local package = debug_getfpackage( 2 )
-        if package then
-            data[ 2 ], data[ 4 ] = package.prefix .. data[ 2 ], package
-            table_insert( package.console_variables, data )
+    ---@param identifier any The identifier of the callback to detach.
+    function Variable:detach( identifier )
+        if identifier == nil then
+            identifier = "nil"
         end
 
-        table_insert( self.callbacks, data )
+        local lst = callbacks[ self ]
+        if lst == nil then
+            return
+        end
+
+        for i = 1, #lst, 3 do
+            if lst[ i ] == identifier then
+                if in_call[ self ] then
+                    lst[ i + 1 ] = debug_fempty
+
+                    local queue = queues[ self ]
+                    if queue == nil then
+                        queues[ self ] = {
+                            { false, identifier }
+                        }
+                    else
+                        queue[ #queue + 1 ] = { false, identifier }
+                    end
+                else
+                    table_eject( lst, i, i + 2 )
+                end
+
+                break
+            end
+        end
+    end
+
+
+    --- [SHARED AND MENU]
+    ---
+    --- Clears all callbacks from the `console.Variable` object.
+    ---
+    function Variable:clear()
+        callbacks[ self ] = {}
+        in_call[ self ] = nil
     end
 
     --- [SHARED AND MENU]
     ---
-    --- Removes a callback from the `ConsoleVariable` object.
+    --- Waits for the `console.Variable` object to change.
     ---
-    ---@param identifier string The identifier of the callback.
-    function Variable:removeChangeCallback( identifier )
-        if identifier == nil then return end
+    ---@return gpm.std.console.Variable.value
+    ---@async
+    function Variable:wait()
+        local future = futures_Future()
 
-        local callbacks = variables[ self.name ]
-        for i = #callbacks, 1, -1 do
-            local data = callbacks[ i ]
-            if data and data[ 2 ] == identifier then
-                table_remove( callbacks, i )
+        self:attach( function( _, value )
+            future:setResult( value )
+        end, future, true )
 
-                local package = data[ 4 ]
-                if package then
-                    local console_variables = package.console_variables
-                    for j = #console_variables, 1, -1 do
-                        if console_variables[ j ] == data then
-                            table_remove( console_variables, j )
-                        end
+        return future:await()
+    end
+
+    engine.consoleVariableCatch( function( str_name, str_old, str_new )
+        local variable = variables[ str_name ]
+        if variable == nil then
+            return
+        end
+
+        local cvar_type = variable.type
+        local old_value, new_value
+
+        if cvar_type == "boolean" then
+            old_value, new_value = str_old == "1", str_new == "1"
+        elseif cvar_type == "number" then
+            old_value, new_value = tonumber( str_old, 10 ), tonumber( str_new, 10 )
+        else
+            old_value, new_value = str_old, str_new
+        end
+
+        in_call[ variable ] = true
+        values[ variable ] = old_value
+
+        local lst = callbacks[ variable ]
+        if lst ~= nil then
+            for i = #lst - 1, 1, -3 do
+                if in_call[ variable ] then
+                    local success, err_msg = pcall( lst[ i ], variable, new_value )
+                    if not success then
+                        -- TODO: add error display here
+                        std.printf( "[GPM] console variable callback error: %s", err_msg )
+                        table_eject( lst, i - 1, i + 1 )
+                    elseif lst[ i + 1 ] then
+                        table_eject( lst, i - 1, i + 1 )
                     end
+                else
+                    break
                 end
             end
         end
-    end
 
-    --- [SHARED AND MENU]
-    ---
-    --- Waits for the `ConsoleVariable` object to change.
-    ---
-    ---@return boolean | string | number
-    ---@async
-    function Variable:waitForChange()
-        local f = futures_Future()
+        values[ variable ] = new_value
+        in_call[ variable ] = nil
 
-        ---@diagnostic disable-next-line: param-type-mismatch
-        self:addChangeCallback( nil, function( _, __, value )
-            f:setResult( value )
-        end, true )
+        local queue = queues[ variable ]
+        if queue ~= nil then
+            queues[ variable ] = nil
 
-        return f:await()
-    end
-
-    engine.consoleVariableCatch( function( name, old, new )
-        local variable = variables[ name ]
-        if variable == nil then return end
-        local cvar_type = variable.type
-
-        local old_value, new_value
-        if cvar_type == "boolean" then
-            old_value, new_value = old == "1", new == "1"
-        elseif cvar_type == "number" then
-            old_value, new_value = tonumber( old, 10 ), tonumber( new, 10 )
-        elseif cvar_type == "string" then
-            old_value, new_value = old, new
-        end
-
-        local callbacks = variable.callbacks
-
-        for i = #callbacks, 1, -1 do
-            local data = callbacks[ i ]
-
-            data[ 1 ]( variable, new_value, old_value )
-
-            if data[ 4 ] then
-                table_remove( callbacks, i )
-            end
-
-            local package = data[ 4 ]
-            if package then
-                local console_variables = package.console_variables
-                for j = #console_variables, 1, -1 do
-                    if console_variables[ j ] == data then
-                        table_remove( console_variables, j )
-                    end
+            for i = 1, #queue, 1 do
+                local tbl = queue[ i ]
+                if tbl[ 1 ] then
+                    variable:attach( tbl[ 2 ], tbl[ 3 ], tbl[ 4 ] )
+                else
+                    variable:detach( tbl[ 2 ] )
                 end
             end
         end
