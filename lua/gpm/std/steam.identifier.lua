@@ -6,8 +6,11 @@ local setmetatable = std.setmetatable
 local steam = std.steam or {}
 std.steam = steam
 
----@alias gpm.std.steam.Identifier.Type
----| string # Steam Account Type ( https://developer.valvesoftware.com/wiki/SteamID#Types_of_Steam_Accounts )
+--- [SHARED AND MENU]
+---
+--- [Steam Account Type](https://developer.valvesoftware.com/wiki/SteamID#Types_of_Steam_Accounts)
+---
+---@alias gpm.std.steam.Identifier.type
 ---| `"Invalid"`
 ---| `"Individual"`
 ---| `"Multiseat"`
@@ -20,8 +23,11 @@ std.steam = steam
 ---| `"ConsoleUser"`
 ---| `"AnonUser"
 
----@alias gpm.std.steam.Identifier.Universe
----| string # Steam Account Universe ( https://developer.valvesoftware.com/wiki/SteamID#Universes_Available_for_Steam_Accounts )
+--- [SHARED AND MENU]
+---
+--- [Steam Account Universe](https://developer.valvesoftware.com/wiki/SteamID#Universes_Available_for_Steam_Accounts)
+---
+---@alias gpm.std.steam.Identifier.universe
 ---| `"Invalid"`
 ---| `"Public"`
 ---| `"Beta"`
@@ -29,27 +35,29 @@ std.steam = steam
 ---| `"Dev"`
 ---| `"RC"`
 
+---@type table<gpm.std.steam.Identifier.type, integer>
 local type2int = {
-    [ "Invalid" ] = 0,
-    [ "Individual" ] = 1,
-    [ "Multiseat" ] = 2,
-    [ "GameServer" ] = 3,
-    [ "AnonGameServer" ] = 4,
-    [ "Pending" ] = 5,
-    [ "ContentServer" ] = 6,
-    [ "Clan" ] = 7,
-    [ "Chat" ] = 8,
-    [ "ConsoleUser" ] = 9,
-    [ "AnonUser" ] = 10
+    Invalid = 0,
+    Individual = 1,
+    Multiseat = 2,
+    GameServer = 3,
+    AnonGameServer = 4,
+    Pending = 5,
+    ContentServer = 6,
+    Clan = 7,
+    Chat = 8,
+    ConsoleUser = 9,
+    AnonUser = 10
 }
 
+---@type table<gpm.std.steam.Identifier.universe, integer>
 local universe2int = {
-    [ "Invalid" ] = 0,
-    [ "Public" ] = 1,
-    [ "Beta" ] = 2,
-    [ "Internal" ] = 3,
-    [ "Dev" ] = 4,
-    [ "RC" ] = 5
+    Invalid = 0,
+    Public = 1,
+    Beta = 2,
+    Internal = 3,
+    Dev = 4,
+    RC = 5
 }
 
 local letter2int = {
@@ -68,14 +76,17 @@ local letter2int = {
     a = 10
 }
 
+local int2universe = std.table.flipped( universe2int )
+local int2type = std.table.flipped( type2int )
+
 --- [SHARED AND MENU]
 ---
---- SteamID object.
+--- The Steam ID object.
 ---
 ---@class gpm.std.steam.Identifier : gpm.std.Object
 ---@field __class gpm.std.steam.IdentifierClass
----@field universe gpm.std.steam.Identifier.Universe Indicates the Steam environment (e.g., public, beta).
----@field type gpm.std.steam.Identifier.Type Specifies the entity type (e.g., individual user, group, game server).
+---@field universe gpm.std.steam.Identifier.universe Indicates the Steam environment (e.g., public, beta).
+---@field type gpm.std.steam.Identifier.type Specifies the entity type (e.g., individual user, group, game server).
 ---@field instance integer Differentiates between multiple instances of the same type within a universe. For individual user accounts, this is typically set to 1, representing the desktop instance.
 ---@field id integer The unique account number.
 ---@operator add( integer ): gpm.std.steam.Identifier
@@ -84,87 +95,41 @@ local Identifier = std.class.base( "Identifier" )
 
 --- [SHARED AND MENU]
 ---
---- SteamID class.
+--- The Steam ID class.
 ---
 ---@class gpm.std.steam.IdentifierClass : gpm.std.steam.Identifier
 ---@field __base gpm.std.steam.Identifier
----@overload fun( universe?: gpm.std.steam.Identifier.Universe, type?: gpm.std.steam.Identifier.Type, id?: integer, instance?: boolean ): gpm.std.steam.Identifier
+---@overload fun( universe?: gpm.std.steam.Identifier.universe, type?: gpm.std.steam.Identifier.type, id?: integer, instance?: boolean ): gpm.std.steam.Identifier
 local IdentifierClass = std.class.create( Identifier )
 steam.Identifier = IdentifierClass
 
---[[
+---@protected
+function Identifier:__add( int32 )
+    return setmetatable( {
+        universe = self.universe,
+        type = self.type,
+        instance = self.instance,
+        id = self.id + int32
+    }, Identifier )
+end
 
-    SteamID ( 64 bit ):
-        1 - universe ( 8 bit )
-        2 - type ( 4 bit )
-        3 - instance ( 20 bit )
-        4 - id ( 32 bit )
-
---]]
-
-do
-
-    local int2universe = std.table.flipped( universe2int )
-    local int2type = std.table.flipped( type2int )
-    local raw_get = std.raw.get
-
-    ---@protected
-    function Identifier:__index( key )
-        if key == "universe" then
-            return int2universe[ self[ 1 ] ]
-        elseif key == "type" then
-            return int2type[ self[ 2 ] ]
-        elseif key == "instance" then
-            return self[ 3 ]
-        elseif key == "id" then
-            return self[ 4 ]
-        else
-            return raw_get( self, key ) or raw_get( Identifier, key )
-        end
-    end
-
-    ---@protected
-    function Identifier:__newindex( key, value )
-        if key == "universe" then
-            self[ 1 ] = universe2int[ value ]
-        elseif key == "type" then
-            self[ 2 ] = type2int[ value ]
-        elseif key == "instance" then
-            self[ 3 ] = value
-        elseif key == "id" then
-            self[ 4 ] = value
-        end
-    end
-
-    ---@protected
-    function Identifier:__add( int )
-        return setmetatable( {
-            self[ 1 ],
-            self[ 2 ],
-            self[ 3 ],
-            self[ 4 ] + int
-        }, Identifier )
-    end
-
-    ---@protected
-    function Identifier:__sub( int )
-        return setmetatable( {
-            self[ 1 ],
-            self[ 2 ],
-            self[ 3 ],
-            self[ 4 ] - int
-        }, Identifier )
-    end
-
+---@protected
+function Identifier:__sub( int32 )
+    return setmetatable( {
+        universe = self.universe,
+        type = self.type,
+        instance = self.instance,
+        id = self.id - int32
+    }, Identifier )
 end
 
 ---@protected
 function Identifier:__new( id, universe, type, instance )
     return setmetatable( {
-        universe2int[ universe or "Public" ],
-        type2int[ type or "Individual" ],
-        instance or 1,
-        id or 0
+        universe = universe or "Public",
+        type = type or "Individual",
+        instance = instance or 1,
+        id = id or 0
     }, Identifier )
 end
 
@@ -175,26 +140,28 @@ do
     --- [SHARED AND MENU]
     ---
     --- Converts a SteamID object to a Steam2 identifier.
+    ---
     ---@param ignore_universe? boolean
     ---@return string
     function Identifier:toSteam2( ignore_universe )
-        local id = self[ 4 ]
+        local id = self.id
         local y = id % 2
-        return string_format( "STEAM_%d:%d:%d", ignore_universe and 0 or self[ 1 ], y, ( id - y ) * 0.5 )
+        return string_format( "STEAM_%d:%d:%d", ignore_universe and 0 or ( universe2int[ self.universe ] or 1 ), y, ( id - y ) * 0.5 )
     end
 
+    ---@type table<gpm.std.steam.Identifier.type, string>
     local int2letter = {
-        [ 0 ] = "I",
-        [ 1 ] = "U",
-        [ 2 ] = "M",
-        [ 3 ] = "G",
-        [ 4 ] = "A",
-        [ 5 ] = "P",
-        [ 6 ] = "C",
-        [ 7 ] = "g",
-        [ 8 ] = "T",
-        [ 9 ] = "i",
-        [ 10 ] = "a"
+        Invalid = "I",
+        Individual = "U",
+        Multiseat = "M",
+        GameServer = "G",
+        AnonGameServer = "A",
+        Pending = "P",
+        ContentServer = "C",
+        Clan = "g",
+        Chat = "T",
+        ConsoleUser = "i",
+        AnonUser = "a"
     }
 
     --- [SHARED AND MENU]
@@ -202,12 +169,12 @@ do
     --- Converts a SteamID object to a Steam3 identifier.
     ---@return string
     function Identifier:toSteam3()
-        return string_format( "[%s:%d:%d]", int2letter[ self[ 2 ] ] or "I", self[ 1 ], self[ 4 ] )
+        return string_format( "[%s:%d:%d]", int2letter[ self.type ] or "I", self.universe, self.id )
     end
 
     ---@protected
     function Identifier:__tostring()
-        return string_format( "Steam Identifier: %p [%s:%d:%d]", self, int2letter[ self[ 2 ] ] or "I", self[ 1 ], self[ 4 ] )
+        return string_format( "Steam Identifier: %p %s", self, self:toSteam3() )
     end
 
 end
@@ -230,10 +197,10 @@ do
         local function to64( object )
             return BigInt_bor(
                 x64_zero,
-                BigInt_lshift( BigInt_fromNumber( object[ 1 ] ), 56 ),
-                BigInt_lshift( BigInt_fromNumber( object[ 2 ] ), 52 ),
-                BigInt_lshift( BigInt_fromNumber( object[ 3 ] ), 32 ),
-                BigInt_fromNumber( object[ 4 ] )
+                BigInt_lshift( BigInt_fromNumber( universe2int[ object.universe ] ), 56 ),
+                BigInt_lshift( BigInt_fromNumber( type2int[ object.type ] ), 52 ),
+                BigInt_lshift( BigInt_fromNumber( object.instance ), 32 ),
+                BigInt_fromNumber( object.id )
             ):toString( 10, true )
         end
 
@@ -252,12 +219,12 @@ do
             ---@param http? boolean
             ---@return string?
             function Identifier:getURL( http )
-                local path = int2path[ self[ 2 ] ]
+                local path = int2path[ self.type ]
                 if path == nil then
                     return nil
+                else
+                    return ( http and "http" or "https" ) .. "://steamcommunity.com/" .. path .. "/" .. to64( self )
                 end
-
-                return ( http and "http" or "https" ) .. "://steamcommunity.com/" .. path .. "/" .. to64( self )
             end
 
         end
@@ -288,10 +255,10 @@ do
             local number = BigInt_fromString( str, 10 )
 
             return setmetatable( {
-                BitInt_toInteger( BigInt_band( BigInt_rshift( number, 56 ), 0xFF ) ),
-                BitInt_toInteger( BigInt_band( BigInt_rshift( number, 52 ), 0xF ) ),
-                BitInt_toInteger( BigInt_band( BigInt_rshift( number, 32 ), 0xFFFFF ) ),
-                BitInt_toInteger( BigInt_band( number, 0xFFFFFFFF ) )
+                universe = int2universe[ BitInt_toInteger( BigInt_band( BigInt_rshift( number, 56 ), 0xFF ) ) ] or "Invalid",
+                type = type2int[ BitInt_toInteger( BigInt_band( BigInt_rshift( number, 52 ), 0xF ) ) ] or "Invalid",
+                instance = BitInt_toInteger( BigInt_band( BigInt_rshift( number, 32 ), 0xFFFFF ) ),
+                id = BitInt_toInteger( BigInt_band( number, 0xFFFFFFFF ) )
             }, Identifier )
         end
 
@@ -310,7 +277,9 @@ do
     ---@return boolean
     function IdentifierClass.isValidSteam2( str )
         local x, y, z = string_match( str, "^STEAM_(%d+):(%d+):(%d+)$" )
-        if not ( x and y and z ) then return false end
+        if not ( x and y and z ) then
+            return false
+        end
 
         local universe = tonumber( x, 10 )
         if universe == nil or universe > 255 then -- 2 ^ 8 ( 8 bits )
@@ -336,8 +305,9 @@ do
     ---@return boolean
     function IdentifierClass.isValidSteam3( str )
         local letter, universe_str, id_str = string_match( str, "^%[(%a):(%d+):(%d+)%]$" )
-        if not ( letter and universe_str and id_str ) then return false end
-        if letter2int[ letter ] == nil then return false end
+        if not ( letter and universe_str and id_str ) or letter2int[ letter ] == nil then
+            return false
+        end
 
         local universe = tonumber( universe_str, 10 )
         if universe == nil or universe > 255 then -- 2 ^ 8 ( 8 bits )
@@ -368,7 +338,12 @@ do
             universe = 1
         end
 
-        return setmetatable( { universe, 1, 1, ( tonumber( z, 10 ) * 2 ) + ( y == "1" and 1 or 0 ) }, Identifier )
+        return setmetatable( {
+            universe = int2universe[ universe ] or "Invalid",
+            type = "Individual",
+            instance = 1,
+            id = ( tonumber( z, 10 ) * 2 ) + ( y == "1" and 1 or 0 )
+        }, Identifier )
     end
 
     --- [SHARED AND MENU]
@@ -383,10 +358,10 @@ do
         end
 
         return setmetatable( {
-            tonumber( universe, 10 ) or 0,
-            letter2int[ letter ] or 0,
-            1,
-            tonumber( id, 10 ) or 0
+            universe = int2universe[ tonumber( universe, 10 ) or 0 ] or "Invalid",
+            type = int2type[ letter2int[ letter ] or 0 ] or "Invalid",
+            instance = 1,
+            id = tonumber( id, 10 ) or 0
         }, Identifier )
     end
 

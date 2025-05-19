@@ -836,10 +836,6 @@ do
 
 end
 
--- TODO: move to pack or crypto
--- dofile( "std/crypto.byte_reader.lua" )
--- dofile( "std/crypto.byte_writer.lua" )
-
 dofile( "std/crypto.hmac.lua" )
 dofile( "std/crypto.pbkdf2.lua" )
 

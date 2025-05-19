@@ -331,37 +331,37 @@ else
 
 end
 
-do
+-- do
 
-    local getfenv = std.getfenv
+--     local getfenv = std.getfenv
 
-    --- [SHARED AND MENU]
-    ---
-    --- Returns the function package or `nil` if not found.
-    ---
-    ---@param location function | integer The function or stack level.
-    ---@return Package? pkg The function package or `nil` if not found.
-    function debug.getfpackage( location )
-        -- TODO: Check this after creating the package class
-        local fenv = getfenv( location )
-        return fenv == nil and nil or fenv.__package
-    end
+--     --- [SHARED AND MENU]
+--     ---
+--     --- Returns the function package or `nil` if not found.
+--     ---
+--     ---@param location function | integer The function or stack level.
+--     ---@return Package? pkg The function package or `nil` if not found.
+--     function debug.getfpackage( location )
+--         -- TODO: Check this after creating the package class
+--         local fenv = getfenv( location )
+--         return fenv == nil and nil or fenv.__package
+--     end
 
-end
+-- end
 
-do
+-- do
 
-    local setfenv = std.setfenv
+--     local setfenv = std.setfenv
 
-    --- [SHARED AND MENU]
-    ---
-    --- Sets the function package.
-    ---
-    ---@param location function | integer The function or stack level.
-    ---@param package Package The package to set.
-    function debug.setfpackage( location, package )
-        -- TODO: Check this after creating the package class
-        setfenv( location, package.env )
-    end
+--     --- [SHARED AND MENU]
+--     ---
+--     --- Sets the function package.
+--     ---
+--     ---@param location function | integer The function or stack level.
+--     ---@param package Package The package to set.
+--     function debug.setfpackage( location, package )
+--         -- TODO: Check this after creating the package class
+--         setfenv( location, package.env )
+--     end
 
-end
+-- end
