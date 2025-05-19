@@ -3,33 +3,6 @@ local std = _G.gpm.std
 
 local debug = std.debug
 local table = std.table
-local getmetatable = std.getmetatable
-
---[[
-
-    Event structure
-    [-5] - queue list ( to add or remove callbacks ) ( table[] )
-    [-4] - mixer function ( function )
-    [-3] - vararg support ( boolean )
-    [-2] - engine hook name ( string )
-    [-1] - hook is running ( boolean )
-    [0] - last callback index
-
-    [1] - identifier ( string )
-    [2] - function ( function )
-    [3] - hook_type ( number )
-
-    [4] - identifier ( string )
-    [5] - function ( function )
-    [6] - hook_type ( number )
-
-    [7] - identifier ( string )
-    [8] - function ( function )
-    [9] - hook_type ( number )
-
-    ...
-
-]]
 
 ---@alias gpm.std.Hook.Type
 ---| number # The type of the hook.
@@ -39,12 +12,23 @@ local getmetatable = std.getmetatable
 ---| `1`  # POST_HOOK_RETURN - This allows for the modification of results returned from preceding hooks!
 ---| `2`  # POST_HOOK - This hook is guaranteed to be called under all circumstances, and cannot be interrupted by a return statement. You can rely on its consistent execution.
 
+---@class gpm.std.Hook.query_data
+---@field [1] boolean `true` to attach, `false` to detach.
+---@field [2] any The identifier of the callback.
+---@field [3] nil | gpm.std.Hook | fun( ...: any ): any The callback function or the hook to attach.
+---@field [4] nil | gpm.std.Hook.Type The type of the hook.
+
 --- [SHARED AND MENU]
 ---
 --- Hook object.
 ---
 ---@class gpm.std.Hook : gpm.std.Object
 ---@field __class gpm.std.HookClass
+---@field name string The name of the hook. **READ-ONLY**
+---@field is_running boolean Whether the hook is running. **READ-ONLY**
+---@field return_vararg boolean Whether the hook returns vararg. **READ-ONLY**
+---@field mixer_fn nil | fun( old_value: any, new_value: any ): any The mixer function for the hook.
+---@field protected queues gpm.std.Hook.query_data[] The queue of queries.
 local Hook = std.class.base( "Hook" )
 
 ---@alias Hook gpm.std.Hook
@@ -55,20 +39,22 @@ local Hook = std.class.base( "Hook" )
 ---
 ---@class gpm.std.HookClass : gpm.std.Hook
 ---@field __base gpm.std.Hook
----@overload fun( name: string?, returns_vararg: boolean? ): gpm.std.Hook
+---@overload fun( name: string?, return_vararg: boolean? ): gpm.std.Hook
 local HookClass = std.class.create( Hook )
 std.Hook = HookClass
 
 ---@protected
 function Hook:__tostring()
-    return std.string.format( "Hook: %p [%s][%s]", self, self[ -2 ], self[ -1 ] and "running" or "stopped" )
+    return std.string.format( "Hook: %p [%s][%s]", self, self.name, self.is_running and "running" or "stopped" )
 end
 
 ---@param name? string The name of the hook.
----@param returns_vararg? boolean Whether the hook returns vararg.
+---@param return_vararg? boolean Whether the hook returns vararg.
 ---@protected
-function Hook:__init( name, returns_vararg )
-    self[ 0 ], self[ -1 ], self[ -2 ], self[ -3 ] = 0, false, name or "unnamed", returns_vararg == true
+function Hook:__init( name, return_vararg )
+    self.is_running = false
+    self.name = name or "unnamed"
+    self.return_vararg = return_vararg == true
 end
 
 do
@@ -85,20 +71,19 @@ do
     function Hook:detach( identifier )
         if identifier == nil then return false end
 
-        for i = self[ 0 ] - 2, 1, -3 do
+        for i = #self - 2, 1, -3 do
             if self[ i ] == identifier then
-                if self[ -1 ] then
+                if self.is_running then
                     self[ i + 1 ] = debug_fempty
 
-                    local queue = self[ -5 ]
+                    local queue = self.queues
                     if queue == nil then
-                        self[ -5 ] = { { false, identifier } }
+                        self.queues = { { false, identifier } }
                     else
                         queue[ #queue + 1 ] = { false, identifier }
                     end
                 else
                     table_eject( self, i, i + 2 )
-                    self[ 0 ] = self[ 0 ] - 3
                 end
 
                 return true
@@ -113,62 +98,72 @@ end
 do
 
     local string_meta = debug.findmetatable( "string" )
-    local table_inject = table.inject
+    local debug_getmetatable = debug.getmetatable
     local math_clamp = std.math.clamp
+    local math_floor = std.math.floor
+    local table_inject = table.inject
+    local isnumber = std.isnumber
 
     --- [SHARED AND MENU]
     ---
     --- Attaches a callback function to the hook.
     ---
-    ---@param identifier string | Hook | any The unique name of the callback, Hook or object with `__isvalid` function in metatable.
-    ---@param fn function | gpm.std.Hook.Type | nil The callback function or the type of the hook if `identifier` is a Hook.
-    ---@param hook_type gpm.std.Hook.Type | nil The type of the hook, default is `0`.
-    function Hook:attach( identifier, fn, hook_type )
+    ---@param fn function | Hook | nil The callback function or the hook to attach.
+    ---@param identifier gpm.std.Hook.Type | any The unique identifier of the callback, object with `__isvalid` function in metatable or the type of the hook if `fn` is a Hook.
+    ---@param hook_type gpm.std.Hook.Type | nil The type of the hook, default is `0`, can be `nil` if `fn` is a Hook and `identifier` is the type of the hook.
+    function Hook:attach( fn, identifier, hook_type )
         if identifier == nil then
-            error( "callback identifier cannot be nil", 2 )
-            return
+            identifier = "nil"
         end
 
-        local metatable = getmetatable( identifier )
+        if debug_getmetatable( fn ) == Hook then
+            if isnumber( identifier ) then
+                hook_type = math_floor( identifier )
+            elseif not isnumber( hook_type ) then
+                hook_type = 0
+            end
+
+            identifier = fn
+        end
+
+        local metatable = debug_getmetatable( identifier )
         if metatable == nil then
             error( "callback identifier has no metatable", 2 )
             return
         end
 
         if metatable ~= string_meta then
-            if metatable == Hook then
-                fn, hook_type = identifier, fn
-                ---@cast fn function
-                ---@cast hook_type gpm.std.Hook.Type | nil
-            else
-                ---@cast identifier any
-                ---@cast fn function
+            ---@cast identifier any
+            ---@cast fn function
 
-                local isvalid = metatable.__isvalid
-                if isvalid == nil then
-                    error( "callback identifier has no `__isvalid` function", 2 )
-                    return
+            local isvalid = metatable.__isvalid
+            if isvalid == nil then
+                error( "callback identifier has no `__isvalid` function", 2 )
+                return
+            end
+
+            if not isvalid( identifier ) then
+                self:detach( identifier )
+                return
+            end
+
+            local real_fn = fn
+            function fn( ... )
+                if isvalid( identifier ) then
+                    return real_fn( identifier, ... )
                 end
 
-                if not isvalid( identifier ) then
-                    self:detach( identifier )
-                    return
-                end
-
-                local real_fn = fn
-                function fn( ... )
-                    if isvalid( identifier ) then
-                        return real_fn( identifier, ... )
-                    end
-
-                    self:detach( identifier )
-                end
+                self:detach( identifier )
             end
         end
 
-        hook_type = hook_type == nil and 0 or math_clamp( hook_type, -2, 2 )
+        if hook_type == nil then
+            hook_type = 0
+        else
+            hook_type = math_clamp( math_floor( hook_type ), -2, 2 )
+        end
 
-        for i = self[ 0 ] - 2, 1, -3 do
+        for i = #self - 2, 1, -3 do
             if self[ i ] == identifier then
                 if self[ i + 2 ] == hook_type then
                     self[ i + 1 ] = fn
@@ -180,10 +175,10 @@ do
             end
         end
 
-        if self[ -1 ] then
-            local queue = self[ -5 ]
+        if self.is_running then
+            local queue = self.queues
             if queue == nil then
-                self[ -5 ] = { { true, identifier, fn, hook_type } }
+                self.queues = { { true, identifier, fn, hook_type } }
             else
                 queue[ #queue + 1 ] = { true, identifier, fn, hook_type }
             end
@@ -191,7 +186,7 @@ do
             return
         end
 
-        local callback_count = self[ 0 ]
+        local callback_count = #self
 
         local index = callback_count
         for i = 3, callback_count, 3 do
@@ -202,7 +197,6 @@ do
         end
 
         table_inject( self, { identifier, fn, hook_type }, index + 1, 1, 3 )
-        self[ 0 ] = self[ 0 ] + 3
     end
 
 end
@@ -213,7 +207,7 @@ end
 ---
 ---@return boolean is_running Returns `true` if the hook is running, otherwise `false`.
 function Hook:isRunning()
-    return self[ -1 ]
+    return self.is_running
 end
 
 do
@@ -223,12 +217,12 @@ do
     --- Stops the hook.
     ---@return boolean stopped Returns `true` if the hook was stopped, `false` if it was already stopped.
     local function hook_stop( self )
-        if not self[ -1 ] then return false end
-        self[ -1 ] = false
+        if not self.is_running then return false end
+        self.is_running = false
 
-        local queue = self[ -5 ]
+        local queue = self.queues
         if queue ~= nil then
-            self[ -5 ] = nil
+            self.queues = nil
 
             for i = 1, #queue, 1 do
                 local args = queue[ i ]
@@ -250,11 +244,9 @@ do
     function Hook:clear()
         hook_stop( self )
 
-        for i = 1, self[ 0 ], 1 do
+        for i = 1, #self, 1 do
             self[ i ] = nil
         end
-
-        self[ 0 ] = 0
     end
 
     Hook.stop = hook_stop
@@ -262,8 +254,8 @@ do
     --- hook call without mixer and vararg
     local function call_without_mixer_and_vararg( self, ... )
         local result
-        for index = 3, self[ 0 ], 3 do
-            if not self[ -1 ] then break end
+        for index = 3, #self, 3 do
+            if not self.is_running then break end
 
             local hook_type = self[ index ]
             if hook_type == -2 then -- pre hook
@@ -279,7 +271,7 @@ do
 
         hook_stop( self )
 
-        for index = 3, self[ 0 ], 3 do
+        for index = 3, #self, 3 do
             if self[ index ] == 2 then -- post hook
                 self[ index - 1 ]( result, ... )
             end
@@ -291,8 +283,8 @@ do
     --- hook call without mixer but with vararg
     local function call_without_mixer( self, ... )
         local r1, r2, r3, r4, r5, r6
-        for index = 3, self[ 0 ], 3 do
-            if not self[ -1 ] then break end
+        for index = 3, #self, 3 do
+            if not self.is_running then break end
 
             local hook_type = self[ index ]
             if hook_type == -2 then -- pre hook
@@ -308,7 +300,7 @@ do
 
         hook_stop( self )
 
-        for index = 3, self[ 0 ], 3 do
+        for index = 3, #self, 3 do
             if self[ index ] == 2 then -- post hook
                 self[ index - 1 ]( { r1, r2, r3, r4, r5, r6 }, ... )
             end
@@ -320,8 +312,8 @@ do
     --- hook call with mixer and without vararg
     local function call_with_mixer( self, mixer_fn, ... )
         local result
-        for index = 3, self[ 0 ], 3 do
-            if not self[ -1 ] then break end
+        for index = 3, #self, 3 do
+            if not self.is_running then break end
 
             local hook_type = self[ index ]
             if hook_type == -2 then -- pre hook
@@ -344,7 +336,7 @@ do
 
         hook_stop( self )
 
-        for index = 3, self[ 0 ], 3 do
+        for index = 3, #self, 3 do
             if self[ index ] == 2 then -- post hook
                 self[ index - 1 ]( result, ... )
             end
@@ -356,8 +348,8 @@ do
     --- hook call with mixer and vararg
     local function call_with_mixer_and_vararg( self, mixer_fn, ... )
         local r1, r2, r3, r4, r5, r6
-        for index = 3, self[ 0 ], 3 do
-            if not self[ -1 ] then break end
+        for index = 3, #self, 3 do
+            if not self.is_running then break end
 
             local hook_type = self[ index ]
             if hook_type == -2 then -- pre hook
@@ -380,7 +372,7 @@ do
 
         hook_stop( self )
 
-        for index = 3, self[ 0 ], 3 do
+        for index = 3, #self, 3 do
             if self[ index ] == 2 then -- post hook
                 self[ index - 1 ]( { r1, r2, r3, r4, r5, r6 }, ... )
             end
@@ -396,17 +388,17 @@ do
     ---@param ... any The arguments to pass to the hook.
     ---@return any ... The return values from the hook.
     function Hook:call( ... )
-        if self[ -1 ] then return end
-        self[ -1 ] = true
+        if self.is_running then return end
+        self.is_running = true
 
-        local mixer_fn = self[ -4 ]
+        local mixer_fn = self.mixer_fn
         if mixer_fn == nil then
-            if self[ -3 ] then
+            if self.return_vararg then
                 return call_without_mixer( self, ... )
             else
                 return call_without_mixer_and_vararg( self, ... )
             end
-        elseif self[ -3 ] then
+        elseif self.return_vararg then
             return call_with_mixer_and_vararg( self, mixer_fn, ... )
         else
             return call_with_mixer( self, mixer_fn, ... )
@@ -428,7 +420,7 @@ end
 ---
 ---@param mixer_fn nil | fun( old_value, new_value ): any The function to perform mixing, `nil` if no mixing is required.
 function Hook:mixer( mixer_fn )
-    self[ -4 ] = mixer_fn
+    self.mixer_fn = mixer_fn
 end
 
 do
@@ -443,10 +435,10 @@ do
     ---@param hook_type? gpm.std.Hook.Type The type of the hook, default is `0`.
     function Hook:once( fn, hook_type )
         local identifier = crypto_UUIDv7()
-        self:attach( identifier, function( ... )
+        self:attach( function( ... )
             self:detach( identifier )
             return fn( ... )
-        end, hook_type )
+        end,  identifier, hook_type )
     end
 
 end
