@@ -230,6 +230,10 @@ local function request( options )
 
     options.timeout = timeout
 
+    ---@diagnostic disable-next-line: inject-field
+    options.type = options.content_type
+    options.content_type = nil
+
     -- TODO: add package logger searching
     Logger:debug( "%s HTTP request to '%s', using '%s', with timeout %f seconds.", method, url, client_name, timeout )
 
@@ -339,6 +343,62 @@ local function request( options )
 end
 
 http.request = request
+
+--- [SHARED AND MENU]
+---
+--- Sends a GET request.
+---
+---@param url gpm.std.http.Request.url The URL to send the request to.
+---@param headers? gpm.std.http.Request.headers The headers to send with the request.
+---@param timeout? integer The timeout in seconds.
+---@return gpm.std.http.Response response The response from the request.
+---@async
+function http.get( url, headers, timeout )
+    return request( {
+        url = url,
+        method = "GET",
+        headers = headers,
+        timeout = timeout
+    } )
+end
+
+--- [SHARED AND MENU]
+---
+--- Sends a POST request.
+---
+---@param url gpm.std.http.Request.url The URL to send the request to.
+---@param body? string The body to send with the request.
+---@param headers? gpm.std.http.Request.headers The headers to send with the request.
+---@param timeout? integer The timeout in seconds.
+---@return gpm.std.http.Response response The response from the request.
+---@async
+function http.post( url, body, headers, timeout )
+    return request( {
+        url = url,
+        body = body,
+        method = "POST",
+        headers = headers,
+        timeout = timeout
+    } )
+end
+
+--- [SHARED AND MENU]
+---
+--- Sends a HEAD request.
+---
+---@param url gpm.std.http.Request.url The URL to send the request to.
+---@param headers? gpm.std.http.Request.headers The headers to send with the request.
+---@param timeout? integer The timeout in seconds.
+---@return gpm.std.http.Response response The response from the request.
+---@async
+function http.head( url, headers, timeout )
+    return request( {
+        url = url,
+        method = "HEAD",
+        headers = headers,
+        timeout = timeout
+    } )
+end
 
 if std.MENU then
 

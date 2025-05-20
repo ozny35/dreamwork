@@ -28,6 +28,42 @@ std = {}
 ---| "http://" # Default protocol.
 ---| "https://" # Default secure protocol.
 
+--- [SHARED AND MENU]
+---
+--- HTTP request content type.
+---
+---@alias gpm.std.http.Request.content_type
+---| string
+---| "text/plain; charset=utf-8"
+---| "text/html; charset=utf-8"
+---| "text/css; charset=utf-8"
+---| "text/csv; charset=utf-8"
+---| "text/javascript; charset=utf-8"
+---| "application/json; charset=utf-8"
+---| "application/xml; charset=utf-8"
+---| "application/x-www-form-urlencoded"
+---| "multipart/form-data"
+---| "application/yaml; charset=utf-8"
+---| "application/octet-stream"
+---| "application/pdf"
+---| "application/zip"
+---| "application/x-pem-file"
+---| "application/jwt"
+---| "application/vnd.api+json; charset=utf-8"
+---| "image/png"
+---| "image/jpeg"
+---| "image/gif"
+---| "audio/mpeg"
+---| "audio/ogg"
+---| "video/mp4"
+---| "video/webm"
+
+--- [SHARED AND MENU]
+---
+--- HTTP request headers.
+---
+---@alias gpm.std.http.Request.headers table<string, string>
+
 do
 
     --- [SHARED AND MENU]
@@ -58,17 +94,17 @@ do
     ---
     --- If set, will override parameters.
     ---
-    ---@type string | nil
+    ---@type string?
     request.body = nil
 
     --- Content type for body.
     ---
-    ---@type string | nil
-    request.type = "text/plain; charset=utf-8"
+    ---@type gpm.std.http.Request.content_type?
+    request.content_type = "text/plain; charset=utf-8"
 
     --- KeyValue table for headers.
     ---
-    ---@type table | nil
+    ---@type gpm.std.http.Request.headers?
     request.headers = nil
 
     --- The timeout for the connection in seconds.
@@ -77,22 +113,22 @@ do
     ---
     --- `0` means no timeout.
     ---
-    ---@type integer | nil
+    ---@type integer?
     request.timeout = 60
 
     --- Whether to cache the response.
     ---
-    ---@type boolean | nil
+    ---@type boolean?
     request.cache = false
 
     --- The cache lifetime for the request.
     ---
-    ---@type number | nil
+    ---@type number?
     request.lifetime = nil
 
     --- Whether to use ETag caching.
     ---
-    ---@type boolean | nil
+    ---@type boolean?
     request.etag = false
 
 end
@@ -118,7 +154,7 @@ do
 
     --- The response headers.
     ---
-    ---@type table
+    ---@type gpm.std.http.Request.headers
     response.headers = nil
 
 end
