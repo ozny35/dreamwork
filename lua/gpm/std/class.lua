@@ -74,7 +74,7 @@ do
             base = debug_getmetatable( template )
 
             if base == nil then
-                error( "userdata metatable is missing, lua is broken - it's over" )
+                error( "userdata metatable is missing, lua is corrupted" )
             end
 
             templates[ base ] = template

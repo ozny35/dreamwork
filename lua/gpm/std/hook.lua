@@ -5,7 +5,6 @@ local debug = std.debug
 local table = std.table
 
 ---@alias gpm.std.Hook.Type
----| number # The type of the hook.
 ---| `-2` # PRE_HOOK - This hook is guaranteed to be called under all circumstances, and cannot be interrupted by a return statement. You can rely on its consistent execution.
 ---| `-1` # PRE_HOOK_RETURN - Consider a scenario where you have an admin mod that checks for "!menu". In this case, your hook might not be called before it.
 ---| `0`  # NORMAL_HOOK - This hook is called after the normal hook, but before the post hook.
@@ -117,9 +116,14 @@ do
         end
 
         if debug_getmetatable( fn ) == Hook then
+            ---@cast fn gpm.std.Hook
+
             if isnumber( identifier ) then
+                ---@cast identifier number
+                ---@diagnostic disable-next-line: cast-local-type
                 hook_type = math_floor( identifier )
             elseif not isnumber( hook_type ) then
+                ---@diagnostic disable-next-line: cast-local-type
                 hook_type = 0
             end
 
@@ -158,8 +162,10 @@ do
         end
 
         if hook_type == nil then
+            ---@diagnostic disable-next-line: cast-local-type
             hook_type = 0
         else
+            ---@diagnostic disable-next-line: cast-local-type
             hook_type = math_clamp( math_floor( hook_type ), -2, 2 )
         end
 
@@ -178,8 +184,10 @@ do
         if self.is_running then
             local queue = self.queues
             if queue == nil then
+                ---@diagnostic disable-next-line: assign-type-mismatch
                 self.queues = { { true, identifier, fn, hook_type } }
             else
+                ---@diagnostic disable-next-line: assign-type-mismatch
                 queue[ #queue + 1 ] = { true, identifier, fn, hook_type }
             end
 

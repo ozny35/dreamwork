@@ -21,7 +21,7 @@ do
 
     local glua_os = _G.os
     if glua_os == nil then
-        error( "os library not found, it's over" )
+        error( "os library not found, yep it's over." )
     end
 
     ---@cast glua_os oslib

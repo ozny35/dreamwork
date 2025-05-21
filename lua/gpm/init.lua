@@ -322,17 +322,19 @@ do
     --- [SHARED AND MENU]
     ---
     --- coroutine library
+    ---
     --- Coroutines are similar to threads, however they do not run simultaneously.
     ---
     --- They offer a way to split up tasks and dynamically pause & resume functions.
+    ---
     ---@class gpm.std.coroutine : coroutinelib
     local coroutine = std.coroutine or {}
     std.coroutine = coroutine
 
     local glua_coroutine = _G.coroutine
-
-    ---@diagnostic disable-next-line: deprecated
-    coroutine.isyieldable = coroutine.isyieldable or glua_coroutine.isyieldable or function() return true end
+    if glua_coroutine == nil then
+       error( "coroutine library not found, so I guess it's over." )
+    end
 
     coroutine.create = coroutine.create or glua_coroutine.create
     coroutine.resume = coroutine.resume or glua_coroutine.resume
@@ -340,6 +342,28 @@ do
     coroutine.status = coroutine.status or glua_coroutine.status
     coroutine.wrap = coroutine.wrap or glua_coroutine.wrap
     coroutine.yield = coroutine.yield or glua_coroutine.yield
+    coroutine.isyieldable = coroutine.isyieldable or glua_coroutine.isyieldable
+
+    if glua_coroutine.isyieldable == nil then
+
+        local coroutine_running = coroutine.running
+        local coroutine_status = coroutine.status
+
+        --- [SHARED AND MENU]
+        ---
+        --- Returns `true` when the running coroutine can yield.
+        ---
+        --- [View documents](command:extension.lua.doc?["en-us/51/manual.html/pdf-coroutine.isyieldable"])
+        ---
+        ---@return boolean
+        ---@nodiscard
+        ---@diagnostic disable-next-line: duplicate-set-field
+        function coroutine.isyieldable()
+            local co = coroutine_running()
+            return co ~= nil and coroutine_status( co ) == "running"
+        end
+
+    end
 
 end
 
@@ -354,6 +378,7 @@ if istable == nil then
     --- [SHARED AND MENU]
     ---
     --- Checks if the value type is a `table`.
+    ---
     ---@param value any The value to check.
     ---@return boolean is_table Returns `true` if the value is a table, otherwise `false`.
     function istable( value )
