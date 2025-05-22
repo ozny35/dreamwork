@@ -481,10 +481,10 @@ do
         return future:await()
     end
 
-    engine.consoleCommandCatch( function( ply, cmd, args, argument_string )
-        local command = commands[ cmd ]
+    engine.consoleCommandCatch( function( ply, name, args, argument_string )
+        local command = commands[ name ]
         if command == nil then
-            return
+            return false
         end
 
         in_call[ command ] = true
@@ -523,6 +523,88 @@ do
             end
         end
 
+        return true
+    end, 1 )
+
+    ---@type table<gpm.std.console.Command, function>
+    local auto_complete = {}
+
+    gc_setTableRules( auto_complete, true, false )
+
+    ---@alias gpm.std.console.Command.simple_auto_complete_fn fun( command: gpm.std.console.Command, argument_string: string, args: string[] ): string[]
+    ---@alias gpm.std.console.Command.extended_auto_complete_fn fun( command: gpm.std.console.Command, argument_string: string, args: string[] ): boolean, string[]
+    ---@alias gpm.std.console.Command.auto_complete_fn gpm.std.console.Command.simple_auto_complete_fn | gpm.std.console.Command.extended_auto_complete_fn
+
+    --- [SHARED AND MENU]
+    ---
+    --- Returns the auto complete function for the console command or `nil` if it does not exist.
+    ---
+    ---@return gpm.std.console.Command.auto_complete_fn | nil
+    function Command:getAutoComplete()
+        return auto_complete[ self ]
+    end
+
+    --- [SHARED AND MENU]
+    ---
+    --- Returns `true` if the console command has an auto complete function.
+    ---
+    ---@return boolean
+    function Command:hasAutoComplete()
+        return auto_complete[ self ] ~= nil
+    end
+
+    --- [SHARED AND MENU]
+    ---
+    --- Sets the auto complete function for the console command.
+    ---
+    ---@param fn gpm.std.console.Command.auto_complete_fn | nil The auto complete function.
+    function Command:setAutoComplete( fn )
+        auto_complete[ self ] = fn
+    end
+
+    engine.consoleCommandAutoCompleteCatch( function( name, argument_string, args )
+        local command = commands[ name ]
+        if command == nil then
+            return
+        end
+
+        ---@type gpm.std.console.Command.auto_complete_fn
+        local fn = auto_complete[ command ]
+        if fn == nil then
+            return
+        end
+
+        local success, value1, value2 = pcall( fn, command, argument_string, args )
+        if not success then
+            -- TODO: replace with cool new errors that i make later
+            std.printf( "[GPM] console command auto complete error: %s", value1 )
+            return
+        elseif value1 == nil then
+            return
+        end
+
+        if value1 == false then
+            return value2
+        end
+
+        ---@type string[]
+        local suggestions = {}
+        local prefix = name .. " "
+
+        if value1 == true and value2 ~= nil then
+            ---@cast value1 boolean
+            ---@cast value2 string[]
+            for i = 1, #value2, 1 do
+                suggestions[ i ] = prefix .. value2[ i ]
+            end
+        else
+            ---@cast value1 string[]
+            for i = 1, #value1, 1 do
+                suggestions[ i ] = prefix .. value1[ i ]
+            end
+        end
+
+        return suggestions
     end, 1 )
 
 end

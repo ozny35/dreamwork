@@ -245,6 +245,54 @@ if engine.consoleCommandCatch == nil then
 
 end
 
+if engine.consoleCommandAutoCompleteCatch == nil then
+
+    local lst = {}
+
+    --- [SHARED AND MENU]
+    ---
+    --- Adds a callback to the `consoleCommandAutoCompleteCatch` event.
+    ---
+    ---@param fn gpm.std.Hook | fun( cmd: string, argument_string: string, args: string[] ): string[]?
+    ---@param priority integer | nil
+    function engine.consoleCommandAutoCompleteCatch( fn, priority )
+        if priority == nil then
+            table_insert( lst, #lst + 1, fn )
+        else
+            table_insert( lst, math_clamp( priority, 1, #lst + 1 ), fn )
+        end
+    end
+
+    local function run_callbacks( cmd, argument_string, args )
+        for i = 1, #lst, 1 do
+            local result = lst[ i ]( cmd, argument_string, args )
+            if result ~= nil then
+                return result
+            end
+        end
+    end
+
+    local concommand = _G.concommand
+    if concommand == nil then
+        ---@diagnostic disable-next-line: inject-field
+        concommand = {}; _G.concommand = concommand
+    end
+
+    if concommand.AutoComplete == nil then
+        concommand.AutoComplete = run_callbacks
+    else
+        concommand.AutoComplete = detour_attach( concommand.AutoComplete, function( fn, cmd, argument_string, args )
+            local result = run_callbacks( cmd, argument_string, args )
+            if result == nil then
+                return fn( cmd, argument_string, args )
+            else
+                return result
+            end
+        end )
+    end
+
+end
+
 if engine.consoleVariableGet == nil or engine.consoleVariableCreate == nil or engine.consoleVariableExists == nil then
 
     local GetConVar_Internal = _G.GetConVar_Internal or debug_fempty

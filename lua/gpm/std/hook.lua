@@ -28,6 +28,7 @@ local table = std.table
 ---@field return_vararg boolean Whether the hook returns vararg. **READ-ONLY**
 ---@field mixer_fn nil | fun( old_value: any, new_value: any ): any The mixer function for the hook.
 ---@field protected queues gpm.std.Hook.query_data[] The queue of queries.
+---@operator call: any
 local Hook = std.class.base( "Hook" )
 
 ---@alias Hook gpm.std.Hook
