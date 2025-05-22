@@ -1,5 +1,8 @@
 local _G = _G
 
+---@type oslib
+local glua_os = _G.os
+
 ---@class gpm.std
 local std = _G.gpm.std
 
@@ -7,36 +10,28 @@ local std = _G.gpm.std
 ---
 --- Library for interacting with the operating system.
 ---
----@class gpm.std.os
+---@class gpm.std.os : oslib
 ---@field name string The name of the operating system.
 ---@field arch string The architecture of the operating system.
 ---@field endianness boolean `true` if the operating system is big endianness, `false` if not.
-local os = std.os or {}
+local os = std.os or {
+    name = std.jit.os,
+    arch = std.jit.arch
+}
+
 std.os = os
 
-do
-
-    os.name = std.jit.os
-    os.arch = std.jit.arch
-
-    local glua_os = _G.os
-    if glua_os == nil then
-        error( "os library not found, yep it's over." )
-    end
-
-    ---@cast glua_os oslib
-
-    os.date = os.date or glua_os.date
-    os.time = os.time or glua_os.time
-    os.clock = os.clock or glua_os.clock
-    os.difftime = os.difftime or glua_os.difftime
-
+if glua_os == nil then
+    error( "os library not found, yep it's over." )
 end
 
-os.endianness = std.string.byte( std.string.dump( std.debug.fempty ), 7 ) == 0x00
+os.date = os.date or glua_os.date
+os.time = os.time or glua_os.time
+os.clock = os.clock or glua_os.clock
+os.difftime = os.difftime or glua_os.difftime
+
+os.endianness = os.endianness or std.string.byte( std.string.dump( std.debug.fempty ), 7 ) == 0x00
 
 if std.MENU then
-    os.openFolder = _G.OpenFolder
-else
-    os.openFolder = std.debug.fempty
+    os.openFolder = os.openFolder or _G.OpenFolder or std.debug.fempty
 end

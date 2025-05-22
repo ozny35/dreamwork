@@ -90,7 +90,11 @@ std.pcall = std.pcall or _G.pcall
 local raw_get = raw.get
 
 -- jit library
-local jit = std.jit or _G.jit
+local jit = std.jit or _G.jit or {
+    arch = "unknown",
+    os = "unknown"
+}
+
 std.jit = jit
 
 local CLIENT, SERVER, MENU = std.CLIENT, std.SERVER, std.MENU
@@ -1325,7 +1329,7 @@ end
 dofile( "std/server.lua" )
 dofile( "std/level.lua" )
 
-do
+if coroutine.wait == nil then
 
     ---@class gpm.std.coroutine
     local coroutine = std.coroutine

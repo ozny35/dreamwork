@@ -484,7 +484,7 @@ do
     engine.consoleCommandCatch( function( ply, name, args, argument_string )
         local command = commands[ name ]
         if command == nil then
-            return false
+            return nil
         end
 
         in_call[ command ] = true
