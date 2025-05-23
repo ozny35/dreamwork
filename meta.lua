@@ -64,6 +64,12 @@ std = {}
 ---
 ---@alias gpm.std.http.Request.headers table<string, string>
 
+--- [SHARED AND MENU]
+---
+--- HTTP request parameters.
+---
+---@alias gpm.std.http.Request.parameters gpm.std.URL.SearchParams | table | nil
+
 do
 
     --- [SHARED AND MENU]
@@ -87,7 +93,7 @@ do
     ---
     --- This is only applicable to the following request methods: **HEAD**, **GET**, **POST**
     ---
-    ---@type gpm.std.URL.SearchParams | table | nil
+    ---@type gpm.std.http.Request.parameters
     request.parameters = nil
 
     --- Body string for POST data.
