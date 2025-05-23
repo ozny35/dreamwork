@@ -6,27 +6,23 @@ local Logger = gpm.Logger
 ---@class gpm.std
 local std = gpm.std
 
-local tonumber = std.tonumber
-local Timer_simple = std.Timer.simple
-local string_gmatch = std.string.gmatch
-local isnumber, isstring, istable = std.isnumber, std.isstring, std.istable
-
+local isnumber, isstring = std.isnumber, std.isstring
 local futures_Future = std.futures.Future
+local Timer_simple = std.Timer.simple
+
 
 local http_client, client_name
 if std.loadbinary( "reqwest" ) then
-    local user_agent = "gLua Package Manager/" .. gpm.VERSION .. " - Garry's Mod/" .. _G.VERSIONSTR
     ---@diagnostic disable-next-line: undefined-field
     local reqwest = _G.reqwest
 
-    local default_headers = {
-        ["User-Agent"] = user_agent
-    }
+    local user_agent = "gLua Package Manager/" .. gpm.VERSION .. " - Garry's Mod/" .. _G.VERSIONSTR
+    local default_headers = { ["User-Agent"] = user_agent }
 
     function http_client( parameters )
         if parameters.headers == nil then
             parameters.headers = default_headers
-        else
+        elseif parameters.headers["User-Agent"] == nil then
             parameters.headers["User-Agent"] = user_agent
         end
 
@@ -37,13 +33,7 @@ if std.loadbinary( "reqwest" ) then
     client_name = "reqwest"
 elseif std.SHARED and std.loadbinary( "chttp" ) then
     ---@diagnostic disable-next-line: undefined-field
-    local CHTTP = _G.CHTTP
-
-    function http_client( parameters )
-        CHTTP( parameters )
-        return true
-    end
-
+    http_client = _G.CHTTP
     client_name = "chttp"
 else
     http_client = _G.HTTP
@@ -52,27 +42,31 @@ end
 
 if http_client == nil then
     Logger:error( "HTTP client '%s' loading failed, sending requests is not possible.", client_name )
+    http_client = std.debug.fempty
 else
     Logger:info( "'%s' was connected as HTTP client.", client_name )
 end
 
+---@cast http_client fun( params: table ): boolean | nil
 
 local make_request
 do
 
     local queue, length = {}, 0
 
+    ---@param parameters table
     function make_request( parameters )
         length = length + 1
-        queue[ length ] = { parameters }
+        queue[ length ] = parameters
+        return true
     end
 
     Timer_simple( function()
         make_request = http_client
 
         for i = 1, length, 1 do
-            ---@diagnostic disable-next-line: need-check-nil
             http_client( queue[ i ] )
+            queue[ i ] = nil
         end
 
         ---@diagnostic disable-next-line: cast-local-type
@@ -139,7 +133,7 @@ if http.StatusCodes == nil then
     }
 
     std.setmetatable( http.StatusCodes, { __index = function( _, code )
-        return "Unknown - Unexpected status code: " .. code
+        return "Unknown status code (" .. code .. ")"
     end } )
 
 end
@@ -172,7 +166,15 @@ end
 local http_cache_get, http_cache_set = gpm.http_cache.get, gpm.http_cache.set
 local json_serialize = std.crypto.json.serialize
 local game_getUptime = std.game.getUptime
+local string_gmatch = std.string.gmatch
+local raw_tonumber = std.raw.tonumber
 
+---@class gpm.std.http.Request.session_cache
+---@field future gpm.std.futures.Future
+---@field start number
+---@field age number
+
+---@type table<string, gpm.std.http.Request.session_cache>
 local session_cache = {}
 
 --- [SHARED AND MENU]
@@ -189,22 +191,22 @@ local function request( options )
     if std.isURLSearchParams( search_parameters ) then
         ---@cast search_parameters gpm.std.URL.SearchParams
 
+        ---@type table<string, string | string[]>
         local parameters = {}
 
         for key, value in search_parameters:iterator() do
             local old_value = parameters[ key ]
             if old_value == nil then
                 parameters[ key ] = value
-            elseif istable( old_value ) then
-                old_value[ #old_value + 1 ] = value
-            else
+            elseif isstring( old_value ) then
+                ---@cast old_value string
                 parameters[ key ] = { old_value, value }
+            else
+                old_value[ #old_value + 1 ] = value
             end
         end
 
         options.parameters = parameters
-    elseif not istable( search_parameters ) then
-        options.parameters = nil
     end
 
     local url = options.url
@@ -253,16 +255,11 @@ local function request( options )
     if options.cache then
         options.cache = nil
 
-        local identifier = json_serialize( {
-            url = url,
-            method = method,
-            parameters = options.parameters,
-            headers = options.headers
-        }, false )
+        local identifier = json_serialize( { url, method, options.parameters, options.headers }, false )
 
         local data = session_cache[ identifier ]
         if data ~= nil and ( game_getUptime() - data.start ) < data.age then
-            return data[ 1 ]
+            return data.future:await()
         end
 
         local lifetime = options.lifetime
@@ -272,8 +269,15 @@ local function request( options )
             lifetime = gpm_http_lifetime.value * 60
         end
 
-        -- future, start, age
-        data = { f, SysTime(), lifetime }
+        ---@cast lifetime number
+
+        ---@type gpm.std.http.Request.session_cache
+        data = {
+            future = f,
+            start = game_getUptime(),
+            age = lifetime
+        }
+
         session_cache[ identifier ] = data
 
         local success = options.success
@@ -281,16 +285,16 @@ local function request( options )
         ---@diagnostic disable-next-line: inject-field
         function options.success( status, body, headers )
             local cache_control = headers["cache-control"]
-            if cache_control then
-                local options = {}
+            if cache_control ~= nil then
+                local cache_options = {}
                 for key, value in string_gmatch( cache_control, "([%w_-]+)=?([%w_-]*)" ) do
-                    options[ key ] = tonumber( value, 10 ) or true
+                    cache_options[ key ] = raw_tonumber( value, 10 ) or true
                 end
 
-                if options["no-cache"] or options["no-store"] then
+                if cache_options["no-cache"] or cache_options["no-store"] then
                     session_cache[ identifier ] = nil
-                elseif options["s-maxage"] or options["max-age"] then
-                    data[ 3 ] = options["s-maxage"] or options["max-age"]
+                elseif cache_options["s-maxage"] or cache_options["max-age"] then
+                    data.age = cache_options["s-maxage"] or cache_options["max-age"]
                 end
             end
 
@@ -304,6 +308,7 @@ local function request( options )
             session_cache[ identifier ] = nil
             failed( msg )
         end
+
     end
 
     -- ETag extension
@@ -311,13 +316,16 @@ local function request( options )
         options.etag = nil
 
         local data = http_cache_get( url )
-        if data then
+        if data ~= nil then
             local headers = options.headers
-            if istable( headers ) then
-                headers[ "If-None-Match" ] = data.etag
-            else
-                headers = { [ "If-None-Match" ] = data.etag }
+            if headers == nil then
+                headers = {
+                    [ "If-None-Match" ] = data.etag
+                }
+
                 options.headers = headers
+            else
+                headers[ "If-None-Match" ] = data.etag
             end
         end
 
@@ -335,7 +343,7 @@ local function request( options )
         end
     end
 
-    if not make_request( options ) then
+    if make_request( options ) == false then
         options.failed( "failed to connect to '" .. client_name .. "' http client for '" .. url .. "'" )
     end
 
@@ -355,8 +363,8 @@ http.request = request
 ---@async
 function http.get( url, headers, timeout )
     return request( {
-        url = url,
         method = "GET",
+        url = url,
         headers = headers,
         timeout = timeout
     } )
@@ -367,16 +375,16 @@ end
 --- Sends a POST request.
 ---
 ---@param url gpm.std.http.Request.url The URL to send the request to.
----@param body? string The body to send with the request.
+---@param parameters? gpm.std.http.Request.parameters The body to send with the request.
 ---@param headers? gpm.std.http.Request.headers The headers to send with the request.
 ---@param timeout? integer The timeout in seconds.
 ---@return gpm.std.http.Response response The response from the request.
 ---@async
-function http.post( url, body, headers, timeout )
+function http.post( url, parameters, headers, timeout )
     return request( {
-        url = url,
-        body = body,
         method = "POST",
+        url = url,
+        parameters = parameters,
         headers = headers,
         timeout = timeout
     } )
@@ -403,34 +411,43 @@ end
 if std.MENU then
 
     local json_deserialize = std.crypto.json.deserialize
-    local GetAPIManifest = _G.GetAPIManifest
+    local glua_GetAPIManifest = _G.GetAPIManifest
 
     --- [MENU]
     ---
     --- Gets miscellaneous information from Facepunches API.
+    ---
     ---@param timeout number? The timeout in seconds.
     ---@return table data The data returned from the API.
     ---@async
     function http.getFacepunchManifest( timeout )
         local f = futures_Future()
 
-        GetAPIManifest( function( json )
-            if isstring( json ) then
+        glua_GetAPIManifest( function( json )
+            if json == nil then
+                f:setError( "failed to get manifest from Facepunch API, unknown error" )
+            else
                 local data = json_deserialize( json )
-                if data ~= nil then
+                if data == nil then
+                    f:setError( "failed to get manifest from Facepunch API, invalid JSON" )
+                else
                     f:setResult( data )
-                    return
                 end
             end
 
-            f:setError( "failed to get facepunch manifest" )
         end )
 
-        Timer_simple( function()
-            if f:isPending() then
-                f:setError( "timed out getting facepunch manifest" )
-            end
-        end, timeout or 30 )
+        if timeout == nil then
+            timeout = 30
+        end
+
+        if timeout > 0 then
+            Timer_simple( function()
+                if f:isPending() then
+                    f:setError( "failed to get manifest from Facepunch API, timed out" )
+                end
+            end, timeout )
+        end
 
         return f:await()
     end
