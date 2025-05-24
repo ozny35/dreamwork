@@ -1083,7 +1083,7 @@ do
         local args = { ... }
 
         for i = 1, select( '#', ... ), 1 do
-            bor( object, args[ i ] )
+            object = bor( object, args[ i ] )
         end
 
         return object
