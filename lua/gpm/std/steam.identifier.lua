@@ -60,6 +60,7 @@ local universe2int = {
     RC = 5
 }
 
+---@type table<string, integer>
 local letter2int = {
     I = 0,
     i = 0,
@@ -76,7 +77,10 @@ local letter2int = {
     a = 10
 }
 
+---@type table<integer, gpm.std.steam.Identifier.universe>
 local int2universe = std.table.flipped( universe2int )
+
+---@type table<integer, gpm.std.steam.Identifier.type>
 local int2type = std.table.flipped( type2int )
 
 --- [SHARED AND MENU]
@@ -150,7 +154,7 @@ do
     end
 
     ---@type table<gpm.std.steam.Identifier.type, string>
-    local int2letter = {
+    local type2letter = {
         Invalid = "I",
         Individual = "U",
         Multiseat = "M",
@@ -167,9 +171,10 @@ do
     --- [SHARED AND MENU]
     ---
     --- Converts a SteamID object to a Steam3 identifier.
+    ---
     ---@return string
     function Identifier:toSteam3()
-        return string_format( "[%s:%d:%d]", int2letter[ self.type ] or "I", self.universe, self.id )
+        return string_format( "[%s:%d:%d]", type2letter[ self.type ] or "I", universe2int[ self.universe ] or 0, self.id )
     end
 
     ---@protected
@@ -192,13 +197,14 @@ do
         --- [SHARED AND MENU]
         ---
         --- Converts a SteamID object to a 64-bit integer.
+        ---
         ---@param object gpm.std.steam.Identifier
         ---@return string
         local function to64( object )
             return BigInt_bor(
                 x64_zero,
-                BigInt_lshift( BigInt_fromNumber( universe2int[ object.universe ] ), 56 ),
-                BigInt_lshift( BigInt_fromNumber( type2int[ object.type ] ), 52 ),
+                BigInt_lshift( BigInt_fromNumber( universe2int[ object.universe ] or 0 ), 56 ),
+                BigInt_lshift( BigInt_fromNumber( type2int[ object.type ] or 0 ), 52 ),
                 BigInt_lshift( BigInt_fromNumber( object.instance ), 32 ),
                 BigInt_fromNumber( object.id )
             ):toString( 10, true )
@@ -216,6 +222,7 @@ do
             --- [SHARED AND MENU]
             ---
             --- Gets the URL for a SteamID object.
+            ---
             ---@param http? boolean
             ---@return string?
             function Identifier:getURL( http )
@@ -240,6 +247,7 @@ do
         --- [SHARED AND MENU]
         ---
         --- Checks if a string is a valid 64-bit identifier.
+        ---
         ---@param str string
         ---@return boolean
         function IdentifierClass.isValid64( str )
@@ -249,6 +257,7 @@ do
         --- [SHARED AND MENU]
         ---
         --- Creates a new SteamID object from a 64-bit number string.
+        ---
         ---@param str string
         ---@return gpm.std.steam.Identifier
         function IdentifierClass.from64( str )
@@ -256,7 +265,7 @@ do
 
             return setmetatable( {
                 universe = int2universe[ BitInt_toInteger( BigInt_band( BigInt_rshift( number, 56 ), 0xFF ) ) ] or "Invalid",
-                type = type2int[ BitInt_toInteger( BigInt_band( BigInt_rshift( number, 52 ), 0xF ) ) ] or "Invalid",
+                type = int2type[ BitInt_toInteger( BigInt_band( BigInt_rshift( number, 52 ), 0xF ) ) ] or "Invalid",
                 instance = BitInt_toInteger( BigInt_band( BigInt_rshift( number, 32 ), 0xFFFFF ) ),
                 id = BitInt_toInteger( BigInt_band( number, 0xFFFFFFFF ) )
             }, Identifier )
@@ -273,6 +282,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- Checks if a string is a valid Steam2 identifier.
+    ---
     ---@param str string
     ---@return boolean
     function IdentifierClass.isValidSteam2( str )
@@ -301,6 +311,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- Checks if a string is a valid Steam3 identifier.
+    ---
     ---@param str string
     ---@return boolean
     function IdentifierClass.isValidSteam3( str )
@@ -325,6 +336,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- Creates a new SteamID object from a steam2 string.
+    ---
     ---@param str string
     ---@return gpm.std.steam.Identifier
     function IdentifierClass.fromSteam2( str, allow_zero_universe )
@@ -349,10 +361,11 @@ do
     --- [SHARED AND MENU]
     ---
     --- Creates a new SteamID object from a steam3 string.
+    ---
     ---@param str string
     ---@return gpm.std.steam.Identifier
     function IdentifierClass.fromSteam3( str )
-        local letter, universe, id = string_match( str, "^%[(%a):(%d+):(%d+)%]$" )
+        local letter, universe, id = string_match( str, "^%[?(%a):(%d+):(%d+)%]?$" )
         if letter == nil or universe == nil or id == nil then
             error( "steam identifier steam3 is invalid", 2 )
         end
