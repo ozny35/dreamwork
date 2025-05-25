@@ -1710,9 +1710,9 @@ end
 --- Appends name and value to the end
 ---@param name string
 ---@param value string?
-function SearchParams:append( list, name, value )
-	list[ #list + 1 ] = { name, value }
-	update( list )
+function SearchParams:append( name, value )
+	self[ #self + 1 ] = { name, value }
+	update( self )
 end
 
 --- [SHARED AND MENU]
@@ -1721,15 +1721,15 @@ end
 --- if `value` is given, then searches for exactly given name AND value
 ---@param name string
 ---@param value string?
-function SearchParams:delete( list, name, value )
-	for i = #list, 1, -1 do
-		local t = list[ i ]
+function SearchParams:delete( name, value )
+	for i = #self, 1, -1 do
+		local t = self[ i ]
 		if t[ 1 ] == name and ( not value or t[ 2 ] == value ) then
-			table_remove( list, i )
+			table_remove( self, i )
 		end
 	end
 
-	update( list )
+	update( self )
 end
 
 --- [SHARED AND MENU]
@@ -1737,9 +1737,9 @@ end
 --- Finds first value associated with given name
 ---@param name string
 ---@return string | nil
-function SearchParams:get( list, name )
-	for i = 1, #list, 1 do
-		local t = list[ i ]
+function SearchParams:get( name )
+	for i = 1, #self, 1 do
+		local t = self[ i ]
 		if t[ 1 ] == name then
 			return t[ 2 ]
 		end
@@ -1751,10 +1751,10 @@ end
 --- Finds all values associated with given name and returns them as list.
 ---@param name string
 ---@return table
-function SearchParams:getAll( list, name )
+function SearchParams:getAll( name )
 	local values = {}
-	for i = 1, #list, 1 do
-		local t = list[ i ]
+	for i = 1, #self, 1 do
+		local t = self[ i ]
 		if t[ 1 ] == name then
 			values[ #values + 1 ] = t[ 2 ]
 		end
@@ -1769,9 +1769,9 @@ end
 ---@param name string
 ---@param value string?
 ---@return boolean
-function SearchParams:has( list, name, value )
-	for i = 1, #list, 1 do
-		local t = list[ i ]
+function SearchParams:has( name, value )
+	for i = 1, #self, 1 do
+		local t = self[ i ]
 		if t[ 1 ] == name and ( not value or t[ 2 ] == value ) then
 			return true
 		end
@@ -1786,27 +1786,27 @@ end
 --- and deletes other parameters with the same name
 ---@param name string
 ---@param value string?
-function SearchParams:set( list, name, value )
-	for i = 1, #list do
-		local t = list[ i ]
+function SearchParams:set( name, value )
+	for i = 1, #self, 1 do
+		local t = self[ i ]
 		if t[ 1 ] == name then
 			-- replace first value
 			t[ 2 ] = value
 
 			-- remove all other values
-			for j = #list, i + 1, -1 do
-				if list[ j ][ 1 ] == name then
-					table_remove( list, j )
+			for j = #self, i + 1, -1 do
+				if self[ j ][ 1 ] == name then
+					table_remove( self, j )
 				end
 			end
 
-			update( list )
+			update( self )
 			return
 		end
 	end
 
 	-- if name is not found, append new value
-	list[ #list + 1 ] = { name, value }
+	self[ #self + 1 ] = { name, value }
 	update( self )
 end
 
