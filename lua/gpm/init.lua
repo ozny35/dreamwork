@@ -1120,14 +1120,6 @@ do
 
 end
 
--- https://github.com/WilliamVenner/gmsv_workshop
----@diagnostic disable-next-line: undefined-field
-if SERVER and not ( std.istable( _G.steamworks ) and std.isfunction( _G.steamworks.DownloadUGC ) ) then
-    if loadbinary( "workshop" ) then
-        logger:info( "'gmsv_workshop' was connected as server-side Steam Workshop API." )
-    end
-end
-
 -- https://github.com/willox/gmbc
 if loadbinary( "gmbc" ) then
     logger:info( "'gmbc' was connected as bytecode compiler, binary code compilation avaliable." )
@@ -1225,6 +1217,7 @@ dofile( "std/http.github.lua" )
 
 dofile( "std/steam.lua" )
 dofile( "std/steam.identifier.lua" )
+dofile( "std/steam.workshop.lua" )
 
 dofile( "std/addon.lua" )
 

@@ -704,3 +704,15 @@ do
     file.Writer = Writer
 
 end
+
+--[[
+
+    TODO:
+
+    _G.LoadAddonPresets
+    _G.SaveAddonPresets
+
+    https://wiki.facepunch.com/gmod/Global.LoadPresets
+    https://wiki.facepunch.com/gmod/Global.SavePresets
+
+]]

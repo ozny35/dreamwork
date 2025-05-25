@@ -10,7 +10,6 @@ local isnumber, isstring = std.isnumber, std.isstring
 local futures_Future = std.futures.Future
 local Timer_simple = std.Timer.simple
 
-
 local http_client, client_name
 if std.loadbinary( "reqwest" ) then
     ---@diagnostic disable-next-line: undefined-field
@@ -143,7 +142,7 @@ do
 
     local cvar_options = {
         name = "gpm.http.timeout",
-        description = "Default timeout for http requests.",
+        description = "The default timeout for http requests.",
         replicated = not std.MENU,
         archive = std.SERVER_MENU,
         type = "number",
@@ -153,13 +152,15 @@ do
     }
 
     gpm_http_timeout = std.console.Variable( cvar_options )
+    http.Timeout = gpm_http_timeout
 
     cvar_options.name = "gpm.http.lifetime"
-    cvar_options.description = "Cache lifetime for gpm http library in minutes."
+    cvar_options.description = "The cache lifetime for the gpm http library in minutes."
     cvar_options.default = 1
     cvar_options.max = 40320
 
     gpm_http_lifetime = std.console.Variable( cvar_options )
+    http.Lifetime = gpm_http_lifetime
 
 end
 
