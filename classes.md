@@ -70,7 +70,7 @@ end
 
 ---@class gpm.std.CarClass : gpm.std.Car
 ---@field __base gpm.std.Car
----@overload fun(): Car
+---@overload fun(): gpm.std.Car
 local CarClass = std.class.create( Car )
 std.Car = CarClass
 

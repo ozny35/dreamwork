@@ -4,9 +4,11 @@ local _G = _G
 local gpm = _G.gpm
 
 local std = gpm.std
+local debug = std.debug
+
 local MENU = std.MENU
 local math_clamp = std.math.clamp
-local debug_fempty = std.debug.fempty
+local debug_fempty = debug.fempty
 local setmetatable = std.setmetatable
 local table_insert = std.table.insert
 local detour_attach = gpm.detour.attach
@@ -302,7 +304,7 @@ if engine.consoleVariableGet == nil or engine.consoleVariableCreate == nil or en
     ---@type table<string, ConVar>
     local cache = {}
 
-    std.debug.gc.setTableRules( cache, false, true )
+    debug.gc.setTableRules( cache, false, true )
 
     --- [SHARED AND MENU]
     ---
@@ -729,6 +731,23 @@ do
     engine.hookCatch( "GameContentChanged", update_mounted )
     update_mounted()
 
+end
+
+local player_meta = debug.findmetatable( "Player" )
+if player_meta == nil then
+    player_meta = {}
+    debug.registermetatable( "Player", player_meta, true )
+end
+
+if player_meta.__gc == nil then
+    function player_meta.__gc( player_userdata )
+        engine_hookCall( "PlayerGC", player_userdata )
+    end
+else
+    player_meta.__gc = detour_attach( player_meta.__gc, function( fn, player_userdata )
+        engine_hookCall( "PlayerGC", player_userdata )
+        fn( player_userdata )
+    end )
 end
 
 -- TODO: matproxy
