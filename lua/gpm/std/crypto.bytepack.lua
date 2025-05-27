@@ -397,124 +397,6 @@ end
 
 --- [SHARED AND MENU]
 ---
---- Reads unsigned integer from big endian bytes.
----
---- Valid values without loss of precision: `0` - `9007199254740991`
----
----@param b1? integer The first byte.
----@param b2? integer The second byte.
----@param b3? integer The third byte.
----@param b4? integer The fourth byte.
----@param b5? integer The fifth byte.
----@param b6? integer The sixth byte.
----@param b7? integer The seventh byte.
----@param b8? integer The eighth byte.
----@return integer value The unsigned integer.
-local function readUInt( b1, b2, b3, b4, b5, b6, b7, b8 )
-	if b1 == nil then
-		return 0
-	elseif b2 == nil then
-		return b1
-	elseif b3 == nil then
-		return readUInt16( b1, b2 )
-	elseif b4 == nil then
-		return readUInt24( b1, b2, b3 )
-	elseif b5 == nil then
-		return readUInt32( b1, b2, b3, b4 )
-	elseif b6 == nil then
-		return readUInt40( b1, b2, b3, b4, b5 )
-	elseif b7 == nil then
-		return readUInt48( b1, b2, b3, b4, b5, b6 )
-	elseif b8 == nil then
-		return readUInt56( b1, b2, b3, b4, b5, b6, b7 )
-	else
-		return readUInt64( b1, b2, b3, b4, b5, b6, b7, b8 )
-	end
-end
-
-bytepack.readUInt = readUInt
-
-local writeUInt
-do
-
-	local max_values = {
-		255,
-		65535,
-		16777215,
-		4294967295,
-		1099511627775,
-		281474976710655,
-		9007199254740991,
-		9007199254740991
-	}
-
-	--- [SHARED AND MENU]
-	---
-	--- Writes unsigned integer as big endian bytes.
-	---
-	--- Valid values without loss of precision: `0` - `9007199254740991`
-	---
-	---@param value integer The unsigned integer.
-	---@param byte_count? integer The number of bytes to write. Defaults to `4`.
-	---@return integer ... The written bytes.
-	function writeUInt( value, byte_count )
-		if byte_count == nil then
-			byte_count = 4
-		elseif byte_count < 1 then
-			error( "invalid byte count", 2 )
-		end
-
-		if value == 0 then
-			if byte_count == 1 then
-				return 0
-			elseif byte_count == 2 then
-				return 0, 0
-			elseif byte_count == 3 then
-				return 0, 0, 0
-			elseif byte_count == 4 then
-				return 0, 0, 0, 0
-			elseif byte_count == 5 then
-				return 0, 0, 0, 0, 0
-			elseif byte_count == 6 then
-				return 0, 0, 0, 0, 0, 0
-			elseif byte_count == 7 then
-				return 0, 0, 0, 0, 0, 0, 0
-			elseif byte_count == 8 then
-				return 0, 0, 0, 0, 0, 0, 0, 0
-			else
-				error( "unsupported byte count", 2 )
-			end
-		elseif value < 0 then
-			error( "integer is too small to write", 2 )
-		elseif value > max_values[ byte_count ] then
-			error( "integer is too large to write", 2 )
-		elseif byte_count == 1 then
-			return value
-		elseif byte_count == 2 then
-			return writeUInt16( value )
-		elseif byte_count == 3 then
-			return writeUInt24( value )
-		elseif byte_count == 4 then
-			return writeUInt32( value )
-		elseif byte_count == 5 then
-			return writeUInt40( value )
-		elseif byte_count == 6 then
-			return writeUInt48( value )
-		elseif byte_count == 7 then
-			return writeUInt56( value )
-		elseif byte_count == 8 then
-			return writeUInt64( value )
-		else
-			error( "unsupported byte count", 2 )
-		end
-	end
-
-	bytepack.writeUInt = writeUInt
-
-end
-
---- [SHARED AND MENU]
----
 --- Reads unsigned fixed-point number (**UQm.n**) as big endian bytes.
 ---
 --- **Commonly Used UQm.n Formats**
@@ -528,10 +410,39 @@ end
 ---|UQ32.16|`0 to 4,294,967,295.99998`|0.0000152588 (1/65536)
 ---
 ---@param n integer Number of fractional bits.
----@param ... integer The bytes to read.
+---@param b1 integer The first byte.
+---@param b2? integer The second byte.
+---@param b3? integer The third byte.
+---@param b4? integer The fourth byte.
+---@param b5? integer The fifth byte.
+---@param b6? integer The sixth byte.
+---@param b7? integer The seventh byte.
+---@param b8? integer The eighth byte.
 ---@return number value The unsigned fixed-point number.
-function bytepack.readUnsignedFixedPoint( n, ... )
-	return readUInt( ... ) / ( 2 ^ n )
+function bytepack.readUnsignedFixedPoint( n, b1, b2, b3, b4, b5, b6, b7, b8 )
+	if b1 == nil then
+		return 0
+	end
+
+	local divisor = 2 ^ n
+
+	if b2 == nil then
+		return b1 / divisor
+	elseif b3 == nil then
+		return readUInt16( b1, b2 ) / divisor
+	elseif b4 == nil then
+		return readUInt24( b1, b2, b3 ) / divisor
+	elseif b5 == nil then
+		return readUInt32( b1, b2, b3, b4 ) / divisor
+	elseif b6 == nil then
+		return readUInt40( b1, b2, b3, b4, b5 ) / divisor
+	elseif b7 == nil then
+		return readUInt48( b1, b2, b3, b4, b5, b6 ) / divisor
+	elseif b8 == nil then
+		return readUInt56( b1, b2, b3, b4, b5, b6, b7 ) / divisor
+	else
+		return readUInt64( b1, b2, b3, b4, b5, b6, b7, b8 ) / divisor
+	end
 end
 
 --- [SHARED AND MENU]
@@ -551,14 +462,39 @@ end
 ---@param value number The unsigned fixed-point number.
 ---@param m integer Number of integer bits (including sign bit).
 ---@param n integer Number of fractional bits.
----@return integer ... The written bytes.
+---@return integer b1 The first byte.
+---@return integer? b2 The second byte.
+---@return integer? b3 The third byte.
+---@return integer? b4 The fourth byte.
+---@return integer? b5 The fifth byte.
+---@return integer? b6 The sixth byte.
+---@return integer? b7 The seventh byte.
+---@return integer? b8 The eighth byte.
 function bytepack.writeUnsignedFixedPoint( value, m, n )
 	local byte_count = ( m + n ) * 0.125
 	if byte_count % 1 ~= 0 then
 		error( "invalid number of integer or fractional bits", 2 )
 	end
 
-	return writeUInt( value * ( 2 ^ n ), byte_count )
+	local unsigned_integer = value * ( 2 ^ n )
+
+	if byte_count == 1 then
+		return unsigned_integer
+	elseif byte_count == 2 then
+		return writeUInt16( unsigned_integer )
+	elseif byte_count == 3 then
+		return writeUInt24( unsigned_integer )
+	elseif byte_count == 4 then
+		return writeUInt32( unsigned_integer )
+	elseif byte_count == 5 then
+		return writeUInt40( unsigned_integer )
+	elseif byte_count == 6 then
+		return writeUInt48( unsigned_integer )
+	elseif byte_count == 7 then
+		return writeUInt56( unsigned_integer )
+	else
+		return writeUInt64( unsigned_integer )
+	end
 end
 
 --- [SHARED AND MENU]
@@ -870,135 +806,6 @@ bytepack.writeInt64 = writeInt64
 
 --- [SHARED AND MENU]
 ---
---- Reads signed integer from big endian bytes.
----
---- Valid values without loss of precision: `-9007199254740991` - `9007199254740991`
----
----@param b1? integer The first byte.
----@param b2? integer The second byte.
----@param b3? integer The third byte.
----@param b4? integer The fourth byte.
----@param b5? integer The fifth byte.
----@param b6? integer The sixth byte.
----@param b7? integer The seventh byte.
----@param b8? integer The eighth byte.
----@return integer value The signed integer.
-local function readInt( b1, b2, b3, b4, b5, b6, b7, b8 )
-	if b1 == nil then
-		return 0
-	elseif b2 == nil then
-		return readInt8( b1 )
-	elseif b3 == nil then
-		return readInt16( b1, b2 )
-	elseif b4 == nil then
-		return readInt24( b1, b2, b3 )
-	elseif b5 == nil then
-		return readInt32( b1, b2, b3, b4 )
-	elseif b6 == nil then
-		return readInt40( b1, b2, b3, b4, b5 )
-	elseif b7 == nil then
-		return readInt48( b1, b2, b3, b4, b5, b6 )
-	elseif b8 == nil then
-		return readInt56( b1, b2, b3, b4, b5, b6, b7 )
-	else
-		return readInt64( b1, b2, b3, b4, b5, b6, b7, b8 )
-	end
-end
-
-bytepack.readInt = readInt
-
-local writeInt
-do
-
-	local min_values = {
-		-128,
-		-32768,
-		-8388608,
-		-2147483648,
-		-549755813888,
-		-140737488355328,
-		-9007199254740991
-		-9007199254740991
-	}
-
-	local max_values = {
-		127,
-		32767,
-		8388607,
-		2147483647,
-		549755813887,
-		140737488355327,
-		9007199254740991,
-		9007199254740991
-	}
-
-	--- [SHARED AND MENU]
-	---
-	--- Writes signed integer as big endian bytes.
-	---
-	--- Valid values without loss of precision: `-9007199254740991` - `9007199254740991`
-	---
-	---@param value integer The signed integer.
-	---@param byte_count? integer The number of bytes to write. Defaults to `4`.
-	---@return integer ... The written bytes.
-	function writeInt( value, byte_count )
-		if byte_count == nil then
-			byte_count = 4
-		elseif byte_count < 1 then
-			error( "invalid byte count", 2 )
-		end
-
-		if value == 0 then
-			if byte_count == 1 then
-				return 0
-			elseif byte_count == 2 then
-				return 0, 0
-			elseif byte_count == 3 then
-				return 0, 0, 0
-			elseif byte_count == 4 then
-				return 0, 0, 0, 0
-			elseif byte_count == 5 then
-				return 0, 0, 0, 0, 0
-			elseif byte_count == 6 then
-				return 0, 0, 0, 0, 0, 0
-			elseif byte_count == 7 then
-				return 0, 0, 0, 0, 0, 0, 0
-			elseif byte_count == 8 then
-				return 0, 0, 0, 0, 0, 0, 0, 0
-			else
-				error( "unsupported byte count", 2 )
-			end
-		elseif value < min_values[ byte_count ] then
-			error( "integer is too small to write", 2 )
-		elseif value > max_values[ byte_count ] then
-			error( "integer is too large to write", 2 )
-		elseif byte_count == 1 then
-			return writeInt8( value )
-		elseif byte_count == 2 then
-			return writeInt16( value )
-		elseif byte_count == 3 then
-			return writeInt24( value )
-		elseif byte_count == 4 then
-			return writeInt32( value )
-		elseif byte_count == 5 then
-			return writeInt40( value )
-		elseif byte_count == 6 then
-			return writeInt48( value )
-		elseif byte_count == 7 then
-			return writeInt56( value )
-		elseif byte_count == 8 then
-			return writeInt64( value )
-		else
-			error( "unsupported byte count", 2 )
-		end
-	end
-
-	bytepack.writeInt = writeInt
-
-end
-
---- [SHARED AND MENU]
----
 --- Reads signed fixed-point number (**UQm.n**) as big endian bytes.
 ---
 --- **Commonly Used UQm.n Formats**
@@ -1012,10 +819,39 @@ end
 ---|UQ32.16|`0 to 4,294,967,295.99998`|0.0000152588 (1/65536)
 ---
 ---@param n integer Number of fractional bits.
----@param ... integer The bytes to read.
+---@param b1 integer The first byte.
+---@param b2? integer The second byte.
+---@param b3? integer The third byte.
+---@param b4? integer The fourth byte.
+---@param b5? integer The fifth byte.
+---@param b6? integer The sixth byte.
+---@param b7? integer The seventh byte.
+---@param b8? integer The eighth byte.
 ---@return number value The signed fixed-point number.
-function bytepack.readFixedPoint( n, ... )
-	return readInt( ... ) / ( 2 ^ n )
+function bytepack.readFixedPoint( n, b1, b2, b3, b4, b5, b6, b7, b8 )
+	if b1 == nil then
+		return 0
+	end
+
+	local divisor = 2 ^ n
+
+	if b2 == nil then
+		return readInt8( b1 ) / divisor
+	elseif b3 == nil then
+		return readInt16( b1, b2 ) / divisor
+	elseif b4 == nil then
+		return readInt24( b1, b2, b3 ) / divisor
+	elseif b5 == nil then
+		return readInt32( b1, b2, b3, b4 ) / divisor
+	elseif b6 == nil then
+		return readInt40( b1, b2, b3, b4, b5 ) / divisor
+	elseif b7 == nil then
+		return readInt48( b1, b2, b3, b4, b5, b6 ) / divisor
+	elseif b8 == nil then
+		return readInt56( b1, b2, b3, b4, b5, b6, b7 ) / divisor
+	else
+		return readInt64( b1, b2, b3, b4, b5, b6, b7, b8 ) / divisor
+	end
 end
 
 --- [SHARED AND MENU]
@@ -1035,14 +871,39 @@ end
 ---@param value number The unsigned fixed-point number.
 ---@param m integer Number of integer bits (including sign bit).
 ---@param n integer Number of fractional bits.
----@return integer ... The written bytes.
+---@return integer b1 The first byte.
+---@return integer? b2 The second byte.
+---@return integer? b3 The third byte.
+---@return integer? b4 The fourth byte.
+---@return integer? b5 The fifth byte.
+---@return integer? b6 The sixth byte.
+---@return integer? b7 The seventh byte.
+---@return integer? b8 The eighth byte.
 function bytepack.writeFixedPoint( value, m, n )
 	local byte_count = ( m + n ) * 0.125
 	if byte_count % 1 ~= 0 then
 		error( "invalid byte count", 2 )
 	end
 
-	return writeInt( value * ( 2 ^ n ), byte_count )
+	local signed_integer = value * ( 2 ^ n )
+
+	if byte_count == 1 then
+		return writeInt8( signed_integer )
+	elseif byte_count == 2 then
+		return writeInt16( signed_integer )
+	elseif byte_count == 3 then
+		return writeInt24( signed_integer )
+	elseif byte_count == 4 then
+		return writeInt32( signed_integer )
+	elseif byte_count == 5 then
+		return writeInt40( signed_integer )
+	elseif byte_count == 6 then
+		return writeInt48( signed_integer )
+	elseif byte_count == 7 then
+		return writeInt56( signed_integer )
+	else
+		return writeInt64( signed_integer )
+	end
 end
 
 local math_huge, math_tiny, math_nan = math.huge, math.tiny, math.nan
