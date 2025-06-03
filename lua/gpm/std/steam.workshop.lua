@@ -173,25 +173,7 @@ local ERemoteStoragePublishedFileVisibility = {
     [ 3 ] = "unlisted"
 }
 
-local api_key
-
-local variable = std.console.Variable( {
-    name = "gpm.steam.api.key",
-    description = "https://steamcommunity.com/dev/apikey",
-    protected = true,
-    type = "string",
-    hidden = true
-} )
-
-variable:attach( function( _, value )
-    ---@cast value string
-    api_key = value
-end, "http.github" )
-
 local default_timeout = std.http.Timeout
-
----@diagnostic disable-next-line: cast-local-type
-api_key = variable.value
 
 if std.CLIENT_MENU then
 
@@ -235,6 +217,21 @@ end
 local workshop = steam.workshop or {}
 steam.workshop = workshop
 
+do
+
+    local string_match = string.match
+
+    --- [SHARED AND MENU]
+    ---
+    --- Checks if the given Steam Workshop item ID is valid.
+    ---
+    ---@param id? string
+    ---@return boolean
+    function workshop.isValidID( id )
+        return id or id ~= "0" and isstring( id ) and string_match( id, "^%d+$", 1 )
+    end
+
+end
 
 do
 

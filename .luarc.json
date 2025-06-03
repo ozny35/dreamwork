@@ -19,7 +19,6 @@
         "continue"
     ],
     "diagnostics.globals": ["gpm"],
-    "diagnostics.disable": [],
     "diagnostics.groupFileStatus": {
         "await": "Any"
     },

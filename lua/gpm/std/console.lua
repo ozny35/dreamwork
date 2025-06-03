@@ -19,7 +19,7 @@ local engine_consoleCommandRun = engine.consoleCommandRun
 ---
 ---@class gpm.std.console
 ---@field visible boolean `true` if the console is visible, `false` otherwise.
-local console = {}
+local console = std.console or { visible = std.SERVER }
 std.console = console
 
 if std.MENU then
@@ -52,7 +52,10 @@ end
 
 if std.CLIENT_MENU then
 
-    local gui_IsConsoleVisible = _G.gui.IsConsoleVisible
+    local gui_IsConsoleVisible = _G.gui.IsConsoleVisible or function() return false end
+
+    local Visibility = console.Visibility or std.Hook( "console.Visibility" )
+    console.Visibility = Visibility
 
     local visible = gui_IsConsoleVisible()
     console.visible = visible
@@ -61,8 +64,13 @@ if std.CLIENT_MENU then
         if visible ~= gui_IsConsoleVisible() then
             visible = not visible
             console.visible = visible
+            Visibility:call( visible )
         end
     end, "std.console.visible" )
+
+else
+
+    console.Visibility = console.Visibility or std.Hook( "console.Visibility" )
 
 end
 

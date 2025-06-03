@@ -190,23 +190,31 @@ end
 
 local engine_hookCall = engine.hookCall
 
-if engine.consoleCommandCatch == nil then
-
-    local lst = {}
-
-    --- [SHARED AND MENU]
-    ---
-    --- Adds a callback to the `consoleCommandCatch` event.
-    ---
-    ---@param fn gpm.std.Hook | fun( ply: Player, cmd: string, args: string[], argument_string: string ): boolean?
+---@param lst table
+local function create_catch_fn( lst )
+    ---@param fn gpm.std.Hook | function
     ---@param priority integer | nil
-    function engine.consoleCommandCatch( fn, priority )
+    return function( fn, priority )
         if priority == nil then
             table_insert( lst, #lst + 1, fn )
         else
             table_insert( lst, math_clamp( priority, 1, #lst + 1 ), fn )
         end
     end
+end
+
+if engine.consoleCommandCatch == nil then
+
+    local lst = {}
+
+    ---@alias gpm.engine.consoleCommandCatch_fn fun( ply: Player, cmd: string, args: string[], argument_string: string ): boolean?
+
+    --- [SHARED AND MENU]
+    ---
+    --- Adds a callback to the `consoleCommandCatch` event.
+    ---
+    ---@overload fun( fn: gpm.std.Hook | gpm.engine.consoleCommandCatch_fn, priority?: integer )
+    engine.consoleCommandCatch = create_catch_fn( lst )
 
     ---@param ply Player
     ---@param cmd string
@@ -251,19 +259,14 @@ if engine.consoleCommandAutoCompleteCatch == nil then
 
     local lst = {}
 
+    ---@alias gpm.engine.consoleCommandAutoCompleteCatch_fn fun( cmd: string, argument_string: string, args: string[] ): string[]?
+
     --- [SHARED AND MENU]
     ---
     --- Adds a callback to the `consoleCommandAutoCompleteCatch` event.
     ---
-    ---@param fn gpm.std.Hook | fun( cmd: string, argument_string: string, args: string[] ): string[]?
-    ---@param priority integer | nil
-    function engine.consoleCommandAutoCompleteCatch( fn, priority )
-        if priority == nil then
-            table_insert( lst, #lst + 1, fn )
-        else
-            table_insert( lst, math_clamp( priority, 1, #lst + 1 ), fn )
-        end
-    end
+    ---@overload fun( fn: gpm.std.Hook | gpm.engine.consoleCommandAutoCompleteCatch_fn, priority?: integer )
+    engine.consoleCommandAutoCompleteCatch = create_catch_fn( lst )
 
     local function run_callbacks( cmd, argument_string, args )
         for i = 1, #lst, 1 do
@@ -407,15 +410,8 @@ if engine.consoleVariableCatch == nil then
     ---
     --- Adds a callback to the `consoleVariableCatch` event.
     ---
-    ---@param fn gpm.std.Hook | fun( str_name: string, str_old: string, str_new: string )
-    ---@param priority integer | nil
-    function engine.consoleVariableCatch( fn, priority )
-        if priority == nil then
-            table_insert( lst, #lst + 1, fn )
-        else
-            table_insert( lst, math_clamp( priority, 1, #lst + 1 ), fn )
-        end
-    end
+    ---@overload fun( fn: gpm.std.Hook | fun( str_name: string, str_old: string, str_new: string ), priority?: integer ): gpm.std.Hook
+    engine.consoleVariableCatch = create_catch_fn( lst )
 
     ---@param str_name string
     ---@param str_old string
@@ -469,19 +465,14 @@ if engine.entityCreationCatch == nil then
 
     local lst = {}
 
+    ---@alias gpm.engine.entityCreationCatch_fn fun( name: string ): table | nil
+
     --- [SHARED AND MENU]
     ---
     --- Adds a callback to the `entityCreationCatch` event.
     ---
-    ---@param fn gpm.std.Hook | fun( name: string ): table | nil
-    ---@param priority integer | nil
-    function engine.entityCreationCatch( fn, priority )
-        if priority == nil then
-            table_insert( lst, #lst + 1, fn )
-        else
-            table_insert( lst, math_clamp( priority, 1, #lst + 1 ), fn )
-        end
-    end
+    ---@overload fun( fn: gpm.std.Hook | gpm.engine.entityCreationCatch_fn, priority?: integer ): gpm.std.Hook
+    engine.entityCreationCatch = create_catch_fn( lst )
 
     ---@param name string
     local function run_callbacks( name )
@@ -532,19 +523,14 @@ if engine.weaponCreationCatch == nil then
 
     local lst = {}
 
+    ---@alias gpm.engine.weaponCreationCatch_fn fun( name: string ): table | nil
+
     --- [SHARED AND MENU]
     ---
     --- Adds a callback to the `weaponCreationCatch` event.
     ---
-    ---@param fn gpm.std.Hook | fun( name: string ): table | nil
-    ---@param priority integer | nil
-    function engine.weaponCreationCatch( fn, priority )
-        if priority == nil then
-            table_insert( lst, #lst + 1, fn )
-        else
-            table_insert( lst, math_clamp( priority, 1, #lst + 1 ), fn )
-        end
-    end
+    ---@overload fun( fn: gpm.std.Hook | gpm.engine.weaponCreationCatch_fn, priority?: integer ): gpm.std.Hook
+    engine.weaponCreationCatch = create_catch_fn( lst )
 
     ---@param name string
     local function run_callbacks( name )
@@ -603,19 +589,14 @@ if engine.effectCreationCatch == nil then
 
     local lst = {}
 
+    ---@alias gpm.engine.effectCreationCatch_fn fun( name: string ): table | nil
+
     --- [SHARED AND MENU]
     ---
     --- Adds a callback to the `effectCreationCatch` event.
     ---
-    ---@param fn gpm.std.Hook | fun( name: string ): table | nil
-    ---@param priority integer | nil
-    function engine.effectCreationCatch( fn, priority )
-        if priority == nil then
-            table_insert( lst, #lst + 1, fn )
-        else
-            table_insert( lst, math_clamp( priority, 1, #lst + 1 ), fn )
-        end
-    end
+    ---@overload fun( fn: gpm.std.Hook | gpm.engine.effectCreationCatch_fn, priority?: integer ): gpm.std.Hook
+    engine.effectCreationCatch = create_catch_fn( lst )
 
     ---@param name string
     local function run_callbacks( name )
@@ -648,30 +629,75 @@ if engine.effectCreationCatch == nil then
 
 end
 
-if _G.gamemode == nil then
+if engine.gamemodeCreationCatch == nil then
 
-    local gamemode = {}
+    local lst = {}
 
-    ---@diagnostic disable-next-line: inject-field
-    _G.gamemode = gamemode
+    ---@alias gpm.engine.gamemodeCreationCatch_fn fun( name: string ): table | nil
 
-    local gamemodes = {}
+    --- [SHARED AND MENU]
+    ---
+    --- Adds a callback to the `gamemodeCreationCatch` event.
+    ---
+    ---@overload fun( fn: gpm.std.Hook | gpm.engine.gamemodeCreationCatch_fn, priority?: integer ): gpm.std.Hook
+    engine.gamemodeCreationCatch = create_catch_fn( lst )
 
-    ---@param name string
-    function gamemode.Get( name )
-        return gamemodes[ name ]
+    local gamemode = _G.gamemode
+    if gamemode == nil then
+        ---@diagnostic disable-next-line: inject-field
+        gamemode = {}; _G.gamemode = gamemode
     end
 
-    ---@param gm table
-    ---@param name string
-    ---@param base_name string
-    function gamemode.Register( gm, name, base_name )
-        gamemodes[ name ] = {
-            FolderName = gm.FolderName,
-            Name = gm.Name or name,
-            Folder = gm.Folder,
-            Base = base_name
-        }
+    if gamemode.Get == nil then
+
+        local gamemodes = {}
+
+        ---@param name string
+        ---@diagnostic disable-next-line: duplicate-set-field
+        function gamemode.Get( name )
+            for i = 1, #lst, 1 do
+                local tbl = lst[ i ]( name )
+                if tbl ~= nil then
+                    return tbl
+                end
+            end
+
+            return gamemodes[ name ]
+        end
+
+        if gamemode.Register == nil then
+
+            ---@param gm table
+            ---@param name string
+            ---@param base_name string
+            ---@diagnostic disable-next-line: duplicate-set-field
+            function gamemode.Register( gm, name, base_name )
+                gamemodes[ name ] = {
+                    FolderName = gm.FolderName,
+                    Name = gm.Name or name,
+                    Folder = gm.Folder,
+                    Base = base_name
+                }
+            end
+
+        end
+
+
+    else
+
+        gamemode.Get = detour_attach( gamemode.Get, function( fn, name )
+            for i = 1, #lst, 1 do
+                local tbl = lst[ i ]( name )
+                if tbl ~= nil then
+                    return tbl
+                end
+            end
+
+            return fn( name )
+        end )
+
+        gamemode.Register = gamemode.Register or debug_fempty
+
     end
 
 end
@@ -733,6 +759,23 @@ do
 
 end
 
+local entity_meta = debug.findmetatable( "Entity" )
+if entity_meta == nil then
+    entity_meta = {}
+    debug.registermetatable( "Entity", entity_meta, true )
+end
+
+if entity_meta.__gc == nil then
+    function entity_meta.__gc( entity_userdata )
+        engine_hookCall( "EntityGC", entity_userdata )
+    end
+else
+    entity_meta.__gc = detour_attach( entity_meta.__gc, function( fn, entity_userdata )
+        engine_hookCall( "EntityGC", entity_userdata )
+        fn( entity_userdata )
+    end )
+end
+
 local player_meta = debug.findmetatable( "Player" )
 if player_meta == nil then
     player_meta = {}
@@ -741,12 +784,80 @@ end
 
 if player_meta.__gc == nil then
     function player_meta.__gc( player_userdata )
-        engine_hookCall( "PlayerGC", player_userdata )
+        engine_hookCall( "EntityGC", player_userdata )
     end
 else
     player_meta.__gc = detour_attach( player_meta.__gc, function( fn, player_userdata )
-        engine_hookCall( "PlayerGC", player_userdata )
+        engine_hookCall( "EntityGC", player_userdata )
         fn( player_userdata )
+    end )
+end
+
+local weapon_meta = debug.findmetatable( "Weapon" )
+if weapon_meta == nil then
+    weapon_meta = {}
+    debug.registermetatable( "Weapon", weapon_meta, true )
+end
+
+if weapon_meta.__gc == nil then
+    function weapon_meta.__gc( weapon_userdata )
+        engine_hookCall( "EntityGC", weapon_userdata )
+    end
+else
+    weapon_meta.__gc = detour_attach( weapon_meta.__gc, function( fn, weapon_userdata )
+        engine_hookCall( "EntityGC", weapon_userdata )
+        fn( weapon_userdata )
+    end )
+end
+
+local vehicle_meta = debug.findmetatable( "Vehicle" )
+if vehicle_meta == nil then
+    vehicle_meta = {}
+    debug.registermetatable( "Vehicle", vehicle_meta, true )
+end
+
+if vehicle_meta.__gc == nil then
+    function vehicle_meta.__gc( vehicle_userdata )
+        engine_hookCall( "EntityGC", vehicle_userdata )
+    end
+else
+    vehicle_meta.__gc = detour_attach( vehicle_meta.__gc, function( fn, vehicle_userdata )
+        engine_hookCall( "EntityGC", vehicle_userdata )
+        fn( vehicle_userdata )
+    end )
+end
+
+local npc_meta = debug.findmetatable( "NPC" )
+if npc_meta == nil then
+    npc_meta = {}
+    debug.registermetatable( "NPC", npc_meta, true )
+end
+
+if npc_meta.__gc == nil then
+    function npc_meta.__gc( npc_userdata )
+        engine_hookCall( "EntityGC", npc_userdata )
+    end
+else
+    npc_meta.__gc = detour_attach( npc_meta.__gc, function( fn, npc_userdata )
+        engine_hookCall( "EntityGC", npc_userdata )
+        fn( npc_userdata )
+    end )
+end
+
+local nextbot_meta = debug.findmetatable( "NextBot" )
+if nextbot_meta == nil then
+    nextbot_meta = {}
+    debug.registermetatable( "NextBot", nextbot_meta, true )
+end
+
+if nextbot_meta.__gc == nil then
+    function nextbot_meta.__gc( nextbot_userdata )
+        engine_hookCall( "EntityGC", nextbot_userdata )
+    end
+else
+    nextbot_meta.__gc = detour_attach( nextbot_meta.__gc, function( fn, nextbot_userdata )
+        engine_hookCall( "EntityGC", nextbot_userdata )
+        fn( nextbot_userdata )
     end )
 end
 

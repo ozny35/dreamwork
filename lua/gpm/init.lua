@@ -64,9 +64,11 @@ raw.set = raw.set or _G.rawset
 raw.len = raw.len or _G.rawlen
 
 if raw.len == nil then
+
     function raw.len( value )
         return #value
     end
+
 end
 
 std.assert = std.assert or _G.assert
@@ -460,7 +462,7 @@ do
         ---@param value any The value to check.
         ---@return boolean is_bool Returns `true` if the value is a boolean, otherwise `false`.
         function std.isboolean( value )
-            return debug_getmetatable( value ) == BOOLEAN
+            return value == true or value == false
         end
 
     end
@@ -695,9 +697,11 @@ do
     if ErrorNoHaltWithStack == nil then
 
         function ErrorNoHaltWithStack( message )
-            if message == nil then message = "unknown" end
+            if message == nil then
+                message = "unknown"
+            end
 
-            local stack, size = { "\n[ERROR] " .. message }, 1
+            local stack, size = { "\n[LUA ERROR] " .. message }, 1
 
             while true do
                 local info = debug_getinfo( size + 1, "Sln" )
@@ -710,7 +714,7 @@ do
             size = size + 1
             stack[ size ] = "\n"
 
-            return ErrorNoHalt( table_concat( stack, "\n", 1, size ) )
+            ErrorNoHalt( table_concat( stack, "\n", 1, size ) )
         end
 
     end
@@ -1012,6 +1016,7 @@ do
         "I'm watching you.",
         "Faster than ever.",
         "Love Wins Again ♪",
+        "Made with love <3",
         "Blazing fast ☄",
         "Here For You ♪",
         "Good Enough ♪",

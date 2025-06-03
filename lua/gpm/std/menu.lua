@@ -14,18 +14,29 @@ local window = std.os.window
 local menu = std.menu or { visible = false }
 std.menu = menu
 
-do
+if _G.gui == nil then
+
+    menu.Visibility = menu.Visibility or std.Hook( "menu.Visibility" )
+
+    menu.open = std.debug.fempty
+    menu.close = std.debug.fempty
+    menu.openURL = std.debug.fempty
+
+else
 
     local gui = _G.gui
 
-    menu.open = gui.ActivateGameUI
+    menu.open = gui.ActivateGameUI or std.debug.fempty
 
     ---@diagnostic disable-next-line: deprecated
     menu.close = gui.HideGameUI or std.debug.fempty
 
     do
 
-        local gui_IsGameUIVisible = gui.IsGameUIVisible
+        local gui_IsGameUIVisible = gui.IsGameUIVisible or function() return false end
+
+        local Visibility = menu.Visibility or std.Hook( "menu.Visibility" )
+        menu.Visibility = Visibility
 
         local visible = gui_IsGameUIVisible()
         menu.visible = visible
@@ -34,6 +45,7 @@ do
             if visible ~= gui_IsGameUIVisible() then
                 visible = not visible
                 menu.visible = visible
+                Visibility:call( visible )
             end
         end, "std.menu.visible" )
 

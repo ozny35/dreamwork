@@ -22,6 +22,8 @@ local console_Variable = console.Variable
 local level = std.level or {}
 std.level = level
 
+-- TODO: rewrite this library
+
 do
 
     local game_GetMap = level.getName or glua_game.GetMap
