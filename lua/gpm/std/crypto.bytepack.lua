@@ -399,15 +399,15 @@ end
 ---
 --- Reads unsigned fixed-point number (**UQm.n**) as big endian bytes.
 ---
---- **Commonly Used UQm.n Formats**
----| Format | Range | Precision (Step) |
----|:------|:------------------------|:-----------------|
----|UQ8.8  |`0 to 255.996`			  |0.00390625 (1/256)
----|UQ10.6 |`0 to 1023.984375`		  |0.015625 (1/64)
----|UQ12.4 |`0 to 4095.9375`		  |0.0625 (1/16)
----|UQ16.16|`0 to 65535.99998`        |0.0000152588 (1/65536)
----|UQ24.8 |`0 to 16,777,215.996`     |0.00390625 (1/256)
----|UQ32.16|`0 to 4,294,967,295.99998`|0.0000152588 (1/65536)
+--- ### Commonly Used UQm.n Formats
+--- | Format  | Range                          | Precision (Step)        |
+--- |:--------|:-------------------------------|:------------------------|
+--- | UQ8.8   | `0 to 255.996`                 | 0.00390625 (1/256)      |
+--- | UQ10.6  | `0 to 1023.984375`             | 0.015625 (1/64)         |
+--- | UQ12.4  | `0 to 4095.9375`               | 0.0625 (1/16)           |
+--- | UQ16.16 | `0 to 65,535.99998`            | 0.0000152588 (1/65536)  |
+--- | UQ24.8  | `0 to 16,777,215.996`          | 0.00390625 (1/256)      |
+--- | UQ32.16 | `0 to 4,294,967,295.99998`     | 0.0000152588 (1/65536)  |
 ---
 ---@param n integer Number of fractional bits.
 ---@param b1 integer The first byte.
@@ -449,15 +449,15 @@ end
 ---
 --- Writes unsigned fixed-point number (**UQm.n**) as big endian bytes.
 ---
---- **Commonly Used UQm.n Formats**
----| Format | Range | Precision (Step) |
----|:------|:------------------------|:-----------------|
----|UQ8.8  |`0 to 255.996`			  |0.00390625 (1/256)
----|UQ10.6 |`0 to 1023.984375`		  |0.015625 (1/64)
----|UQ12.4 |`0 to 4095.9375`		  |0.0625 (1/16)
----|UQ16.16|`0 to 65535.99998`        |0.0000152588 (1/65536)
----|UQ24.8 |`0 to 16,777,215.996`     |0.00390625 (1/256)
----|UQ32.16|`0 to 4,294,967,295.99998`|0.0000152588 (1/65536)
+--- ### Commonly Used UQm.n Formats
+--- | Format  | Range                          | Precision (Step)        |
+--- |:--------|:-------------------------------|:------------------------|
+--- | UQ8.8   | `0 to 255.996`                 | 0.00390625 (1/256)      |
+--- | UQ10.6  | `0 to 1023.984375`             | 0.015625 (1/64)         |
+--- | UQ12.4  | `0 to 4095.9375`               | 0.0625 (1/16)           |
+--- | UQ16.16 | `0 to 65,535.99998`            | 0.0000152588 (1/65536)  |
+--- | UQ24.8  | `0 to 16,777,215.996`          | 0.00390625 (1/256)      |
+--- | UQ32.16 | `0 to 4,294,967,295.99998`     | 0.0000152588 (1/65536)  |
 ---
 ---@param value number The unsigned fixed-point number.
 ---@param m integer Number of integer bits (including sign bit).
@@ -806,17 +806,17 @@ bytepack.writeInt64 = writeInt64
 
 --- [SHARED AND MENU]
 ---
---- Reads signed fixed-point number (**UQm.n**) as big endian bytes.
+--- Reads signed fixed-point number (**Qm.n**) as big endian bytes.
 ---
---- **Commonly Used UQm.n Formats**
----| Format | Range | Precision (Step) |
----|:------|:------------------------|:-----------------|
----|UQ8.8  |`0 to 255.996`			  |0.00390625 (1/256)
----|UQ10.6 |`0 to 1023.984375`		  |0.015625 (1/64)
----|UQ12.4 |`0 to 4095.9375`		  |0.0625 (1/16)
----|UQ16.16|`0 to 65535.99998`        |0.0000152588 (1/65536)
----|UQ24.8 |`0 to 16,777,215.996`     |0.00390625 (1/256)
----|UQ32.16|`0 to 4,294,967,295.99998`|0.0000152588 (1/65536)
+--- ### Commonly Used Qm.n Formats
+--- | Format | Range                          | Precision (Step)        |
+--- |:-------|:-------------------------------|:------------------------|
+--- | Q8.8   | `-128.0 to 127.996`            | 0.00390625 (1/256)      |
+--- | Q10.6  | `-512.0 to 511.984375`         | 0.015625 (1/64)         |
+--- | Q12.4  | `-2048.0 to 2047.9375`         | 0.0625 (1/16)           |
+--- | Q16.16 | `-32,768.0 to 32,767.99998`    | 0.0000152588 (1/65536)  |
+--- | Q24.8  | `-8,388,608.0 to 8,388,607.996`| 0.00390625 (1/256)      |
+--- | Q32.16 | `-2,147,483,648.0 to 2,147,483,647.99998` | 0.0000152588 (1/65536) |
 ---
 ---@param n integer Number of fractional bits.
 ---@param b1 integer The first byte.
@@ -858,15 +858,15 @@ end
 ---
 --- Writes unsigned fixed-point number (**UQm.n**) as big endian bytes.
 ---
---- **Commonly Used UQm.n Formats**
----| Format | Range | Precision (Step) |
----|:------|:------------------------|:-----------------|
----|UQ8.8  |`0 to 255.996`			  |0.00390625 (1/256)
----|UQ10.6 |`0 to 1023.984375`		  |0.015625 (1/64)
----|UQ12.4 |`0 to 4095.9375`		  |0.0625 (1/16)
----|UQ16.16|`0 to 65535.99998`        |0.0000152588 (1/65536)
----|UQ24.8 |`0 to 16,777,215.996`     |0.00390625 (1/256)
----|UQ32.16|`0 to 4,294,967,295.99998`|0.0000152588 (1/65536)
+--- ### Commonly Used Qm.n Formats
+--- | Format | Range                          | Precision (Step)        |
+--- |:-------|:-------------------------------|:------------------------|
+--- | Q8.8   | `-128.0 to 127.996`            | 0.00390625 (1/256)      |
+--- | Q10.6  | `-512.0 to 511.984375`         | 0.015625 (1/64)         |
+--- | Q12.4  | `-2048.0 to 2047.9375`         | 0.0625 (1/16)           |
+--- | Q16.16 | `-32,768.0 to 32,767.99998`    | 0.0000152588 (1/65536)  |
+--- | Q24.8  | `-8,388,608.0 to 8,388,607.996`| 0.00390625 (1/256)      |
+--- | Q32.16 | `-2,147,483,648.0 to 2,147,483,647.99998` | 0.0000152588 (1/65536) |
 ---
 ---@param value number The unsigned fixed-point number.
 ---@param m integer Number of integer bits (including sign bit).
@@ -913,8 +913,6 @@ local math_frexp, math_ldexp = math.frexp, math.ldexp
 ---
 --- Reads signed 4-byte (32 bit) float from big endian bytes.
 ---
---- Allowable values from `1.175494351e-38` to `3.402823466e+38`.
----
 ---@param b1 integer The first byte.
 ---@param b2 integer The second byte.
 ---@param b3 integer The third byte.
@@ -953,8 +951,6 @@ end
 --- [SHARED AND MENU]
 ---
 --- Writes signed 4-byte (32 bit) float as big endian bytes.
----
---- Allowable values from `1.175494351e-38` to `3.402823466e+38`.
 ---
 ---@param value number The signed 4-byte float.
 ---@return integer b1 The first byte.
@@ -1000,8 +996,6 @@ end
 ---
 --- Reads signed 8-byte (64 bit) float (double) from big endian bytes.
 ---
---- Allowable values from `2.2250738585072014e-308` to `1.7976931348623158e+308`.
----
 ---@param b1 integer The first byte.
 ---@param b2 integer The second byte.
 ---@param b3 integer The third byte.
@@ -1044,8 +1038,6 @@ end
 --- [SHARED AND MENU]
 ---
 --- Writes signed 8-byte (64 bit) float (double) as big endian bytes.
----
---- Allowable values from `2.2250738585072014e-308` to `1.7976931348623158e+308`.
 ---
 ---@param value number The signed 8-byte float.
 ---@return integer b1 The first byte.
