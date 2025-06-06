@@ -1,684 +1,817 @@
 local std = _G.gpm.std
+
 local string = std.string
 
 local string_byte, string_char = string.byte, string.char
 local string_sub, string_rep = string.sub, string.rep
 local string_len = string.len
 
+local math = std.math
+local math_ceil = math.ceil
+
 ---@class gpm.std.crypto
 local crypto = std.crypto
+
 local bytepack = crypto.bytepack
+
+local bytepack_readUInt16, bytepack_writeUInt16 = bytepack.readUInt16, bytepack.writeUInt16
+local bytepack_readUInt24, bytepack_writeUInt24 = bytepack.readUInt24, bytepack.writeUInt24
+local bytepack_readUInt32, bytepack_writeUInt32 = bytepack.readUInt32, bytepack.writeUInt32
+local bytepack_readUInt40, bytepack_writeUInt40 = bytepack.readUInt40, bytepack.writeUInt40
+local bytepack_readUInt48, bytepack_writeUInt48 = bytepack.readUInt48, bytepack.writeUInt48
+local bytepack_readUInt56, bytepack_writeUInt56 = bytepack.readUInt56, bytepack.writeUInt56
+local bytepack_readUInt64, bytepack_writeUInt64 = bytepack.readUInt64, bytepack.writeUInt64
+
+local bytepack_readInt8, bytepack_writeInt8 = bytepack.readInt8, bytepack.writeInt8
+local bytepack_readInt16, bytepack_writeInt16 = bytepack.readInt16, bytepack.writeInt16
+local bytepack_readInt24, bytepack_writeInt24 = bytepack.readInt24, bytepack.writeInt24
+local bytepack_readInt32, bytepack_writeInt32 = bytepack.readInt32, bytepack.writeInt32
+local bytepack_readInt40, bytepack_writeInt40 = bytepack.readInt40, bytepack.writeInt40
+local bytepack_readInt48, bytepack_writeInt48 = bytepack.readInt48, bytepack.writeInt48
+local bytepack_readInt56, bytepack_writeInt56 = bytepack.readInt56, bytepack.writeInt56
+local bytepack_readInt64, bytepack_writeInt64 = bytepack.readInt64, bytepack.writeInt64
 
 --- [SHARED AND MENU]
 ---
 --- The binary pack/unpack library.
 ---
 ---@class gpm.std.crypto.pack
-local pack = {}
+local pack = crypto.pack or {}
 crypto.pack = pack
 
-do
+--- [SHARED AND MENU]
+---
+--- The binary reader object.
+---
+---@class gpm.std.crypto.pack.Reader : gpm.std.Object
+---@field __class gpm.std.crypto.pack.ReaderClass
+---@field protected position integer The current position of the reader in bytes. **READ-ONLY**
+---@field protected length integer The size of the reader in bytes. **READ-ONLY**
+---@field protected data string The content of the reader. **READ-ONLY**
+local Reader = std.class.base( "crypto.pack.Reader" )
 
-	local bytepack_readUInt = bytepack.readUInt
-
-
-	--- [SHARED AND MENU]
-	---
-	--- Reads unsigned integer from binary string.
-	---
-	--- Valid values without loss of precision: `0` - `9007199254740991`
-	---
-	--- All values above will have problems when working with them.
-	---
-	---@param str string The binary string.
-	---@param byte_count? integer The number of bytes to read, default is `4`.
-	---@param big_endian? boolean `true` for big endian, `false` for little endian, default is `false`.
-	---@param start_position? integer The start position in binary string, default is `1`.
-	---@return integer value The unsigned integer.
-	function pack.readUInt( str, byte_count, big_endian, start_position )
-		if byte_count == nil then
-			byte_count = 4
-		end
-
-		if start_position == nil then
-			start_position = 1
-		end
-
-		if byte_count == 0 or str == "" then
-			return 0
-		elseif byte_count == 1 then
-			return string_byte( str, start_position )
-		elseif byte_count == 2 then
-			local b1, b2 = string_byte( str, start_position, start_position + 1 )
-
-			if b2 == nil then
-				error( "insufficient data length", 2 )
-			end
-
-			if not big_endian then
-				b1, b2 = b2, b1
-			end
-
-			return bytepack_readUInt( b1, b2 )
-		elseif byte_count == 3 then
-			local b1, b2, b3 = string_byte( str, start_position, start_position + 2 )
-
-			if b3 == nil then
-				error( "insufficient data length", 2 )
-			end
-
-			if not big_endian then
-				b1, b2, b3 = b3, b2, b1
-			end
-
-			return bytepack_readUInt( b1, b2, b3 )
-		elseif byte_count == 4 then
-			local b1, b2, b3, b4 = string_byte( str, start_position, start_position + 3 )
-
-			if b4 == nil then
-				error( "insufficient data length", 2 )
-			end
-
-			if not big_endian then
-				b1, b2, b3, b4 = b4, b3, b2, b1
-			end
-
-			return bytepack_readUInt( b1, b2, b3, b4 )
-		elseif byte_count == 5 then
-			local b1, b2, b3, b4, b5 = string_byte( str, start_position, start_position + 4 )
-
-			if b5 == nil then
-				error( "insufficient data length", 2 )
-			end
-
-			if not big_endian then
-				b1, b2, b3, b4, b5 = b5, b4, b3, b2, b1
-			end
-
-			return bytepack_readUInt( b1, b2, b3, b4, b5 )
-		elseif byte_count == 6 then
-			local b1, b2, b3, b4, b5, b6 = string_byte( str, start_position, start_position + 5 )
-
-			if b6 == nil then
-				error( "insufficient data length", 2 )
-			end
-
-			if not big_endian then
-				b1, b2, b3, b4, b5, b6 = b6, b5, b4, b3, b2, b1
-			end
-
-			return bytepack_readUInt( b1, b2, b3, b4, b5, b6 )
-		elseif byte_count == 7 then
-			local b1, b2, b3, b4, b5, b6, b7 = string_byte( str, start_position, start_position + 6 )
-
-			if b7 == nil then
-				error( "insufficient data length", 2 )
-			end
-
-			if not big_endian then
-				b1, b2, b3, b4, b5, b6, b7 = b7, b6, b5, b4, b3, b2, b1
-			end
-
-			return bytepack_readUInt( b1, b2, b3, b4, b5, b6, b7 )
-		elseif byte_count == 8 then
-			local b1, b2, b3, b4, b5, b6, b7, b8 = string_byte( str, start_position, start_position + 7 )
-
-			if b8 == nil then
-				error( "insufficient data length", 2 )
-			end
-
-			if not big_endian then
-				b1, b2, b3, b4, b5, b6, b7, b8 = b8, b7, b6, b5, b4, b3, b2, b1
-			end
-
-			return bytepack_readUInt( b1, b2, b3, b4, b5, b6, b7, b8 )
-		else
-			error( "unsupported byte count", 2 )
-			return 0
-		end
-	end
-
+---@protected
+function Reader:__tostring()
+	return string.format( "crypto.pack.Reader: %p [%d/%d bytes]", self, self.position, self.length )
 end
 
-do
+---@protected
+function Reader:__init( data )
+	self.position = 0
+	self.length = 0
+end
 
-	local bytepack_writeUInt = bytepack.writeUInt
+--- [SHARED AND MENU]
+---
+--- Returns the current position of the reader.
+---
+---@return integer position
+function Reader:tell()
+	return self.position
+end
 
-	--- [SHARED AND MENU]
-	---
-	--- Writes unsigned integer as binary string.
-	---
-	--- Valid values without loss of precision: `0` - `9007199254740991`
-	---
-	--- All values above will have problems when working with them.
-	---
-	---@param value integer The unsigned integer.
-	---@param byte_count? integer The number of bytes to write. Defaults to `4`.
-	---@param big_endian? boolean `true` for big endian, `false` for little endian. Defaults to `false`.
-	---@return string str The binary string representation of the unsigned integer.
-	function pack.writeUInt( value, byte_count, big_endian )
-		if byte_count == nil then
-			byte_count = 4
-		end
+--- [SHARED AND MENU]
+---
+--- Returns the size of the reader content in bytes.
+---
+---@return integer size
+function Reader:size()
+	return self.length
+end
 
-		if byte_count == 0 then
-			return ""
-		elseif byte_count == 1 then
-			return string_char( bytepack_writeUInt( value, byte_count ) )
-		elseif byte_count == 2 then
-			local b1, b2 = bytepack_writeUInt( value, byte_count )
+--- [SHARED AND MENU]
+---
+--- Sets the current position of the reader.
+---
+---@param new_position integer
+function Reader:seek( new_position )
+	local length = self.length
 
-			if not big_endian then
-				b1, b2 = b2, b1
-			end
-
-			return string_char( b1, b2 )
-		elseif byte_count == 3 then
-			local b1, b2, b3 = bytepack_writeUInt( value, byte_count )
-
-			if not big_endian then
-				b1, b2, b3 = b3, b2, b1
-			end
-
-			return string_char( b1, b2, b3 )
-		elseif byte_count == 4 then
-			local b1, b2, b3, b4 = bytepack_writeUInt( value, byte_count )
-
-			if not big_endian then
-				b1, b2, b3, b4 = b4, b3, b2, b1
-			end
-
-			return string_char( b1, b2, b3, b4 )
-		elseif byte_count == 5 then
-			local b1, b2, b3, b4, b5 = bytepack_writeUInt( value, byte_count )
-
-			if not big_endian then
-				b1, b2, b3, b4, b5 = b5, b4, b3, b2, b1
-			end
-
-			return string_char( b1, b2, b3, b4, b5 )
-
-		elseif byte_count == 6 then
-			local b1, b2, b3, b4, b5, b6 = bytepack_writeUInt( value, byte_count )
-
-			if not big_endian then
-				b1, b2, b3, b4, b5, b6 = b6, b5, b4, b3, b2, b1
-			end
-
-			return string_char( b1, b2, b3, b4, b5, b6 )
-
-		elseif byte_count == 7 then
-			local b1, b2, b3, b4, b5, b6, b7 = bytepack_writeUInt( value, byte_count )
-
-			if not big_endian then
-				b1, b2, b3, b4, b5, b6, b7 = b7, b6, b5, b4, b3, b2, b1
-			end
-
-			return string_char( b1, b2, b3, b4, b5, b6, b7 )
-		elseif byte_count == 8 then
-			local b1, b2, b3, b4, b5, b6, b7, b8 = bytepack_writeUInt( value, byte_count )
-
-			if not big_endian then
-				b1, b2, b3, b4, b5, b6, b7, b8 = b8, b7, b6, b5, b4, b3, b2, b1
-			end
-
-			return string_char( b1, b2, b3, b4, b5, b6, b7, b8 )
-		else
-			error( "unsupported byte count", 2 )
-			return ""
-		end
+	while new_position < 0 do
+		new_position = new_position + length + 1
 	end
 
+	self.position = math.min( new_position, length )
 end
+
+--- [SHARED AND MENU]
+---
+--- Skips the reader position by the specified offset.
+---
+---@param offset integer
+function Reader:skip( offset )
+	self:seek( self.position + offset )
+end
+
+--- [SHARED AND MENU]
+---
+--- Reads the specified number of bytes from the reader.
+---
+---@param length? integer
+---@return string | nil str
+---@return nil | string error
+function Reader:read( length )
+	if length == 0 then
+		return "", nil
+	end
+
+	local position = self.position
+
+	local available = self.length - position
+	if available <= 0 then
+		return nil, "end of file"
+	end
+
+	if length == nil then
+		length = available
+	elseif length > available then
+		return nil, "not enough data"
+	end
+
+	while length < 0 do
+		length = length + available + 1
+	end
+
+	self.position = position + length
+
+	return string_sub( self.data, position + 1, position + length ), nil
+end
+
+--- [SHARED AND MENU]
+---
+--- Opens the reader.
+---
+---@param data string The content to read.
+---@return boolean success `true` on success, `false` on failure.
+function Reader:open( data )
+	self.length = string_len( data )
+	self.position = 0
+	self.data = data
+	return true
+end
+
+--- [SHARED AND MENU]
+---
+--- Closes the reader.
+---
+function Reader:close()
+	self.position = 0
+	self.length = 0
+	self.data = nil
+end
+
+--- [SHARED AND MENU]
+---
+--- The binary reader class.
+---
+---@class gpm.std.crypto.pack.ReaderClass : gpm.std.crypto.pack.Reader
+---@field __base gpm.std.crypto.pack.Reader
+---@overload fun( content?: string ): gpm.std.crypto.pack.Reader
+local ReaderClass = std.class.create( Reader )
+pack.Reader = ReaderClass
+
+--- [SHARED AND MENU]
+---
+--- The binary writer object.
+---
+---@class gpm.std.crypto.pack.Writer : gpm.std.Object
+---@field __class gpm.std.crypto.pack.WriterClass
+local Writer = std.class.base( "crypto.pack.Writer" )
+
+--- [SHARED AND MENU]
+---
+--- The binary writer class.
+---
+---@class gpm.std.crypto.pack.WriterClass : gpm.std.crypto.pack.Writer
+---@field __base gpm.std.crypto.pack.Writer
+---@overload fun(): gpm.std.crypto.pack.Writer
+local WriterClass = std.class.create( Writer )
+pack.Writer = WriterClass
+
+-- TODO: make writer class
 
 --- [SHARED AND MENU]
 ---
 --- Reads unsigned 1-byte (8 bit) integer from binary string.
 ---
---- Valid values without loss of precision: `0` - `255`
+--- Range of values: `0` - `255`
 ---
 ---@param str string The binary string.
 ---@param start_position? integer The start position in binary string, default is `1`.
----@return integer value The unsigned 1-byte integer.
+---@return integer | nil value The unsigned 1-byte integer.
+---@return nil | string err_msg The error message.
 function pack.readUInt8( str, start_position )
-	return string_byte( str, start_position or 1 )
+	local uint8 = string_byte( str, start_position or 1 )
+	if uint8 == nil then
+		return nil, "not enough data"
+	else
+		return uint8, nil
+	end
+end
+
+--- [SHARED AND MENU]
+---
+--- Reads unsigned 1-byte (8 bit) integer.
+---
+--- Range of values: `0` - `255`
+---
+---@return integer | nil value The unsigned 1-byte integer.
+---@return nil | string err_msg The error message.
+function Reader:readU8()
+	local start_position = self.position
+
+	local available = self.length - start_position
+	if available <= 0 then
+		return nil, "end of file"
+	elseif available < 1 then
+		return nil, "not enough data"
+	end
+
+	start_position = start_position + 1
+	self.position = start_position
+
+	return string_byte( self.data, start_position ), nil
 end
 
 --- [SHARED AND MENU]
 ---
 --- Writes unsigned 1-byte (8 bit) integer as binary string.
 ---
---- Valid values without loss of precision: `0` - `255`
+--- Range of values: `0` - `255`
 ---
 ---@param value integer The unsigned 1-byte integer.
----@return string str The binary string.
+---@return string | nil str The binary string.
+---@return nil | string err_msg The error message.
 function pack.writeUInt8( value )
-	return string_char( value )
+	if value < 0 or value > 255 then
+		return nil, "UInt8 value out of range"
+	else
+		return string_char( value ), nil
+	end
 end
 
-do
-
-	local bytepack_readUInt16 = bytepack.readUInt16
-
-	--- [SHARED AND MENU]
-	---
-	--- Reads unsigned 2-byte (16 bit) integer from binary string.
-	---
-	--- Valid values without loss of precision: `0` - `65535`
-	---
-	---@param str string The binary string.
-	---@param big_endian? boolean `true` for big endian, `false` for little endian, default is `false`.
-	---@param start_position? integer The start position in binary string, default is `1`.
-	---@return integer value The unsigned 2-byte integer.
-	function pack.readUInt16( str, big_endian, start_position )
-		if start_position == nil then
-			start_position = 1
-		end
-
-		local b1, b2 = string_byte( str, start_position, start_position + 1 )
-
-		if b2 == nil then
-			error( "insufficient data length", 2 )
-		end
-
-		if not big_endian then
-			b1, b2 = b2, b1
-		end
-
-		return bytepack_readUInt16( b1, b2 )
+--- [SHARED AND MENU]
+---
+--- Reads unsigned 2-byte (16 bit) integer from binary string.
+---
+--- Range of values: `0` - `65535`
+---
+---@param str string The binary string.
+---@param big_endian? boolean `true` for big endian, `false` for little endian, default is `false`.
+---@param start_position? integer The start position in binary string, default is `1`.
+---@return integer | nil value The unsigned 2-byte integer.
+---@return nil | string err_msg The error message.
+function pack.readUInt16( str, big_endian, start_position )
+	if start_position == nil then
+		start_position = 1
 	end
 
-end
+	local b1, b2 = string_byte( str, start_position, start_position + 1 )
 
-do
-
-	local bytepack_writeUInt16 = bytepack.writeUInt16
-
-	--- [SHARED AND MENU]
-	---
-	--- Writes unsigned 2-byte (16 bit) integer as binary string.
-	---
-	--- Valid values without loss of precision: `0` - `65535`
-	---
-	---@param value integer The unsigned 2-byte integer.
-	---@param big_endian? boolean `true` for big endian, `false` for little endian, default is `false`.
-	---@return string str The binary string.
-	function pack.writeUInt16( value, big_endian )
-		local b1, b2 = bytepack_writeUInt16( value )
-
-		if not big_endian then
-			b1, b2 = b2, b1
-		end
-
-		return string_char( b1, b2 )
+	if b2 == nil then
+		return nil, "not enough data"
 	end
 
-end
-
-do
-
-	local bytepack_readUInt24 = bytepack.readUInt24
-
-	--- [SHARED AND MENU]
-	---
-	--- Reads unsigned 3-byte (24 bit) integer from binary string.
-	---
-	--- Valid values without loss of precision: `0` - `16777215`
-	---
-	---@param str string The binary string.
-	---@param big_endian? boolean `true` for big endian, `false` for little endian, default is `false`.
-	---@param start_position? integer The start position in binary string, default is `1`.
-	---@return integer value The unsigned 3-byte integer.
-	function pack.readUInt24( str, big_endian, start_position )
-		if start_position == nil then
-			start_position = 1
-		end
-
-		local b1, b2, b3 = string_byte( str, start_position, start_position + 2 )
-
-		if b3 == nil then
-			error( "insufficient data length", 2 )
-		end
-
-		if not big_endian then
-			b1, b2, b3 = b3, b2, b1
-		end
-
-		return bytepack_readUInt24( b1, b2, b3 )
+	if not big_endian then
+		b1, b2 = b2, b1
 	end
 
+	return bytepack_readUInt16( b1, b2 )
 end
 
-do
+--- [SHARED AND MENU]
+---
+--- Reads unsigned 2-byte (16 bit) integer.
+---
+--- Range of values: `0` - `65535`
+---
+---@return integer | nil value The unsigned 2-byte integer.
+---@return nil | string err_msg The error message.
+function Reader:readU16( big_endian )
+	local start_position = self.position
 
-	local bytepack_writeUInt24 = bytepack.writeUInt24
-
-	--- [SHARED AND MENU]
-	---
-	--- Writes unsigned 3-byte (24 bit) integer as binary string.
-	---
-	--- Valid values without loss of precision: `0` - `16777215`
-	---
-	---@param value integer The unsigned 3-byte integer.
-	---@param big_endian? boolean `true` for big endian, `false` for little endian, default is `false`.
-	---@return string str The binary string.
-	function pack.writeUInt24( value, big_endian )
-		local b1, b2, b3 = bytepack_writeUInt24( value )
-
-		if not big_endian then
-			b1, b2, b3 = b3, b2, b1
-		end
-
-		return string_char( b1, b2, b3 )
+	local available = self.length - start_position
+	if available <= 0 then
+		return nil, "end of file"
+	elseif available < 2 then
+		return nil, "not enough data"
 	end
 
-end
+	start_position = start_position + 1
 
-do
+	local end_position = start_position + 1
+	self.position = end_position
 
-	local bytepack_readUInt32 = bytepack.readUInt32
+	local b1, b2 = string_byte( self.data, start_position, end_position )
 
-	--- [SHARED AND MENU]
-	---
-	--- Reads unsigned 4-byte (32 bit) integer from binary string.
-	---
-	--- Valid values without loss of precision: `0` - `4294967295`
-	---
-	---@param str string The binary string.
-	---@param big_endian? boolean `true` for big endian, `false` for little endian, default is `false`.
-	---@param start_position? integer The start position in binary string, default is `1`.
-	---@return integer value The unsigned 4-byte integer.
-	function pack.readUInt32( str, big_endian, start_position )
-		if start_position == nil then
-			start_position = 1
-		end
-
-		local b1, b2, b3, b4 = string_byte( str, start_position, start_position + 3 )
-
-		if b4 == nil then
-			error( "insufficient data length", 2 )
-		end
-
-		if not big_endian then
-			b1, b2, b3, b4 = b4, b3, b2, b1
-		end
-
-		return bytepack_readUInt32( b1, b2, b3, b4 )
+	if b2 == nil then
+		return nil, "not enough data"
 	end
 
-end
-
-do
-
-	local bytepack_writeUInt32 = bytepack.writeUInt32
-
-	--- [SHARED AND MENU]
-	---
-	--- Writes unsigned 4-byte (32 bit) integer as binary string.
-	---
-	--- Valid values without loss of precision: `0` - `4294967295`
-	---
-	---@param value integer The unsigned 4-byte integer.
-	---@param big_endian? boolean `true` for big endian, `false` for little endian, default is `false`.
-	---@return string str The binary string.
-	function pack.writeUInt32( value, big_endian )
-		local b1, b2, b3, b4 = bytepack_writeUInt32( value )
-
-		if not big_endian then
-			b1, b2, b3, b4 = b4, b3, b2, b1
-		end
-
-		return string_char( b1, b2, b3, b4 )
+	if not big_endian then
+		b1, b2 = b2, b1
 	end
 
+	return bytepack_readUInt16( b1, b2 )
 end
 
-do
-
-	local bytepack_readUInt40 = bytepack.readUInt40
-
-	--- [SHARED AND MENU]
-	---
-	--- Reads unsigned 5-byte (40 bit) integer from binary string.
-	---
-	--- Valid values without loss of precision: `0` - `1099511627775`.
-	---
-	--- All values above will have problems when working with them.
-	---
-	---@param str string The binary string.
-	---@param big_endian? boolean `true` for big endian, `false` for little endian, default is `false`.
-	---@param start_position? integer The start position in binary string, default is `1`.
-	---@return integer value The unsigned 5-byte integer.
-	function pack.readUInt40( str, big_endian, start_position )
-		if start_position == nil then
-			start_position = 1
-		end
-
-		local b1, b2, b3, b4, b5 = string_byte( str, start_position, start_position + 4 )
-
-		if b5 == nil then
-			error( "insufficient data length", 2 )
-		end
-
-		if not big_endian then
-			b1, b2, b3, b4, b5 = b5, b4, b3, b2, b1
-		end
-
-		return bytepack_readUInt40( b1, b2, b3, b4, b5 )
+--- [SHARED AND MENU]
+---
+--- Writes unsigned 2-byte (16 bit) integer as binary string.
+---
+--- Range of values: `0` - `65535`
+---
+---@param value integer The unsigned 2-byte integer.
+---@param big_endian? boolean `true` for big endian, `false` for little endian, default is `false`.
+---@return string | nil str The binary string.
+---@return nil | string err_msg The error message.
+function pack.writeUInt16( value, big_endian )
+	if value < 0 or value > 65535 then
+		return nil, "UInt16 value out of range"
 	end
 
-end
+	local b1, b2 = bytepack_writeUInt16( value )
 
-do
-
-	local bytepack_writeUInt40 = bytepack.writeUInt40
-
-	--- [SHARED AND MENU]
-	---
-	--- Writes unsigned 5-byte (40 bit) integer as binary string.
-	---
-	--- Valid values without loss of precision: `0` - `1099511627775`.
-	---
-	---@param value integer The unsigned 5-byte integer.
-	---@param big_endian? boolean `true` for big endian, `false` for little endian, default is `false`.
-	---@return string str The binary string.
-	function pack.writeUInt40( value, big_endian )
-		local b1, b2, b3, b4, b5 = bytepack_writeUInt40( value )
-
-		if not big_endian then
-			b1, b2, b3, b4, b5 = b5, b4, b3, b2, b1
-		end
-
-		return string_char( b1, b2, b3, b4, b5 )
+	if not big_endian then
+		b1, b2 = b2, b1
 	end
 
+	return string_char( b1, b2 )
 end
 
-do
-
-	local bytepack_readUInt48 = bytepack.readUInt48
-
-	--- [SHARED AND MENU]
-	---
-	--- Reads unsigned 6-byte (48 bit) integer from binary string.
-	---
-	--- Valid values without loss of precision: `0` - `281474976710655`
-	---
-	---@param str string The binary string.
-	---@param big_endian boolean `true` for big endian, `false` for little endian, default is `false`.
-	---@param start_position? integer The start position in binary string, default is `1`.
-	---@return integer value The unsigned 6-byte integer.
-	function pack.readUInt48( str, big_endian, start_position )
-		if start_position == nil then
-			start_position = 1
-		end
-
-		local b1, b2, b3, b4, b5, b6 = string_byte( str, start_position, start_position + 5 )
-
-		if b6 == nil then
-			error( "insufficient data length", 2 )
-		end
-
-		if not big_endian then
-			b1, b2, b3, b4, b5, b6 = b6, b5, b4, b3, b2, b1
-		end
-
-		return bytepack_readUInt48( b1, b2, b3, b4, b5, b6 )
+--- [SHARED AND MENU]
+---
+--- Reads unsigned 3-byte (24 bit) integer from binary string.
+---
+--- Range of values: `0` - `16777215`
+---
+---@param str string The binary string.
+---@param big_endian? boolean `true` for big endian, `false` for little endian, default is `false`.
+---@param start_position? integer The start position in binary string, default is `1`.
+---@return integer | nil value The unsigned 3-byte integer.
+---@return nil | string err_msg The error message.
+function pack.readUInt24( str, big_endian, start_position )
+	if start_position == nil then
+		start_position = 1
 	end
 
-end
+	local b1, b2, b3 = string_byte( str, start_position, start_position + 2 )
 
-do
-
-	local bytepack_writeUInt48 = bytepack.writeUInt48
-
-	--- [SHARED AND MENU]
-	---
-	--- Writes unsigned 6-byte (48 bit) integer as binary string.
-	---
-	--- Valid values without loss of precision: `0` - `281474976710655`
-	---
-	---@param value integer The unsigned 6-byte integer.
-	---@param big_endian? boolean `true` for big endian, `false` for little endian, default is `false`.
-	---@return string str The binary string.
-	function pack.writeUInt48( value, big_endian )
-		local b1, b2, b3, b4, b5, b6 = bytepack_writeUInt48( value )
-
-		if not big_endian then
-			b1, b2, b3, b4, b5, b6 = b6, b5, b4, b3, b2, b1
-		end
-
-		return string_char( b1, b2, b3, b4, b5, b6 )
+	if b3 == nil then
+		return nil, "not enough data"
 	end
 
-end
-
-do
-
-	local bytepack_readUInt56 = bytepack.readUInt56
-
-	--- [SHARED AND MENU]
-	---
-	--- Reads unsigned 7-byte (56 bit) integer from binary string.
-	---
-	--- Valid values without loss of precision: `0` - `9007199254740991`
-	---
-	--- All values above will have problems when working with them.
-	---
-	---@param str string The binary string.
-	---@param big_endian? boolean The endianess.
-	---@param start_position? integer The start position in binary string, default is `1`.
-	---@return integer value The unsigned integer.
-	function pack.readUInt56( str, big_endian, start_position )
-		if start_position == nil then
-			start_position = 1
-		end
-
-		local b1, b2, b3, b4, b5, b6, b7 = string_byte( str, start_position, start_position + 6 )
-
-		if b7 == nil then
-			error( "insufficient data length", 2 )
-		end
-
-		if not big_endian then
-			b1, b2, b3, b4, b5, b6, b7 = b7, b6, b5, b4, b3, b2, b1
-		end
-
-		return bytepack_readUInt56( b1, b2, b3, b4, b5, b6, b7 )
+	if not big_endian then
+		b1, b2, b3 = b3, b2, b1
 	end
 
+	return bytepack_readUInt24( b1, b2, b3 )
 end
 
-do
-
-	local bytepack_writeUInt56 = bytepack.writeUInt56
-
-	--- [SHARED AND MENU]
-	---
-	--- Writes unsigned 7-byte (56 bit) integer as binary string.
-	---
-	--- Valid values without loss of precision: `0` - `9007199254740991`
-	---
-	--- All values above will have problems when working with them.
-	---
-	---@param value integer The unsigned 7-byte integer.
-	---@param big_endian? boolean `true` for big endian, `false` for little endian, default is `false`.
-	---@return string str The binary string.
-	function pack.writeUInt56( value, big_endian )
-		local b1, b2, b3, b4, b5, b6, b7 = bytepack_writeUInt56( value )
-
-		if not big_endian then
-			b1, b2, b3, b4, b5, b6, b7 = b7, b6, b5, b4, b3, b2, b1
-		end
-
-		return string_char( b1, b2, b3, b4, b5, b6, b7 )
+--- [SHARED AND MENU]
+---
+--- Writes unsigned 3-byte (24 bit) integer as binary string.
+---
+--- Range of values: `0` - `16777215`
+---
+---@param value integer The unsigned 3-byte integer.
+---@param big_endian? boolean `true` for big endian, `false` for little endian, default is `false`.
+---@return string | nil str The binary string.
+---@return nil | string err_msg The error message.
+function pack.writeUInt24( value, big_endian )
+	if value < 0 or value > 16777215 then
+		return nil, "UInt24 value out of range"
 	end
 
-end
+	local b1, b2, b3 = bytepack_writeUInt24( value )
 
-do
-
-	local bytepack_readUInt64 = bytepack.readUInt64
-
-	--- [SHARED AND MENU]
-	---
-	--- Reads unsigned 8-byte (64 bit) integer as binary string.
-	---
-	--- Valid values without loss of precision: `0` - `9007199254740991`
-	---
-	--- All values above will have problems when working with them.
-	---
-	---@param str string The binary string.
-	---@param big_endian? boolean `true` for big endian, `false` for little endian, default is `false`.
-	---@param start_position? integer The start position in binary string, default is `1`.
-	---@return integer value The unsigned 8-byte integer.
-	function pack.readUInt64( str, big_endian, start_position )
-		if start_position == nil then
-			start_position = 1
-		end
-
-		local b1, b2, b3, b4, b5, b6, b7, b8 = string_byte( str, start_position, start_position + 7 )
-
-		if b8 == nil then
-			error( "insufficient data length", 2 )
-		end
-
-		if not big_endian then
-			b1, b2, b3, b4, b5, b6, b7, b8 = b8, b7, b6, b5, b4, b3, b2, b1
-		end
-
-		return bytepack_readUInt64( b1, b2, b3, b4, b5, b6, b7, b8 )
+	if not big_endian then
+		b1, b2, b3 = b3, b2, b1
 	end
 
+	return string_char( b1, b2, b3 )
 end
 
-do
-
-	local bytepack_writeUInt64 = bytepack.writeUInt64
-
-	--- [SHARED AND MENU]
-	---
-	--- Writes unsigned 8-byte (64 bit) integer as binary string.
-	---
-	--- Valid values without loss of precision: `0` - `9007199254740991`
-	---
-	--- All values above will have problems when working with them.
-	---
-	---@param value integer The unsigned 8-byte integer.
-	---@param big_endian? boolean `true` for big endian, `false` for little endian.
-	---@return string binary_string The binary string.
-	function pack.writeUInt64( value, big_endian )
-		local b1, b2, b3, b4, b5, b6, b7, b8 = bytepack_writeUInt64( value )
-
-		if not big_endian then
-			b1, b2, b3, b4, b5, b6, b7, b8 = b8, b7, b6, b5, b4, b3, b2, b1
-		end
-
-		return string_char( b1, b2, b3, b4, b5, b6, b7, b8 )
+--- [SHARED AND MENU]
+---
+--- Reads unsigned 4-byte (32 bit) integer from binary string.
+---
+--- Range of values: `0` - `4294967295`
+---
+---@param str string The binary string.
+---@param big_endian? boolean `true` for big endian, `false` for little endian, default is `false`.
+---@param start_position? integer The start position in binary string, default is `1`.
+---@return integer | nil value The unsigned 4-byte integer.
+---@return nil | string err_msg The error message.
+function pack.readUInt32( str, big_endian, start_position )
+	if start_position == nil then
+		start_position = 1
 	end
 
+	local b1, b2, b3, b4 = string_byte( str, start_position, start_position + 3 )
+
+	if b4 == nil then
+		return nil, "not enough data"
+	end
+
+	if not big_endian then
+		b1, b2, b3, b4 = b4, b3, b2, b1
+	end
+
+	return bytepack_readUInt32( b1, b2, b3, b4 )
 end
 
+--- [SHARED AND MENU]
+---
+--- Reads unsigned 4-byte (32 bit) integer.
+---
+--- Range of values: `0` - `4294967295`
+---
+---@param big_endian? boolean `true` for big endian, `false` for little endian, default is `false`.
+---@return integer | nil value The unsigned 4-byte integer.
+---@return nil | string err_msg The error message.
+function Reader:readU32( big_endian )
+	local start_position = self.position
+
+	local available = self.length - start_position
+	if available <= 0 then
+		return nil, "end of file"
+	elseif available < 4 then
+		return nil, "not enough data"
+	end
+
+	start_position = start_position + 1
+
+	local end_position = start_position + 3
+	self.position = end_position
+
+	local b1, b2, b3, b4 = string_byte( self.data, start_position, end_position )
+
+	if b4 == nil then
+		return nil, "not enough data"
+	end
+
+	if not big_endian then
+		b1, b2, b3, b4 = b4, b3, b2, b1
+	end
+
+	return bytepack_readUInt32( b1, b2, b3, b4 )
+end
+
+--- [SHARED AND MENU]
+---
+--- Writes unsigned 4-byte (32 bit) integer as binary string.
+---
+--- Range of values: `0` - `4294967295`
+---
+---@param value integer The unsigned 4-byte integer.
+---@param big_endian? boolean `true` for big endian, `false` for little endian, default is `false`.
+---@return string | nil str The binary string.
+---@return nil | string err_msg The error message.
+function pack.writeUInt32( value, big_endian )
+	if value < 0 or value > 4294967295 then
+		return nil, "UInt32 value out of range"
+	end
+
+	local b1, b2, b3, b4 = bytepack_writeUInt32( value )
+
+	if not big_endian then
+		b1, b2, b3, b4 = b4, b3, b2, b1
+	end
+
+	return string_char( b1, b2, b3, b4 )
+end
+
+--- [SHARED AND MENU]
+---
+--- Reads unsigned 5-byte (40 bit) integer from binary string.
+---
+--- Range of values: `0` - `1099511627775`.
+---
+--- All values above range will have problems.
+---
+---@param str string The binary string.
+---@param big_endian? boolean `true` for big endian, `false` for little endian, default is `false`.
+---@param start_position? integer The start position in binary string, default is `1`.
+---@return integer | nil value The unsigned 5-byte integer.
+---@return nil | string err_msg The error message.
+function pack.readUInt40( str, big_endian, start_position )
+	if start_position == nil then
+		start_position = 1
+	end
+
+	local b1, b2, b3, b4, b5 = string_byte( str, start_position, start_position + 4 )
+
+	if b5 == nil then
+		return nil, "not enough data"
+	end
+
+	if not big_endian then
+		b1, b2, b3, b4, b5 = b5, b4, b3, b2, b1
+	end
+
+	return bytepack_readUInt40( b1, b2, b3, b4, b5 )
+end
+
+--- [SHARED AND MENU]
+---
+--- Writes unsigned 5-byte (40 bit) integer as binary string.
+---
+--- Range of values: `0` - `1099511627775`.
+---
+---@param value integer The unsigned 5-byte integer.
+---@param big_endian? boolean `true` for big endian, `false` for little endian, default is `false`.
+---@return string | nil str The binary string.
+---@return nil | string err_msg The error message.
+function pack.writeUInt40( value, big_endian )
+	if value < 0 or value > 1099511627775 then
+		return nil, "UInt40 value out of range"
+	end
+
+	local b1, b2, b3, b4, b5 = bytepack_writeUInt40( value )
+
+	if not big_endian then
+		b1, b2, b3, b4, b5 = b5, b4, b3, b2, b1
+	end
+
+	return string_char( b1, b2, b3, b4, b5 )
+end
+
+--- [SHARED AND MENU]
+---
+--- Reads unsigned 6-byte (48 bit) integer from binary string.
+---
+--- Range of values: `0` - `281474976710655`
+---
+---@param str string The binary string.
+---@param big_endian boolean `true` for big endian, `false` for little endian, default is `false`.
+---@param start_position? integer The start position in binary string, default is `1`.
+---@return integer | nil value The unsigned 6-byte integer.
+---@return nil | string err_msg The error message.
+function pack.readUInt48( str, big_endian, start_position )
+	if start_position == nil then
+		start_position = 1
+	end
+
+	local b1, b2, b3, b4, b5, b6 = string_byte( str, start_position, start_position + 5 )
+
+	if b6 == nil then
+		return nil, "not enough data"
+	end
+
+	if not big_endian then
+		b1, b2, b3, b4, b5, b6 = b6, b5, b4, b3, b2, b1
+	end
+
+	return bytepack_readUInt48( b1, b2, b3, b4, b5, b6 )
+end
+
+--- [SHARED AND MENU]
+---
+--- Writes unsigned 6-byte (48 bit) integer as binary string.
+---
+--- Range of values: `0` - `281474976710655`
+---
+---@param value integer The unsigned 6-byte integer.
+---@param big_endian? boolean `true` for big endian, `false` for little endian, default is `false`.
+---@return string | nil str The binary string.
+---@return nil | string err_msg The error message.
+function pack.writeUInt48( value, big_endian )
+	if value < 0 or value > 281474976710655 then
+		return nil, "UInt48 value out of range"
+	end
+
+	local b1, b2, b3, b4, b5, b6 = bytepack_writeUInt48( value )
+
+	if not big_endian then
+		b1, b2, b3, b4, b5, b6 = b6, b5, b4, b3, b2, b1
+	end
+
+	return string_char( b1, b2, b3, b4, b5, b6 )
+end
+
+--- [SHARED AND MENU]
+---
+--- Reads unsigned 7-byte (56 bit) integer from binary string.
+---
+--- Range of values: `0` - `9007199254740991`
+---
+--- All values above range will have problems.
+---
+---@param str string The binary string.
+---@param big_endian? boolean The endianess.
+---@param start_position? integer The start position in binary string, default is `1`.
+---@return integer | nil value The unsigned integer.
+---@return nil | string err_msg The error message.
+function pack.readUInt56( str, big_endian, start_position )
+	if start_position == nil then
+		start_position = 1
+	end
+
+	local b1, b2, b3, b4, b5, b6, b7 = string_byte( str, start_position, start_position + 6 )
+
+	if b7 == nil then
+		return nil, "not enough data"
+	end
+
+	if not big_endian then
+		b1, b2, b3, b4, b5, b6, b7 = b7, b6, b5, b4, b3, b2, b1
+	end
+
+	return bytepack_readUInt56( b1, b2, b3, b4, b5, b6, b7 )
+end
+
+--- [SHARED AND MENU]
+---
+--- Writes unsigned 7-byte (56 bit) integer as binary string.
+---
+--- Range of values: `0` - `9007199254740991`
+---
+--- All values above range will have problems.
+---
+---@param value integer The unsigned 7-byte integer.
+---@param big_endian? boolean `true` for big endian, `false` for little endian, default is `false`.
+---@return string | nil str The binary string.
+---@return nil | string err_msg The error message.
+function pack.writeUInt56( value, big_endian )
+	if value < 0 or value > 9007199254740991 then
+		return nil, "UInt56 value out of range"
+	end
+
+	local b1, b2, b3, b4, b5, b6, b7 = bytepack_writeUInt56( value )
+
+	if not big_endian then
+		b1, b2, b3, b4, b5, b6, b7 = b7, b6, b5, b4, b3, b2, b1
+	end
+
+	return string_char( b1, b2, b3, b4, b5, b6, b7 )
+end
+
+--- [SHARED AND MENU]
+---
+--- Reads unsigned 8-byte (64 bit) integer as binary string.
+---
+--- Range of values: `0` - `9007199254740991`
+---
+--- All values above range will have problems.
+---
+---@param str string The binary string.
+---@param big_endian? boolean `true` for big endian, `false` for little endian, default is `false`.
+---@param start_position? integer The start position in binary string, default is `1`.
+---@return integer | nil value The unsigned 8-byte integer.
+---@return nil | string err_msg The error message.
+function pack.readUInt64( str, big_endian, start_position )
+	if start_position == nil then
+		start_position = 1
+	end
+
+	local b1, b2, b3, b4, b5, b6, b7, b8 = string_byte( str, start_position, start_position + 7 )
+
+	if b8 == nil then
+		return nil, "not enough data"
+	end
+
+	if not big_endian then
+		b1, b2, b3, b4, b5, b6, b7, b8 = b8, b7, b6, b5, b4, b3, b2, b1
+	end
+
+	return bytepack_readUInt64( b1, b2, b3, b4, b5, b6, b7, b8 )
+end
+
+--- [SHARED AND MENU]
+---
+--- Reads unsigned 8-byte (64 bit) integer.
+---
+--- Range of values: `0` - `9007199254740991`
+---
+--- All values above range will have problems.
+---
+---@param big_endian? boolean `true` for big endian, `false` for little endian, default is `false`.
+---@return integer | nil value The unsigned 8-byte integer.
+---@return nil | string err_msg The error message.
+function Reader:readU64( big_endian )
+	local start_position = self.position
+
+	local available = self.length - start_position
+	if available <= 0 then
+		return nil, "end of file"
+	elseif available < 8 then
+		return nil, "not enough data"
+	end
+
+	start_position = start_position + 1
+
+	local end_position = start_position + 7
+	self.position = end_position
+
+	local b1, b2, b3, b4, b5, b6, b7, b8 = string_byte( self.data, start_position, end_position )
+
+	if b8 == nil then
+		return nil, "not enough data"
+	end
+
+	if not big_endian then
+		b1, b2, b3, b4, b5, b6, b7, b8 = b8, b7, b6, b5, b4, b3, b2, b1
+	end
+
+	return bytepack_readUInt64( b1, b2, b3, b4, b5, b6, b7, b8 )
+end
+
+--- [SHARED AND MENU]
+---
+--- Writes unsigned 8-byte (64 bit) integer as binary string.
+---
+--- Range of values: `0` - `9007199254740991`
+---
+--- All values above range will have problems.
+---
+---@param value integer The unsigned 8-byte integer.
+---@param big_endian? boolean `true` for big endian, `false` for little endian.
+---@return string | nil binary_string The binary string.
+---@return nil | string err_msg The error message.
+function pack.writeUInt64( value, big_endian )
+	if value < 0 or value > 9007199254740991 then
+		return nil, "UInt64 value out of range"
+	end
+
+	local b1, b2, b3, b4, b5, b6, b7, b8 = bytepack_writeUInt64( value )
+
+	if not big_endian then
+		b1, b2, b3, b4, b5, b6, b7, b8 = b8, b7, b6, b5, b4, b3, b2, b1
+	end
+
+	return string_char( b1, b2, b3, b4, b5, b6, b7, b8 )
+end
+
+--- [SHARED AND MENU]
+---
+--- Reads an unsigned integer with the specified number of bits.
+---
+---@param bit_count integer The number of bits to read.
+---@param big_endian? boolean `true` for big endian, `false` for little endian, default is `false`.
+---@return integer | nil value The unsigned integer.
+---@return nil | string err_msg The error message.
+function Reader:readUInt( bit_count, big_endian )
+	if bit_count == 0 then
+		return 0, nil
+	elseif bit_count < 0 then
+		return nil, "invalid bit count"
+	end
+
+	local position = self.position
+
+	local available = self.length - position
+	if available <= 0 then
+		return nil, "end of file"
+	end
+
+	local byte_count = math_ceil( bit_count * 0.125 )
+	if byte_count > available then
+		return nil, "not enough data"
+	end
+
+	self.position = position + byte_count
+
+	if byte_count == 1 then
+		return string_byte( self.data, position + 1 )
+	end
+
+	local b1, b2, b3, b4, b5, b6, b7, b8 = string_byte( self.data, position + 1, position + byte_count )
+
+	if big_endian then
+		if byte_count == 2 then
+			return bytepack_readUInt16( b1, b2 )
+		elseif byte_count == 3 then
+			return bytepack_readUInt24( b1, b2, b3 )
+		elseif byte_count == 4 then
+			return bytepack_readUInt32( b1, b2, b3, b4 )
+		elseif byte_count == 5 then
+			return bytepack_readUInt40( b1, b2, b3, b4, b5 )
+		elseif byte_count == 6 then
+			return bytepack_readUInt48( b1, b2, b3, b4, b5, b6 )
+		elseif byte_count == 7 then
+			return bytepack_readUInt56( b1, b2, b3, b4, b5, b6, b7 )
+		else
+			return bytepack_readUInt64( b1, b2, b3, b4, b5, b6, b7, b8 )
+		end
+	elseif byte_count == 2 then
+		return bytepack_readUInt16( b2, b1 )
+	elseif byte_count == 3 then
+		return bytepack_readUInt24( b3, b2, b1 )
+	elseif byte_count == 4 then
+		return bytepack_readUInt32( b4, b3, b2, b1 )
+	elseif byte_count == 5 then
+		return bytepack_readUInt40( b5, b4, b3, b2, b1 )
+	elseif byte_count == 6 then
+		return bytepack_readUInt48( b6, b5, b4, b3, b2, b1 )
+	elseif byte_count == 7 then
+		return bytepack_readUInt56( b7, b6, b5, b4, b3, b2, b1 )
+	else
+		return bytepack_readUInt64( b8, b7, b6, b5, b4, b3, b2, b1 )
+	end
+end
+
+-- unsigned fixed-point number
 do
 
 	local bytepack_readUnsignedFixedPoint = bytepack.readUnsignedFixedPoint
@@ -687,110 +820,179 @@ do
 	---
 	--- Reads unsigned fixed-point number (**UQm.n**) as binary string.
 	---
-	--- **Commonly Used UQm.n Formats**
-	---| Format | Range | Precision (Step) |
-	---|:------|:------------------------|:-----------------|
-	---|UQ8.8  |`0 to 255.996`			  |0.00390625 (1/256)
-	---|UQ10.6 |`0 to 1023.984375`		  |0.015625 (1/64)
-	---|UQ12.4 |`0 to 4095.9375`		  |0.0625 (1/16)
-	---|UQ16.16|`0 to 65535.99998`        |0.0000152588 (1/65536)
-	---|UQ24.8 |`0 to 16,777,215.996`     |0.00390625 (1/256)
-	---|UQ32.16|`0 to 4,294,967,295.99998`|0.0000152588 (1/65536)
+	--- ### Commonly used UQm.n formats
+	--- | Format  | Range                          | Precision (Step)        |
+	--- |:--------|:-------------------------------|:------------------------|
+	--- | UQ8.8   | `0 to 255.996`                 | 0.00390625 (1/256)      |
+	--- | UQ10.6  | `0 to 1023.984375`             | 0.015625 (1/64)         |
+	--- | UQ12.4  | `0 to 4095.9375`               | 0.0625 (1/16)           |
+	--- | UQ16.16 | `0 to 65,535.99998`            | 0.0000152588 (1/65536)  |
+	--- | UQ24.8  | `0 to 16,777,215.996`          | 0.00390625 (1/256)      |
+	--- | UQ32.16 | `0 to 4,294,967,295.99998`     | 0.0000152588 (1/65536)  |
 	---
-	---@param str string The string to read.
+	---@param str string The binary string to read.
 	---@param m integer Number of integer bits (including sign bit).
 	---@param n integer Number of fractional bits.
 	---@param big_endian? boolean `true` for big endian, `false` for little endian, default is `false`.
 	---@param start_position? integer The start position in binary string, default is `1`.
-	---@return number value The unsigned fixed-point number.
+	---@return number | nil value The unsigned fixed-point number.
+	---@return nil | string err_msg The error message.
 	function pack.readUnsignedFixedPoint( str, m, n, big_endian, start_position )
 		local byte_count = ( m + n ) * 0.125
 		if byte_count % 1 ~= 0 then
-			error( "invalid byte count", 2 )
+			return nil, "invalid m.n values"
+		end
+
+		if byte_count == 0 then
+			return 0
+		elseif str == "" then
+			return nil, "not enough data"
 		end
 
 		if start_position == nil then
 			start_position = 1
 		end
 
-		if byte_count == 0 or str == "" then
-			return 0
-		elseif byte_count == 1 then
-			return bytepack_readUnsignedFixedPoint( n, string_byte( str, start_position ) )
-		elseif byte_count == 2 then
-			local b1, b2 = string_byte( str, start_position, start_position + 1 )
+		local b1, b2, b3, b4, b5, b6, b7, b8 = string_byte( str, start_position, start_position + byte_count )
 
-			if b2 == nil then
-				error( "insufficient data length", 2 )
-			elseif not big_endian then
+		if byte_count == 1 and b1 ~= nil then
+			return bytepack_readUnsignedFixedPoint( n, b1 ), nil
+		elseif byte_count == 2 and b2 ~= nil then
+			if not big_endian then
 				b1, b2 = b2, b1
 			end
 
-			return bytepack_readUnsignedFixedPoint( n, b1, b2 )
-		elseif byte_count == 3 then
-			local b1, b2, b3 = string_byte( str, start_position, start_position + 2 )
-
-			if b3 == nil then
-				error( "insufficient data length", 2 )
-			elseif not big_endian then
+			return bytepack_readUnsignedFixedPoint( n, b1, b2 ), nil
+		elseif byte_count == 3 and b3 ~= nil then
+			if not big_endian then
 				b1, b2, b3 = b3, b2, b1
 			end
 
-			return bytepack_readUnsignedFixedPoint( n, b1, b2, b3 )
-		elseif byte_count == 4 then
-			local b1, b2, b3, b4 = string_byte( str, start_position, start_position + 3 )
-
-			if b4 == nil then
-				error( "insufficient data length", 2 )
-			elseif not big_endian then
+			return bytepack_readUnsignedFixedPoint( n, b1, b2, b3 ), nil
+		elseif byte_count == 4 and b4 ~= nil then
+			if not big_endian then
 				b1, b2, b3, b4 = b4, b3, b2, b1
 			end
 
-			return bytepack_readUnsignedFixedPoint( n, b1, b2, b3, b4 )
-		elseif byte_count == 5 then
-			local b1, b2, b3, b4, b5 = string_byte( str, start_position, start_position + 4 )
-
-			if b5 == nil then
-				error( "insufficient data length", 2 )
-			elseif not big_endian then
+			return bytepack_readUnsignedFixedPoint( n, b1, b2, b3, b4 ), nil
+		elseif byte_count == 5 and b5 ~= nil then
+			if not big_endian then
 				b1, b2, b3, b4, b5 = b5, b4, b3, b2, b1
 			end
 
-			return bytepack_readUnsignedFixedPoint( n, b1, b2, b3, b4, b5 )
-		elseif byte_count == 6 then
-			local b1, b2, b3, b4, b5, b6 = string_byte( str, start_position, start_position + 5 )
-
-			if b6 == nil then
-				error( "insufficient data length", 2 )
-			elseif not big_endian then
+			return bytepack_readUnsignedFixedPoint( n, b1, b2, b3, b4, b5 ), nil
+		elseif byte_count == 6 and b6 ~= nil then
+			if not big_endian then
 				b1, b2, b3, b4, b5, b6 = b6, b5, b4, b3, b2, b1
 			end
 
-			return bytepack_readUnsignedFixedPoint( n, b1, b2, b3, b4, b5, b6 )
-		elseif byte_count == 7 then
-			local b1, b2, b3, b4, b5, b6, b7 = string_byte( str, start_position, start_position + 6 )
-
-			if b7 == nil then
-				error( "insufficient data length", 2 )
-			elseif not big_endian then
+			return bytepack_readUnsignedFixedPoint( n, b1, b2, b3, b4, b5, b6 ), nil
+		elseif byte_count == 7 and b7 ~= nil then
+			if not big_endian then
 				b1, b2, b3, b4, b5, b6, b7 = b7, b6, b5, b4, b3, b2, b1
 			end
 
-			return bytepack_readUnsignedFixedPoint( n, b1, b2, b3, b4, b5, b6, b7 )
-		elseif byte_count == 8 then
-			local b1, b2, b3, b4, b5, b6, b7, b8 = string_byte( str, start_position, start_position + 7 )
-
-			if b8 == nil then
-				error( "insufficient data length", 2 )
-			elseif not big_endian then
+			return bytepack_readUnsignedFixedPoint( n, b1, b2, b3, b4, b5, b6, b7 ), nil
+		elseif byte_count == 8 and b8 ~= nil then
+			if not big_endian then
 				b1, b2, b3, b4, b5, b6, b7, b8 = b8, b7, b6, b5, b4, b3, b2, b1
 			end
 
-			return bytepack_readUnsignedFixedPoint( n, b1, b2, b3, b4, b5, b6, b7, b8 )
-		else
-			error( "unsupported byte count", 2 )
-			return 0
+			return bytepack_readUnsignedFixedPoint( n, b1, b2, b3, b4, b5, b6, b7, b8 ), nil
 		end
+
+		return nil, "not enough data"
+	end
+
+	--- [SHARED AND MENU]
+	---
+	--- Reads unsigned fixed-point number (**UQm.n**).
+	---
+	--- ### Commonly used UQm.n formats
+	--- | Format  | Range                          | Precision (Step)        |
+	--- |:--------|:-------------------------------|:------------------------|
+	--- | UQ8.8   | `0 to 255.996`                 | 0.00390625 (1/256)      |
+	--- | UQ10.6  | `0 to 1023.984375`             | 0.015625 (1/64)         |
+	--- | UQ12.4  | `0 to 4095.9375`               | 0.0625 (1/16)           |
+	--- | UQ16.16 | `0 to 65,535.99998`            | 0.0000152588 (1/65536)  |
+	--- | UQ24.8  | `0 to 16,777,215.996`          | 0.00390625 (1/256)      |
+	--- | UQ32.16 | `0 to 4,294,967,295.99998`     | 0.0000152588 (1/65536)  |
+	---
+	---@param m integer Number of integer bits.
+	---@param n integer Number of fractional bits.
+	---@param big_endian? boolean `true` for big endian, `false` for little endian, default is `false`.
+	---@return nil | number value The unsigned fixed-point number.
+	---@return string | nil err_msg The error message.
+	function Reader:readUnsignedFixedPoint( n, m, big_endian )
+		local byte_count = ( m + n ) * 0.125
+		if byte_count % 1 ~= 0 or byte_count < 0 then
+			return nil, "invalid m.n values"
+		end
+
+		if byte_count == 0 then
+			return 0, nil
+		end
+
+		local position = self.position
+
+		local available = self.length - position
+		if available <= 0 then
+			return nil, "end of file"
+		elseif byte_count > available then
+			return nil, "not enough data"
+		end
+
+		local b1, b2, b3, b4, b5, b6, b7, b8 = string_byte( self.data, position + 1, position + byte_count )
+
+		self.position = position + byte_count
+
+		if byte_count == 1 and b1 ~= nil then
+			return bytepack_readUnsignedFixedPoint( n, b1 ), nil
+		elseif byte_count == 2 and b2 ~= nil then
+			if not big_endian then
+				b1, b2 = b2, b1
+			end
+
+			return bytepack_readUnsignedFixedPoint( n, b1, b2 ), nil
+		elseif byte_count == 3 and b3 ~= nil then
+			if not big_endian then
+				b1, b2, b3 = b3, b2, b1
+			end
+
+			return bytepack_readUnsignedFixedPoint( n, b1, b2, b3 ), nil
+		elseif byte_count == 4 and b4 ~= nil then
+			if not big_endian then
+				b1, b2, b3, b4 = b4, b3, b2, b1
+			end
+
+			return bytepack_readUnsignedFixedPoint( n, b1, b2, b3, b4 ), nil
+		elseif byte_count == 5 and b5 ~= nil then
+			if not big_endian then
+				b1, b2, b3, b4, b5 = b5, b4, b3, b2, b1
+			end
+
+			return bytepack_readUnsignedFixedPoint( n, b1, b2, b3, b4, b5 ), nil
+		elseif byte_count == 6 and b6 ~= nil then
+			if not big_endian then
+				b1, b2, b3, b4, b5, b6 = b6, b5, b4, b3, b2, b1
+			end
+
+			return bytepack_readUnsignedFixedPoint( n, b1, b2, b3, b4, b5, b6 ), nil
+		elseif byte_count == 7 and b7 ~= nil then
+			if not big_endian then
+				b1, b2, b3, b4, b5, b6, b7 = b7, b6, b5, b4, b3, b2, b1
+			end
+
+			return bytepack_readUnsignedFixedPoint( n, b1, b2, b3, b4, b5, b6, b7 ), nil
+		elseif byte_count == 8 and b8 ~= nil then
+			if not big_endian then
+				b1, b2, b3, b4, b5, b6, b7, b8 = b8, b7, b6, b5, b4, b3, b2, b1
+			end
+
+			return bytepack_readUnsignedFixedPoint( n, b1, b2, b3, b4, b5, b6, b7, b8 ), nil
+		end
+
+		return nil, "not enough data"
 	end
 
 end
@@ -803,917 +1005,1024 @@ do
 	---
 	--- Writes unsigned fixed-point number (**UQm.n**) as binary string.
 	---
-	--- **Commonly Used UQm.n Formats**
-	---| Format | Range | Precision (Step) |
-	---|:------|:------------------------|:-----------------|
-	---|UQ8.8  |`0 to 255.996`			  |0.00390625 (1/256)
-	---|UQ10.6 |`0 to 1023.984375`		  |0.015625 (1/64)
-	---|UQ12.4 |`0 to 4095.9375`		  |0.0625 (1/16)
-	---|UQ16.16|`0 to 65535.99998`        |0.0000152588 (1/65536)
-	---|UQ24.8 |`0 to 16,777,215.996`     |0.00390625 (1/256)
-	---|UQ32.16|`0 to 4,294,967,295.99998`|0.0000152588 (1/65536)
+	--- ### Commonly used UQm.n formats
+	--- | Format  | Range                          | Precision (Step)        |
+	--- |:--------|:-------------------------------|:------------------------|
+	--- | UQ8.8   | `0 to 255.996`                 | 0.00390625 (1/256)      |
+	--- | UQ10.6  | `0 to 1023.984375`             | 0.015625 (1/64)         |
+	--- | UQ12.4  | `0 to 4095.9375`               | 0.0625 (1/16)           |
+	--- | UQ16.16 | `0 to 65,535.99998`            | 0.0000152588 (1/65536)  |
+	--- | UQ24.8  | `0 to 16,777,215.996`          | 0.00390625 (1/256)      |
+	--- | UQ32.16 | `0 to 4,294,967,295.99998`     | 0.0000152588 (1/65536)  |
 	---
 	---@param value number The unsigned fixed-point number.
-	---@param m integer Number of integer bits (including sign bit).
+	---@param m integer Number of integer bits.
 	---@param n integer Number of fractional bits.
 	---@param big_endian? boolean `true` for big endian, `false` for little endian.
-	---@return string str The binary string.
-	function pack.writeFixedPoint( value, m, n, big_endian )
+	---@return string | nil binary_string The binary string.
+	---@return nil | string err_msg The error message.
+	function pack.writeUnsignedFixedPoint( value, m, n, big_endian )
 		local byte_count = ( m + n ) * 0.125
 		if byte_count % 1 ~= 0 then
-			error( "invalid byte count", 2 )
-		end
-
-		if value == 0 then
-			return string_rep( "\0", byte_count )
-		elseif byte_count == 0 then
-			return ""
-		elseif byte_count == 1 then
-			return string_char( bytepack_writeUnsignedFixedPoint( value, m, n ) )
-		elseif byte_count == 2 then
-			local b1, b2 = bytepack_writeUnsignedFixedPoint( value, m, n )
-
-			if not big_endian then
-				b1, b2 = b2, b1
-			end
-
-			return string_char( b1, b2 )
-		elseif byte_count == 3 then
-			local b1, b2, b3 = bytepack_writeUnsignedFixedPoint( value, m, n )
-
-			if not big_endian then
-				b1, b2, b3 = b3, b2, b1
-			end
-
-			return string_char( b1, b2, b3 )
-		elseif byte_count == 4 then
-			local b1, b2, b3, b4 = bytepack_writeUnsignedFixedPoint( value, m, n )
-
-			if not big_endian then
-				b1, b2, b3, b4 = b4, b3, b2, b1
-			end
-
-			return string_char( b1, b2, b3, b4 )
-		elseif byte_count == 5 then
-			local b1, b2, b3, b4, b5 = bytepack_writeUnsignedFixedPoint( value, m, n )
-
-			if not big_endian then
-				b1, b2, b3, b4, b5 = b5, b4, b3, b2, b1
-			end
-
-			return string_char( b1, b2, b3, b4, b5 )
-		elseif byte_count == 6 then
-			local b1, b2, b3, b4, b5, b6 = bytepack_writeUnsignedFixedPoint( value, m, n )
-
-			if not big_endian then
-				b1, b2, b3, b4, b5, b6 = b6, b5, b4, b3, b2, b1
-			end
-
-			return string_char( b1, b2, b3, b4, b5, b6 )
-		elseif byte_count == 7 then
-			local b1, b2, b3, b4, b5, b6, b7 = bytepack_writeUnsignedFixedPoint( value, m, n )
-
-			if not big_endian then
-				b1, b2, b3, b4, b5, b6, b7 = b7, b6, b5, b4, b3, b2, b1
-			end
-
-			return string_char( b1, b2, b3, b4, b5, b6, b7 )
-		elseif byte_count == 8 then
-			local b1, b2, b3, b4, b5, b6, b7, b8 = bytepack_writeUnsignedFixedPoint( value, m, n )
-
-			if not big_endian then
-				b1, b2, b3, b4, b5, b6, b7, b8 = b8, b7, b6, b5, b4, b3, b2, b1
-			end
-
-			return string_char( b1, b2, b3, b4, b5, b6, b7, b8 )
-		else
-			error( "unsupported byte count", 2 )
-			return ""
-		end
-	end
-
-end
-
-do
-
-	local bytepack_readInt = bytepack.readInt
-
-	--- [SHARED AND MENU]
-	---
-	--- Reads signed integer from binary string.
-	---
-	--- Valid values without loss of precision: `-9007199254740991` - `9007199254740991`
-	---
-	--- All values above will have problems when working with them.
-	---
-	---@param str string The binary string.
-	---@param byte_count? integer The number of bytes to read.
-	---@param big_endian? boolean `true` for big endian, `false` for little endian.
-	function pack.readInt( str, byte_count, big_endian, start_position )
-		if byte_count == nil then
-			byte_count = 4
-		end
-
-		if start_position == nil then
-			start_position = 1
-		end
-
-		if byte_count == 0 or str == "" then
-			return 0
-		elseif byte_count == 1 then
-			return bytepack_readInt( string_byte( str, start_position ) )
-		elseif byte_count == 2 then
-			local b1, b2 = string_byte( str, start_position, start_position + 1 )
-
-			if not big_endian then
-				b1, b2 = b2, b1
-			end
-
-			return bytepack_readInt( b1, b2 )
-		elseif byte_count == 3 then
-			local b1, b2, b3 = string_byte( str, start_position, start_position + 2 )
-
-			if not big_endian then
-				b1, b2, b3 = b3, b2, b1
-			end
-
-			return bytepack_readInt( b1, b2, b3 )
-		elseif byte_count == 4 then
-			local b1, b2, b3, b4 = string_byte( str, start_position, start_position + 3 )
-
-			if not big_endian then
-				b1, b2, b3, b4 = b4, b3, b2, b1
-			end
-
-			return bytepack_readInt( b1, b2, b3, b4 )
-		elseif byte_count == 5 then
-			local b1, b2, b3, b4, b5 = string_byte( str, start_position, start_position + 4 )
-
-			if not big_endian then
-				b1, b2, b3, b4, b5 = b5, b4, b3, b2, b1
-			end
-
-			return bytepack_readInt( b1, b2, b3, b4, b5 )
-		elseif byte_count == 6 then
-			local b1, b2, b3, b4, b5, b6 = string_byte( str, start_position, start_position + 5 )
-
-			if not big_endian then
-				b1, b2, b3, b4, b5, b6 = b6, b5, b4, b3, b2, b1
-			end
-
-			return bytepack_readInt( b1, b2, b3, b4, b5, b6 )
-		elseif byte_count == 7 then
-			local b1, b2, b3, b4, b5, b6, b7 = string_byte( str, start_position, start_position + 6 )
-
-			if not big_endian then
-				b1, b2, b3, b4, b5, b6, b7 = b7, b6, b5, b4, b3, b2, b1
-			end
-
-			return bytepack_readInt( b1, b2, b3, b4, b5, b6, b7 )
-		elseif byte_count == 8 then
-			local b1, b2, b3, b4, b5, b6, b7, b8 = string_byte( str, start_position, start_position + 7 )
-
-			if not big_endian then
-				b1, b2, b3, b4, b5, b6, b7, b8 = b8, b7, b6, b5, b4, b3, b2, b1
-			end
-
-			return bytepack_readInt( b1, b2, b3, b4, b5, b6, b7, b8 )
-		else
-			error( "unsupported byte count", 2 )
-			return 0
-		end
-	end
-
-end
-
-do
-
-	local bytepack_writeInt = bytepack.writeInt
-
-	--- [SHARED AND MENU]
-	---
-	--- Writes signed integer as binary string.
-	---
-	--- Valid values without loss of precision: `-9007199254740991` - `9007199254740991`
-	---
-	--- All values above will have problems when working with them.
-	---
-	---@param value integer The signed integer.
-	---@param byte_count? integer The number of bytes to write. Defaults to `4`.
-	---@param big_endian? boolean `true` for big endian, `false` for little endian.
-	---@return string binary_string The binary string.
-	function pack.writeInt( value, byte_count, big_endian )
-		if byte_count == nil then
-			byte_count = 4
+			return nil, "invalid m.n values"
 		end
 
 		if byte_count == 0 then
-			return ""
-		elseif byte_count == 1 then
-			return string_char( bytepack_writeInt( value, byte_count ) )
+			return "", nil
+		elseif value == 0 then
+			return string_rep( "\0", byte_count ), nil
+		end
+
+		local b1, b2, b3, b4, b5, b6, b7, b8 = bytepack_writeUnsignedFixedPoint( value, m, n )
+
+		if byte_count == 1 then
+			if b1 == nil then
+				return nil, "invalid value"
+			end
+
+			return string_char( b1 ), nil
 		elseif byte_count == 2 then
-			local b1, b2 = bytepack_writeInt( value, byte_count )
+			if b2 == nil then
+				return nil, "invalid value"
+			end
 
 			if not big_endian then
 				b1, b2 = b2, b1
 			end
 
-			return string_char( b1, b2 )
+			return string_char( b1, b2 ), nil
 		elseif byte_count == 3 then
-			local b1, b2, b3 = bytepack_writeInt( value, byte_count )
+			if b3 == nil then
+				return nil, "invalid value"
+			end
 
 			if not big_endian then
 				b1, b2, b3 = b3, b2, b1
 			end
 
-			return string_char( b1, b2, b3 )
+			return string_char( b1, b2, b3 ), nil
 		elseif byte_count == 4 then
-			local b1, b2, b3, b4 = bytepack_writeInt( value, byte_count )
+			if b4 == nil then
+				return nil, "invalid value"
+			end
 
 			if not big_endian then
 				b1, b2, b3, b4 = b4, b3, b2, b1
 			end
 
-			return string_char( b1, b2, b3, b4 )
+			return string_char( b1, b2, b3, b4 ), nil
 		elseif byte_count == 5 then
-			local b1, b2, b3, b4, b5 = bytepack_writeInt( value, byte_count )
+			if b5 == nil then
+				return nil, "invalid value"
+			end
 
 			if not big_endian then
 				b1, b2, b3, b4, b5 = b5, b4, b3, b2, b1
 			end
 
-			return string_char( b1, b2, b3, b4, b5 )
+			return string_char( b1, b2, b3, b4, b5 ), nil
 		elseif byte_count == 6 then
-			local b1, b2, b3, b4, b5, b6 = bytepack_writeInt( value, byte_count )
+			if b6 == nil then
+				return nil, "invalid value"
+			end
 
 			if not big_endian then
 				b1, b2, b3, b4, b5, b6 = b6, b5, b4, b3, b2, b1
 			end
 
-			return string_char( b1, b2, b3, b4, b5, b6 )
+			return string_char( b1, b2, b3, b4, b5, b6 ), nil
 		elseif byte_count == 7 then
-			local b1, b2, b3, b4, b5, b6, b7 = bytepack_writeInt( value, byte_count )
+			if b7 == nil then
+				return nil, "invalid value"
+			end
 
 			if not big_endian then
 				b1, b2, b3, b4, b5, b6, b7 = b7, b6, b5, b4, b3, b2, b1
 			end
 
-			return string_char( b1, b2, b3, b4, b5, b6, b7 )
+			return string_char( b1, b2, b3, b4, b5, b6, b7 ), nil
 		elseif byte_count == 8 then
-			local b1, b2, b3, b4, b5, b6, b7, b8 = bytepack_writeInt( value, byte_count )
+			if b8 == nil then
+				return nil, "invalid value"
+			end
 
 			if not big_endian then
 				b1, b2, b3, b4, b5, b6, b7, b8 = b8, b7, b6, b5, b4, b3, b2, b1
 			end
 
-			return string_char( b1, b2, b3, b4, b5, b6, b7, b8 )
+			return string_char( b1, b2, b3, b4, b5, b6, b7, b8 ), nil
+		end
+
+		return nil, "unsupported byte count"
+	end
+
+end
+
+--- [SHARED AND MENU]
+---
+--- Reads signed 1-byte (8 bit) integer from binary string.
+---
+--- Range of values: `-128` - `127`
+---
+---@param str string The binary string.
+---@param start_position? integer The start position in binary string, default is `1`.
+---@return integer | nil value The signed 1-byte integer.
+---@return nil | string err_msg The error message.
+function pack.readInt8( str, start_position )
+	local byte = string_byte( str, start_position or 1 )
+	if byte == nil then
+		return nil, "not enough data"
+	else
+		return bytepack_readInt8( byte ), nil
+	end
+end
+
+--- [SHARED AND MENU]
+---
+--- Reads signed 1-byte (8 bit) integer.
+---
+--- Range of values: `-128` - `127`
+---
+---@return integer | nil value The signed 1-byte integer.
+---@return nil | string err_msg The error message.
+function Reader:readI8()
+	local u8, err_msg = self:readU8()
+	if u8 == nil then
+		return nil, err_msg
+	else
+		return bytepack_readInt8( u8 ), nil
+	end
+end
+
+--- [SHARED AND MENU]
+---
+--- Writes signed 1-byte (8 bit) integer as binary string.
+---
+--- Range of values: `-128` - `127`
+---
+---@param value integer The signed 1-byte integer.
+---@return string | nil str The binary string.
+---@return nil | string err_msg The error message.
+function pack.writeInt8( value )
+	if value < -128 or value > 127 then
+		return nil, "Int8 value out of range"
+	else
+		return string_char( bytepack_writeInt8( value ) ), nil
+	end
+end
+
+--- [SHARED AND MENU]
+---
+--- Reads signed 2-byte (16 bit) integer as binary string.
+---
+--- Range of values: `-32768` - `32767`
+---
+---@param str string The binary string.
+---@param big_endian? boolean `true` for big endian, `false` for little endian, default is `false`.
+---@param start_position? integer The start position in binary string, default is `1`.
+---@return integer | nil value The signed 2-byte integer.
+---@return nil | string err_msg The error message.
+function pack.readInt16( str, big_endian, start_position )
+	if start_position == nil then
+		start_position = 1
+	end
+
+	local b1, b2 = string_byte( str, start_position, start_position + 1 )
+
+	if b2 == nil then
+		return nil, "not enough data"
+	end
+
+	if not big_endian then
+		b1, b2 = b2, b1
+	end
+
+	return bytepack_readInt16( b1, b2 )
+end
+
+--- [SHARED AND MENU]
+---
+--- Reads signed 2-byte (16 bit) integer.
+---
+--- Range of values: `-32768` - `32767`
+---
+---@param big_endian? boolean `true` for big endian, `false` for little endian, default is `false`.
+---@return integer | nil value The signed 2-byte integer.
+---@return nil | string err_msg The error message.
+function Reader:readI16( big_endian )
+	local start_position = self.position
+
+	local available = self.length - start_position
+	if available <= 0 then
+		return nil, "end of file"
+	elseif available < 2 then
+		return nil, "not enough data"
+	end
+
+	start_position = start_position + 1
+
+	local end_position = start_position + 1
+	self.position = end_position
+
+	local b1, b2 = string_byte( self.data, start_position, end_position )
+
+	if not big_endian then
+		b1, b2 = b2, b1
+	end
+
+	return bytepack_readInt16( b1, b2 )
+end
+
+--- [SHARED AND MENU]
+---
+--- Writes signed 2-byte (16 bit) integer as binary string.
+---
+--- Range of values: `-32768` - `32767`
+---
+---@param value integer The signed 2-byte integer.
+---@param big_endian? boolean `true` for big endian, `false` for little endian.
+---@return string | nil binary_string The binary string.
+---@return nil | string err_msg The error message.
+function pack.writeInt16( value, big_endian )
+	if value < -32768 or value > 32767 then
+		return nil, "Int16 value out of range"
+	end
+
+	local b1, b2 = bytepack_writeInt16( value )
+
+	if not big_endian then
+		b1, b2 = b2, b1
+	end
+
+	return string_char( b1, b2 )
+end
+
+--- [SHARED AND MENU]
+---
+--- Reads signed 3-byte (24 bit) integer as binary string.
+---
+--- Range of values: `-8388608` - `8388607`
+---
+---@param str string The binary string.
+---@param big_endian? boolean `true` for big endian, `false` for little endian, default is `false`.
+---@param start_position? integer The start position in binary string, default is `1`.
+---@return integer | nil value The signed 3-byte integer.
+---@return nil | string err_msg The error message.
+function pack.readInt24( str, big_endian, start_position )
+	if start_position == nil then
+		start_position = 1
+	end
+
+	local b1, b2, b3 = string_byte( str, start_position, start_position + 2 )
+
+	if b3 == nil then
+		return nil, "not enough data"
+	end
+
+	if not big_endian then
+		b1, b2, b3 = b3, b2, b1
+	end
+
+	return bytepack_readInt24( b1, b2, b3 )
+end
+
+--- [SHARED AND MENU]
+---
+--- Writes signed 3-byte (24 bit) integer as binary string.
+---
+--- Range of values: `-8388608` - `8388607`
+---
+---@param value integer The signed 3-byte integer.
+---@param big_endian? boolean `true` for big endian, `false` for little endian.
+---@return string | nil binary_string The binary string.
+---@return nil | string err_msg The error message.
+function pack.writeInt24( value, big_endian )
+	if value < -8388608 or value > 8388607 then
+		return nil, "Int24 value out of range"
+	end
+
+	local b1, b2, b3 = bytepack_writeInt24( value )
+
+	if not big_endian then
+		b1, b2, b3 = b3, b2, b1
+	end
+
+	return string_char( b1, b2, b3 )
+end
+
+--- [SHARED AND MENU]
+---
+--- Reads signed 4-byte (32 bit) integer from binary string.
+---
+--- Range of values: `-2147483648` - `2147483647`
+---
+---@param str string The binary string.
+---@param big_endian? boolean `true` for big endian, `false` for little endian, default is `false`.
+---@param start_position? integer The start position in binary string, default is `1`.
+---@return integer | nil value The signed 4-byte integer.
+---@return nil | string err_msg The error message.
+function pack.readInt32( str, big_endian, start_position )
+	if start_position == nil then
+		start_position = 1
+	end
+
+	local b1, b2, b3, b4 = string_byte( str, start_position, start_position + 3 )
+
+	if b4 == nil then
+		return nil, "not enough data"
+	end
+
+	if not big_endian then
+		b1, b2, b3, b4 = b4, b3, b2, b1
+	end
+
+	return bytepack_readInt32( b1, b2, b3, b4 )
+end
+
+--- [SHARED AND MENU]
+---
+--- Reads signed 4-byte (32 bit) integer.
+---
+--- Range of values: `-2147483648` - `2147483647`
+---
+---@param big_endian? boolean `true` for big endian, `false` for little endian, default is `false`.
+---@return integer | nil value The signed 4-byte integer.
+---@return nil | string err_msg The error message.
+function Reader:readI32( big_endian )
+	local start_position = self.position
+
+	local available = self.length - start_position
+	if available <= 0 then
+		return nil, "end of file"
+	elseif available < 4 then
+		return nil, "not enough data"
+	end
+
+	start_position = start_position + 1
+
+	local end_position = start_position + 3
+	self.position = end_position
+
+	local b1, b2, b3, b4 = string_byte( self.data, start_position, end_position )
+
+	if not big_endian then
+		b1, b2, b3, b4 = b4, b3, b2, b1
+	end
+
+	return bytepack_readInt32( b1, b2, b3, b4 )
+end
+
+--- [SHARED AND MENU]
+---
+--- Writes signed 4-byte (32 bit) integer as binary string.
+---
+--- Range of values: `-2147483648` - `2147483647`
+---
+---@param value integer The signed 4-byte integer.
+---@param big_endian? boolean `true` for big endian, `false` for little endian.
+---@return string | nil binary_string The binary string.
+---@return nil | string err_msg The error message.
+function pack.writeInt32( value, big_endian )
+	if value < -2147483648 or value > 2147483647 then
+		return nil, "Int32 value out of range"
+	end
+
+	local b1, b2, b3, b4 = bytepack_writeInt32( value )
+
+	if not big_endian then
+		b1, b2, b3, b4 = b4, b3, b2, b1
+	end
+
+	return string_char( b1, b2, b3, b4 )
+end
+
+--- [SHARED AND MENU]
+---
+--- Reads signed 5-byte (40 bit) integer from binary string.
+---
+--- Range of values: `-549755813888` - `549755813887`
+---
+---@param str string The binary string.
+---@param big_endian? boolean `true` for big endian, `false` for little endian, default is `false`.
+---@param start_position? integer The start position in binary string, default is `1`.
+---@return integer | nil value The signed 5-byte integer.
+---@return nil | string err_msg The error message.
+function pack.readInt40( str, big_endian, start_position )
+	if start_position == nil then
+		start_position = 1
+	end
+
+	local b1, b2, b3, b4, b5 = string_byte( str, start_position, start_position + 4 )
+
+	if b5 == nil then
+		return nil, "not enough data"
+	end
+
+	if not big_endian then
+		b1, b2, b3, b4, b5 = b5, b4, b3, b2, b1
+	end
+
+	return bytepack_readInt40( b1, b2, b3, b4, b5 )
+end
+
+--- [SHARED AND MENU]
+---
+--- Writes signed 5-byte (40 bit) integer as binary string.
+---
+--- Range of values: `-549755813888` - `549755813887`
+---
+---@param value integer The signed 5-byte integer.
+---@param big_endian? boolean `true` for big endian, `false` for little endian.
+---@return string | nil binary_string The binary string.
+---@return nil | string err_msg The error message.
+function pack.writeInt40( value, big_endian )
+	if value < -549755813888 or value > 549755813887 then
+		return nil, "Int40 value out of range"
+	end
+
+	local b1, b2, b3, b4, b5 = bytepack_writeInt40( value )
+
+	if not big_endian then
+		b1, b2, b3, b4, b5 = b5, b4, b3, b2, b1
+	end
+
+	return string_char( b1, b2, b3, b4, b5 )
+end
+
+--- [SHARED AND MENU]
+---
+--- Reads signed 6-byte (48 bit) integer from binary string.
+---
+--- Range of values: `-140737488355328` - `140737488355327`
+---
+---@param str string The binary string.
+---@param big_endian? boolean `true` for big endian, `false` for little endian, default is `false`.
+---@param start_position? integer The start position in binary string, default is `1`.
+---@return integer | nil value The signed 6-byte integer.
+---@return nil | string err_msg The error message.
+function pack.readInt48( str, big_endian, start_position )
+	if start_position == nil then
+		start_position = 1
+	end
+
+	local b1, b2, b3, b4, b5, b6 = string_byte( str, start_position, start_position + 5 )
+
+	if b6 == nil then
+		return nil, "not enough data"
+	end
+
+	if not big_endian then
+		b1, b2, b3, b4, b5, b6 = b6, b5, b4, b3, b2, b1
+	end
+
+	return bytepack_readInt48( b1, b2, b3, b4, b5, b6 )
+end
+
+--- [SHARED AND MENU]
+---
+--- Writes signed 6-byte (48 bit) integer as binary string.
+---
+--- Range of values: `-140737488355328` - `140737488355327`
+---
+---@param value integer The signed 6-byte integer.
+---@param big_endian? boolean `true` for big endian, `false` for little endian.
+---@return string | nil binary_string The binary string.
+---@return nil | string err_msg The error message.
+function pack.writeInt48( value, big_endian )
+	if value < -140737488355328 or value > 140737488355327 then
+		return nil, "Int48 value out of range"
+	end
+
+	local b1, b2, b3, b4, b5, b6 = bytepack_writeInt48( value )
+
+	if not big_endian then
+		b1, b2, b3, b4, b5, b6 = b6, b5, b4, b3, b2, b1
+	end
+
+	return string_char( b1, b2, b3, b4, b5, b6 )
+end
+
+--- [SHARED AND MENU]
+---
+--- Reads signed 7-byte (56 bit) integer from binary string.
+---
+--- Range of values: `-36028797018963968` - `36028797018963967`
+---
+---@param str string The binary string.
+---@param big_endian? boolean `true` for big endian, `false` for little endian, default is `false`.
+---@param start_position? integer The start position in binary string, default is `1`.
+---@return integer | nil value The signed 7-byte integer.
+---@return nil | string err_msg The error message.
+function pack.readInt56( str, big_endian, start_position )
+	if start_position == nil then
+		start_position = 1
+	end
+
+	local b1, b2, b3, b4, b5, b6, b7 = string_byte( str, start_position, start_position + 6 )
+
+	if b7 == nil then
+		return nil, "not enough data"
+	end
+
+	if not big_endian then
+		b1, b2, b3, b4, b5, b6, b7 = b7, b6, b5, b4, b3, b2, b1
+	end
+
+	return bytepack_readInt56( b1, b2, b3, b4, b5, b6, b7 )
+end
+
+--- [SHARED AND MENU]
+---
+--- Writes signed 7-byte (56 bit) integer as binary string.
+---
+--- Range of values: `-36028797018963968` - `36028797018963967`
+---
+---@param value integer The signed 7-byte integer.
+---@param big_endian? boolean `true` for big endian, `false` for little endian.
+---@return string | nil binary_string The binary string.
+---@return nil | string err_msg The error message.
+function pack.writeInt56( value, big_endian )
+	if value < -36028797018963968 or value > 36028797018963967 then
+		return nil, "Int56 value out of range"
+	end
+
+	local b1, b2, b3, b4, b5, b6, b7 = bytepack_writeInt56( value )
+
+	if not big_endian then
+		b1, b2, b3, b4, b5, b6, b7 = b7, b6, b5, b4, b3, b2, b1
+	end
+
+	return string_char( b1, b2, b3, b4, b5, b6, b7 )
+end
+
+--- [SHARED AND MENU]
+---
+--- Reads signed 8-byte (64 bit) integer from binary string.
+---
+--- Range of values: `-9007199254740991` - `9007199254740991`
+---
+--- All values above range will have problems.
+---
+---@param str string The binary string.
+---@param big_endian? boolean `true` for big endian, `false` for little endian, default is `false`.
+---@param start_position? integer The start position in binary string, default is `1`.
+---@return integer | nil value The signed 8-byte integer.
+---@return nil | string err_msg The error message.
+function pack.readInt64( str, big_endian, start_position )
+	if start_position == nil then
+		start_position = 1
+	end
+
+	local b1, b2, b3, b4, b5, b6, b7, b8 = string_byte( str, start_position, start_position + 7 )
+
+	if b8 == nil then
+		return nil, "not enough data"
+	end
+
+	if not big_endian then
+		b1, b2, b3, b4, b5, b6, b7, b8 = b8, b7, b6, b5, b4, b3, b2, b1
+	end
+
+	return bytepack_readInt64( b1, b2, b3, b4, b5, b6, b7, b8 )
+end
+
+--- [SHARED AND MENU]
+---
+--- Reads signed 8-byte (64 bit) integer.
+---
+--- Range of values: `-9007199254740991` - `9007199254740991`
+---
+--- All values above range will have problems.
+---
+---@param big_endian? boolean `true` for big endian, `false` for little endian, default is `false`.
+---@return integer | nil value The signed 8-byte integer.
+---@return nil | string err_msg The error message.
+function Reader:readI64( big_endian )
+	local start_position = self.position
+
+	local available = self.length - start_position
+	if available <= 0 then
+		return nil, "end of file"
+	elseif available < 8 then
+		return nil, "not enough data"
+	end
+
+	start_position = start_position + 1
+
+	local end_position = start_position + 7
+	self.position = end_position
+
+	local b1, b2, b3, b4, b5, b6, b7, b8 = string_byte( self.data, start_position, end_position )
+
+	if not big_endian then
+		b1, b2, b3, b4, b5, b6, b7, b8 = b8, b7, b6, b5, b4, b3, b2, b1
+	end
+
+	return bytepack_readInt64( b1, b2, b3, b4, b5, b6, b7, b8 )
+end
+
+--- [SHARED AND MENU]
+---
+--- Writes signed 8-byte (64 bit) integer as binary string.
+---
+--- Range of values: `-9007199254740991` - `9007199254740991`
+---
+--- All values above range will have problems.
+---
+---@param value integer The signed 8-byte integer.
+---@param big_endian? boolean `true` for big endian, `false` for little endian.
+---@return string | nil binary_string The binary string.
+---@return nil | string err_msg The error message.
+function pack.writeInt64( value, big_endian )
+	if value < -9007199254740991 or value > 9007199254740991 then
+		return nil, "Int64 value out of range"
+	end
+
+	local b1, b2, b3, b4, b5, b6, b7, b8 = bytepack_writeInt64( value )
+
+	if not big_endian then
+		b1, b2, b3, b4, b5, b6, b7, b8 = b8, b7, b6, b5, b4, b3, b2, b1
+	end
+
+	return string_char( b1, b2, b3, b4, b5, b6, b7, b8 )
+end
+
+--- [SHARED AND MENU]
+---
+--- Reads an signed integer with the specified number of bits.
+---
+---@param bit_count integer The number of bits to read.
+---@param big_endian? boolean `true` for big endian, `false` for little endian, default is `false`.
+---@return integer | nil value The signed integer.
+---@return nil | string err_msg The error message.
+function Reader:readInt( bit_count, big_endian )
+	if bit_count == 0 then
+		return 0, nil
+	elseif bit_count < 0 then
+		return nil, "invalid bit count"
+	end
+
+	local position = self.position
+
+	local available = self.length - position
+	if available <= 0 then
+		return nil, "end of file"
+	end
+
+	local byte_count = math_ceil( bit_count * 0.125 )
+	if byte_count > available then
+		return nil, "not enough data"
+	end
+
+	self.position = position + byte_count
+
+	if byte_count == 1 then
+		return string_byte( self.data, position + 1 )
+	end
+
+	local b1, b2, b3, b4, b5, b6, b7, b8 = string_byte( self.data, position + 1, position + byte_count )
+
+	if big_endian then
+		if byte_count == 2 then
+			return bytepack_readInt16( b1, b2 )
+		elseif byte_count == 3 then
+			return bytepack_readInt24( b1, b2, b3 )
+		elseif byte_count == 4 then
+			return bytepack_readInt32( b1, b2, b3, b4 )
+		elseif byte_count == 5 then
+			return bytepack_readInt40( b1, b2, b3, b4, b5 )
+		elseif byte_count == 6 then
+			return bytepack_readInt48( b1, b2, b3, b4, b5, b6 )
+		elseif byte_count == 7 then
+			return bytepack_readInt56( b1, b2, b3, b4, b5, b6, b7 )
 		else
-			error( "unsupported byte count", 2 )
-			return ""
+			return bytepack_readInt64( b1, b2, b3, b4, b5, b6, b7, b8 )
 		end
+	elseif byte_count == 2 then
+		return bytepack_readInt16( b2, b1 )
+	elseif byte_count == 3 then
+		return bytepack_readInt24( b3, b2, b1 )
+	elseif byte_count == 4 then
+		return bytepack_readInt32( b4, b3, b2, b1 )
+	elseif byte_count == 5 then
+		return bytepack_readInt40( b5, b4, b3, b2, b1 )
+	elseif byte_count == 6 then
+		return bytepack_readInt48( b6, b5, b4, b3, b2, b1 )
+	elseif byte_count == 7 then
+		return bytepack_readInt56( b7, b6, b5, b4, b3, b2, b1 )
+	else
+		return bytepack_readInt64( b8, b7, b6, b5, b4, b3, b2, b1 )
 	end
-
 end
 
-do
-
-	local bytepack_readInt8 = bytepack.readInt8
-
-	--- [SHARED AND MENU]
-	---
-	--- Reads signed 1-byte (8 bit) integer from binary string.
-	---
-	--- Valid values without loss of precision: `-128` - `127`
-	---
-	---@param str string The binary string.
-	---@param start_position? integer The start position in binary string, default is `1`.
-	---@return integer value The signed 1-byte integer.
-	function pack.readInt8( str, start_position )
-		return bytepack_readInt8( string_byte( str, start_position or 1 ) )
-	end
-
-end
-
-do
-
-	local bytepack_writeInt8 = bytepack.writeInt8
-
-	--- [SHARED AND MENU]
-	---
-	--- Writes signed 1-byte (8 bit) integer as binary string.
-	---
-	--- Valid values without loss of precision: `-128` - `127`
-	---
-	---@param value integer The signed 1-byte integer.
-	---@return string str The binary string.
-	function pack.writeInt8( value )
-		return string_char( bytepack_writeInt8( value ) )
-	end
-
-end
-
-do
-
-	local bytepack_readInt16 = bytepack.readInt16
-
-	--- [SHARED AND MENU]
-	---
-	--- Reads signed 2-byte (16 bit) integer as binary string.
-	---
-	--- Valid values without loss of precision: `-32768` - `32767`
-	---
-	---@param str string The binary string.
-	---@param big_endian? boolean `true` for big endian, `false` for little endian, default is `false`.
-	---@param start_position? integer The start position in binary string, default is `1`.
-	---@return integer value The signed 2-byte integer.
-	function pack.readInt16( str, big_endian, start_position )
-		if start_position == nil then
-			start_position = 1
-		end
-
-		local b1, b2 = string_byte( str, start_position, start_position + 1 )
-
-		if not big_endian then
-			b1, b2 = b2, b1
-		end
-
-		return bytepack_readInt16( b1, b2 )
-	end
-
-end
-
-do
-
-	local bytepack_writeInt16 = bytepack.writeInt16
-
-	--- [SHARED AND MENU]
-	---
-	--- Writes signed 2-byte (16 bit) integer as binary string.
-	---
-	--- Valid values without loss of precision: `-32768` - `32767`
-	---
-	---@param value integer The signed 2-byte integer.
-	---@param big_endian? boolean `true` for big endian, `false` for little endian.
-	---@return string binary_string The binary string.
-	function pack.writeInt16( value, big_endian )
-		local b1, b2 = bytepack_writeInt16( value )
-
-		if not big_endian then
-			b1, b2 = b2, b1
-		end
-
-		return string_char( b1, b2 )
-	end
-
-end
-
-do
-
-	local bytepack_readInt24 = bytepack.readInt24
-
-	--- [SHARED AND MENU]
-	---
-	--- Reads signed 3-byte (24 bit) integer as binary string.
-	---
-	--- Valid values without loss of precision: `-8388608` - `8388607`
-	---
-	---@param str string The binary string.
-	---@param big_endian? boolean `true` for big endian, `false` for little endian, default is `false`.
-	---@param start_position? integer The start position in binary string, default is `1`.
-	---@return integer value The signed 3-byte integer.
-	function pack.readInt24( str, big_endian, start_position )
-		if start_position == nil then
-			start_position = 1
-		end
-
-		local b1, b2, b3 = string_byte( str, start_position, start_position + 2 )
-
-		if not big_endian then
-			b1, b2, b3 = b3, b2, b1
-		end
-
-		return bytepack_readInt24( b1, b2, b3 )
-	end
-
-end
-
-do
-
-	local bytepack_writeInt24 = bytepack.writeInt24
-
-	--- [SHARED AND MENU]
-	---
-	--- Writes signed 3-byte (24 bit) integer as binary string.
-	---
-	--- Valid values without loss of precision: `-8388608` - `8388607`
-	---
-	---@param value integer The signed 3-byte integer.
-	---@param big_endian? boolean `true` for big endian, `false` for little endian.
-	---@return string binary_string The binary string.
-	function pack.writeInt24( value, big_endian )
-		local b1, b2, b3 = bytepack_writeInt24( value )
-
-		if not big_endian then
-			b1, b2, b3 = b3, b2, b1
-		end
-
-		return string_char( b1, b2, b3 )
-	end
-
-end
-
-do
-
-	local bytepack_readInt32 = bytepack.readInt32
-
-	--- [SHARED AND MENU]
-	---
-	--- Reads signed 4-byte (32 bit) integer from binary string.
-	---
-	--- Valid values without loss of precision: `-2147483648` - `2147483647`
-	---
-	---@param str string The binary string.
-	---@param big_endian? boolean `true` for big endian, `false` for little endian, default is `false`.
-	---@param start_position? integer The start position in binary string, default is `1`.
-	---@return integer value The signed 4-byte integer.
-	function pack.readInt32( str, big_endian, start_position )
-		if start_position == nil then
-			start_position = 1
-		end
-
-		local b1, b2, b3, b4 = string_byte( str, start_position, start_position + 3 )
-
-		if not big_endian then
-			b1, b2, b3, b4 = b4, b3, b2, b1
-		end
-
-		return bytepack_readInt32( b1, b2, b3, b4 )
-	end
-
-end
-
-do
-
-	local bytepack_writeInt32 = bytepack.writeInt32
-
-	--- [SHARED AND MENU]
-	---
-	--- Writes signed 4-byte (32 bit) integer as binary string.
-	---
-	--- Valid values without loss of precision: `-2147483648` - `2147483647`
-	---
-	---@param value integer The signed 4-byte integer.
-	---@param big_endian? boolean `true` for big endian, `false` for little endian.
-	---@return string binary_string The binary string.
-	function pack.writeInt32( value, big_endian )
-		local b1, b2, b3, b4 = bytepack_writeInt32( value )
-
-		if not big_endian then
-			b1, b2, b3, b4 = b4, b3, b2, b1
-		end
-
-		return string_char( b1, b2, b3, b4 )
-	end
-
-end
-
-do
-
-	local bytepack_readInt40 = bytepack.readInt40
-
-	--- [SHARED AND MENU]
-	---
-	--- Reads signed 5-byte (40 bit) integer from binary string.
-	---
-	--- Valid values without loss of precision: `-549755813888` - `549755813887`
-	---
-	---@param str string The binary string.
-	---@param big_endian? boolean `true` for big endian, `false` for little endian, default is `false`.
-	---@param start_position? integer The start position in binary string, default is `1`.
-	---@return integer value The signed 5-byte integer.
-	function pack.readInt40( str, big_endian, start_position )
-		if start_position == nil then
-			start_position = 1
-		end
-
-		local b1, b2, b3, b4, b5 = string_byte( str, start_position, start_position + 4 )
-
-		if not big_endian then
-			b1, b2, b3, b4, b5 = b5, b4, b3, b2, b1
-		end
-
-		return bytepack_readInt40( b1, b2, b3, b4, b5 )
-	end
-
-end
-
-do
-
-	local bytepack_writeInt40 = bytepack.writeInt40
-
-	--- [SHARED AND MENU]
-	---
-	--- Writes signed 5-byte (40 bit) integer as binary string.
-	---
-	--- Valid values without loss of precision: `-549755813888` - `549755813887`
-	---
-	---@param value integer The signed 5-byte integer.
-	---@param big_endian? boolean `true` for big endian, `false` for little endian.
-	---@return string binary_string The binary string.
-	function pack.writeInt40( value, big_endian )
-		local b1, b2, b3, b4, b5 = bytepack_writeInt40( value )
-
-		if not big_endian then
-			b1, b2, b3, b4, b5 = b5, b4, b3, b2, b1
-		end
-
-		return string_char( b1, b2, b3, b4, b5 )
-	end
-
-end
-
-do
-
-	local bytepack_readInt48 = bytepack.readInt48
-
-	--- [SHARED AND MENU]
-	---
-	--- Reads signed 6-byte (48 bit) integer from binary string.
-	---
-	--- Valid values without loss of precision: `-140737488355328` - `140737488355327`
-	---
-	---@param str string The binary string.
-	---@param big_endian? boolean `true` for big endian, `false` for little endian, default is `false`.
-	---@param start_position? integer The start position in binary string, default is `1`.
-	---@return integer value The signed 6-byte integer.
-	function pack.readInt48( str, big_endian, start_position )
-		if start_position == nil then
-			start_position = 1
-		end
-
-		local b1, b2, b3, b4, b5, b6 = string_byte( str, start_position, start_position + 5 )
-
-		if not big_endian then
-			b1, b2, b3, b4, b5, b6 = b6, b5, b4, b3, b2, b1
-		end
-
-		return bytepack_readInt48( b1, b2, b3, b4, b5, b6 )
-	end
-
-end
-
-do
-
-	local bytepack_writeInt48 = bytepack.writeInt48
-
-	--- [SHARED AND MENU]
-	---
-	--- Writes signed 6-byte (48 bit) integer as binary string.
-	---
-	--- Valid values without loss of precision: `-140737488355328` - `140737488355327`
-	---
-	---@param value integer The signed 6-byte integer.
-	---@param big_endian? boolean `true` for big endian, `false` for little endian.
-	---@return string binary_string The binary string.
-	function pack.writeInt48( value, big_endian )
-		local b1, b2, b3, b4, b5, b6 = bytepack_writeInt48( value )
-
-		if not big_endian then
-			b1, b2, b3, b4, b5, b6 = b6, b5, b4, b3, b2, b1
-		end
-
-		return string_char( b1, b2, b3, b4, b5, b6 )
-	end
-
-end
-
-do
-
-	local bytepack_readInt56 = bytepack.readInt56
-
-	--- [SHARED AND MENU]
-	---
-	--- Reads signed 7-byte (56 bit) integer from binary string.
-	---
-	--- Valid values without loss of precision: `-36028797018963968` - `36028797018963967`
-	---
-	---@param str string The binary string.
-	---@param big_endian? boolean `true` for big endian, `false` for little endian, default is `false`.
-	---@param start_position? integer The start position in binary string, default is `1`.
-	---@return integer value The signed 7-byte integer.
-	function pack.readInt56( str, big_endian, start_position )
-		if start_position == nil then
-			start_position = 1
-		end
-
-		local b1, b2, b3, b4, b5, b6, b7 = string_byte( str, start_position, start_position + 6 )
-
-		if not big_endian then
-			b1, b2, b3, b4, b5, b6, b7 = b7, b6, b5, b4, b3, b2, b1
-		end
-
-		return bytepack_readInt56( b1, b2, b3, b4, b5, b6, b7 )
-	end
-
-end
-
-do
-
-	local bytepack_writeInt56 = bytepack.writeInt56
-
-	--- [SHARED AND MENU]
-	---
-	--- Writes signed 7-byte (56 bit) integer as binary string.
-	---
-	--- Valid values without loss of precision: `-36028797018963968` - `36028797018963967`
-	---
-	---@param value integer The signed 7-byte integer.
-	---@param big_endian? boolean `true` for big endian, `false` for little endian.
-	---@return string binary_string The binary string.
-	function pack.writeInt56( value, big_endian )
-		local b1, b2, b3, b4, b5, b6, b7 = bytepack_writeInt56( value )
-
-		if not big_endian then
-			b1, b2, b3, b4, b5, b6, b7 = b7, b6, b5, b4, b3, b2, b1
-		end
-
-		return string_char( b1, b2, b3, b4, b5, b6, b7 )
-	end
-
-end
-
-do
-
-	local bytepack_readInt64 = bytepack.readInt64
-
-	--- [SHARED AND MENU]
-	---
-	--- Reads signed 8-byte (64 bit) integer from binary string.
-	---
-	--- Valid values without loss of precision: `-9007199254740991` - `9007199254740991`
-	---
-	--- All values above will have problems when working with them.
-	---
-	---@param str string The binary string.
-	---@param big_endian? boolean `true` for big endian, `false` for little endian, default is `false`.
-	---@param start_position? integer The start position in binary string, default is `1`.
-	---@return integer value The signed 8-byte integer.
-	function pack.readInt64( str, big_endian, start_position )
-		if start_position == nil then
-			start_position = 1
-		end
-
-		local b1, b2, b3, b4, b5, b6, b7, b8 = string_byte( str, start_position, start_position + 7 )
-
-		if not big_endian then
-			b1, b2, b3, b4, b5, b6, b7, b8 = b8, b7, b6, b5, b4, b3, b2, b1
-		end
-
-		return bytepack_readInt64( b1, b2, b3, b4, b5, b6, b7, b8 )
-	end
-
-end
-
-do
-
-	local bytepack_writeInt64 = bytepack.writeInt64
-
-	--- [SHARED AND MENU]
-	---
-	--- Writes signed 8-byte (64 bit) integer as binary string.
-	---
-	--- Valid values without loss of precision: `-9007199254740991` - `9007199254740991`
-	---
-	--- All values above will have problems when working with them.
-	---
-	---@param value integer The signed 8-byte integer.
-	---@param big_endian? boolean `true` for big endian, `false` for little endian.
-	---@return string binary_string The binary string.
-	function pack.writeInt64( value, big_endian )
-		local b1, b2, b3, b4, b5, b6, b7, b8 = bytepack_writeInt64( value )
-
-		if not big_endian then
-			b1, b2, b3, b4, b5, b6, b7, b8 = b8, b7, b6, b5, b4, b3, b2, b1
-		end
-
-		return string_char( b1, b2, b3, b4, b5, b6, b7, b8 )
-	end
-
-end
-
+-- signed fixed-point number
 do
 
 	local bytepack_readFixedPoint = bytepack.readFixedPoint
 
 	--- [SHARED AND MENU]
 	---
-	--- Reads signed fixed-point number (**UQm.n**) from binary string.
+	--- Reads signed fixed-point number (**Qm.n**) from binary string.
 	---
-	--- **Commonly Used UQm.n Formats**
-	---| Format | Range | Precision (Step) |
-	---|:------|:------------------------|:-----------------|
-	---|UQ8.8  |`0 to 255.996`			  |0.00390625 (1/256)
-	---|UQ10.6 |`0 to 1023.984375`		  |0.015625 (1/64)
-	---|UQ12.4 |`0 to 4095.9375`		  |0.0625 (1/16)
-	---|UQ16.16|`0 to 65535.99998`        |0.0000152588 (1/65536)
-	---|UQ24.8 |`0 to 16,777,215.996`     |0.00390625 (1/256)
-	---|UQ32.16|`0 to 4,294,967,295.99998`|0.0000152588 (1/65536)
+	--- ### Commonly used Qm.n formats
+	--- | Format | Range                          | Precision (Step)        |
+	--- |:-------|:-------------------------------|:------------------------|
+	--- | Q8.8   | `-128.0 to 127.996`            | 0.00390625 (1/256)      |
+	--- | Q10.6  | `-512.0 to 511.984375`         | 0.015625 (1/64)         |
+	--- | Q12.4  | `-2048.0 to 2047.9375`         | 0.0625 (1/16)           |
+	--- | Q16.16 | `-32,768.0 to 32,767.99998`    | 0.0000152588 (1/65536)  |
+	--- | Q24.8  | `-8,388,608.0 to 8,388,607.996`| 0.00390625 (1/256)      |
+	--- | Q32.16 | `-2,147,483,648.0 to 2,147,483,647.99998` | 0.0000152588 (1/65536) |
 	---
-	---@param m integer Number of fractional bits.
+	---@param str string The binary string to read.
+	---@param m integer Number of integer bits (including sign bit).
 	---@param n integer Number of fractional bits.
 	---@param big_endian? boolean `true` for big endian, `false` for little endian.
-	---@return number value The signed fixed-point number.
+	---@return number | nil value The signed fixed-point number.
+	---@return nil | string err_msg The error message.
 	function pack.readFixedPoint( str, m, n, big_endian, start_position )
 		local byte_count = ( m + n ) * 0.125
 		if byte_count % 1 ~= 0 then
-			error( "invalid byte count", 2 )
+			return nil, "invalid m.n values"
+		end
+
+		if byte_count == 0 then
+			return 0
+		elseif str == "" then
+			return nil, "not enough data"
 		end
 
 		if start_position == nil then
 			start_position = 1
 		end
 
-		if byte_count == 0 or str == "" then
-			return 0
-		elseif byte_count == 1 then
-			return bytepack_readFixedPoint( n, string_byte( str, start_position ) )
-		elseif byte_count == 2 then
-			local b1, b2 = string_byte( str, start_position, start_position + 1 )
+		local b1, b2, b3, b4, b5, b6, b7, b8 = string_byte( str, start_position, start_position + byte_count )
 
-			if b2 == nil then
-				error( "insufficient data length", 2 )
-			elseif not big_endian then
+		if byte_count == 1 and b1 ~= nil then
+			return bytepack_readFixedPoint( n, b1 ), nil
+		elseif byte_count == 2 and b2 ~= nil then
+			if not big_endian then
 				b1, b2 = b2, b1
 			end
 
-			return bytepack_readFixedPoint( n, b1, b2 )
-		elseif byte_count == 3 then
-			local b1, b2, b3 = string_byte( str, start_position, start_position + 2 )
-
-			if b3 == nil then
-				error( "insufficient data length", 2 )
-			elseif not big_endian then
+			return bytepack_readFixedPoint( n, b1, b2 ), nil
+		elseif byte_count == 3 and b3 ~= nil then
+			if not big_endian then
 				b1, b2, b3 = b3, b2, b1
 			end
 
-			return bytepack_readFixedPoint( n, b1, b2, b3 )
-		elseif byte_count == 4 then
-			local b1, b2, b3, b4 = string_byte( str, start_position, start_position + 3 )
-
-			if b4 == nil then
-				error( "insufficient data length", 2 )
-			elseif not big_endian then
+			return bytepack_readFixedPoint( n, b1, b2, b3 ), nil
+		elseif byte_count == 4 and b4 ~= nil then
+			if not big_endian then
 				b1, b2, b3, b4 = b4, b3, b2, b1
 			end
 
-			return bytepack_readFixedPoint( n, b1, b2, b3, b4 )
-		elseif byte_count == 5 then
-			local b1, b2, b3, b4, b5 = string_byte( str, start_position, start_position + 4 )
-
-			if b5 == nil then
-				error( "insufficient data length", 2 )
-			elseif not big_endian then
+			return bytepack_readFixedPoint( n, b1, b2, b3, b4 ), nil
+		elseif byte_count == 5 and b5 ~= nil then
+			if not big_endian then
 				b1, b2, b3, b4, b5 = b5, b4, b3, b2, b1
 			end
 
-			return bytepack_readFixedPoint( n, b1, b2, b3, b4, b5 )
-		elseif byte_count == 6 then
-			local b1, b2, b3, b4, b5, b6 = string_byte( str, start_position, start_position + 5 )
-
-			if b6 == nil then
-				error( "insufficient data length", 2 )
-			elseif not big_endian then
+			return bytepack_readFixedPoint( n, b1, b2, b3, b4, b5 ), nil
+		elseif byte_count == 6 and b6 ~= nil then
+			if not big_endian then
 				b1, b2, b3, b4, b5, b6 = b6, b5, b4, b3, b2, b1
 			end
 
-			return bytepack_readFixedPoint( n, b1, b2, b3, b4, b5, b6 )
-		elseif byte_count == 7 then
-			local b1, b2, b3, b4, b5, b6, b7 = string_byte( str, start_position, start_position + 6 )
-
-			if b7 == nil then
-				error( "insufficient data length", 2 )
-			elseif not big_endian then
+			return bytepack_readFixedPoint( n, b1, b2, b3, b4, b5, b6 ), nil
+		elseif byte_count == 7 and b7 ~= nil then
+			if not big_endian then
 				b1, b2, b3, b4, b5, b6, b7 = b7, b6, b5, b4, b3, b2, b1
 			end
 
-			return bytepack_readFixedPoint( n, b1, b2, b3, b4, b5, b6, b7 )
-		elseif byte_count == 8 then
-			local b1, b2, b3, b4, b5, b6, b7, b8 = string_byte( str, start_position, start_position + 7 )
-
-			if b8 == nil then
-				error( "insufficient data length", 2 )
-			elseif not big_endian then
+			return bytepack_readFixedPoint( n, b1, b2, b3, b4, b5, b6, b7 ), nil
+		elseif byte_count == 8 and b8 ~= nil then
+			if not big_endian then
 				b1, b2, b3, b4, b5, b6, b7, b8 = b8, b7, b6, b5, b4, b3, b2, b1
 			end
 
-			return bytepack_readFixedPoint( n, b1, b2, b3, b4, b5, b6, b7, b8 )
-		else
-			error( "unsupported byte count", 2 )
-			return 0
+			return bytepack_readFixedPoint( n, b1, b2, b3, b4, b5, b6, b7, b8 ), nil
 		end
+
+		return nil, "not enough data"
 	end
+
+	--- [SHARED AND MENU]
+	---
+	--- Reads signed fixed-point number (**Qm.n**).
+	---
+	--- ### Commonly used Qm.n formats
+	--- | Format | Range                          | Precision (Step)        |
+	--- |:-------|:-------------------------------|:------------------------|
+	--- | Q8.8   | `-128.0 to 127.996`            | 0.00390625 (1/256)      |
+	--- | Q10.6  | `-512.0 to 511.984375`         | 0.015625 (1/64)         |
+	--- | Q12.4  | `-2048.0 to 2047.9375`         | 0.0625 (1/16)           |
+	--- | Q16.16 | `-32,768.0 to 32,767.99998`    | 0.0000152588 (1/65536)  |
+	--- | Q24.8  | `-8,388,608.0 to 8,388,607.996`| 0.00390625 (1/256)      |
+	--- | Q32.16 | `-2,147,483,648.0 to 2,147,483,647.99998` | 0.0000152588 (1/65536) |
+	---
+	---@param m integer Number of integer bits (including sign bit).
+	---@param n integer Number of fractional bits.
+	---@param big_endian? boolean `true` for big endian, `false` for little endian, default is `false`.
+	---@return nil | number value The signed fixed-point number.
+	---@return string | nil err_msg The error message.
+	function Reader:readFixedPoint( n, m, big_endian )
+		local byte_count = ( m + n ) * 0.125
+		if byte_count % 1 ~= 0 or byte_count < 0 then
+			return nil, "invalid m.n values"
+		end
+
+		if byte_count == 0 then
+			return 0, nil
+		end
+
+		local position = self.position
+
+		local available = self.length - position
+		if available <= 0 then
+			return nil, "end of file"
+		elseif byte_count > available then
+			return nil, "not enough data"
+		end
+
+		local b1, b2, b3, b4, b5, b6, b7, b8 = string_byte( self.data, position + 1, position + byte_count )
+
+		self.position = position + byte_count
+
+		if byte_count == 1 and b1 ~= nil then
+			return bytepack_readFixedPoint( n, b1 ), nil
+		elseif byte_count == 2 and b2 ~= nil then
+			if not big_endian then
+				b1, b2 = b2, b1
+			end
+
+			return bytepack_readFixedPoint( n, b1, b2 ), nil
+		elseif byte_count == 3 and b3 ~= nil then
+			if not big_endian then
+				b1, b2, b3 = b3, b2, b1
+			end
+
+			return bytepack_readFixedPoint( n, b1, b2, b3 ), nil
+		elseif byte_count == 4 and b4 ~= nil then
+			if not big_endian then
+				b1, b2, b3, b4 = b4, b3, b2, b1
+			end
+
+			return bytepack_readFixedPoint( n, b1, b2, b3, b4 ), nil
+		elseif byte_count == 5 and b5 ~= nil then
+			if not big_endian then
+				b1, b2, b3, b4, b5 = b5, b4, b3, b2, b1
+			end
+
+			return bytepack_readFixedPoint( n, b1, b2, b3, b4, b5 ), nil
+		elseif byte_count == 6 and b6 ~= nil then
+			if not big_endian then
+				b1, b2, b3, b4, b5, b6 = b6, b5, b4, b3, b2, b1
+			end
+
+			return bytepack_readFixedPoint( n, b1, b2, b3, b4, b5, b6 ), nil
+		elseif byte_count == 7 and b7 ~= nil then
+			if not big_endian then
+				b1, b2, b3, b4, b5, b6, b7 = b7, b6, b5, b4, b3, b2, b1
+			end
+
+			return bytepack_readFixedPoint( n, b1, b2, b3, b4, b5, b6, b7 ), nil
+		elseif byte_count == 8 and b8 ~= nil then
+			if not big_endian then
+				b1, b2, b3, b4, b5, b6, b7, b8 = b8, b7, b6, b5, b4, b3, b2, b1
+			end
+
+			return bytepack_readFixedPoint( n, b1, b2, b3, b4, b5, b6, b7, b8 ), nil
+		end
+
+		return nil, "not enough data"
+	end
+
 
 end
 
 do
 
-	local bytepack_writeUnsignedFixedPoint = bytepack.writeUnsignedFixedPoint
+	local bytepack_writeFixedPoint = bytepack.writeFixedPoint
 
 	--- [SHARED AND MENU]
 	---
-	--- Writes unsigned fixed-point number (**UQm.n**) as binary string.
+	--- Writes signed fixed-point number (**Qm.n**) as binary string.
 	---
-	--- **Commonly Used UQm.n Formats**
-	---| Format | Range | Precision (Step) |
-	---|:------|:------------------------|:-----------------|
-	---|UQ8.8  |`0 to 255.996`			  |0.00390625 (1/256)
-	---|UQ10.6 |`0 to 1023.984375`		  |0.015625 (1/64)
-	---|UQ12.4 |`0 to 4095.9375`		  |0.0625 (1/16)
-	---|UQ16.16|`0 to 65535.99998`        |0.0000152588 (1/65536)
-	---|UQ24.8 |`0 to 16,777,215.996`     |0.00390625 (1/256)
-	---|UQ32.16|`0 to 4,294,967,295.99998`|0.0000152588 (1/65536)
+	--- ### Commonly used Qm.n formats
+	--- | Format | Range                          | Precision (Step)        |
+	--- |:-------|:-------------------------------|:------------------------|
+	--- | Q8.8   | `-128.0 to 127.996`            | 0.00390625 (1/256)      |
+	--- | Q10.6  | `-512.0 to 511.984375`         | 0.015625 (1/64)         |
+	--- | Q12.4  | `-2048.0 to 2047.9375`         | 0.0625 (1/16)           |
+	--- | Q16.16 | `-32,768.0 to 32,767.99998`    | 0.0000152588 (1/65536)  |
+	--- | Q24.8  | `-8,388,608.0 to 8,388,607.996`| 0.00390625 (1/256)      |
+	--- | Q32.16 | `-2,147,483,648.0 to 2,147,483,647.99998` | 0.0000152588 (1/65536) |
 	---
-	---@param value number The unsigned fixed-point number.
+	---@param value number The signed fixed-point number.
 	---@param m integer Number of integer bits (including sign bit).
 	---@param n integer Number of fractional bits.
 	---@param big_endian? boolean `true` for big endian, `false` for little endian.
-	---@return string binary_string The binary string.
-	function pack.writeUnsignedFixedPoint( value, m, n, big_endian )
+	---@return string | nil binary_string The binary string.
+	---@return nil | string err_msg The error message.
+	function pack.writeFixedPoint( value, m, n, big_endian )
 		local byte_count = ( m + n ) * 0.125
 		if byte_count % 1 ~= 0 then
-			error( "invalid byte count", 2 )
+			return nil, "invalid m.n values"
 		end
 
-		if value == 0 then
-			return string_rep( "\0", byte_count )
-		elseif byte_count == 0 then
-			return ""
-		elseif byte_count == 1 then
-			return string_char( bytepack_writeUnsignedFixedPoint( value, m, n ) )
+		if byte_count == 0 then
+			return "", nil
+		elseif value == 0 then
+			return string_rep( "\0", byte_count ), nil
+		end
+
+		local b1, b2, b3, b4, b5, b6, b7, b8 = bytepack_writeFixedPoint( value, m, n )
+
+		if byte_count == 1 then
+			if b1 == nil then
+				return nil, "invalid value"
+			end
+
+			return string_char( b1 ), nil
 		elseif byte_count == 2 then
-			local b1, b2 = bytepack_writeUnsignedFixedPoint( value, m, n )
+			if b2 == nil then
+				return nil, "invalid value"
+			end
 
 			if not big_endian then
 				b1, b2 = b2, b1
 			end
 
-			return string_char( b1, b2 )
+			return string_char( b1, b2 ), nil
 		elseif byte_count == 3 then
-			local b1, b2, b3 = bytepack_writeUnsignedFixedPoint( value, m, n )
+			if b3 == nil then
+				return nil, "invalid value"
+			end
 
 			if not big_endian then
 				b1, b2, b3 = b3, b2, b1
 			end
 
-			return string_char( b1, b2, b3 )
+			return string_char( b1, b2, b3 ), nil
 		elseif byte_count == 4 then
-			local b1, b2, b3, b4 = bytepack_writeUnsignedFixedPoint( value, m, n )
+			if b4 == nil then
+				return nil, "invalid value"
+			end
 
 			if not big_endian then
 				b1, b2, b3, b4 = b4, b3, b2, b1
 			end
 
-			return string_char( b1, b2, b3, b4 )
+			return string_char( b1, b2, b3, b4 ), nil
 		elseif byte_count == 5 then
-			local b1, b2, b3, b4, b5 = bytepack_writeUnsignedFixedPoint( value, m, n )
+			if b5 == nil then
+				return nil, "invalid value"
+			end
 
 			if not big_endian then
 				b1, b2, b3, b4, b5 = b5, b4, b3, b2, b1
 			end
 
-			return string_char( b1, b2, b3, b4, b5 )
+			return string_char( b1, b2, b3, b4, b5 ), nil
 		elseif byte_count == 6 then
-			local b1, b2, b3, b4, b5, b6 = bytepack_writeUnsignedFixedPoint( value, m, n )
+			if b6 == nil then
+				return nil, "invalid value"
+			end
 
 			if not big_endian then
 				b1, b2, b3, b4, b5, b6 = b6, b5, b4, b3, b2, b1
 			end
 
-			return string_char( b1, b2, b3, b4, b5, b6 )
+			return string_char( b1, b2, b3, b4, b5, b6 ), nil
 		elseif byte_count == 7 then
-			local b1, b2, b3, b4, b5, b6, b7 = bytepack_writeUnsignedFixedPoint( value, m, n )
+			if b7 == nil then
+				return nil, "invalid value"
+			end
 
 			if not big_endian then
 				b1, b2, b3, b4, b5, b6, b7 = b7, b6, b5, b4, b3, b2, b1
 			end
 
-			return string_char( b1, b2, b3, b4, b5, b6, b7 )
+			return string_char( b1, b2, b3, b4, b5, b6, b7 ), nil
 		elseif byte_count == 8 then
-			local b1, b2, b3, b4, b5, b6, b7, b8 = bytepack_writeUnsignedFixedPoint( value, m, n )
+			if b8 == nil then
+				return nil, "invalid value"
+			end
 
 			if not big_endian then
 				b1, b2, b3, b4, b5, b6, b7, b8 = b8, b7, b6, b5, b4, b3, b2, b1
 			end
 
-			return string_char( b1, b2, b3, b4, b5, b6, b7, b8 )
-		else
-			error( "unsupported byte count", 2 )
-			return ""
+			return string_char( b1, b2, b3, b4, b5, b6, b7, b8 ), nil
 		end
+
+		return nil, "unsupported byte count"
 	end
 
 end
 
+-- float
 do
 
 	local bytepack_readFloat = bytepack.readFloat
@@ -1722,12 +2031,11 @@ do
 	---
 	--- Reads signed 4-byte (32 bit) float from binary string.
 	---
-	--- Allowable values from `1.175494351e-38` to `3.402823466e+38`.
-	---
 	---@param str string The binary string.
 	---@param big_endian? boolean `true` for big endian, `false` for little endian, default is `false`.
 	---@param start_position? integer The start position in binary string, default is `1`.
-	---@return number value The signed 4-byte float.
+	---@return number | nil value The signed 4-byte float.
+	---@return nil | string err_msg The error message.
 	function pack.readFloat( str, big_endian, start_position )
 		if start_position == nil then
 			start_position = 1
@@ -1735,11 +2043,50 @@ do
 
 		local b1, b2, b3, b4 = string_byte( str, start_position, start_position + 3 )
 
+		if b4 == nil then
+			return nil, "not enough data"
+		end
+
 		if not big_endian then
 			b1, b2, b3, b4 = b4, b3, b2, b1
 		end
 
-		return bytepack_readFloat( b1, b2, b3, b4 )
+		return bytepack_readFloat( b1, b2, b3, b4 ), nil
+	end
+
+	--- [SHARED AND MENU]
+	---
+	--- Reads signed 4-byte (32 bit) float.
+	---
+	---@param big_endian? boolean `true` for big endian, `false` for little endian, default is `false`.
+	---@return number | nil value The signed 4-byte float.
+	---@return nil | string err_msg The error message.
+	function Reader:readFloat( big_endian )
+		local start_position = self.position
+
+		local available = self.length - start_position
+		if available <= 0 then
+			return nil, "end of file"
+		elseif available < 4 then
+			return nil, "not enough data"
+		end
+
+		start_position = start_position + 1
+
+		local end_position = start_position + 3
+		self.position = end_position
+
+		local b1, b2, b3, b4 = string_byte( self.data, start_position, end_position )
+
+		if b4 == nil then
+			return nil, "not enough data"
+		end
+
+		if not big_endian then
+			b1, b2, b3, b4 = b4, b3, b2, b1
+		end
+
+		return bytepack_readFloat( b1, b2, b3, b4 ), nil
 	end
 
 end
@@ -1769,6 +2116,7 @@ do
 
 end
 
+-- double
 do
 
 	local bytepack_readDouble = bytepack.readDouble
@@ -1777,12 +2125,11 @@ do
 	---
 	--- Reads signed 8-byte (64 bit) float (double) from binary string.
 	---
-	--- Allowable values from `2.2250738585072014e-308` to `1.7976931348623158e+308`.
-	---
 	---@param str string The binary string.
 	---@param big_endian? boolean `true` for big endian, `false` for little endian, default is `false`.
 	---@param start_position? integer The start position in binary string, default is `1`.
-	---@return number value The double value.
+	---@return number | nil value The double value.
+	---@return nil | string err_msg The error message.
 	function pack.readDouble( str, big_endian, start_position )
 		if start_position == nil then
 			start_position = 1
@@ -1790,11 +2137,50 @@ do
 
 		local b1, b2, b3, b4, b5, b6, b7, b8 = string_byte( str, start_position, start_position + 7 )
 
+		if b8 == nil then
+			return nil, "not enough data"
+		end
+
 		if not big_endian then
 			b1, b2, b3, b4, b5, b6, b7, b8 = b8, b7, b6, b5, b4, b3, b2, b1
 		end
 
 		return bytepack_readDouble( b1, b2, b3, b4, b5, b6, b7, b8 )
+	end
+
+	--- [SHARED AND MENU]
+	---
+	--- Reads signed 8-byte (64 bit) float (double).
+	---
+	---@param big_endian? boolean `true` for big endian, `false` for little endian, default is `false`.
+	---@return number | nil value The double value.
+	---@return nil | string err_msg The error message.
+	function Reader:readDouble( big_endian )
+		local start_position = self.position
+
+		local available = self.length - start_position
+		if available <= 0 then
+			return nil, "end of file"
+		elseif available < 8 then
+			return nil, "not enough data"
+		end
+
+		start_position = start_position + 1
+
+		local end_position = start_position + 7
+		self.position = end_position
+
+		local b1, b2, b3, b4, b5, b6, b7, b8 = string_byte( self.data, start_position, end_position )
+
+		if b8 == nil then
+			return nil, "not enough data"
+		end
+
+		if not big_endian then
+			b1, b2, b3, b4, b5, b6, b7, b8 = b8, b7, b6, b5, b4, b3, b2, b1
+		end
+
+		return bytepack_readDouble( b1, b2, b3, b4, b5, b6, b7, b8 ), nil
 	end
 
 end
@@ -1806,8 +2192,6 @@ do
 	--- [SHARED AND MENU]
 	---
 	--- Writes signed 8-byte (64 bit) float (double) as binary string.
-	---
-	--- Allowable values from `2.2250738585072014e-308` to `1.7976931348623158e+308`.
 	---
 	---@param value number The signed 8-byte float.
 	---@param big_endian? boolean `true` for big endian, `false` for little endian.
@@ -1824,20 +2208,22 @@ do
 
 end
 
+-- DOS date
 do
 
 	local bytepack_readDate = bytepack.readDate
 
 	--- [SHARED AND MENU]
 	---
-	--- Reads date in DOS format from binary string.
+	--- Reads DOS formatted date from binary string.
 	---
 	---@param str string The string.
 	---@param big_endian? boolean `true` for big endian, `false` for little endian, default is `false`.
 	---@param start_position? integer The start position in binary string, default is `1`.
-	---@return integer day The day.
-	---@return integer month The month.
-	---@return integer year The year.
+	---@return integer | nil day The day.
+	---@return integer | nil month The month.
+	---@return integer | nil year The year.
+	---@return nil | string err_msg The error message.
 	function pack.readDate( str, big_endian, start_position )
 		if start_position == nil then
 			start_position = 1
@@ -1846,7 +2232,44 @@ do
 		local b1, b2 = string_byte( str, start_position, start_position + 1 )
 
 		if b2 == nil then
-			error( "insufficient data length", 2 )
+			return nil, nil, nil, "not enough data"
+		end
+
+		if not big_endian then
+			b1, b2 = b2, b1
+		end
+
+		return bytepack_readDate( b1, b2 )
+	end
+
+	--- [SHARED AND MENU]
+	---
+	--- Reads DOS formatted date.
+	---
+	---@param big_endian? boolean `true` for big endian, `false` for little endian, default is `false`.
+	---@return integer | nil day The day.
+	---@return integer | nil month The month.
+	---@return integer | nil year The year.
+	---@return nil | string err_msg The error message.
+	function Reader:readDate( big_endian )
+		local start_position = self.position
+
+		local available = self.length - start_position
+		if available <= 0 then
+			return nil, nil, nil, "end of file"
+		elseif available < 2 then
+			return nil, nil, nil, "not enough data"
+		end
+
+		start_position = start_position + 1
+
+		local end_position = start_position + 1
+		self.position = end_position
+
+		local b1, b2 = string_byte( self.data, start_position, end_position )
+
+		if b2 == nil then
+			return nil, nil, nil, "not enough data"
 		end
 
 		if not big_endian then
@@ -1869,6 +2292,8 @@ do
 	---@param day? integer The day.
 	---@param month? integer The month.
 	---@param year? integer The year.
+	---@param big_endian? boolean `true` for big endian, `false` for little endian.
+	---@return string | nil binary_string The binary string.
 	function pack.writeDate( day, month, year, big_endian )
 		local b1, b2 = bytepack_writeDate( day, month, year )
 
@@ -1881,20 +2306,22 @@ do
 
 end
 
+-- time
 do
 
 	local bytepack_readTime = bytepack.readTime
 
 	--- [SHARED AND MENU]
 	---
-	--- Reads time in DOS format from binary string.
+	--- Reads DOS formatted time from binary string.
 	---
 	---@param str string The binary string.
 	---@param big_endian? boolean `true` for big endian, `false` for little endian, default is `false`.
 	---@param start_position? integer The start position in binary string, default is `1`.
-	---@return integer hours The number of hours.
-	---@return integer minutes The number of minutes.
-	---@return integer seconds The number of seconds, **will be rounded**.
+	---@return integer | nil hours The number of hours.
+	---@return integer | nil minutes The number of minutes.
+	---@return integer | nil seconds The number of seconds, **will be rounded**.
+	---@return nil | string err_msg The error message.
 	function pack.readTime( str, big_endian, start_position )
 		if start_position == nil then
 			start_position = 1
@@ -1903,7 +2330,44 @@ do
 		local b1, b2 = string_byte( str, start_position, start_position + 1 )
 
 		if b2 == nil then
-			error( "insufficient data length", 2 )
+			return nil, nil, nil, "not enough data"
+		end
+
+		if not big_endian then
+			b1, b2 = b2, b1
+		end
+
+		return bytepack_readTime( b1, b2 )
+	end
+
+	--- [SHARED AND MENU]
+	---
+	--- Reads DOS formatted time.
+	---
+	---@param big_endian? boolean `true` for big endian, `false` for little endian, default is `false`.
+	---@return integer | nil hours The number of hours.
+	---@return integer | nil minutes The number of minutes.
+	---@return integer | nil seconds The number of seconds, **will be rounded**.
+	---@return nil | string err_msg The error message.
+	function Reader:readTime( big_endian )
+		local start_position = self.position
+
+		local available = self.length - start_position
+		if available <= 0 then
+			return nil, nil, nil, "end of file"
+		elseif available < 2 then
+			return nil, nil, nil, "not enough data"
+		end
+
+		start_position = start_position + 1
+
+		local end_position = start_position + 1
+		self.position = end_position
+
+		local b1, b2 = string_byte( self.data, start_position, end_position )
+
+		if b2 == nil then
+			return nil, nil, nil, "not enough data"
 		end
 
 		if not big_endian then
@@ -1947,13 +2411,40 @@ end
 ---@param str string The binary string.
 ---@param length? integer The size of the string.
 ---@param start_position? integer The start position in binary string, default is `1`.
----@return string str The fixed-length string.
-function pack.readFixedString( str, length, start_position )
+---@return string | nil str The fixed-length string.
+---@return nil | string err_msg The error message.
+local function pack_readFixedString( str, length, start_position )
 	if start_position == nil then
 		start_position = 1
 	end
 
-	return string_sub( str, start_position, ( start_position - 1 ) + length )
+	if ( string_len( str ) - start_position ) < ( length - 1 ) then
+		return nil, "not enough data"
+	else
+		return string_sub( str, start_position, ( start_position - 1 ) + length ), nil
+	end
+end
+
+pack.readFixedString = pack_readFixedString
+
+--- [SHARED AND MENU]
+---
+--- Reads fixed-length string.
+---
+---@param length? integer The size of the string.
+---@return string | nil str The fixed-length string.
+---@return nil | string err_msg The error message.
+function Reader:readFixedString( length )
+	local start_position = self.position
+
+	local available = self.length - start_position
+	if available <= 0 then
+		return nil, "end of file"
+	elseif length > available then
+		return nil, "not enough data"
+	else
+		return string_sub( self.data, start_position + 1, start_position + length ), nil
+	end
 end
 
 --- [SHARED AND MENU]
@@ -1961,81 +2452,169 @@ end
 --- Writes fixed-length string as binary string.
 ---
 ---@param str string The binary string.
----@param max_length? integer The size of the string. ( 255 by default )
+---@param required_length? integer The size of the string, default is `255`.
 ---@return string str The fixed-length string.
-function pack.writeFixedString( str, max_length )
-	if max_length == nil then
-		max_length = 255
+local function pack_writeFixedString( str, required_length )
+	if required_length == nil then
+		required_length = 255
+	end
+
+	local real_length = string_len( str )
+
+	if required_length == real_length then
+		return str
+	elseif required_length > real_length then
+		return str .. string_rep( "\0", required_length - real_length )
+	else
+		return string_sub( str, 1, required_length )
+	end
+end
+
+pack.writeFixedString = pack_writeFixedString
+
+--- [SHARED AND MENU]
+---
+--- Reads counted string from binary string.
+---
+---@param str string The binary string.
+---@param byte_count? integer The number of bytes to read for the length of the string, default is `1`.
+---@param big_endian? boolean `true` for big endian, `false` for little endian, default is `false`.
+---@param start_position? integer The start position in binary string, default is `1`.
+---@return string | nil str The counted string.
+---@return integer | nil str_length The length of the counted string.
+---@return nil | string err_msg The error message.
+function pack.readCountedString( str, byte_count, big_endian, start_position )
+	if byte_count == nil then
+		byte_count = 1
+	elseif byte_count == 0 then
+		return "", 0
+	end
+
+	if start_position == nil then
+		start_position = 1
+	end
+
+	local b1, b2, b3, b4, b5, b6, b7, b8 = string_byte( str, start_position, start_position + byte_count )
+	local length
+
+	if byte_count == 1 then
+		length = b1
+	elseif big_endian then
+		if byte_count == 2 then
+			length = bytepack_readUInt16( b1, b2 )
+		elseif byte_count == 3 then
+			length = bytepack_readUInt24( b1, b2, b3 )
+		elseif byte_count == 4 then
+			length = bytepack_readUInt32( b1, b2, b3, b4 )
+		elseif byte_count == 5 then
+			length = bytepack_readUInt40( b1, b2, b3, b4, b5 )
+		elseif byte_count == 6 then
+			length = bytepack_readUInt48( b1, b2, b3, b4, b5, b6 )
+		elseif byte_count == 7 then
+			length = bytepack_readUInt56( b1, b2, b3, b4, b5, b6, b7 )
+		else
+			length = bytepack_readUInt64( b1, b2, b3, b4, b5, b6, b7, b8 )
+		end
+	elseif byte_count == 2 then
+		length = bytepack_readUInt16( b2, b1 )
+	elseif byte_count == 3 then
+		length = bytepack_readUInt24( b3, b2, b1 )
+	elseif byte_count == 4 then
+		length = bytepack_readUInt32( b4, b3, b2, b1 )
+	elseif byte_count == 5 then
+		length = bytepack_readUInt40( b5, b4, b3, b2, b1 )
+	elseif byte_count == 6 then
+		length = bytepack_readUInt48( b6, b5, b4, b3, b2, b1 )
+	elseif byte_count == 7 then
+		length = bytepack_readUInt56( b7, b6, b5, b4, b3, b2, b1 )
+	else
+		length = bytepack_readUInt64( b8, b7, b6, b5, b4, b3, b2, b1 )
+	end
+
+	if length == 0 then
+		return "", 0
+	else
+		return pack_readFixedString( str, length, byte_count + ( start_position - 1 ) + 1 ), length
+	end
+end
+
+--- [SHARED AND MENU]
+---
+--- Reads counted string from binary string.
+---
+---@param bit_count? integer The number of bits to read for the length of the string, default is `8`.
+---@param big_endian? boolean `true` for big endian, `false` for little endian, default is `false`.
+---@return string | nil str The counted string.
+---@return integer | nil str_length The length of the counted string.
+---@return nil | string err_msg The error message.
+function Reader:readCountedString( bit_count, big_endian )
+	local length, err_msg = self:readUInt( bit_count or 8, big_endian )
+	if length == nil then
+		return nil, nil, err_msg
+	else
+		return self:readFixedString( length ), length
+	end
+end
+
+--- [SHARED AND MENU]
+---
+--- Writes counted string as binary string.
+---
+---@param str string The counted string.
+---@param byte_count? integer The number of bytes to read.
+---@param big_endian? boolean `true` for big endian, `false` for little endian.
+---@return string new_str The binary string.
+---@return integer new_length The length of the binary string.
+function pack.writeCountedString( str, byte_count, big_endian )
+	if byte_count == nil then
+		byte_count = 1
 	end
 
 	local length = string_len( str )
 
-	if max_length == length then
-		return str
-	elseif max_length > length then
-		return str .. string_rep( "\0", max_length - length )
+	local uint_str
+	if byte_count == 1 then
+		uint_str = string_char( length )
+	elseif big_endian then
+		if byte_count == 2 then
+			uint_str = string_char( bytepack_writeUInt16( length ) )
+		elseif byte_count == 3 then
+			uint_str = string_char( bytepack_writeUInt24( length ) )
+		elseif byte_count == 4 then
+			uint_str = string_char( bytepack_writeUInt32( length ) )
+		elseif byte_count == 5 then
+			uint_str = string_char( bytepack_writeUInt40( length ) )
+		elseif byte_count == 6 then
+			uint_str = string_char( bytepack_writeUInt48( length ) )
+		elseif byte_count == 7 then
+			uint_str = string_char( bytepack_writeUInt56( length ) )
+		else
+			uint_str = string_char( bytepack_writeUInt64( length ) )
+		end
+	elseif byte_count == 2 then
+		local b1, b2 = bytepack_writeUInt16( length )
+		uint_str = string_char( b2, b1 )
+	elseif byte_count == 3 then
+		local b1, b2, b3 = bytepack_writeUInt24( length )
+		uint_str = string_char( b3, b2, b1 )
+	elseif byte_count == 4 then
+		local b1, b2, b3, b4 = bytepack_writeUInt32( length )
+		uint_str = string_char( b4, b3, b2, b1 )
+	elseif byte_count == 5 then
+		local b1, b2, b3, b4, b5 = bytepack_writeUInt40( length )
+		uint_str = string_char( b5, b4, b3, b2, b1 )
+	elseif byte_count == 6 then
+		local b1, b2, b3, b4, b5, b6 = bytepack_writeUInt48( length )
+		uint_str = string_char( b6, b5, b4, b3, b2, b1 )
+	elseif byte_count == 7 then
+		local b1, b2, b3, b4, b5, b6, b7 = bytepack_writeUInt56( length )
+		uint_str = string_char( b7, b6, b5, b4, b3, b2, b1 )
 	else
-		return string_sub( str, 1, max_length )
-	end
-end
-
-do
-
-	local readUInt = pack.readUInt
-
-	--- [SHARED AND MENU]
-	---
-	--- Reads counted string from binary string.
-	---
-	---@param str string The binary string.
-	---@param byte_count? integer The number of bytes to read.
-	---@param big_endian? boolean `true` for big endian, `false` for little endian, default is `false`.
-	---@param start_position? integer The start position in binary string, default is `1`.
-	---@return string result The counted string.
-	---@return integer length The length of the counted string.
-	function pack.readCountedString( str, byte_count, big_endian, start_position )
-		if byte_count == nil then
-			byte_count = 1
-		end
-
-		if start_position == nil then
-			start_position = 1
-		end
-
-		local length = readUInt( str, byte_count, big_endian, start_position )
-
-		if length == 0 then
-			return "", 0
-		end
-
-		start_position = byte_count + ( start_position - 1 )
-		return string_sub( str, start_position + 1, start_position + length ), length
+		local b1, b2, b3, b4, b5, b6, b7, b8 = bytepack_writeUInt64( length )
+		uint_str = string_char( b8, b7, b6, b5, b4, b3, b2, b1 )
 	end
 
-end
-
-do
-
-	local pack_writeUInt = pack.writeUInt
-
-	--- [SHARED AND MENU]
-	---
-	--- Writes counted string as binary string.
-	---
-	---@param str string The counted string.
-	---@param byte_count? integer The number of bytes to read.
-	---@param big_endian? boolean `true` for big endian, `false` for little endian.
-	---@return string result The binary string.
-	---@return integer length The length of the binary string.
-	function pack.writeCountedString( str, byte_count, big_endian )
-		if byte_count == nil then
-			byte_count = 1
-		end
-
-		local length = string_len( str )
-		return pack_writeUInt( length, byte_count, big_endian ) .. str, length + byte_count
-	end
-
+	return uint_str .. pack_writeFixedString( str, length ), length + byte_count
 end
 
 --- [SHARED AND MENU]
@@ -2073,3 +2652,5 @@ end
 function pack.writeNullTerminatedString( str )
 	return str .. "\0"
 end
+
+-- TODO: Zip
