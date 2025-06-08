@@ -169,3 +169,36 @@ do
     end
 
 end
+
+--- [SHARED AND MENU]
+---
+--- Returns a UUID v8 string from the given bytes.
+---
+--- UUIDv8 is a flexible version allowing custom data alongside version and variant bits.
+---
+---@param b1? integer Unsigned byte (0..255)
+---@param b2? integer Unsigned byte (0..255)
+---@param b3? integer Unsigned byte (0..255)
+---@param b4? integer Unsigned byte (0..255)
+---@param b5? integer Unsigned byte (0..255)
+---@param b6? integer Unsigned byte (0..255)
+---@param b7? integer Unsigned byte (0..15)
+---@param b8? integer Unsigned byte (0..255)
+---@param b9? integer Unsigned byte (0..63)
+---@param b10? integer Unsigned byte (0..255)
+---@param b11? integer Unsigned byte (0..255)
+---@param b12? integer Unsigned byte (0..255)
+---@param b13? integer Unsigned byte (0..255)
+---@param b14? integer Unsigned byte (0..255)
+---@param b15? integer Unsigned byte (0..255)
+---@param b16? integer Unsigned byte (0..255)
+---@return string uuid A UUID v8 string.
+function crypto.UUIDv8( b1, b2, b3, b4, b5, b6, b7, b8, b9, b10, b11, b12, b13, b14, b15, b16 )
+    return string_format(
+        "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
+        b1 or 0, b2 or 0, b3 or 0, b4 or 0, b5 or 0, b6 or 0,
+        bit_bor( bit_band( b7 or 0, 0x0F ), 0x80 ), b8 or 0,
+        bit_bor( bit_band( b9 or 0, 0x3F ), 0x80 ), b10 or 0,
+        b11 or 0, b12 or 0, b13 or 0, b14 or 0, b15 or 0, b16 or 0
+    )
+end
