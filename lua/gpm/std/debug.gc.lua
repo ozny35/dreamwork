@@ -146,9 +146,9 @@ do
     local setmetatable = std.setmetatable
 
     local presets = {
-        kv = { __mode = "kv" },
-        k = { __mode = "k" },
-        v = { __mode = "v" }
+        [ 1 ] = { __mode = "kv" },
+        [ 2 ] = { __mode = "k" },
+        [ 3 ] = { __mode = "v" }
     }
 
     --- [SHARED AND MENU]
@@ -159,27 +159,50 @@ do
     ---@param key? boolean `true` if key collection is allowed, `false` otherwise.
     ---@param value? boolean `true` if value collection is allowed, `false` otherwise.
     function gc.setTableRules( tbl, key, value )
+        local mode_id
+        if key and value then
+            mode_id = 1
+        elseif key then
+            mode_id = 2
+        elseif value then
+            mode_id = 3
+        else
+            mode_id = 0
+        end
+
         local metatable = debug_getmetatable( tbl )
         if metatable == nil then
-            if key and value then
-                setmetatable( tbl, presets.kv )
-            elseif key then
-                setmetatable( tbl, presets.k )
-            elseif value then
-                setmetatable( tbl, presets.v )
+            if mode_id ~= 0 then
+                setmetatable( tbl, presets[ mode_id ] )
             end
 
             return
         end
 
-        if key and value then
-            metatable.__mode = "kv"
-        elseif key then
-            metatable.__mode = "k"
-        elseif value then
-            metatable.__mode = "v"
-        else
+        if metatable == presets[ mode_id ] then
+            return
+        end
+
+        for i = 1, 3, 1 do
+            if presets[ i ] == metatable then
+                if mode_id == 0 then
+                    setmetatable( tbl, nil )
+                else
+                    setmetatable( tbl, presets[ mode_id ] )
+                end
+
+                return
+            end
+        end
+
+        if mode_id == 0 then
             metatable.__mode = nil
+        elseif mode_id == 1 then
+            metatable.__mode = "kv"
+        elseif mode_id == 2 then
+            metatable.__mode = "k"
+        elseif mode_id == 3 then
+            metatable.__mode = "v"
         end
     end
 
