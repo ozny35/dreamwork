@@ -386,8 +386,6 @@ end
 local WriterClass = std.class.create( Writer )
 pack.Writer = WriterClass
 
--- TODO: make writer class
-
 --- [SHARED AND MENU]
 ---
 --- Reads unsigned 1-byte (8 bit) integer from binary string.
