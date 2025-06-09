@@ -1,5 +1,5 @@
 local _G = _G
-local glua_util = _G.util
+local glua_util = _G.util or {}
 
 ---@class gpm.std
 local std = _G.gpm.std
@@ -73,16 +73,8 @@ do
 
 end
 
---- [SHARED AND MENU]
----
---- The base64 format is used to encode data as a string of characters.
----
----@class gpm.std.crypto.base64
-local base64 = crypto.base64 or {}
-crypto.base64 = base64
-
-base64.encode = base64.encode or glua_util.Base64Encode
-base64.decode = base64.decode or glua_util.Base64Decode
+-- TODO: pure lua md5
+-- TODO: pure lua sha1
 
 do
 

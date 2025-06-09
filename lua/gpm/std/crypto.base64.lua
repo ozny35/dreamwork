@@ -1,0 +1,530 @@
+--[[
+
+    Sources:
+
+        https://github.com/iskolbin/lbase64
+        https://github.com/ErnieE5/ee5_base64
+        http://lua-users.org/wiki/BaseSixtyFour
+
+    Thank you all for your work!
+
+--]]
+
+local std = _G.gpm.std
+
+---@class gpm.std.crypto
+local crypto = std.crypto
+
+local string = std.string
+local string_len = string.len
+local string_sub = string.sub
+local string_byte, string_char = string.byte, string.char
+
+local table_concat = std.table.concat
+local bit_extract = std.bit.extract
+
+local glua_util = _G.util
+local glue_encode = glua_util ~= nil and glua_util.Base64Encode
+local glue_decode = glua_util ~= nil and glua_util.Base64Decode
+
+--- [SHARED AND MENU]
+---
+--- The base64 encoding/decoding library.
+---
+--- See https://en.wikipedia.org/wiki/Base64
+---
+---@class gpm.std.crypto.base64
+local base64 = crypto.base64 or {}
+crypto.base64 = base64
+
+--- [SHARED AND MENU]
+---
+--- The base64 encoding/decoding alphabet.
+---
+---@class gpm.std.crypto.base64.Alphabet
+---@field [1] integer[] The encoding alphabet.
+---@field [2] integer[] The decoding alphabet.
+
+do
+
+    local table_remove = std.table.remove
+
+    --- [SHARED AND MENU]
+    ---
+    --- Creates a base64 alphabet with encoding and decoding maps.
+    ---
+    ---@param str_alphabet string The alphabet string.
+    ---@return gpm.std.crypto.base64.Alphabet alphabet The alphabet.
+    function base64.alphabet( str_alphabet )
+        if string_len( str_alphabet ) ~= 64 then
+            error( "alphabet must be 64 characters long", 2 )
+        end
+
+        local encode_alphabet = { string_byte( str_alphabet, 1, 64 ) }
+        encode_alphabet[ 0 ] = table_remove( encode_alphabet, 1 )
+
+        local decode_alphabet = {}
+
+        for i = 0, 63, 1 do
+            local byte = encode_alphabet[ i ]
+            if decode_alphabet[ byte ] == nil then
+                decode_alphabet[ byte ] = i
+            elseif byte > 32 and byte < 127 then
+                error( "alphabet characters must be unique, duplicate character: '" .. string_char( byte ) .. "'", 2 )
+            else
+                error( "alphabet characters must be unique, duplicate character: '\\" .. byte .. "'", 2 )
+            end
+        end
+
+        return { encode_alphabet, decode_alphabet }
+    end
+
+end
+
+local standard = base64.alphabet( "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/" )
+local urlsafe = base64.alphabet( "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_" )
+
+--- [SHARED AND MENU]
+---
+--- Base64 encoding/decoding options variant.
+---
+---@class gpm.std.crypto.base64.Variant
+---@field alphabet gpm.std.crypto.base64.Alphabet The 64-character alphabet used for encoding and decoding.
+---@field pad string | nil Optional padding character (usually "="). When `nil`, padding is disabled.
+---@field wrap integer | nil Optional line wrap length. If `nil`, no wrapping is applied.
+---@field eol string | nil Optional end-of-line character(s) used if `wrap` is set (e.g., "\r\n").
+---@field ignore_cache boolean | nil Whether to ignore the cache during decoding. Default is `false`.
+---@field encode_cache table<integer, string> | nil A cache of encoded strings.
+---@field decode_cache table<integer, string> | nil A cache of decoded strings.
+
+---@type table<string, gpm.std.crypto.base64.Variant>
+local variants = {
+    standard = {
+        alphabet = standard,
+        pad = "="
+    },
+
+    urlsafe = {
+        alphabet = urlsafe
+    },
+
+    mime = {
+        alphabet = standard,
+        pad = "=",
+        wrap = 76,
+        eol = "\r\n"
+    }
+}
+
+variants.jwt = variants.urlsafe
+
+--- [SHARED AND MENU]
+---
+--- Base64 encoding/decoding options.
+---
+---@class gpm.std.crypto.base64.Options : gpm.std.crypto.base64.Variant
+---@field variant "standard" | "urlsafe" | "mime" | "jwt" | "custom" The base64 variant to use.
+---@field alphabet gpm.std.crypto.base64.Alphabet | nil The 64-character alphabet used for encoding and decoding.
+
+---@param options gpm.std.crypto.base64.Options
+local function perform_options( options )
+    local variant = options.variant or "standard"
+    options.variant = nil
+
+    if variant == "custom" then
+        local variant_options = variants.standard
+        options.alphabet = options.alphabet or variant_options.alphabet
+        return
+    end
+
+    local variant_options = variants[ variant ]
+    if variant_options == nil then
+        error( "unknown base64 variant", 3 )
+    end
+
+    local alphabet = options.alphabet
+    if alphabet == nil then
+        options.alphabet = variant_options.alphabet
+    end
+
+    local pad = options.pad
+    if pad == nil then
+        options.pad = variant_options.pad
+    elseif string_len( pad ) ~= 1 then
+        error( "pad must be a single character", 3 )
+    end
+
+    local wrap = options.wrap
+    if wrap == nil then
+        options.wrap = variant_options.wrap
+    end
+
+    local eol = options.eol
+    if eol == nil then
+        options.eol = variant_options.eol or "\r\n"
+    end
+
+    local ignore_cache = options.ignore_cache
+    if ignore_cache == nil then
+        options.ignore_cache = variant_options.ignore_cache == true
+    else
+        options.ignore_cache = ignore_cache == true
+    end
+end
+
+---@param encode_alphabet table<integer, integer>
+---@param do_cache boolean
+---@param cache_map table<integer, string> | nil
+---@param b1 integer
+---@param b2 integer | nil
+---@param b3 integer | nil
+---@return string
+local function block_encode( encode_alphabet, do_cache, cache_map, b1, b2, b3 )
+    local bit_sum
+
+    if b1 == nil then
+        error( "block must have at least one byte", 2 )
+    elseif b2 == nil then
+        bit_sum = b1 * 0x10000
+    elseif b3 == nil then
+        bit_sum = b1 * 0x10000 + b2 * 0x100
+    else
+        bit_sum = b1 * 0x10000 + b2 * 0x100 + b3
+    end
+
+    local str_block
+
+    if do_cache then
+        ---@diagnostic disable-next-line: need-check-nil
+        str_block = cache_map[ bit_sum ]
+        if str_block ~= nil then
+            return str_block
+        end
+    end
+
+    if b2 == nil then
+        str_block = string_char(
+            encode_alphabet[ bit_extract( bit_sum, 18, 6 ) ],
+            encode_alphabet[ bit_extract( bit_sum, 12, 6 ) ]
+        )
+    elseif b3 == nil then
+        str_block = string_char(
+            encode_alphabet[ bit_extract( bit_sum, 18, 6 ) ],
+            encode_alphabet[ bit_extract( bit_sum, 12, 6 ) ],
+            encode_alphabet[ bit_extract( bit_sum, 6, 6 ) ]
+        )
+    else
+        str_block = string_char(
+            encode_alphabet[ bit_extract( bit_sum, 18, 6 ) ],
+            encode_alphabet[ bit_extract( bit_sum, 12, 6 ) ],
+            encode_alphabet[ bit_extract( bit_sum, 6, 6 ) ],
+            encode_alphabet[ bit_extract( bit_sum, 0, 6 ) ]
+        )
+    end
+
+    if do_cache then
+        cache_map[ bit_sum ] = str_block
+    end
+
+    return str_block
+end
+
+--- [SHARED AND MENU]
+---
+--- Encodes the specified string to base64.
+---
+---@param str_raw string
+---@param options? gpm.std.crypto.base64.Options
+---@return string
+function base64.encode( str_raw, options )
+    if options == nil then
+        if glue_encode == nil then
+            ---@diagnostic disable-next-line: cast-local-type
+            options = variants.standard
+        else
+            ---@diagnostic disable-next-line: need-check-nil
+            return glue_encode( str_raw, true )
+        end
+    else
+        perform_options( options )
+    end
+
+    local encode_alphabet = options.alphabet[ 1 ]
+    local do_cache = not options.ignore_cache
+    local pad = options.pad
+
+    local str_length = string_len( str_raw )
+	local remainder = str_length % 3
+
+    local blocks, block_count = {}, 0
+
+    local cache_map
+
+    if do_cache then
+        cache_map = options.encode_cache or {}
+    else
+        cache_map = nil
+    end
+
+    for i = 1, str_length - remainder, 3 do
+		block_count = block_count + 1
+		blocks[ block_count ] = block_encode( encode_alphabet, do_cache, cache_map, string_byte( str_raw, i, i + 2 ) )
+	end
+
+    if remainder == 2 then
+        local str_block = block_encode( encode_alphabet, do_cache, cache_map, string_byte( str_raw, str_length - 1, str_length ) )
+
+        if pad ~= nil then
+            str_block = str_block .. pad
+        end
+
+        block_count = block_count + 1
+        blocks[ block_count ] = str_block
+	elseif remainder == 1 then
+        local str_block = block_encode( encode_alphabet, do_cache, cache_map, string_byte( str_raw, str_length ) )
+
+        if pad ~= nil then
+            str_block = str_block .. pad .. pad
+        end
+
+        block_count = block_count + 1
+		blocks[ block_count ] = str_block
+	end
+
+    local str_base64 = table_concat( blocks, "", 1, block_count )
+
+    local wrap = options.wrap
+    if wrap and wrap > 0 then
+        local cursor, str_base64_length = 0, string_len( str_base64 )
+        local segments, segment_count = {}, 0
+
+        while cursor < str_base64_length do
+            segment_count = segment_count + 1
+            segments[ segment_count ] = string_sub( str_base64, cursor + 1, cursor + wrap )
+            cursor = cursor + wrap
+        end
+
+        return table_concat( segments, options.eol, 1, segment_count )
+    else
+        return str_base64
+    end
+end
+
+do
+
+    local math_floor = std.math.floor
+
+    --- [SHARED AND MENU]
+    ---
+    --- Checks if the specified base64 encoded string is valid.\
+    ---
+    ---@param str_base64 string The base64 encoded string to check.
+    ---@param options? gpm.std.crypto.base64.Options The base64 encoding options.
+    ---@return boolean is_valid `true` if the base64 string is valid, `false` otherwise
+    function base64.validate( str_base64, options )
+        if options == nil then
+            ---@diagnostic disable-next-line: cast-local-type
+            options = variants.standard
+        else
+            perform_options( options )
+        end
+
+        local str_base64_length = string_len( str_base64 )
+
+        local alphabet = options.alphabet[ 2 ]
+
+        local wrap = options.wrap
+        if wrap and wrap > 0 then
+            local eol = options.eol
+            if eol ~= nil then
+                local eol_length = string_len( eol )
+
+                local buffer_str = str_base64
+                str_base64 = ""
+
+                local step_size = wrap + eol_length
+
+                for i = wrap, str_base64_length, step_size do
+                    if string_sub( buffer_str, i + 1, i + eol_length ) == eol then
+                        local next_cursor = i + step_size
+                        if next_cursor > str_base64_length then
+                            str_base64 = str_base64 .. string_sub( buffer_str, i - wrap + 1, i ) .. string_sub( buffer_str, i + eol_length + 1, str_base64_length )
+                        else
+                            str_base64 = str_base64 .. string_sub( buffer_str, i - wrap + 1, i )
+                        end
+                    else
+                        return false
+                    end
+                end
+
+                str_base64_length = str_base64_length - step_size * math_floor( str_base64_length / step_size )
+            end
+        end
+
+        if str_base64_length % 4 ~= 0 then
+            return false
+        end
+
+        local pad_byte
+
+        local pad = options.pad
+        if pad == nil then
+            pad_byte = -1
+        else
+            pad_byte = string_byte( pad, 1, 1 )
+        end
+
+        for start_position = 1, str_base64_length, 4 do
+            local end_position = start_position + 3
+            local b1, b2, b3, b4 = string_byte( str_base64, start_position, end_position )
+
+            if not ( alphabet[ b1 ] and alphabet[ b2 ] ) then
+                return false
+            end
+
+            if end_position == str_base64_length then
+                if not ( ( alphabet[ b3 ] or b3 == pad_byte ) and ( alphabet[ b4 ] or b4 == pad_byte ) ) then
+                    return false
+                end
+            elseif not ( alphabet[ b3 ] and alphabet[ b4 ] ) then
+                return false
+            end
+        end
+
+        return true
+    end
+
+end
+
+---@param decode_alphabet table<integer, integer>
+---@param do_cache boolean
+---@param cache_map table<integer, string> | nil
+---@param b1 integer
+---@param b2 integer
+---@param b3 integer | nil
+---@param b4 integer | nil
+---@return string
+local function block_decode( decode_alphabet, do_cache, cache_map, b1, b2, b3, b4 )
+    if do_cache then
+        local cache_key
+
+        if b1 == nil then
+            error( "block must have at least one byte", 2 )
+        elseif b3 == nil then
+            cache_key = b1 * 0x1000000 + b2 * 0x10000
+        elseif b4 == nil then
+            cache_key = b1 * 0x1000000 + b2 * 0x10000 + b3 * 0x100
+        else
+            cache_key = b1 * 0x1000000 + b2 * 0x10000 + b3 * 0x100 + b4
+        end
+
+        ---@diagnostic disable-next-line: need-check-nil
+        local str_block = cache_map[ cache_key ]
+        if str_block ~= nil then
+            return str_block
+        end
+
+        str_block = block_decode( decode_alphabet, false, nil, b1, b2, b3, b4 )
+
+        cache_map[ cache_key ] = str_block
+
+        return str_block
+    elseif b3 == nil then
+        local bit_sum = ( decode_alphabet[ b1 ] * 0x40000 ) +
+            ( decode_alphabet[ b2 ] * 0x1000 )
+
+        return string_char(
+            bit_extract( bit_sum, 16, 8 )
+        )
+    elseif b4 == nil then
+        local bit_sum = ( decode_alphabet[ b1 ] * 0x40000 ) +
+            ( decode_alphabet[ b2 ] * 0x1000 ) +
+            ( decode_alphabet[ b3 ] * 0x40 )
+
+        return string_char(
+            bit_extract( bit_sum, 16, 8 ),
+            bit_extract( bit_sum, 8, 8 )
+        )
+    else
+        local bit_sum = ( decode_alphabet[ b1 ] * 0x40000 ) +
+            ( decode_alphabet[ b2 ] * 0x1000 ) +
+            ( decode_alphabet[ b3 ] * 0x40 ) +
+            decode_alphabet[ b4 ]
+
+        return string_char(
+            bit_extract( bit_sum, 16, 8 ),
+            bit_extract( bit_sum, 8, 8 ),
+            bit_extract( bit_sum, 0, 8 )
+        )
+    end
+end
+
+--- [SHARED AND MENU]
+---
+--- Decodes the specified base64 encoded string.
+---
+---@param str_base64 string
+---@param options? gpm.std.crypto.base64.Options
+---@return string str_raw
+function base64.decode( str_base64, options )
+    if options == nil then
+        if glue_decode == nil then
+            ---@diagnostic disable-next-line: cast-local-type
+            options = variants.standard
+        else
+            ---@diagnostic disable-next-line: need-check-nil
+            return glue_decode( str_base64 )
+        end
+    else
+        perform_options( options )
+    end
+
+    local decode_alphabet = options.alphabet[ 2 ]
+    local do_cache = not options.ignore_cache
+
+    local str_base64_length = string_len( str_base64 )
+
+    local remainder
+
+    local str_pad = options.pad
+    if str_pad == nil then
+        remainder = 0
+    else
+
+        local b3, b4 = string_byte( str_base64, str_base64_length - 1, str_base64_length )
+        local pad_byte = string_byte( str_pad, 1, 1 )
+
+        if b3 == pad_byte and b4 == pad_byte then
+            str_base64_length = str_base64_length - 4
+            remainder = 2
+        elseif b4 == pad_byte then
+            str_base64_length = str_base64_length - 4
+            remainder = 1
+        else
+            remainder = 0
+        end
+
+    end
+
+    local blocks, block_count = {}, 0
+
+    local cache_map
+
+    if do_cache then
+        cache_map = options.decode_cache or {}
+    else
+        cache_map = nil
+    end
+
+    for i = 1, str_base64_length, 4 do
+        block_count = block_count + 1
+        blocks[ block_count ] = block_decode( decode_alphabet, do_cache, cache_map, string_byte( str_base64, i, i + 3 ) )
+    end
+
+    if remainder ~= 0 then
+        block_count = block_count + 1
+        blocks[ block_count ] = block_decode( decode_alphabet, do_cache, cache_map, string_byte( str_base64, str_base64_length - 3, str_base64_length - remainder ) )
+    end
+
+    return table_concat( blocks, "", 1, block_count )
+end
