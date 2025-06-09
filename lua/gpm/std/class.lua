@@ -16,20 +16,28 @@ local raw_get = std.raw.get
 local class = {}
 std.class = class
 
----@alias Object gpm.std.Object
+---@alias gpm.std.Class.__inherited fun( parent: gpm.std.Class, child: gpm.std.Class )
+---@alias gpm.std.Object.__new fun( cls: gpm.std.Object, ...: any? ): gpm.std.Object
+---@alias gpm.std.Object.__init fun( obj: gpm.std.Object, ...: any? )
+
 ---@class gpm.std.Object
----@field private __type string The name of object type.
----@field __class gpm.std.Class The class of the object.
----@field __parent gpm.std.Object | nil The parent of the object.
----@field protected __new function A function that will be called when a new class is created and allows you to replace the result.
----@field private __init function A function that will be called when creating a new object and should be used as the constructor.
+---@field private __type string The name of object type. **READ ONLY**
+---@field __class gpm.std.Class The class of the object. **READ ONLY**
+---@field __parent? gpm.std.Object The parent of the object. **READ ONLY**
+---@field protected __new? gpm.std.Object.__new A function that will be called when a new class is created and allows you to replace the result.
+---@field private __init? gpm.std.Object.__init A function that will be called when creating a new object and should be used as the constructor.
+---@field protected __serialize? fun( obj: gpm.std.Object, writer: gpm.std.crypto.pack.Writer, ...: any? ) A function that will be called when the object is serialized.
+---@field protected __deserialize? fun( obj: gpm.std.Object, reader: gpm.std.crypto.pack.Reader, ...: any? ) A function that will be called when the object is deserialized.
+
+---@alias Object gpm.std.Object
+
+---@class gpm.std.Class : gpm.std.Object
+---@field __base gpm.std.Object The base of the class. **READ ONLY**
+---@field __parent? gpm.std.Class The parent of the class. **READ ONLY**
+---@field __private boolean If the class is private. **READ ONLY**
+---@field private __inherited? gpm.std.Class.__inherited The function that will be called when the class is inherited.
 
 ---@alias Class gpm.std.Class
----@class gpm.std.Class : gpm.std.Object
----@field __base gpm.std.Object The base of the class.
----@field __parent gpm.std.Class | nil The parent of the class.
----@field __private boolean If the class is private.
----@field private __inherited fun( parent: gpm.std.Class, child: gpm.std.Class ) | nil The function that will be called when the class is inherited.
 
 ---@type table<gpm.std.Object, userdata>
 local templates = {}
@@ -124,10 +132,10 @@ do
     --- Calls the base initialization function, <b>if it exists</b>, and returns the given object.
     ---
     ---@param base gpm.std.Object The base object, aka metatable.
-    ---@param obj any The object to initialize.
+    ---@param obj gpm.std.Object The object to initialize.
     ---@param ... any? Arguments to pass to the constructor.
     ---@return gpm.std.Object object The initialized object.
-    function class.init( base, obj, ... )
+    local function class_init( base, obj, ... )
         local init_fn = raw_get( base, "__init" )
         if init_fn ~= nil then
             init_fn( obj, ... )
@@ -136,40 +144,50 @@ do
         return obj
     end
 
+    class.init = class_init
+
+    --- [SHARED AND MENU]
+    ---
+    --- Creates a new class object.
+    ---
+    ---@param base gpm.std.Object The base object, aka metatable.
+    ---@return gpm.std.Object object The new object.
+    local function class_new( base )
+        if raw_get( base, "__private" ) then
+            ---@diagnostic disable-next-line: return-type-mismatch
+            return debug_newproxy( templates[ base ] )
+        end
+
+        local obj = {}
+        setmetatable( obj, base )
+        return obj
+    end
+
+    class.new = class_new
+
     ---@param self gpm.std.Class The class.
     ---@return gpm.std.Object object The new object.
     function class__call( self, ... )
+        ---@type gpm.std.Object | nil
         local base = raw_get( self, "__base" )
         if base == nil then
             error( "class base is missing, class creation failed.", 2 )
         end
 
-        ---@cast base gpm.std.Object
-
+        ---@type gpm.std.Object | nil
         local obj
 
+        ---@type gpm.std.Object.__new | nil
         local new_fn = raw_get( base, "__new" )
         if new_fn ~= nil then
             obj = new_fn( base, ... )
         end
 
         if obj == nil then
-            if raw_get( base, "__private" ) then
-                obj = debug_newproxy( templates[ base ] )
-            else
-                obj = {}
-                setmetatable( obj, base )
-            end
+            obj = class_new( base )
         end
 
-        ---@cast obj gpm.std.Object
-
-        local init_fn = raw_get( base, "__init" )
-        if init_fn ~= nil then
-            init_fn( obj, ... )
-        end
-
-        return obj
+        return class_init( base, obj, ... )
     end
 
 end
@@ -198,10 +216,12 @@ function class.create( base )
         ---@cast parent_base gpm.std.Object
         cls.__parent = parent_base.__class
 
+        ---@type gpm.std.Class | nil
         local parent = raw_get( parent_base, "__class" )
         if parent == nil then
             error( "parent class has no class", 2 )
         else
+            ---@type gpm.std.Class.__inherited | nil
             local inherited_fn = raw_get( parent, "__inherited" )
             if inherited_fn ~= nil then
                 inherited_fn( parent, cls )
