@@ -56,7 +56,7 @@ function Reader:__tostring()
 end
 
 ---@protected
-function Reader:__init( data )
+function Reader:__init()
 	self.data_length = 0
 	self.position = 0
 end
@@ -144,9 +144,10 @@ function Reader:read( length )
 		return "", nil
 	end
 
-	local position = self.position
+	local position, data_length = self.position, self.data_length
 
-	local available = self.data_length - position
+
+	local available = data_length - position
 	if available <= 0 then
 		return nil, "end of file"
 	end
@@ -161,9 +162,13 @@ function Reader:read( length )
 		length = length + available + 1
 	end
 
-	self.position = position + length
-
-	return string_sub( self.data, position + 1, position + length ), nil
+	if length == data_length then
+		self.position = data_length
+		return self.data, nil
+	else
+		self.position = position + length
+		return string_sub( self.data, position + 1, position + length ), nil
+	end
 end
 
 --- [SHARED AND MENU]
@@ -172,7 +177,7 @@ end
 ---
 ---@class gpm.std.crypto.pack.ReaderClass : gpm.std.crypto.pack.Reader
 ---@field __base gpm.std.crypto.pack.Reader
----@overload fun( content?: string ): gpm.std.crypto.pack.Reader
+---@overload fun(): gpm.std.crypto.pack.Reader
 local ReaderClass = std.class.create( Reader )
 pack.Reader = ReaderClass
 
@@ -251,7 +256,12 @@ end
 ---
 ---@return integer size
 function Writer:size()
-	return string_len( self.sub_data )
+	local sub_data = self.sub_data
+	if sub_data == nil then
+		return 0
+	else
+		return string_len( sub_data )
+	end
 end
 
 do

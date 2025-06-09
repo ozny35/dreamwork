@@ -44,17 +44,6 @@ local function default_debug_fn()
     return std.DEVELOPER > 0
 end
 
---[[
-
-    Logger:
-        .title - Title
-        .title_color - Color
-        .text_color - Text color
-        .interpolation - Interpolation
-        .debug_fn - Debug function
-
---]]
-
 local white_color = scheme.white
 local primary_text_color = scheme.text_primary
 local secondary_text_color = scheme.text_secondary

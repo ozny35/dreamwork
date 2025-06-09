@@ -9,7 +9,7 @@ local std = _G.gpm.std
 ---
 --- In gpm string library contains additional functions.
 ---
----@class gpm.std.string : stringlib
+---@class gpm.std.string
 local string = std.string or {}
 std.string = string
 

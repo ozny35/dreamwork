@@ -9,7 +9,7 @@ local math = std.math
 ---
 --- The bit library.
 ---
----@class gpm.std.bit : bitlib
+---@class gpm.std.bit
 local bit = std.bit or {}
 std.bit = bit
 

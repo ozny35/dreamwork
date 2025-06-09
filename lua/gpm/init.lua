@@ -333,7 +333,7 @@ do
     ---
     --- They offer a way to split up tasks and dynamically pause & resume functions.
     ---
-    ---@class gpm.std.coroutine : coroutinelib
+    ---@class gpm.std.coroutine
     local coroutine = std.coroutine or {}
     std.coroutine = coroutine
 
@@ -865,7 +865,7 @@ do
     ---@param str string Compressed string.
     ---@return integer size The decompressed size in bytes.
     function lzma.size( str )
-        return pack_readUInt32( str, false, 6 )
+        return pack_readUInt32( str, false, 6 ) or 0
     end
 
 end
@@ -1416,5 +1416,7 @@ end
     -- require - broken in glua
 
 ]]
+
+-- TODO: put https://wiki.facepunch.com/gmod/Global.SuppressHostEvents somewhere
 
 -- TODO: plugins support
