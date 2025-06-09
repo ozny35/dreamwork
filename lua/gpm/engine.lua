@@ -240,7 +240,13 @@ if engine.consoleCommandCatch == nil then
     if concommand.Run == nil then
         ---@diagnostic disable-next-line: duplicate-set-field
         function concommand.Run( ply, cmd, args, argument_string )
-            return run_callbacks( ply, cmd, args, argument_string ) == true
+            local exists = run_callbacks( ply, cmd, args, argument_string ) == true
+
+            if not exists then
+                gpm.Logger:error( "Console command '%s' not found.", cmd )
+            end
+
+            return exists
         end
     else
         concommand.Run = detour_attach( concommand.Run, function( fn, ply, cmd, args, argument_string )
@@ -359,7 +365,7 @@ if engine.consoleVariableGet == nil or engine.consoleVariableCreate == nil or en
 
 end
 
-if engine.consoleCommandAdd == nil or engine.consoleCommandExists == nil then
+if engine.consoleCommandRegister == nil or engine.consoleCommandExists == nil then
 
     local commands = {}
 
@@ -374,7 +380,7 @@ if engine.consoleCommandAdd == nil or engine.consoleCommandExists == nil then
         end )
     end
 
-    engine.consoleCommandAdd = _G.AddConsoleCommand
+    engine.consoleCommandRegister = _G.AddConsoleCommand
 
     --- [SHARED AND MENU]
     ---
@@ -859,6 +865,108 @@ else
         engine_hookCall( "EntityGC", nextbot_userdata )
         fn( nextbot_userdata )
     end )
+end
+
+if std.SHARED and engine.networkRegister == nil then
+
+    local glua_util = _G.util or {}
+
+    local add_fn = glua_util.AddNetworkString or debug_fempty
+    local get_id_fn = glua_util.NetworkStringToID or debug_fempty
+    local get_name_fn = glua_util.NetworkIDToString or debug_fempty
+
+    ---@type table<string, integer>
+    local id2name = {}
+
+    ---@type table<integer, string>
+    local name2id = {}
+
+    setmetatable( id2name, {
+        __index = function( _, name )
+            local id = get_id_fn( name ) or 0
+
+            if id ~= 0 then
+                id2name[ name ] = id
+                name2id[ id ] = name
+            end
+
+            return id
+        end
+    } )
+
+    setmetatable( name2id, {
+        __index = function( _, id )
+            local name = get_name_fn( id )
+
+            if name ~= nil then
+                id2name[ name ] = id
+                name2id[ id ] = name
+            end
+
+            return name
+        end
+    } )
+
+
+    --- [SHARED AND MENU]
+    ---
+    --- Get all the registered networks.
+    ---
+    ---@return string[] networks The registered networks.
+    function engine.getNetworks()
+        local lst = {}
+
+        for name in std.raw.pairs( id2name ) do
+            lst[ #lst + 1 ] = name
+        end
+
+        return lst
+    end
+
+    --- [SHARED AND MENU]
+    ---
+    --- Checks if the network exists.
+    ---
+    ---@return boolean exists `true` if the network exists, `false` otherwise.
+    function engine.networkMessageExists( name )
+        return id2name[ name ] ~= 0
+    end
+
+    --- [SHARED AND MENU]
+    ---
+    --- Get the ID of the network from its name.
+    ---
+    ---@param name string The name of the network.
+    ---@return integer | nil id The ID of the network, or `nil` if the network does not exist.
+    function engine.networkGetID( name )
+        local id = id2name[ name ]
+        if id ~= 0 then
+            return id
+        end
+    end
+
+    --- [SHARED AND MENU]
+    ---
+    --- Get the name of the network from its ID.
+    ---
+    ---@param id integer The ID of the network message.
+    ---@return string | nil name The name of the network message, or `nil` if the network message does not exist.
+    function engine.networkGetName( id )
+        return name2id[ id ]
+    end
+
+    --- [SHARED AND MENU]
+    ---
+    --- Registers a network.
+    ---
+    function engine.networkRegister( name )
+        if id2name[ name ] == 0 then
+            local id = add_fn( name ) or 0
+            name2id[ id ] = name
+            id2name[ name ] = id
+        end
+    end
+
 end
 
 -- TODO: matproxy

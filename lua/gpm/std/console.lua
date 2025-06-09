@@ -233,7 +233,7 @@ do
 
     do
 
-        local engine_consoleCommandAdd = engine.consoleCommandAdd
+        local engine_consoleCommandRegister = engine.consoleCommandRegister
 
         ---@param options gpm.std.console.Command.Options
         ---@private
@@ -250,7 +250,7 @@ do
                 end
             end
 
-            engine_consoleCommandAdd( name, description, int32_flags )
+            engine_consoleCommandRegister( name, description, int32_flags )
 
             names[ self ] = name
             descriptions[ self ] = description
