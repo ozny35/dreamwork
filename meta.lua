@@ -903,32 +903,38 @@ do
     ---    │ root │              │ name │ ext │
     ---    "  /    home/user/dir/  file  .txt "
     ---    └──────┴──────────────┴──────┴─────┘
-    ---    (All spaces in the "" line should be ignored. They are purely for formatting.)
+    --- (All spaces in the "" line should be ignored. They are purely for formatting.)
     ---
     ---@class gpm.std.file.path.Data
     local path_data = {}
 
     --- The root of the file path.
-    ---@type string
+    ---
+    ---@type "/" | ""
     path_data.root = ""
 
     --- The directory of the file path.
+    ---
     ---@type string
     path_data.dir = ""
 
-    --- The basename of the file path.
+    --- The `basename` of the file path, basically the name of the file with extension.
+    ---
     ---@type string
     path_data.base = ""
 
-    --- The name of the file path.
+    --- The name of file in the file path.
+    ---
     ---@type string
     path_data.name = ""
 
-    --- The extension of the file path.
+    --- The extension of file in the file path.
+    ---
     ---@type string
     path_data.ext = ""
 
-    --- Whether the file path is absolute.
+    --- Whether the file path is absolute or not.
+    ---
     ---@type boolean
     path_data.abs = false
 
