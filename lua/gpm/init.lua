@@ -988,8 +988,9 @@ do
     if cvar == nil then
         name = "stranger"
     else
+        ---@type string
         name = cvar.value
-        if name == "" or name == "unnamed" then
+        if string.isEmpty( name ) or name == "unnamed" then
             name = "stranger"
         end
     end
@@ -1064,14 +1065,14 @@ dofile( "database.lua" )
 local loadbinary
 do
 
-    local file_Exists = _G.file.Exists
+    local file_exists = std.file.exists
     local require = _G.require
 
     local isEdge = jit.version_num ~= 20004
     local is32 = jit.arch == "x86"
     local os_name = jit.os
 
-    local head = "lua/bin/gm" .. ( ( CLIENT and not MENU ) and "cl" or "sv" ) .. "_"
+    local head = "/garrysmod/lua/bin/gm" .. ( ( CLIENT and not MENU ) and "cl" or "sv" ) .. "_"
     local tail = "_" .. ( { "osx64", "osx", "linux64", "linux", "win64", "win32" } )[ ( os_name == "Windows" and 4 or 0 ) + ( os_name == "Linux" and 2 or 0 ) + ( is32 and 1 or 0 ) + 1 ] .. ".dll"
 
     --- [SHARED AND MENU]
@@ -1082,16 +1083,18 @@ do
     ---@return boolean installed `true` if the binary module is installed, `false` otherwise.
     ---@return string path The absolute path to the binary module.
     local function lookupbinary( name )
-        if name == "" then return false, "" end
+        if string.isEmpty( name ) then
+            return false, ""
+        end
 
         local filePath = head .. name .. tail
-        if file_Exists( filePath, "MOD" ) then
+        if file_exists( filePath ) then
             return true, "/" .. filePath
         end
 
         if isEdge and is32 and tail == "_linux.dll" then
             filePath = head .. name .. "_linux32.dll"
-            if file_Exists( filePath, "MOD" ) then
+            if file_exists( filePath ) then
                 return true, "/" .. filePath
             end
         end

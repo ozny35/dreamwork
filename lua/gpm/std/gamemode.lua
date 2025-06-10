@@ -6,6 +6,7 @@ local std = _G.gpm.std
 ---@alias Gamemode gpm.std.Gamemode
 ---@class gpm.std.Gamemode : gpm.std.Object
 ---@field __class gpm.std.GamemodeClass
+---@field name string
 local Gamemode = std.class.base( "Gamemode" )
 
 ---@protected
@@ -20,4 +21,3 @@ local GamemodeClass = std.class.create( Gamemode )
 std.Gamemode = GamemodeClass
 
 -- TODO: make gamemode class and gamemode handler
--- TODO: engine.GetGamemodes

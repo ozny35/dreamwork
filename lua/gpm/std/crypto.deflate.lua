@@ -2678,7 +2678,7 @@ end
 --- local decoded = codec:decode(encoded)
 --- assert(decoded == SOME_STRING)
 function deflate.createCodec( reserved_chars, escape_chars, map_chars )
-    if escape_chars == "" then
+    if string_byte( escape_chars, 1, 1 ) == nil then
         return nil, "No escape characters supplied."
     end
 
@@ -2687,7 +2687,7 @@ function deflate.createCodec( reserved_chars, escape_chars, map_chars )
         return nil, "The number of reserved characters must be at least as many as the number of mapped chars."
     end
 
-    if reserved_chars == "" then
+    if string_byte( reserved_chars, 1, 1 ) == nil then
         return nil, "No characters to encode."
     end
 
@@ -2765,7 +2765,7 @@ function deflate.createCodec( reserved_chars, escape_chars, map_chars )
                     decode_search = {}
                     decode_translate = {}
 
-                    if not escape_char or escape_char == "" then
+                    if escape_char == nil or string_byte( escape_char, 1, 1 ) == nil then
                         -- actually I don't need to check
                         -- "not ecape_char", but what if Lua changes
                         -- the behavior of string.sub() in the future?

@@ -45,6 +45,16 @@ local string_rep = string.rep
 
 --- [SHARED AND MENU]
 ---
+--- Checks if the string is empty.
+---
+---@param str string The input string.
+---@return boolean result True if the string is empty.
+function string.isEmpty( str )
+    return string_byte( str, 1, 1 ) == nil
+end
+
+--- [SHARED AND MENU]
+---
 --- Cuts the string into two.
 ---
 ---@param str string The input string.

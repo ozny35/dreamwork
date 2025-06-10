@@ -1021,13 +1021,13 @@ do
     ---
     ---@param str_name string The name of the console variable.
     ---@param str_type gpm.std.console.Variable.type The type of the console variable.
-    ---@return gpm.std.console.Variable variable The `console.Variable` object.
+    ---@return gpm.std.console.Variable | nil variable The `console.Variable` object.
     function VariableClass.get( str_name, str_type )
         local variable = variables[ str_name ]
         if variable == nil then
             local cvar = engine_consoleVariableGet( str_name )
             if cvar == nil then
-                error( "console variable '" .. str_name .. "' does not exist.", 2 )
+                return nil
             end
 
             local options = {

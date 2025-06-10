@@ -212,31 +212,6 @@ if CLIENT_SERVER then
 
 end
 
-do
-
-    local jit_os = jit.os
-
-    std.OSX = jit_os == "OSX"
-    std.LINUX = jit_os == "Linux"
-    std.WINDOWS = jit_os == "Windows"
-
-end
-
-do
-
-    local engine = _G.engine
-    if engine == nil then
-        std.GAMEMODE = "base" -- TODO: move to gamemode.name
-        std.SINGLEPLAYER = false -- TODO: move to game.singleplayer
-        std.DEDICATED = false -- TODO: move to server.dedicated
-    else
-        std.GAMEMODE = engine.ActiveGamemode() -- TODO: move to gamemode.name
-        std.SINGLEPLAYER = game.SinglePlayer() -- TODO: move to game.singleplayer
-        std.DEDICATED = game.IsDedicated() -- TODO: move to server.dedicated
-    end
-
-end
-
 if SERVER then
 
     -- TODO: move to npc library/class

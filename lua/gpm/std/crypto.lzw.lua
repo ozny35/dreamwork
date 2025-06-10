@@ -8,7 +8,10 @@
 local std = _G.gpm.std
 local string = std.string
 
-local string_char, string_sub, string_len = string.char, string.sub, string.len
+local string_char, string_byte = string.char, string.byte
+local string_sub = string.sub
+local string_len = string.len
+
 local table_concat = std.table.concat
 
 ---@class gpm.std.crypto
@@ -121,7 +124,7 @@ end
 ---@return string | nil decompressed_data The decompressed string or `nil` if the decompression fails.
 ---@return nil | string error_message The error message or `nil` if the decompression succeeds.
 function lzw.decompress( encoded_data )
-    if encoded_data == "" then
+    if string_byte( encoded_data, 1, 1 ) == nil then
         return nil, "compressed string cannot be empty"
     end
 

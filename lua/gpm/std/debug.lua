@@ -268,20 +268,22 @@ end
 ---
 --- Returns the function within which the call was made or `nil` if not found.
 ---
+---@param level? integer The stack level.
 ---@return function | nil fn The function within which the call was made or `nil` if not found.
-function debug.getfmain()
-    for location = 2, 16, 1 do
-        local info = debug_getinfo( location, "fS" )
-        if info then
-            if info.what == "main" then
-                return info.func
-            end
-        else
-            break
-        end
+function debug.getfmain( level )
+    if level == nil then
+        level = 1
     end
 
-    return nil
+    for location = level + 1, level + 16, 1 do
+        local info = debug_getinfo( location, "fS" )
+        if info == nil then
+            return nil
+        elseif info.what == "main" then
+            return info.func
+        end
+
+    end
 end
 
 do
@@ -291,18 +293,16 @@ do
 
     --- [SHARED AND MENU]
     ---
-    --- Returns the path to the file in which it was called or an empty string if it could not be found.
+    --- Returns the path to the file of the given location or `nil` if not found.
     ---
-    ---@param location function | integer The function or location to get the path from.
-    ---@return string path The path to the file in which it was called or an [b]empty string[/b] if it could not be found.
+    ---@param location function | integer
+    ---@return string | nil path_to_file
     function debug.getfpath( location )
         local info = debug_getinfo( location, "S" )
         if info.what == "main" then
             ---@diagnostic disable-next-line: redundant-return-value
-            return string_gsub( string_gsub( string_sub( info.source, 2 ), "^(.-)(lua/.*)$", gsub_formatter ), "^(.-)([%w_]+/gamemode/.*)$", gsub_formatter ), nil
+            return "/garrysmod/" .. string_gsub( string_gsub( string_sub( info.source, 2 ), "^(.-)(lua/.*)$", gsub_formatter ), "^(.-)([%w_]+/gamemode/.*)$", gsub_formatter ), nil
         end
-
-        return ""
     end
 
 end

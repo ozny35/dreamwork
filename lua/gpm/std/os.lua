@@ -14,12 +14,22 @@ local std = _G.gpm.std
 ---@field name string The name of the operating system.
 ---@field arch string The architecture of the operating system.
 ---@field endianness boolean `true` if the operating system is big endianness, `false` if not.
-local os = std.os or {
-    name = std.jit.os,
-    arch = std.jit.arch
-}
-
+local os = std.os or {}
 std.os = os
+
+do
+
+    local jit = std.jit
+    local jit_os = jit.os
+
+    os.name = jit_os
+    os.arch = jit.arch
+
+    std.OSX = jit_os == "OSX"
+    std.LINUX = jit_os == "Linux"
+    std.WINDOWS = jit_os == "Windows"
+
+end
 
 if glua_os == nil then
     error( "os library not found, yep it's over." )

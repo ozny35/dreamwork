@@ -1249,7 +1249,7 @@ do
 
 		if byte_count == 0 then
 			return 0
-		elseif binary_str == "" then
+		elseif string_byte( binary_str, 1, 1 ) == nil then
 			return nil, "not enough data"
 		end
 
@@ -2381,7 +2381,7 @@ do
 
 		if byte_count == 0 then
 			return 0
-		elseif binary_str == "" then
+		elseif string_byte( binary_str, 1, 1 ) == nil then
 			return nil, "not enough data"
 		end
 
