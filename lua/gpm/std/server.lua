@@ -4,17 +4,167 @@ local gpm = _G.gpm
 ---@class gpm.std
 local std = gpm.std
 
-local console_Variable = std.console.Variable
-local engine_hookCatch = gpm.engine.hookCatch
 local Hook = std.Hook
+local engine = gpm.engine
+local console = std.console
+local console_Variable = console.Variable
+local engine_hookCatch = engine.hookCatch
 
 --- [SHARED AND MENU]
 ---
 --- The game's server library.
 ---
 ---@class gpm.std.server
+---@field singleplayer boolean `true` if server is running in singleplayer mode, `false` otherwise. **READ-ONLY**
+---@field dedicated boolean `true` if server is running as a dedicated server, `false` otherwise. **READ-ONLY**
 local server = std.server or {}
 std.server = server
+
+do
+
+    local glua_game = _G.game
+    if glua_game == nil then
+        server.singleplayer = false
+        server.dedicated = false
+    else
+        server.singleplayer = ( game.SinglePlayer or std.debug.fempty )() == true
+        server.dedicated = ( game.IsDedicated or std.debug.fempty )() == true
+    end
+
+end
+
+if server.getGamemodeName == nil then
+
+    local gpm_server_gamemode = console_Variable( {
+        name = "gpm.server.gamemode",
+        description = "The publicly visible gamemode name of the server.",
+        replicated = true,
+        type = "string"
+    } )
+
+    local gamemode_name
+
+    local glua_engine = _G.engine
+    if glua_engine == nil then
+        gamemode_name = "base"
+    else
+        gamemode_name = ( glua_engine.ActiveGamemode or std.debug.fempty )() or "base"
+    end
+
+    --- [SHARED AND MENU]
+    ---
+    --- Gets the name of the active gamemode.
+    ---
+    ---@return string name The name of the active gamemode.
+    function server.getGamemodeName()
+        ---@type string
+        ---@diagnostic disable-next-line: assign-type-mismatch
+        local name = gpm_server_gamemode.value
+
+        if name == "" then
+            return gamemode_name
+        else
+            return name
+        end
+    end
+
+    if std.SHARED and server.getGamemode == nil and server.setGamemode == nil then
+
+        ---@type gpm.std.Gamemode | nil
+        local gamemode_value = nil
+
+        local key2base_key = {
+            Name = "title",
+            Author = "author",
+            Email = "email",
+            Website = "website",
+            FolderName = "name",
+            Folder = "name"
+        }
+
+        local translator = {}
+
+        setmetatable( translator, {
+            __index = function( _, key )
+                if gamemode_value == nil then
+                    return nil
+                end
+
+                if key == "ThisClass" then
+                    ---@diagnostic disable-next-line: need-check-nil
+                    return std.type( gamemode_value.__class )
+                elseif key == "BaseClass" then
+                    return gamemode_value.__parent
+                elseif key == "IsSandboxDerived" or key == "TeamBased" then
+                    return false
+                end
+
+                local base_key = key2base_key[ key ]
+                if base_key == nil then
+                    return gamemode_value[ key ]
+                else
+                    return gamemode_value[ base_key ]
+                end
+            end
+        } )
+
+        local gmod_GetGamemode = gmod ~= nil and gmod.GetGamemode or std.debug.fempty
+
+        --- [SHARED]
+        ---
+        --- Returns the active gamemode object.
+        ---
+        ---@return boolean is_legacy `true` if the gamemode is a legacy gamemode, `false` otherwise.
+        ---@return table | gpm.std.Gamemode gamemode The active gamemode object.
+        function server.getGamemode()
+            if gamemode_value == nil then
+                ---@diagnostic disable-next-line: param-type-mismatch
+                return true, ( gmod_GetGamemode() or _G.GAMEMODE or gamemode.Get( gamemode_name ) )
+            else
+                return false, gamemode_value
+            end
+        end
+
+        --- [SHARED]
+        ---
+        --- Sets the active gamemode object.
+        ---
+        ---@param gm gpm.std.Gamemode The new active gamemode object.
+        function server.setGamemode( gm )
+            gamemode_value = gm
+
+            if gm == nil then
+                gpm_server_gamemode.value = gamemode_name or "base"
+            else
+                gpm_server_gamemode.value = gm.name or "unknown"
+            end
+        end
+
+        engine.gamemodeCreationCatch( function( name )
+            if gamemode_value == nil then
+                return nil
+            else
+                return translator
+            end
+        end, 1 )
+
+    end
+
+    if server.getGamemodeTitle == nil then
+
+        --- [SHARED AND MENU]
+        ---
+        --- Returns the title of the gamemode in the server browser.
+        ---
+        ---@return string title The title of the gamemode.
+        function server.getGamemodeTitle()
+            ---@diagnostic disable-next-line: undefined-field
+            return _G.hook.Call( "GetGameDescription" ) or ( _G.GM or _G.GAMEMODE ).Title or "unknown"
+        end
+
+    end
+
+end
 
 server.getUptime = server.getUptime or _G.UnPredictedCurTime
 
@@ -32,13 +182,14 @@ end
 
 if std.CLIENT_MENU then
 
-    server.getFrameTime = _G.engine.ServerFrameTime
+    server.getFrameTime = server.getFrameTime or _G.engine.ServerFrameTime or function() return 0 end
 
-    local glua_permissions = _G.permissions
-    server.grantPermission = glua_permissions.Grant
-    server.revokePermission = glua_permissions.Revoke
-    server.hasPermission = glua_permissions.IsGranted
-    server.getAllPermissions = glua_permissions.GetAll
+    local glua_permissions = _G.permissions or {}
+
+    server.grantPermission = server.grantPermission and glua_permissions.Grant or std.debug.fempty
+    server.revokePermission = server.revokePermission and glua_permissions.Revoke or std.debug.fempty
+    server.hasPermission = server.hasPermission and glua_permissions.IsGranted or function() return false end
+    server.getAllPermissions = server.getAllPermissions and glua_permissions.GetAll or function() return {} end
 
 end
 
@@ -327,20 +478,6 @@ if std.SERVER then
         https://developer.valvesoftware.com/wiki/Console_Command_List
 
     --]]
-
-    if server.getGamemodeTitle == nil then
-
-        --- [SERVER]
-        ---
-        --- Returns the title of the gamemode in the server browser.
-        ---
-        ---@return string title The title of the gamemode.
-        function server.getGamemodeTitle()
-            ---@diagnostic disable-next-line: undefined-field
-            return _G.hook.Call( "GetGameDescription" ) or ( _G.GM or _G.GAMEMODE ).Title or "unknown"
-        end
-
-    end
 
     if server.setGamemodeTitile == nil then
 
