@@ -73,9 +73,6 @@ do
 
 end
 
--- TODO: pure lua md5
--- TODO: pure lua sha1
-
 do
 
     --- [SHARED AND MENU]
@@ -141,9 +138,9 @@ do
 
 end
 
-do
+if std.SHARED then
 
-    --- [SHARED AND MENU]
+    --- [SHARED]
     ---
     --- SHA-256 stands for Secure Hash Algorithm 256-bit, part of the SHA-2 family.
     ---
