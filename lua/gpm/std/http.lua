@@ -137,7 +137,7 @@ if http.StatusCodes == nil then
 
 end
 
-local gpm_http_timeout, gpm_http_lifetime
+local gpm_http_timeout, gpm_http_cache_ttl
 do
 
     local cvar_options = {
@@ -154,13 +154,13 @@ do
     gpm_http_timeout = std.console.Variable( cvar_options )
     http.Timeout = gpm_http_timeout
 
-    cvar_options.name = "gpm.http.lifetime"
-    cvar_options.description = "The cache lifetime for the gpm http library in minutes."
+    cvar_options.name = "gpm.http.cache.ttl"
+    cvar_options.description = "The cache time to live for the gpm http library in minutes."
     cvar_options.default = 1
     cvar_options.max = 40320
 
-    gpm_http_lifetime = std.console.Variable( cvar_options )
-    http.Lifetime = gpm_http_lifetime
+    gpm_http_cache_ttl = std.console.Variable( cvar_options )
+    http.CacheTTL = gpm_http_cache_ttl
 
 end
 
@@ -263,20 +263,20 @@ local function request( options )
             return data.future:await()
         end
 
-        local lifetime = options.lifetime
-        options.lifetime = nil
+        local cache_ttl = options.cache_ttl
+        options.cache_ttl = nil
 
-        if not isnumber( lifetime ) then
-            lifetime = gpm_http_lifetime.value * 60
+        if not isnumber( cache_ttl ) then
+            cache_ttl = gpm_http_cache_ttl.value * 60
         end
 
-        ---@cast lifetime number
+        ---@cast cache_ttl number
 
         ---@type gpm.std.http.Request.session_cache
         data = {
             future = f,
             start = game_getUptime(),
-            age = lifetime
+            age = cache_ttl
         }
 
         session_cache[ identifier ] = data

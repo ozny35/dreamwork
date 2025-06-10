@@ -127,10 +127,10 @@ do
     ---@type boolean?
     request.cache = false
 
-    --- The cache lifetime for the request.
+    --- The cache time to live for the request.
     ---
     ---@type number?
-    request.lifetime = nil
+    request.cache_ttl = nil
 
     --- Whether to use ETag caching.
     ---
