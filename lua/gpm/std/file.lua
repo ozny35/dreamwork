@@ -19,24 +19,14 @@ local file = std.file or {}
 std.file = file
 
 local path = file.path
+local path_resolve = path.resolve
 
 local debug = std.debug
 local string = std.string
 
-local function resolve_path( resolving_path  )
-    if not resolving_path or resolving_path == "" or resolving_path == "." then
-        return path.getCurrentDirectory( debug.getfmain(), false )
-    elseif resolving_path == "./" then
-        return path.getCurrentDirectory( debug.getfmain(), true )
-    elseif string.byte( resolving_path, 1 ) == 0x2F --[[ / ]] then
-        return path.normalize( resolving_path )
-    else
-        return path.normalize( path.getCurrentDirectory( debug.getfmain(), true ) .. resolving_path )
-    end
-end
-
 local engine = gpm.engine
 
+-- TODO: move into path library
 local path_unpack
 do
 
@@ -152,7 +142,7 @@ local file_Exists, file_IsDir = glua_file.Exists, glua_file.IsDir
 ---@param file_path string The path to the file.
 ---@return boolean exists Returns `true` if the file or directory exists, otherwise `false`.
 function file.exists( file_path )
-    return file_Exists( path_unpack( resolve_path( file_path ), false, 2 ) )
+    return file_Exists( path_unpack( path_resolve( file_path ), false, 2 ) )
 end
 
 --- [SHARED AND MENU]
@@ -161,7 +151,7 @@ end
 ---@param directory_path string The path to the directory.
 ---@return boolean exists Returns `true` if the directory exists and is not a file, otherwise `false`.
 function file.isExistingDirectory( directory_path )
-    return file_IsDir( path_unpack( resolve_path( directory_path ), false, 2 ) )
+    return file_IsDir( path_unpack( path_resolve( directory_path ), false, 2 ) )
 end
 
 --- [SHARED AND MENU]
@@ -170,7 +160,7 @@ end
 ---@param file_path string The path to the file.
 ---@return boolean exists Returns `true` if the file exists and is not a directory, otherwise `false`.
 function file.isExistingFile( file_path )
-    local local_path, game_path = path_unpack( resolve_path( file_path ), false, 2 )
+    local local_path, game_path = path_unpack( path_resolve( file_path ), false, 2 )
     return file_Exists( local_path, game_path ) and not file_IsDir( local_path, game_path )
 end
 
@@ -182,7 +172,7 @@ local file_Time = glua_file.Time
 ---@param file_path string The path to the file or directory.
 ---@return integer unix_time The last modified time of the file or directory.
 function file.getLastWriteTime( file_path )
-    return file_Time( path_unpack( resolve_path( file_path ), false, 2 ) )
+    return file_Time( path_unpack( path_resolve( file_path ), false, 2 ) )
 end
 
 local file_Find, file_Size = glua_file.Find, glua_file.Size
@@ -194,7 +184,7 @@ local file_Find, file_Size = glua_file.Find, glua_file.Size
 ---@return table files The list of files.
 ---@return table directories The list of directories.
 function file.find( file_path )
-    return file_Find( path_unpack( resolve_path( file_path ), false, 2 ) )
+    return file_Find( path_unpack( path_resolve( file_path ), false, 2 ) )
 end
 
 local function do_tralling_slash( str )
@@ -246,7 +236,7 @@ do
     ---@return table files The list of files.
     ---@return integer count The number of files in the list.
     function file.search( directory_path, searchable, plain )
-        local lst, local_path, game_path = {}, path_unpack( resolve_path( directory_path ), false, 2 )
+        local lst, local_path, game_path = {}, path_unpack( path_resolve( directory_path ), false, 2 )
         return lst, search( do_tralling_slash( local_path ), game_path, searchable, plain, lst, 0 )
     end
 
@@ -276,7 +266,7 @@ end
 ---@param file_path string The path to the file or directory.
 ---@return integer size The size of the file or directory in bytes.
 function file.getSize( file_path )
-    local local_path, game_path = path_unpack( resolve_path( file_path ), false, 2 )
+    local local_path, game_path = path_unpack( path_resolve( file_path ), false, 2 )
     if file_IsDir( local_path, game_path ) then
         return directory_Size( do_tralling_slash( local_path ), game_path )
     else
@@ -308,7 +298,7 @@ end
 ---@param file_path string The path to the file or directory to delete.
 ---@param forced? boolean If `true`, then the file or directory will be deleted even if it is not empty. (useless for files)
 function file.delete( file_path, forced )
-    local local_path, game_path = path_unpack( resolve_path( file_path ), true, 2 )
+    local local_path, game_path = path_unpack( path_resolve( file_path ), true, 2 )
     if forced and file_IsDir( local_path, game_path ) then
         directory_Delete( do_tralling_slash( local_path ), game_path )
     else
@@ -342,7 +332,7 @@ end
 ---@param file_path string The path to the directory to create. (creates all non-existing directories in the path)
 ---@param forced? boolean If `true`, all files in the path will be deleted if they exist.
 function file.createDirectory( file_path, forced )
-    return directory_Create( forced, path_unpack( resolve_path( file_path ), true, 2 ) )
+    return directory_Create( forced, path_unpack( path_resolve( file_path ), true, 2 ) )
 end
 
 local FILE = std.debug.findmetatable( "File" )
@@ -418,7 +408,7 @@ end
 ---@param forced? boolean
 ---@return string
 function file.copy( source_path, target_path, forced )
-    local resolved_source_path = resolve_path( source_path )
+    local resolved_source_path = path_resolve( source_path )
     local source_local_path, source_game_path = path_unpack( resolved_source_path, target_path == nil, 2 )
 
     local resolved_target_path, target_local_path, target_game_path
@@ -429,15 +419,15 @@ function file.copy( source_path, target_path, forced )
             resolved_target_path = resolved_source_path .. "-copy"
         else
 
-            local directory, file_name_with_ext = path.stripFile( source_local_path, true )
-            local file_name, extension = path.stripExtension( file_name_with_ext, true )
+            local directory, file_name_with_ext = path.split( source_local_path, true )
+            local file_name, extension = path.splitExtension( file_name_with_ext, true )
             local new_file_name = file_name .. "-copy" .. extension
 
-            resolved_target_path = path.stripFile( resolved_source_path, true ) .. new_file_name
+            resolved_target_path = path.split( resolved_source_path, true ) .. new_file_name
             target_local_path, target_game_path = directory .. new_file_name, source_game_path
         end
     else
-        resolved_target_path = resolve_path( target_path )
+        resolved_target_path = path_resolve( target_path )
         target_local_path, target_game_path = path_unpack( resolved_target_path, true, 2 )
         if target_game_path == source_game_path and target_local_path == source_local_path then
             error( "Source and target paths cannot be the same.", 2 )
@@ -465,10 +455,10 @@ end
 ---@param forced? boolean If `true`, the target file or directory will be deleted if it already exists.
 ---@return string new_path The path to the new file or directory.
 function file.move( source_path, target_path, forced )
-    local resolved_target_path = resolve_path( target_path )
+    local resolved_target_path = path_resolve( target_path )
 
     local target_local_path, target_game_path = path_unpack( resolved_target_path, true, 2 )
-    local source_local_path, source_game_path = path_unpack( resolve_path( source_path ), false, 2 )
+    local source_local_path, source_game_path = path_unpack( path_resolve( source_path ), false, 2 )
 
     if target_game_path == source_game_path and file_IsDir( source_local_path, source_game_path ) and string.startsWith( target_local_path, source_local_path ) then
         error( "Cannot move a file or directory to itself.", 2 )
@@ -507,7 +497,7 @@ end
 ---@param length? integer The number of bytes to read, or `nil` to read the entire file.
 ---@return string data The data read from the file.
 function file.read( file_path, length )
-    local resolved_path = resolve_path( file_path )
+    local resolved_path = path_resolve( file_path )
     local local_path, game_path = path_unpack( resolved_path, false, 2 )
 
     local handler = file_Open( local_path, "rb", game_path )
@@ -531,14 +521,14 @@ end
 ---@param data string The data to write to the file.
 ---@param forced? boolean If `true`, the directory will not be created if it does not exist.
 function file.write( file_path, data, forced )
-    local resolved_path = resolve_path( file_path )
+    local resolved_path = path_resolve( file_path )
     local local_path, game_path = path_unpack( resolved_path, true, 2 )
 
     if forced then
         if file_IsDir( local_path, game_path ) then
             directory_Delete( do_tralling_slash( local_path ), game_path )
         else
-            directory_Create( true, path.stripFile( local_path, false ), game_path )
+            directory_Create( true, path.split( local_path, false ), game_path )
         end
     end
 
@@ -561,14 +551,14 @@ end
 ---@param data string The data to append to the file.
 ---@param forced? boolean If `true`, the directory will not be created if it does not exist.
 function file.append( file_path, data, forced )
-    local resolved_path = resolve_path( file_path )
+    local resolved_path = path_resolve( file_path )
     local local_path, game_path = path_unpack( resolved_path, true, 2 )
 
     if forced then
         if file_IsDir( local_path, game_path ) then
             directory_Delete( do_tralling_slash( local_path ), game_path )
         else
-            directory_Create( true, path.stripFile( local_path, false ), game_path )
+            directory_Create( true, path.split( local_path, false ), game_path )
         end
     end
 
@@ -606,7 +596,7 @@ do
 
     ---@protected
     function Reader:__init( resolving_path )
-        local resolved_path = resolve_path( resolving_path )
+        local resolved_path = path_resolve( resolving_path )
         self[ 1 ] = resolved_path
 
         local local_path, game_path = path_unpack( resolved_path, false, 3 )
