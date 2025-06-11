@@ -15,6 +15,7 @@ local Queue = std.Queue
 --- [SHARED AND MENU]
 ---
 --- The futures library.
+---
 ---@class gpm.std.futures
 local futures = std.futures or {}
 std.futures = futures
@@ -62,7 +63,8 @@ if coroutine_listeners == nil then
     gc_setTableRules( coroutine_listeners, true, true )
 end
 
---- Abstract type that is used to type hint async functions
+--- Abstract type that is used to type hint async functions.
+---
 ---@see gpm.std.futures.apairs for example
 ---@alias gpm.std.futures.AsyncIterator<K, V> table<K, V> | nil
 ---@alias AsyncIterator<K, V> gpm.std.futures.AsyncIterator<K, V>
@@ -457,6 +459,8 @@ do
 
     local table = std.table
 
+    --- [SHARED AND MENU]
+    ---
     --- Futures are objects that hold the result that can be assigned asynchronously
     --- they can be awaited to get the result
     --- or add callback with :addCallback(...) method.

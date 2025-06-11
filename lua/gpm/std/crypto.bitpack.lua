@@ -19,6 +19,7 @@ local crypto = std.crypto
 local bitpack = crypto.bitpack or {}
 crypto.bitpack = bitpack
 
+-- TODO: ffi support?
 
 --- [SHARED AND MENU]
 ---

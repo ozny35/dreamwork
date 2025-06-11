@@ -12,6 +12,8 @@ local math_ceil = math.ceil
 ---@class gpm.std.crypto
 local crypto = std.crypto
 
+-- TODO: ffi support?
+
 local bytepack = crypto.bytepack
 
 local bytepack_readUInt16, bytepack_writeUInt16 = bytepack.readUInt16, bytepack.writeUInt16
@@ -423,7 +425,7 @@ end
 ---
 ---@return integer | nil value The unsigned 1-byte integer.
 ---@return nil | string err_msg The error message.
-function Reader:readU8()
+function Reader:readUInt8()
 	local start_position = self.position
 
 	local available = self.data_length - start_position
@@ -467,7 +469,7 @@ do
 	--- Range of values: `0` - `255`
 	---
 	---@param value integer The unsigned 1-byte integer.
-	function Writer:writeU8( value )
+	function Writer:writeUInt8( value )
 		local binary_str, err_msg = pack_writeUInt8( value )
 		if binary_str == nil then
 			error( err_msg, 2 )
@@ -500,7 +502,7 @@ function pack.readUInt16( binary_str, big_endian, start_position )
 		return nil, "not enough data"
 	end
 
-	if not big_endian then
+	if big_endian then
 		b1, b2 = b2, b1
 	end
 
@@ -515,7 +517,7 @@ end
 ---
 ---@return integer | nil value The unsigned 2-byte integer.
 ---@return nil | string err_msg The error message.
-function Reader:readU16( big_endian )
+function Reader:readUInt16( big_endian )
 	local start_position = self.position
 
 	local available = self.data_length - start_position
@@ -536,7 +538,7 @@ function Reader:readU16( big_endian )
 		return nil, "not enough data"
 	end
 
-	if not big_endian then
+	if big_endian then
 		b1, b2 = b2, b1
 	end
 
@@ -562,7 +564,7 @@ do
 
 		local b1, b2 = bytepack_writeUInt16( value )
 
-		if not big_endian then
+		if big_endian then
 			b1, b2 = b2, b1
 		end
 
@@ -576,7 +578,7 @@ do
 	--- Range of values: `0` - `65535`
 	---
 	---@param value integer The unsigned 2-byte integer.
-	function Writer:writeU16( value )
+	function Writer:writeUInt16( value )
 		local binary_str, err_msg = pack_writeUInt16( value )
 		if binary_str == nil then
 			error( err_msg, 2 )
@@ -609,7 +611,7 @@ function pack.readUInt24( binary_str, big_endian, start_position )
 		return nil, "not enough data"
 	end
 
-	if not big_endian then
+	if big_endian then
 		b1, b2, b3 = b3, b2, b1
 	end
 
@@ -633,7 +635,7 @@ function pack.writeUInt24( value, big_endian )
 
 	local b1, b2, b3 = bytepack_writeUInt24( value )
 
-	if not big_endian then
+	if big_endian then
 		b1, b2, b3 = b3, b2, b1
 	end
 
@@ -662,7 +664,7 @@ function pack.readUInt32( binary_str, big_endian, start_position )
 		return nil, "not enough data"
 	end
 
-	if not big_endian then
+	if big_endian then
 		b1, b2, b3, b4 = b4, b3, b2, b1
 	end
 
@@ -678,7 +680,7 @@ end
 ---@param big_endian? boolean `true` for big endian, `false` for little endian, default is `false`.
 ---@return integer | nil value The unsigned 4-byte integer.
 ---@return nil | string err_msg The error message.
-function Reader:readU32( big_endian )
+function Reader:readUInt32( big_endian )
 	local start_position = self.position
 
 	local available = self.data_length - start_position
@@ -699,7 +701,7 @@ function Reader:readU32( big_endian )
 		return nil, "not enough data"
 	end
 
-	if not big_endian then
+	if big_endian then
 		b1, b2, b3, b4 = b4, b3, b2, b1
 	end
 
@@ -725,7 +727,7 @@ do
 
 		local b1, b2, b3, b4 = bytepack_writeUInt32( value )
 
-		if not big_endian then
+		if big_endian then
 			b1, b2, b3, b4 = b4, b3, b2, b1
 		end
 
@@ -742,7 +744,7 @@ do
 	---
 	---@param value integer The unsigned 4-byte integer.
 	---@param big_endian? boolean `true` for big endian, `false` for little endian, default is `false`.
-	function Writer:writeU32( value, big_endian )
+	function Writer:writeUInt32( value, big_endian )
 		local binary_str, err_msg = pack_writeUInt32( value, big_endian )
 		if binary_str == nil then
 			error( err_msg, 2 )
@@ -777,7 +779,7 @@ function pack.readUInt40( binary_str, big_endian, start_position )
 		return nil, "not enough data"
 	end
 
-	if not big_endian then
+	if big_endian then
 		b1, b2, b3, b4, b5 = b5, b4, b3, b2, b1
 	end
 
@@ -801,7 +803,7 @@ function pack.writeUInt40( value, big_endian )
 
 	local b1, b2, b3, b4, b5 = bytepack_writeUInt40( value )
 
-	if not big_endian then
+	if big_endian then
 		b1, b2, b3, b4, b5 = b5, b4, b3, b2, b1
 	end
 
@@ -830,7 +832,7 @@ function pack.readUInt48( binary_str, big_endian, start_position )
 		return nil, "not enough data"
 	end
 
-	if not big_endian then
+	if big_endian then
 		b1, b2, b3, b4, b5, b6 = b6, b5, b4, b3, b2, b1
 	end
 
@@ -854,7 +856,7 @@ function pack.writeUInt48( value, big_endian )
 
 	local b1, b2, b3, b4, b5, b6 = bytepack_writeUInt48( value )
 
-	if not big_endian then
+	if big_endian then
 		b1, b2, b3, b4, b5, b6 = b6, b5, b4, b3, b2, b1
 	end
 
@@ -885,7 +887,7 @@ function pack.readUInt56( binary_str, big_endian, start_position )
 		return nil, "not enough data"
 	end
 
-	if not big_endian then
+	if big_endian then
 		b1, b2, b3, b4, b5, b6, b7 = b7, b6, b5, b4, b3, b2, b1
 	end
 
@@ -911,7 +913,7 @@ function pack.writeUInt56( value, big_endian )
 
 	local b1, b2, b3, b4, b5, b6, b7 = bytepack_writeUInt56( value )
 
-	if not big_endian then
+	if big_endian then
 		b1, b2, b3, b4, b5, b6, b7 = b7, b6, b5, b4, b3, b2, b1
 	end
 
@@ -942,7 +944,7 @@ function pack.readUInt64( binary_str, big_endian, start_position )
 		return nil, "not enough data"
 	end
 
-	if not big_endian then
+	if big_endian then
 		b1, b2, b3, b4, b5, b6, b7, b8 = b8, b7, b6, b5, b4, b3, b2, b1
 	end
 
@@ -960,7 +962,7 @@ end
 ---@param big_endian? boolean `true` for big endian, `false` for little endian, default is `false`.
 ---@return integer | nil value The unsigned 8-byte integer.
 ---@return nil | string err_msg The error message.
-function Reader:readU64( big_endian )
+function Reader:readUInt64( big_endian )
 	local start_position = self.position
 
 	local available = self.data_length - start_position
@@ -981,7 +983,7 @@ function Reader:readU64( big_endian )
 		return nil, "not enough data"
 	end
 
-	if not big_endian then
+	if big_endian then
 		b1, b2, b3, b4, b5, b6, b7, b8 = b8, b7, b6, b5, b4, b3, b2, b1
 	end
 
@@ -1009,7 +1011,7 @@ do
 
 		local b1, b2, b3, b4, b5, b6, b7, b8 = bytepack_writeUInt64( value )
 
-		if not big_endian then
+		if big_endian then
 			b1, b2, b3, b4, b5, b6, b7, b8 = b8, b7, b6, b5, b4, b3, b2, b1
 		end
 
@@ -1028,7 +1030,7 @@ do
 	---
 	---@param value integer The unsigned 8-byte integer.
 	---@param big_endian? boolean `true` for big endian, `false` for little endian.
-	function Writer:writeU64( value, big_endian )
+	function Writer:writeUInt64( value, big_endian )
 		local binary_str, err_msg = pack_writeUInt64( value, big_endian )
 		if binary_str == nil then
 			error( err_msg, 2 )
@@ -1157,7 +1159,7 @@ function Writer:writeUInt( value, bit_count, big_endian )
 	elseif byte_count == 2 then
 		local b1, b2 = bytepack_writeUInt16( value )
 
-		if not big_endian then
+		if big_endian then
 			b1, b2 = b2, b1
 		end
 
@@ -1165,7 +1167,7 @@ function Writer:writeUInt( value, bit_count, big_endian )
 	elseif byte_count == 3 then
 		local b1, b2, b3 = bytepack_writeUInt24( value )
 
-		if not big_endian then
+		if big_endian then
 			b1, b2, b3 = b3, b2, b1
 		end
 
@@ -1173,7 +1175,7 @@ function Writer:writeUInt( value, bit_count, big_endian )
 	elseif byte_count == 4 then
 		local b1, b2, b3, b4 = bytepack_writeUInt32( value )
 
-		if not big_endian then
+		if big_endian then
 			b1, b2, b3, b4 = b4, b3, b2, b1
 		end
 
@@ -1181,7 +1183,7 @@ function Writer:writeUInt( value, bit_count, big_endian )
 	elseif byte_count == 5 then
 		local b1, b2, b3, b4, b5 = bytepack_writeUInt40( value )
 
-		if not big_endian then
+		if big_endian then
 			b1, b2, b3, b4, b5 = b5, b4, b3, b2, b1
 		end
 
@@ -1189,7 +1191,7 @@ function Writer:writeUInt( value, bit_count, big_endian )
 	elseif byte_count == 6 then
 		local b1, b2, b3, b4, b5, b6 = bytepack_writeUInt48( value )
 
-		if not big_endian then
+		if big_endian then
 			b1, b2, b3, b4, b5, b6 = b6, b5, b4, b3, b2, b1
 		end
 
@@ -1197,7 +1199,7 @@ function Writer:writeUInt( value, bit_count, big_endian )
 	elseif byte_count == 7 then
 		local b1, b2, b3, b4, b5, b6, b7 = bytepack_writeUInt56( value )
 
-		if not big_endian then
+		if big_endian then
 			b1, b2, b3, b4, b5, b6, b7 = b7, b6, b5, b4, b3, b2, b1
 		end
 
@@ -1205,7 +1207,7 @@ function Writer:writeUInt( value, bit_count, big_endian )
 	elseif byte_count == 8 then
 		local b1, b2, b3, b4, b5, b6, b7, b8 = bytepack_writeUInt64( value )
 
-		if not big_endian then
+		if big_endian then
 			b1, b2, b3, b4, b5, b6, b7, b8 = b8, b7, b6, b5, b4, b3, b2, b1
 		end
 
@@ -1262,43 +1264,43 @@ do
 		if byte_count == 1 and b1 ~= nil then
 			return bytepack_readUnsignedFixedPoint( n, b1 ), nil
 		elseif byte_count == 2 and b2 ~= nil then
-			if not big_endian then
+			if big_endian then
 				b1, b2 = b2, b1
 			end
 
 			return bytepack_readUnsignedFixedPoint( n, b1, b2 ), nil
 		elseif byte_count == 3 and b3 ~= nil then
-			if not big_endian then
+			if big_endian then
 				b1, b2, b3 = b3, b2, b1
 			end
 
 			return bytepack_readUnsignedFixedPoint( n, b1, b2, b3 ), nil
 		elseif byte_count == 4 and b4 ~= nil then
-			if not big_endian then
+			if big_endian then
 				b1, b2, b3, b4 = b4, b3, b2, b1
 			end
 
 			return bytepack_readUnsignedFixedPoint( n, b1, b2, b3, b4 ), nil
 		elseif byte_count == 5 and b5 ~= nil then
-			if not big_endian then
+			if big_endian then
 				b1, b2, b3, b4, b5 = b5, b4, b3, b2, b1
 			end
 
 			return bytepack_readUnsignedFixedPoint( n, b1, b2, b3, b4, b5 ), nil
 		elseif byte_count == 6 and b6 ~= nil then
-			if not big_endian then
+			if big_endian then
 				b1, b2, b3, b4, b5, b6 = b6, b5, b4, b3, b2, b1
 			end
 
 			return bytepack_readUnsignedFixedPoint( n, b1, b2, b3, b4, b5, b6 ), nil
 		elseif byte_count == 7 and b7 ~= nil then
-			if not big_endian then
+			if big_endian then
 				b1, b2, b3, b4, b5, b6, b7 = b7, b6, b5, b4, b3, b2, b1
 			end
 
 			return bytepack_readUnsignedFixedPoint( n, b1, b2, b3, b4, b5, b6, b7 ), nil
 		elseif byte_count == 8 and b8 ~= nil then
-			if not big_endian then
+			if big_endian then
 				b1, b2, b3, b4, b5, b6, b7, b8 = b8, b7, b6, b5, b4, b3, b2, b1
 			end
 
@@ -1353,43 +1355,43 @@ do
 		if byte_count == 1 and b1 ~= nil then
 			return bytepack_readUnsignedFixedPoint( n, b1 ), nil
 		elseif byte_count == 2 and b2 ~= nil then
-			if not big_endian then
+			if big_endian then
 				b1, b2 = b2, b1
 			end
 
 			return bytepack_readUnsignedFixedPoint( n, b1, b2 ), nil
 		elseif byte_count == 3 and b3 ~= nil then
-			if not big_endian then
+			if big_endian then
 				b1, b2, b3 = b3, b2, b1
 			end
 
 			return bytepack_readUnsignedFixedPoint( n, b1, b2, b3 ), nil
 		elseif byte_count == 4 and b4 ~= nil then
-			if not big_endian then
+			if big_endian then
 				b1, b2, b3, b4 = b4, b3, b2, b1
 			end
 
 			return bytepack_readUnsignedFixedPoint( n, b1, b2, b3, b4 ), nil
 		elseif byte_count == 5 and b5 ~= nil then
-			if not big_endian then
+			if big_endian then
 				b1, b2, b3, b4, b5 = b5, b4, b3, b2, b1
 			end
 
 			return bytepack_readUnsignedFixedPoint( n, b1, b2, b3, b4, b5 ), nil
 		elseif byte_count == 6 and b6 ~= nil then
-			if not big_endian then
+			if big_endian then
 				b1, b2, b3, b4, b5, b6 = b6, b5, b4, b3, b2, b1
 			end
 
 			return bytepack_readUnsignedFixedPoint( n, b1, b2, b3, b4, b5, b6 ), nil
 		elseif byte_count == 7 and b7 ~= nil then
-			if not big_endian then
+			if big_endian then
 				b1, b2, b3, b4, b5, b6, b7 = b7, b6, b5, b4, b3, b2, b1
 			end
 
 			return bytepack_readUnsignedFixedPoint( n, b1, b2, b3, b4, b5, b6, b7 ), nil
 		elseif byte_count == 8 and b8 ~= nil then
-			if not big_endian then
+			if big_endian then
 				b1, b2, b3, b4, b5, b6, b7, b8 = b8, b7, b6, b5, b4, b3, b2, b1
 			end
 
@@ -1450,7 +1452,7 @@ do
 				return nil, "invalid value"
 			end
 
-			if not big_endian then
+			if big_endian then
 				b1, b2 = b2, b1
 			end
 
@@ -1460,7 +1462,7 @@ do
 				return nil, "invalid value"
 			end
 
-			if not big_endian then
+			if big_endian then
 				b1, b2, b3 = b3, b2, b1
 			end
 
@@ -1470,7 +1472,7 @@ do
 				return nil, "invalid value"
 			end
 
-			if not big_endian then
+			if big_endian then
 				b1, b2, b3, b4 = b4, b3, b2, b1
 			end
 
@@ -1480,7 +1482,7 @@ do
 				return nil, "invalid value"
 			end
 
-			if not big_endian then
+			if big_endian then
 				b1, b2, b3, b4, b5 = b5, b4, b3, b2, b1
 			end
 
@@ -1490,7 +1492,7 @@ do
 				return nil, "invalid value"
 			end
 
-			if not big_endian then
+			if big_endian then
 				b1, b2, b3, b4, b5, b6 = b6, b5, b4, b3, b2, b1
 			end
 
@@ -1500,7 +1502,7 @@ do
 				return nil, "invalid value"
 			end
 
-			if not big_endian then
+			if big_endian then
 				b1, b2, b3, b4, b5, b6, b7 = b7, b6, b5, b4, b3, b2, b1
 			end
 
@@ -1510,7 +1512,7 @@ do
 				return nil, "invalid value"
 			end
 
-			if not big_endian then
+			if big_endian then
 				b1, b2, b3, b4, b5, b6, b7, b8 = b8, b7, b6, b5, b4, b3, b2, b1
 			end
 
@@ -1578,8 +1580,8 @@ end
 ---
 ---@return integer | nil value The signed 1-byte integer.
 ---@return nil | string err_msg The error message.
-function Reader:readI8()
-	local u8, err_msg = self:readU8()
+function Reader:readInt8()
+	local u8, err_msg = self:readUInt8()
 	if u8 == nil then
 		return nil, err_msg
 	else
@@ -1615,7 +1617,7 @@ do
 	--- Range of values: `-128` - `127`
 	---
 	---@param value integer The signed 1-byte integer.
-	function Writer:writeI8( value )
+	function Writer:writeInt8( value )
 		local binary_str, err_msg = pack_writeInt8( value )
 		if binary_str == nil then
 			error( err_msg, 2 )
@@ -1648,7 +1650,7 @@ function pack.readInt16( binary_str, big_endian, start_position )
 		return nil, "not enough data"
 	end
 
-	if not big_endian then
+	if big_endian then
 		b1, b2 = b2, b1
 	end
 
@@ -1664,7 +1666,7 @@ end
 ---@param big_endian? boolean `true` for big endian, `false` for little endian, default is `false`.
 ---@return integer | nil value The signed 2-byte integer.
 ---@return nil | string err_msg The error message.
-function Reader:readI16( big_endian )
+function Reader:readInt16( big_endian )
 	local start_position = self.position
 
 	local available = self.data_length - start_position
@@ -1681,7 +1683,7 @@ function Reader:readI16( big_endian )
 
 	local b1, b2 = string_byte( self.data, start_position, end_position )
 
-	if not big_endian then
+	if big_endian then
 		b1, b2 = b2, b1
 	end
 
@@ -1707,7 +1709,7 @@ do
 
 		local b1, b2 = bytepack_writeInt16( value )
 
-		if not big_endian then
+		if big_endian then
 			b1, b2 = b2, b1
 		end
 
@@ -1724,7 +1726,7 @@ do
 	---
 	---@param value integer The signed 2-byte integer.
 	---@param big_endian? boolean `true` for big endian, `false` for little endian.
-	function Writer:writeI16( value, big_endian )
+	function Writer:writeInt16( value, big_endian )
 		local binary_str, err_msg = pack_writeInt16( value, big_endian )
 		if binary_str == nil then
 			error( err_msg, 2 )
@@ -1757,7 +1759,7 @@ function pack.readInt24( binary_str, big_endian, start_position )
 		return nil, "not enough data"
 	end
 
-	if not big_endian then
+	if big_endian then
 		b1, b2, b3 = b3, b2, b1
 	end
 
@@ -1781,7 +1783,7 @@ function pack.writeInt24( value, big_endian )
 
 	local b1, b2, b3 = bytepack_writeInt24( value )
 
-	if not big_endian then
+	if big_endian then
 		b1, b2, b3 = b3, b2, b1
 	end
 
@@ -1810,7 +1812,7 @@ function pack.readInt32( binary_str, big_endian, start_position )
 		return nil, "not enough data"
 	end
 
-	if not big_endian then
+	if big_endian then
 		b1, b2, b3, b4 = b4, b3, b2, b1
 	end
 
@@ -1826,7 +1828,7 @@ end
 ---@param big_endian? boolean `true` for big endian, `false` for little endian, default is `false`.
 ---@return integer | nil value The signed 4-byte integer.
 ---@return nil | string err_msg The error message.
-function Reader:readI32( big_endian )
+function Reader:readInt32( big_endian )
 	local start_position = self.position
 
 	local available = self.data_length - start_position
@@ -1843,7 +1845,7 @@ function Reader:readI32( big_endian )
 
 	local b1, b2, b3, b4 = string_byte( self.data, start_position, end_position )
 
-	if not big_endian then
+	if big_endian then
 		b1, b2, b3, b4 = b4, b3, b2, b1
 	end
 
@@ -1869,7 +1871,7 @@ do
 
 		local b1, b2, b3, b4 = bytepack_writeInt32( value )
 
-		if not big_endian then
+		if big_endian then
 			b1, b2, b3, b4 = b4, b3, b2, b1
 		end
 
@@ -1885,7 +1887,7 @@ do
 	--- Range of values: `-2147483648` - `2147483647`
 	---
 	---@param value integer The signed 4-byte integer.
-	function Writer:writeI32( value, big_endian )
+	function Writer:writeInt32( value, big_endian )
 		local binary_str, err_msg = pack_writeInt32( value, big_endian )
 		if binary_str == nil then
 			error( err_msg, 2 )
@@ -1918,7 +1920,7 @@ function pack.readInt40( binary_str, big_endian, start_position )
 		return nil, "not enough data"
 	end
 
-	if not big_endian then
+	if big_endian then
 		b1, b2, b3, b4, b5 = b5, b4, b3, b2, b1
 	end
 
@@ -1942,7 +1944,7 @@ function pack.writeInt40( value, big_endian )
 
 	local b1, b2, b3, b4, b5 = bytepack_writeInt40( value )
 
-	if not big_endian then
+	if big_endian then
 		b1, b2, b3, b4, b5 = b5, b4, b3, b2, b1
 	end
 
@@ -1971,7 +1973,7 @@ function pack.readInt48( binary_str, big_endian, start_position )
 		return nil, "not enough data"
 	end
 
-	if not big_endian then
+	if big_endian then
 		b1, b2, b3, b4, b5, b6 = b6, b5, b4, b3, b2, b1
 	end
 
@@ -1995,7 +1997,7 @@ function pack.writeInt48( value, big_endian )
 
 	local b1, b2, b3, b4, b5, b6 = bytepack_writeInt48( value )
 
-	if not big_endian then
+	if big_endian then
 		b1, b2, b3, b4, b5, b6 = b6, b5, b4, b3, b2, b1
 	end
 
@@ -2024,7 +2026,7 @@ function pack.readInt56( binary_str, big_endian, start_position )
 		return nil, "not enough data"
 	end
 
-	if not big_endian then
+	if big_endian then
 		b1, b2, b3, b4, b5, b6, b7 = b7, b6, b5, b4, b3, b2, b1
 	end
 
@@ -2048,7 +2050,7 @@ function pack.writeInt56( value, big_endian )
 
 	local b1, b2, b3, b4, b5, b6, b7 = bytepack_writeInt56( value )
 
-	if not big_endian then
+	if big_endian then
 		b1, b2, b3, b4, b5, b6, b7 = b7, b6, b5, b4, b3, b2, b1
 	end
 
@@ -2079,7 +2081,7 @@ function pack.readInt64( binary_str, big_endian, start_position )
 		return nil, "not enough data"
 	end
 
-	if not big_endian then
+	if big_endian then
 		b1, b2, b3, b4, b5, b6, b7, b8 = b8, b7, b6, b5, b4, b3, b2, b1
 	end
 
@@ -2097,7 +2099,7 @@ end
 ---@param big_endian? boolean `true` for big endian, `false` for little endian, default is `false`.
 ---@return integer | nil value The signed 8-byte integer.
 ---@return nil | string err_msg The error message.
-function Reader:readI64( big_endian )
+function Reader:readInt64( big_endian )
 	local start_position = self.position
 
 	local available = self.data_length - start_position
@@ -2114,7 +2116,7 @@ function Reader:readI64( big_endian )
 
 	local b1, b2, b3, b4, b5, b6, b7, b8 = string_byte( self.data, start_position, end_position )
 
-	if not big_endian then
+	if big_endian then
 		b1, b2, b3, b4, b5, b6, b7, b8 = b8, b7, b6, b5, b4, b3, b2, b1
 	end
 
@@ -2142,7 +2144,7 @@ do
 
 		local b1, b2, b3, b4, b5, b6, b7, b8 = bytepack_writeInt64( value )
 
-		if not big_endian then
+		if big_endian then
 			b1, b2, b3, b4, b5, b6, b7, b8 = b8, b7, b6, b5, b4, b3, b2, b1
 		end
 
@@ -2161,7 +2163,7 @@ do
 	---
 	---@param value integer The signed 8-byte integer.
 	---@param big_endian? boolean `true` for big endian, `false` for little endian.
-	function Writer:writeI64( value, big_endian )
+	function Writer:writeInt64( value, big_endian )
 		local binary_str, err_msg = pack_writeInt64( value, big_endian )
 		if binary_str == nil then
 			error( err_msg, 2 )
@@ -2290,7 +2292,7 @@ function Writer:writeInt( value, bit_count, big_endian )
 	elseif byte_count == 2 then
 		local b1, b2 = bytepack_writeInt16( value )
 
-		if not big_endian then
+		if big_endian then
 			b1, b2 = b2, b1
 		end
 
@@ -2298,7 +2300,7 @@ function Writer:writeInt( value, bit_count, big_endian )
 	elseif byte_count == 3 then
 		local b1, b2, b3 = bytepack_writeInt24( value )
 
-		if not big_endian then
+		if big_endian then
 			b1, b2, b3 = b3, b2, b1
 		end
 
@@ -2306,7 +2308,7 @@ function Writer:writeInt( value, bit_count, big_endian )
 	elseif byte_count == 4 then
 		local b1, b2, b3, b4 = bytepack_writeInt32( value )
 
-		if not big_endian then
+		if big_endian then
 			b1, b2, b3, b4 = b4, b3, b2, b1
 		end
 
@@ -2314,7 +2316,7 @@ function Writer:writeInt( value, bit_count, big_endian )
 	elseif byte_count == 5 then
 		local b1, b2, b3, b4, b5 = bytepack_writeInt40( value )
 
-		if not big_endian then
+		if big_endian then
 			b1, b2, b3, b4, b5 = b5, b4, b3, b2, b1
 		end
 
@@ -2322,7 +2324,7 @@ function Writer:writeInt( value, bit_count, big_endian )
 	elseif byte_count == 6 then
 		local b1, b2, b3, b4, b5, b6 = bytepack_writeInt48( value )
 
-		if not big_endian then
+		if big_endian then
 			b1, b2, b3, b4, b5, b6 = b6, b5, b4, b3, b2, b1
 		end
 
@@ -2330,7 +2332,7 @@ function Writer:writeInt( value, bit_count, big_endian )
 	elseif byte_count == 7 then
 		local b1, b2, b3, b4, b5, b6, b7 = bytepack_writeInt56( value )
 
-		if not big_endian then
+		if big_endian then
 			b1, b2, b3, b4, b5, b6, b7 = b7, b6, b5, b4, b3, b2, b1
 		end
 
@@ -2338,7 +2340,7 @@ function Writer:writeInt( value, bit_count, big_endian )
 	elseif byte_count == 8 then
 		local b1, b2, b3, b4, b5, b6, b7, b8 = bytepack_writeInt64( value )
 
-		if not big_endian then
+		if big_endian then
 			b1, b2, b3, b4, b5, b6, b7, b8 = b8, b7, b6, b5, b4, b3, b2, b1
 		end
 
@@ -2394,43 +2396,43 @@ do
 		if byte_count == 1 and b1 ~= nil then
 			return bytepack_readFixedPoint( n, b1 ), nil
 		elseif byte_count == 2 and b2 ~= nil then
-			if not big_endian then
+			if big_endian then
 				b1, b2 = b2, b1
 			end
 
 			return bytepack_readFixedPoint( n, b1, b2 ), nil
 		elseif byte_count == 3 and b3 ~= nil then
-			if not big_endian then
+			if big_endian then
 				b1, b2, b3 = b3, b2, b1
 			end
 
 			return bytepack_readFixedPoint( n, b1, b2, b3 ), nil
 		elseif byte_count == 4 and b4 ~= nil then
-			if not big_endian then
+			if big_endian then
 				b1, b2, b3, b4 = b4, b3, b2, b1
 			end
 
 			return bytepack_readFixedPoint( n, b1, b2, b3, b4 ), nil
 		elseif byte_count == 5 and b5 ~= nil then
-			if not big_endian then
+			if big_endian then
 				b1, b2, b3, b4, b5 = b5, b4, b3, b2, b1
 			end
 
 			return bytepack_readFixedPoint( n, b1, b2, b3, b4, b5 ), nil
 		elseif byte_count == 6 and b6 ~= nil then
-			if not big_endian then
+			if big_endian then
 				b1, b2, b3, b4, b5, b6 = b6, b5, b4, b3, b2, b1
 			end
 
 			return bytepack_readFixedPoint( n, b1, b2, b3, b4, b5, b6 ), nil
 		elseif byte_count == 7 and b7 ~= nil then
-			if not big_endian then
+			if big_endian then
 				b1, b2, b3, b4, b5, b6, b7 = b7, b6, b5, b4, b3, b2, b1
 			end
 
 			return bytepack_readFixedPoint( n, b1, b2, b3, b4, b5, b6, b7 ), nil
 		elseif byte_count == 8 and b8 ~= nil then
-			if not big_endian then
+			if big_endian then
 				b1, b2, b3, b4, b5, b6, b7, b8 = b8, b7, b6, b5, b4, b3, b2, b1
 			end
 
@@ -2485,43 +2487,43 @@ do
 		if byte_count == 1 and b1 ~= nil then
 			return bytepack_readFixedPoint( n, b1 ), nil
 		elseif byte_count == 2 and b2 ~= nil then
-			if not big_endian then
+			if big_endian then
 				b1, b2 = b2, b1
 			end
 
 			return bytepack_readFixedPoint( n, b1, b2 ), nil
 		elseif byte_count == 3 and b3 ~= nil then
-			if not big_endian then
+			if big_endian then
 				b1, b2, b3 = b3, b2, b1
 			end
 
 			return bytepack_readFixedPoint( n, b1, b2, b3 ), nil
 		elseif byte_count == 4 and b4 ~= nil then
-			if not big_endian then
+			if big_endian then
 				b1, b2, b3, b4 = b4, b3, b2, b1
 			end
 
 			return bytepack_readFixedPoint( n, b1, b2, b3, b4 ), nil
 		elseif byte_count == 5 and b5 ~= nil then
-			if not big_endian then
+			if big_endian then
 				b1, b2, b3, b4, b5 = b5, b4, b3, b2, b1
 			end
 
 			return bytepack_readFixedPoint( n, b1, b2, b3, b4, b5 ), nil
 		elseif byte_count == 6 and b6 ~= nil then
-			if not big_endian then
+			if big_endian then
 				b1, b2, b3, b4, b5, b6 = b6, b5, b4, b3, b2, b1
 			end
 
 			return bytepack_readFixedPoint( n, b1, b2, b3, b4, b5, b6 ), nil
 		elseif byte_count == 7 and b7 ~= nil then
-			if not big_endian then
+			if big_endian then
 				b1, b2, b3, b4, b5, b6, b7 = b7, b6, b5, b4, b3, b2, b1
 			end
 
 			return bytepack_readFixedPoint( n, b1, b2, b3, b4, b5, b6, b7 ), nil
 		elseif byte_count == 8 and b8 ~= nil then
-			if not big_endian then
+			if big_endian then
 				b1, b2, b3, b4, b5, b6, b7, b8 = b8, b7, b6, b5, b4, b3, b2, b1
 			end
 
@@ -2582,7 +2584,7 @@ do
 				return nil, "invalid value"
 			end
 
-			if not big_endian then
+			if big_endian then
 				b1, b2 = b2, b1
 			end
 
@@ -2592,7 +2594,7 @@ do
 				return nil, "invalid value"
 			end
 
-			if not big_endian then
+			if big_endian then
 				b1, b2, b3 = b3, b2, b1
 			end
 
@@ -2602,7 +2604,7 @@ do
 				return nil, "invalid value"
 			end
 
-			if not big_endian then
+			if big_endian then
 				b1, b2, b3, b4 = b4, b3, b2, b1
 			end
 
@@ -2612,7 +2614,7 @@ do
 				return nil, "invalid value"
 			end
 
-			if not big_endian then
+			if big_endian then
 				b1, b2, b3, b4, b5 = b5, b4, b3, b2, b1
 			end
 
@@ -2622,7 +2624,7 @@ do
 				return nil, "invalid value"
 			end
 
-			if not big_endian then
+			if big_endian then
 				b1, b2, b3, b4, b5, b6 = b6, b5, b4, b3, b2, b1
 			end
 
@@ -2632,7 +2634,7 @@ do
 				return nil, "invalid value"
 			end
 
-			if not big_endian then
+			if big_endian then
 				b1, b2, b3, b4, b5, b6, b7 = b7, b6, b5, b4, b3, b2, b1
 			end
 
@@ -2642,7 +2644,7 @@ do
 				return nil, "invalid value"
 			end
 
-			if not big_endian then
+			if big_endian then
 				b1, b2, b3, b4, b5, b6, b7, b8 = b8, b7, b6, b5, b4, b3, b2, b1
 			end
 
@@ -2708,7 +2710,7 @@ do
 			return nil, "not enough data"
 		end
 
-		if not big_endian then
+		if big_endian then
 			b1, b2, b3, b4 = b4, b3, b2, b1
 		end
 
@@ -2743,7 +2745,7 @@ do
 			return nil, "not enough data"
 		end
 
-		if not big_endian then
+		if big_endian then
 			b1, b2, b3, b4 = b4, b3, b2, b1
 		end
 
@@ -2768,7 +2770,7 @@ do
 	local function pack_writeFloat( value, big_endian )
 		local b1, b2, b3, b4 = bytepack_writeFloat( value )
 
-		if not big_endian then
+		if big_endian then
 			b1, b2, b3, b4 = b4, b3, b2, b1
 		end
 
@@ -2816,7 +2818,7 @@ do
 			return nil, "not enough data"
 		end
 
-		if not big_endian then
+		if big_endian then
 			b1, b2, b3, b4, b5, b6, b7, b8 = b8, b7, b6, b5, b4, b3, b2, b1
 		end
 
@@ -2851,7 +2853,7 @@ do
 			return nil, "not enough data"
 		end
 
-		if not big_endian then
+		if big_endian then
 			b1, b2, b3, b4, b5, b6, b7, b8 = b8, b7, b6, b5, b4, b3, b2, b1
 		end
 
@@ -2874,7 +2876,7 @@ do
 	local function pack_writeDouble( value, big_endian )
 		local b1, b2, b3, b4, b5, b6, b7, b8 = bytepack_writeDouble( value )
 
-		if not big_endian then
+		if big_endian then
 			b1, b2, b3, b4, b5, b6, b7, b8 = b8, b7, b6, b5, b4, b3, b2, b1
 		end
 
@@ -2922,7 +2924,7 @@ do
 			return nil, nil, nil, "not enough data"
 		end
 
-		if not big_endian then
+		if big_endian then
 			b1, b2 = b2, b1
 		end
 
@@ -2959,7 +2961,7 @@ do
 			return nil, nil, nil, "not enough data"
 		end
 
-		if not big_endian then
+		if big_endian then
 			b1, b2 = b2, b1
 		end
 
@@ -2984,7 +2986,7 @@ do
 	local function pack_writeDate( day, month, year, big_endian )
 		local b1, b2 = bytepack_writeDate( day, month, year )
 
-		if not big_endian then
+		if big_endian then
 			b1, b2 = b2, b1
 		end
 
@@ -3034,7 +3036,7 @@ do
 			return nil, nil, nil, "not enough data"
 		end
 
-		if not big_endian then
+		if big_endian then
 			b1, b2 = b2, b1
 		end
 
@@ -3071,7 +3073,7 @@ do
 			return nil, nil, nil, "not enough data"
 		end
 
-		if not big_endian then
+		if big_endian then
 			b1, b2 = b2, b1
 		end
 
@@ -3096,7 +3098,7 @@ do
 	local function pack_writeTime( hours, minutes, seconds, big_endian )
 		local b1, b2 = bytepack_writeTime( hours, minutes, seconds )
 
-		if not big_endian then
+		if big_endian then
 			b1, b2 = b2, b1
 		end
 

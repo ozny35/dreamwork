@@ -15,6 +15,7 @@ local bit_band, bit_bor = bit.band, bit.bor
 ---@class gpm.std.crypto
 local crypto = std.crypto
 
+-- TODO: ffi support?
 
 --- [SHARED AND MENU]
 ---
@@ -26,7 +27,7 @@ crypto.bytepack = bytepack
 
 --- [SHARED AND MENU]
 ---
---- Reads unsigned 2-byte (16 bit) integer from big endian bytes.
+--- Reads unsigned 2-byte (16 bit) integer from little endian bytes.
 ---
 --- Valid values without loss of precision: `0` - `65535`
 ---
@@ -34,14 +35,14 @@ crypto.bytepack = bytepack
 ---@param b2 integer The second byte.
 ---@return integer value The unsigned 2-byte integer.
 local function readUInt16( b1, b2 )
-	return b1 * 0x100 + b2
+	return b2 * 0x100 + b1
 end
 
 bytepack.readUInt16 = readUInt16
 
 --- [SHARED AND MENU]
 ---
---- Writes unsigned 2-byte (16 bit) integer as big endian bytes.
+--- Writes unsigned 2-byte (16 bit) integer as little endian bytes.
 ---
 --- Valid values without loss of precision: `0` - `65535`
 ---
@@ -49,15 +50,15 @@ bytepack.readUInt16 = readUInt16
 ---@return integer b1 The first byte.
 ---@return integer b2 The second byte.
 local function writeUInt16( value )
-	return bit_band( bit_rshift( value, 8 ), 0xFF ),
-		bit_band( value, 0xFF )
+	return bit_band( value, 0xFF ),
+		bit_band( bit_rshift( value, 8 ), 0xFF )
 end
 
 bytepack.writeUInt16 = writeUInt16
 
 --- [SHARED AND MENU]
 ---
---- Reads unsigned 3-byte (24 bit) integer from big endian bytes.
+--- Reads unsigned 3-byte (24 bit) integer from little endian bytes.
 ---
 --- Valid values without loss of precision: `0` - `16777215`
 ---
@@ -66,14 +67,14 @@ bytepack.writeUInt16 = writeUInt16
 ---@param b3 integer The third byte.
 ---@return integer value The unsigned 3-byte integer.
 local function readUInt24( b1, b2, b3 )
-	return ( b1 * 0x100 + b2 ) * 0x100 + b3
+	return ( b3 * 0x100 + b2 ) * 0x100 + b1
 end
 
 bytepack.readUInt24 = readUInt24
 
 --- [SHARED AND MENU]
 ---
---- Writes unsigned 3-byte (24 bit) integer as big endian bytes.
+--- Writes unsigned 3-byte (24 bit) integer as little endian bytes.
 ---
 --- Valid values without loss of precision: `0` - `16777215`
 ---
@@ -82,16 +83,16 @@ bytepack.readUInt24 = readUInt24
 ---@return integer b2 The second byte.
 ---@return integer b3 The third byte.
 local function writeUInt24( value )
-	return bit_band( bit_rshift( value, 16 ), 0xFF ),
+	return bit_band( value, 0xFF ),
 		bit_band( bit_rshift( value, 8 ), 0xFF ),
-		bit_band( value, 0xFF )
+		bit_band( bit_rshift( value, 16 ), 0xFF )
 end
 
 bytepack.writeUInt24 = writeUInt24
 
 --- [SHARED AND MENU]
 ---
---- Reads unsigned 4-byte (32 bit) integer from big endian bytes.
+--- Reads unsigned 4-byte (32 bit) integer from little endian bytes.
 ---
 --- Valid values without loss of precision: `0` - `4294967295`
 ---
@@ -101,14 +102,14 @@ bytepack.writeUInt24 = writeUInt24
 ---@param b4 integer The fourth byte.
 ---@return integer value The unsigned 4-byte integer.
 local function readUInt32( b1, b2, b3, b4 )
-	return ( ( b1 * 0x100 + b2 ) * 0x100 + b3 ) * 0x100 + b4
+	return ( ( b4 * 0x100 + b3 ) * 0x100 + b2 ) * 0x100 + b1
 end
 
 bytepack.readUInt32 = readUInt32
 
 --- [SHARED AND MENU]
 ---
---- Writes unsigned 4-byte (32 bit) integer as big endian bytes.
+--- Writes unsigned 4-byte (32 bit) integer as little endian bytes.
 ---
 --- Valid values without loss of precision: `0` - `4294967295`
 ---
@@ -118,17 +119,17 @@ bytepack.readUInt32 = readUInt32
 ---@return integer b3 The third byte.
 ---@return integer b4 The fourth byte.
 local function writeUInt32( value )
-	return bit_band( bit_rshift( value, 24 ), 0xFF ),
-		bit_band( bit_rshift( value, 16 ), 0xFF ),
+	return bit_band( value, 0xFF ),
 		bit_band( bit_rshift( value, 8 ), 0xFF ),
-		bit_band( value, 0xFF )
+		bit_band( bit_rshift( value, 16 ), 0xFF ),
+		bit_band( bit_rshift( value, 24 ), 0xFF )
 end
 
 bytepack.writeUInt32 = writeUInt32
 
 --- [SHARED AND MENU]
 ---
---- Reads unsigned 5-byte (40 bit) integer from big endian bytes.
+--- Reads unsigned 5-byte (40 bit) integer from little endian bytes.
 ---
 --- Valid values without loss of precision: `0` - `1099511627775`
 ---
@@ -139,14 +140,14 @@ bytepack.writeUInt32 = writeUInt32
 ---@param b5 integer The fifth byte.
 ---@return integer value The unsigned 5-byte integer.
 local function readUInt40( b1, b2, b3, b4, b5 )
-	return ( ( ( b1 * 0x100 + b2 ) * 0x100 + b3 ) * 0x100 + b4 ) * 0x100 + b5
+	return ( ( ( b5 * 0x100 + b4 ) * 0x100 + b3 ) * 0x100 + b2 ) * 0x100 + b1
 end
 
 bytepack.readUInt40 = readUInt40
 
 --- [SHARED AND MENU]
 ---
---- Writes unsigned 5-byte (40 bit) integer as big endian bytes.
+--- Writes unsigned 5-byte (40 bit) integer as little endian bytes.
 ---
 --- Valid values without loss of precision: `0` - `1099511627775`.
 ---
@@ -157,19 +158,18 @@ bytepack.readUInt40 = readUInt40
 ---@return integer b4 The fourth byte.
 ---@return integer b5 The fifth byte.
 local function writeUInt40( value )
-	return math_floor( value / 0x100000000 ) % 0x100,
-		math_floor( value / 0x1000000 ) % 0x100,
-		math_floor( value / 0x10000 ) % 0x100,
+	return value % 0x100,
 		math_floor( value / 0x100 ) % 0x100,
-		value % 0x100
-
+		math_floor( value / 0x10000 ) % 0x100,
+		math_floor( value / 0x1000000 ) % 0x100,
+		math_floor( value / 0x100000000 ) % 0x100
 end
 
 bytepack.writeUInt40 = writeUInt40
 
 --- [SHARED AND MENU]
 ---
---- Reads unsigned 6-byte (48 bit) integer from big endian bytes.
+--- Reads unsigned 6-byte (48 bit) integer from little endian bytes.
 ---
 --- Valid values without loss of precision: `0` - `281474976710655`
 ---
@@ -181,14 +181,14 @@ bytepack.writeUInt40 = writeUInt40
 ---@param b6 integer The sixth byte.
 ---@return integer value The unsigned 6-byte integer.
 local function readUInt48( b1, b2, b3, b4, b5, b6 )
-	return ( ( ( ( b1 * 0x100 + b2 ) * 0x100 + b3 ) * 0x100 + b4 ) * 0x100 + b5 ) * 0x100 + b6
+	return ( ( ( ( b6 * 0x100 + b5 ) * 0x100 + b4 ) * 0x100 + b3 ) * 0x100 + b2 ) * 0x100 + b1
 end
 
 bytepack.readUInt48 = readUInt48
 
 --- [SHARED AND MENU]
 ---
---- Writes unsigned 6-byte (48 bit) integer as big endian bytes.
+--- Writes unsigned 6-byte (48 bit) integer as little endian bytes.
 ---
 --- Valid values without loss of precision: `0` - `281474976710655`
 ---
@@ -200,19 +200,19 @@ bytepack.readUInt48 = readUInt48
 ---@return integer b5 The fifth byte.
 ---@return integer b6 The sixth byte.
 local function writeUInt48( value )
-	return math_floor( value / 0x10000000000 ) % 0x100,
-		math_floor( value / 0x100000000 ) % 0x100,
-		math_floor( value / 0x1000000 ) % 0x100,
-		math_floor( value / 0x10000 ) % 0x100,
+	return value % 0x100,
 		math_floor( value / 0x100 ) % 0x100,
-		value % 0x100
+		math_floor( value / 0x10000 ) % 0x100,
+		math_floor( value / 0x1000000 ) % 0x100,
+		math_floor( value / 0x100000000 ) % 0x100,
+		math_floor( value / 0x10000000000 ) % 0x100
 end
 
 bytepack.writeUInt48 = writeUInt48
 
 --- [SHARED AND MENU]
 ---
---- Reads unsigned 7-byte (56 bit) integer from big endian bytes.
+--- Reads unsigned 7-byte (56 bit) integer from little endian bytes.
 ---
 --- Valid values without loss of precision: `0` - `9007199254740991`
 ---
@@ -227,14 +227,14 @@ bytepack.writeUInt48 = writeUInt48
 ---@param b7 integer The seventh byte.
 ---@return integer value The unsigned 7-byte integer.
 local function readUInt56( b1, b2, b3, b4, b5, b6, b7 )
-	return ( ( ( ( ( b1 * 0x100 + b2 ) * 0x100 + b3 ) * 0x100 + b4 ) * 0x100 + b5 ) * 0x100 + b6 ) * 0x100 + b7
+	return ( ( ( ( ( b7 * 0x100 + b6 ) * 0x100 + b5 ) * 0x100 + b4 ) * 0x100 + b3 ) * 0x100 + b2 ) * 0x100 + b1
 end
 
 bytepack.readUInt56 = readUInt56
 
 --- [SHARED AND MENU]
 ---
---- Writes unsigned 7-byte (56 bit) integer as big endian bytes.
+--- Writes unsigned 7-byte (56 bit) integer as little endian bytes.
 ---
 --- Valid values without loss of precision: `0` - `9007199254740991`
 ---
@@ -249,20 +249,20 @@ bytepack.readUInt56 = readUInt56
 ---@return integer b6 The sixth byte.
 ---@return integer b7 The seventh byte.
 local function writeUInt56( value )
-	return math_floor( value / 0x1000000000000 ) % 0x100,
-		math_floor( value / 0x10000000000 ) % 0x100,
-		math_floor( value / 0x100000000 ) % 0x100,
-		math_floor( value / 0x1000000 ) % 0x100,
-		math_floor( value / 0x10000 ) % 0x100,
+	return value % 0x100,
 		math_floor( value / 0x100 ) % 0x100,
-		value % 0x100
+		math_floor( value / 0x10000 ) % 0x100,
+		math_floor( value / 0x1000000 ) % 0x100,
+		math_floor( value / 0x100000000 ) % 0x100,
+		math_floor( value / 0x10000000000 ) % 0x100,
+		math_floor( value / 0x1000000000000 ) % 0x100
 end
 
 bytepack.writeUInt56 = writeUInt56
 
 --- [SHARED AND MENU]
 ---
---- Reads unsigned 8-byte (64 bit) integer from big endian bytes.
+--- Reads unsigned 8-byte (64 bit) integer from little endian bytes.
 ---
 --- Valid values without loss of precision: `0` - `9007199254740991`
 ---
@@ -278,14 +278,14 @@ bytepack.writeUInt56 = writeUInt56
 ---@param b8 integer The eighth byte.
 ---@return integer value The unsigned 8-byte integer.
 local function readUInt64( b1, b2, b3, b4, b5, b6, b7, b8 )
-	return ( ( ( ( ( ( b1 * 0x100 + b2 ) * 0x100 + b3 ) * 0x100 + b4 ) * 0x100 + b5 ) * 0x100 + b6 ) * 0x100 + b7 ) * 0x100 + b8
+	return ( ( ( ( ( ( b8 * 0x100 + b7 ) * 0x100 + b6 ) * 0x100 + b5 ) * 0x100 + b4 ) * 0x100 + b3 ) * 0x100 + b2 ) * 0x100 + b1
 end
 
 bytepack.readUInt64 = readUInt64
 
 --- [SHARED AND MENU]
 ---
---- Writes unsigned 8-byte (64 bit) integer as big endian bytes.
+--- Writes unsigned 8-byte (64 bit) integer as little endian bytes.
 ---
 --- Valid values without loss of precision: `0` - `9007199254740991`
 ---
@@ -301,14 +301,14 @@ bytepack.readUInt64 = readUInt64
 ---@return integer b7 The seventh byte.
 ---@return integer b8 The eighth byte.
 local function writeUInt64( value )
-	return 0,
-		math_floor( value / 0x1000000000000 ) % 0x100,
-		math_floor( value / 0x10000000000 ) % 0x100,
-		math_floor( value / 0x100000000 ) % 0x100,
-		math_floor( value / 0x1000000 ) % 0x100,
-		math_floor( value / 0x10000 ) % 0x100,
-		math_floor( value / 0x100 ) % 0x100,
-		value % 0x100
+	return value % 0x100,
+	math_floor( value / 0x100 ) % 0x100,
+	math_floor( value / 0x10000 ) % 0x100,
+	math_floor( value / 0x1000000 ) % 0x100,
+	math_floor( value / 0x100000000 ) % 0x100,
+	math_floor( value / 0x10000000000 ) % 0x100,
+	math_floor( value / 0x1000000000000 ) % 0x100,
+	0
 end
 
 bytepack.writeUInt64 = writeUInt64
@@ -319,7 +319,7 @@ do
 
 	--- [SHARED AND MENU]
 	---
-	--- Reads time in DOS format from big endian bytes.
+	--- Reads time in DOS format from little endian bytes.
 	---
 	---@param b1 integer The first byte.
 	---@param b2 integer The second byte.
@@ -328,6 +328,7 @@ do
 	---@return integer seconds The number of seconds, **will be rounded**.
 	function bytepack.readTime( b1, b2 )
 		local short = readUInt16( b1, b2 )
+
 		return bit_rshift( bit_band( short, 0xF800 ), 11 ),
 			bit_rshift( bit_band( short, 0x7E0 ), 5 ),
 			bit_band( short, 0x1F ) * 2
@@ -335,7 +336,7 @@ do
 
 	--- [SHARED AND MENU]
 	---
-	--- Writes time in DOS format as big endian bytes.
+	--- Writes time in DOS format as little endian bytes.
 	---
 	---@param hours? integer The number of hours.
 	---@param minutes? integer The number of minutes.
@@ -357,7 +358,7 @@ do
 
 	--- [SHARED AND MENU]
 	---
-	--- Reads date in DOS format from big endian bytes.
+	--- Reads date in DOS format from little endian bytes.
 	---
 	---@param b1 integer The first byte.
 	---@param b2 integer The second byte.
@@ -366,6 +367,7 @@ do
 	---@return integer year The year.
 	function bytepack.readDate( b1, b2 )
 		local short = readUInt16( b1, b2 )
+
 		return bit_band( short, 0x1F ),
 			bit_rshift( bit_band( short, 0x1E0 ), 5 ),
 			bit_rshift( bit_band( short, 0xFE00 ), 9 ) + 1980
@@ -373,7 +375,7 @@ do
 
 	--- [SHARED AND MENU]
 	---
-	--- Writes date in DOS format as big endian bytes.
+	--- Writes date in DOS format as little endian bytes.
 	---
 	---@param day? integer The day.
 	---@param month? integer The month.
@@ -397,7 +399,7 @@ end
 
 --- [SHARED AND MENU]
 ---
---- Reads unsigned fixed-point number (**UQm.n**) as big endian bytes.
+--- Reads unsigned fixed-point number (**UQm.n**) as little endian bytes.
 ---
 --- ### Commonly Used UQm.n Formats
 --- | Format  | Range                          | Precision (Step)        |
@@ -447,7 +449,7 @@ end
 
 --- [SHARED AND MENU]
 ---
---- Writes unsigned fixed-point number (**UQm.n**) as big endian bytes.
+--- Writes unsigned fixed-point number (**UQm.n**) as little endian bytes.
 ---
 --- ### Commonly Used UQm.n Formats
 --- | Format  | Range                          | Precision (Step)        |
@@ -499,7 +501,7 @@ end
 
 --- [SHARED AND MENU]
 ---
---- Reads signed 1-byte (8 bit) integer as big endian bytes.
+--- Reads signed 1-byte (8 bit) integer as little endian bytes.
 ---
 --- Valid values without loss of precision: `-128` - `127`
 ---
@@ -513,7 +515,7 @@ bytepack.readInt8 = readInt8
 
 --- [SHARED AND MENU]
 ---
---- Writes signed 1-byte (8 bit) integer as big endian bytes.
+--- Writes signed 1-byte (8 bit) integer as little endian bytes.
 ---
 --- Valid values without loss of precision: `-128` - `127`
 ---
@@ -527,7 +529,7 @@ bytepack.writeInt8 = writeInt8
 
 --- [SHARED AND MENU]
 ---
---- Reads signed 2-byte (16 bit) integer as big endian bytes.
+--- Reads signed 2-byte (16 bit) integer as little endian bytes.
 ---
 --- Valid values without loss of precision: `-32768` - `32767`
 ---
@@ -542,7 +544,7 @@ bytepack.readInt16 = readInt16
 
 --- [SHARED AND MENU]
 ---
---- Writes signed 2-byte (16 bit) integer as big endian bytes.
+--- Writes signed 2-byte (16 bit) integer as little endian bytes.
 ---
 --- Valid values without loss of precision: `-32768` - `32767`
 ---
@@ -557,7 +559,7 @@ bytepack.writeInt16 = writeInt16
 
 --- [SHARED AND MENU]
 ---
---- Reads signed 3-byte (24 bit) integer as big endian bytes.
+--- Reads signed 3-byte (24 bit) integer as little endian bytes.
 ---
 --- Valid values without loss of precision: `-8388608` - `8388607`
 ---
@@ -573,7 +575,7 @@ bytepack.readInt24 = readInt24
 
 --- [SHARED AND MENU]
 ---
---- Writes signed 3-byte (24 bit) integer as big endian bytes.
+--- Writes signed 3-byte (24 bit) integer as little endian bytes.
 ---
 --- Valid values without loss of precision: `-8388608` - `8388607`
 ---
@@ -589,7 +591,7 @@ bytepack.writeInt24 = writeInt24
 
 --- [SHARED AND MENU]
 ---
---- Reads signed 4-byte (32 bit) integer from big endian bytes.
+--- Reads signed 4-byte (32 bit) integer from little endian bytes.
 ---
 --- Valid values without loss of precision: `-2147483648` - `2147483647`
 ---
@@ -606,7 +608,7 @@ bytepack.readInt32 = readInt32
 
 --- [SHARED AND MENU]
 ---
---- Writes signed 4-byte (32 bit) integer as big endian bytes.
+--- Writes signed 4-byte (32 bit) integer as little endian bytes.
 ---
 --- Valid values without loss of precision: `-2147483648` - `2147483647`
 ---
@@ -623,7 +625,7 @@ bytepack.writeInt32 = writeInt32
 
 --- [SHARED AND MENU]
 ---
---- Reads signed 5-byte (40 bit) integer from big endian bytes.
+--- Reads signed 5-byte (40 bit) integer from little endian bytes.
 ---
 --- Valid values without loss of precision: `-549755813888` - `549755813887`
 ---
@@ -641,7 +643,7 @@ bytepack.readInt40 = readInt40
 
 --- [SHARED AND MENU]
 ---
---- Writes signed 5-byte (40 bit) integer as big endian bytes.
+--- Writes signed 5-byte (40 bit) integer as little endian bytes.
 ---
 --- Valid values without loss of precision: `-549755813888` - `549755813887`
 ---
@@ -659,7 +661,7 @@ bytepack.writeInt40 = writeInt40
 
 --- [SHARED AND MENU]
 ---
---- Reads signed 6-byte (48 bit) integer from big endian bytes.
+--- Reads signed 6-byte (48 bit) integer from little endian bytes.
 ---
 --- Valid values without loss of precision: `-140737488355328` - `140737488355327`
 ---
@@ -678,7 +680,7 @@ bytepack.readInt48 = readInt48
 
 --- [SHARED AND MENU]
 ---
---- Writes signed 6-byte (48 bit) integer as big endian bytes.
+--- Writes signed 6-byte (48 bit) integer as little endian bytes.
 ---
 --- Valid values without loss of precision: `-140737488355328` - `140737488355327`
 ---
@@ -697,7 +699,7 @@ bytepack.writeInt48 = writeInt48
 
 --- [SHARED AND MENU]
 ---
---- Reads signed 7-byte (56 bit) integer from big endian bytes.
+--- Reads signed 7-byte (56 bit) integer from little endian bytes.
 ---
 --- Valid values without loss of precision: `-36028797018963968` - `36028797018963967`
 ---
@@ -711,9 +713,9 @@ bytepack.writeInt48 = writeInt48
 ---@return integer value The signed 7-byte integer.
 local function readInt56( b1, b2, b3, b4, b5, b6, b7 )
 	if b1 < 0x80 then
-		return ( ( ( ( ( b1 * 0x100 + b2 ) * 0x100 + b3 ) * 0x100 + b4 ) * 0x100 + b5 ) * 0x100 + b6 ) * 0x100 + b7
+		return ( ( ( ( ( b7 * 0x100 + b6 ) * 0x100 + b5 ) * 0x100 + b4 ) * 0x100 + b3 ) * 0x100 + b2 ) * 0x100 + b1
 	else
-		return ( ( ( ( ( ( ( b1 - 0xFF ) * 0x100 + ( b2 - 0xFF ) ) * 0x100 + ( b3 - 0xFF ) ) * 0x100 + ( b4 - 0xFF ) ) * 0x100 + ( b5 - 0xFF ) ) * 0x100 + ( b6 - 0xFF ) ) * 0x100 + ( b7 - 0xFF ) ) - 1
+		return ( ( ( ( ( ( ( b7 - 0xFF ) * 0x100 + ( b6 - 0xFF ) ) * 0x100 + ( b5 - 0xFF ) ) * 0x100 + ( b4 - 0xFF ) ) * 0x100 + ( b3 - 0xFF ) ) * 0x100 + ( b2 - 0xFF ) ) * 0x100 + ( b1 - 0xFF ) ) - 1
 	end
 end
 
@@ -721,7 +723,7 @@ bytepack.readInt56 = readInt56
 
 --- [SHARED AND MENU]
 ---
---- Writes signed 7-byte (56 bit) integer as big endian bytes.
+--- Writes signed 7-byte (56 bit) integer as little endian bytes.
 ---
 --- Valid values without loss of precision: `-36028797018963968` - `36028797018963967`
 ---
@@ -734,13 +736,13 @@ bytepack.readInt56 = readInt56
 ---@return integer b6 The sixth byte.
 ---@return integer b7 The seventh byte.
 local function writeInt56( value )
-	return math_ispositive( value ) and 0 or 0xFF,
-		math_floor( value / 0x10000000000 ) % 0x100,
-		math_floor( value / 0x100000000 ) % 0x100,
-		math_floor( value / 0x1000000 ) % 0x100,
-		math_floor( value / 0x10000 ) % 0x100,
+	return value % 0x100,
 		math_floor( value / 0x100 ) % 0x100,
-		value % 0x100
+		math_floor( value / 0x10000 ) % 0x100,
+		math_floor( value / 0x1000000 ) % 0x100,
+		math_floor( value / 0x100000000 ) % 0x100,
+		math_floor( value / 0x10000000000 ) % 0x100,
+		math_ispositive( value ) and 0 or 0xFF
 end
 
 bytepack.writeInt56 = writeInt56
@@ -749,7 +751,7 @@ bytepack.writeInt56 = writeInt56
 
 --- [SHARED AND MENU]
 ---
---- Reads signed 8-byte (64 bit) integer from big endian bytes.
+--- Reads signed 8-byte (64 bit) integer from little endian bytes.
 ---
 --- Valid values without loss of precision: `-9007199254740991` - `9007199254740991`
 ---
@@ -766,9 +768,9 @@ bytepack.writeInt56 = writeInt56
 ---@return integer value The signed 8-byte integer.
 local function readInt64( b1, b2, b3, b4, b5, b6, b7, b8 )
 	if b1 < 0x80 then
-		return ( ( ( ( ( ( b1 * 0x100 + b2 ) * 0x100 + b3 ) * 0x100 + b4 ) * 0x100 + b5 ) * 0x100 + b6 ) * 0x100 + b7 ) * 0x100 + b8
+		return ( ( ( ( ( ( b8 * 0x100 + b7 ) * 0x100 + b6 ) * 0x100 + b5 ) * 0x100 + b4 ) * 0x100 + b3 ) * 0x100 + b2 ) * 0x100 + b1
 	else
-		return ( ( ( ( ( ( ( ( b1 - 0xFF ) * 0x100 + ( b2 - 0xFF ) ) * 0x100 + ( b3 - 0xFF ) ) * 0x100 + ( b4 - 0xFF ) ) * 0x100 + ( b5 - 0xFF ) ) * 0x100 + ( b6 - 0xFF ) ) * 0x100 + ( b7 - 0xFF ) ) * 0x100 + ( b8 - 0xFF ) ) - 1
+		return ( ( ( ( ( ( ( ( b8 - 0xFF ) * 0x100 + ( b7 - 0xFF ) ) * 0x100 + ( b6 - 0xFF ) ) * 0x100 + ( b5 - 0xFF ) ) * 0x100 + ( b4 - 0xFF ) ) * 0x100 + ( b3 - 0xFF ) ) * 0x100 + ( b2 - 0xFF ) ) * 0x100 + ( b1 - 0xFF ) ) - 1
 	end
 end
 
@@ -776,7 +778,7 @@ bytepack.readInt64 = readInt64
 
 --- [SHARED AND MENU]
 ---
---- Writes signed 8-byte (64 bit) integer as big endian bytes.
+--- Writes signed 8-byte (64 bit) integer as little endian bytes.
 ---
 --- Valid values without loss of precision: `-9007199254740991` - `9007199254740991`
 ---
@@ -792,21 +794,21 @@ bytepack.readInt64 = readInt64
 ---@return integer b7 The seventh byte.
 ---@return integer b8 The eighth byte.
 local function writeInt64( value )
-	return math_ispositive( value ) and 0 or 0xFF,
-		math_floor( value / 0x1000000000000 ) % 0x100,
-		math_floor( value / 0x10000000000 ) % 0x100,
-		math_floor( value / 0x100000000 ) % 0x100,
-		math_floor( value / 0x1000000 ) % 0x100,
-		math_floor( value / 0x10000 ) % 0x100,
+	return value % 0x100,
 		math_floor( value / 0x100 ) % 0x100,
-		value % 0x100
+		math_floor( value / 0x10000 ) % 0x100,
+		math_floor( value / 0x1000000 ) % 0x100,
+		math_floor( value / 0x100000000 ) % 0x100,
+		math_floor( value / 0x10000000000 ) % 0x100,
+		math_floor( value / 0x1000000000000 ) % 0x100,
+		math_ispositive( value ) and 0 or 0xFF
 end
 
 bytepack.writeInt64 = writeInt64
 
 --- [SHARED AND MENU]
 ---
---- Reads signed fixed-point number (**Qm.n**) as big endian bytes.
+--- Reads signed fixed-point number (**Qm.n**) as little endian bytes.
 ---
 --- ### Commonly Used Qm.n Formats
 --- | Format | Range                          | Precision (Step)        |
@@ -856,7 +858,7 @@ end
 
 --- [SHARED AND MENU]
 ---
---- Writes unsigned fixed-point number (**UQm.n**) as big endian bytes.
+--- Writes unsigned fixed-point number (**UQm.n**) as little endian bytes.
 ---
 --- ### Commonly Used Qm.n Formats
 --- | Format | Range                          | Precision (Step)        |
@@ -911,7 +913,7 @@ local math_frexp, math_ldexp = math.frexp, math.ldexp
 
 --- [SHARED AND MENU]
 ---
---- Reads signed 4-byte (32 bit) float from big endian bytes.
+--- Reads signed 4-byte (32 bit) float from little endian bytes.
 ---
 ---@param b1 integer The first byte.
 ---@param b2 integer The second byte.
@@ -919,9 +921,9 @@ local math_frexp, math_ldexp = math.frexp, math.ldexp
 ---@param b4 integer The fourth byte.
 ---@return number value The signed 4-byte float.
 function bytepack.readFloat( b1, b2, b3, b4 )
-	local sign = b1 > 0x7F
-	local expo = ( b1 % 0x80 ) * 0x2 + math_floor( b2 / 0x80 )
-	local mant = ( ( b2 % 0x80 ) * 0x100 + b3 ) * 0x100 + b4
+	local sign = b4 > 0x7F
+	local expo = ( b4 % 0x80 ) * 0x2 + math_floor( b3 / 0x80 )
+	local mant = ( ( b3 % 0x80 ) * 0x100 + b2 ) * 0x100 + b1
 
 	if mant == 0 and expo == 0 then
 		if sign then
@@ -950,7 +952,7 @@ end
 
 --- [SHARED AND MENU]
 ---
---- Writes signed 4-byte (32 bit) float as big endian bytes.
+--- Writes signed 4-byte (32 bit) float as little endian bytes.
 ---
 ---@param value number The signed 4-byte float.
 ---@return integer b1 The first byte.
@@ -986,15 +988,15 @@ function bytepack.writeFloat( value, big_endian )
 	mant = math_floor( ( mant * 2.0 - 1.0 ) * math_ldexp( 0.5, 24 ) )
 	expo = expo + 0x7E
 
-	return ( sign and 0x80 or 0 ) + math_floor( expo / 0x2 ),
-		( expo % 0x2 ) * 0x80 + math_floor( mant / 0x10000 ),
+	return mant % 0x100,
 		math_floor( mant / 0x100 ) % 0x100,
-		mant % 0x100
+		( expo % 0x2 ) * 0x80 + math_floor( mant / 0x10000 ),
+		( sign and 0x80 or 0 ) + math_floor( expo / 0x2 )
 end
 
 --- [SHARED AND MENU]
 ---
---- Reads signed 8-byte (64 bit) float (double) from big endian bytes.
+--- Reads signed 8-byte (64 bit) float (double) from little endian bytes.
 ---
 ---@param b1 integer The first byte.
 ---@param b2 integer The second byte.
@@ -1006,9 +1008,9 @@ end
 ---@param b8 integer The eighth byte.
 ---@return number value The signed 8-byte float.
 function bytepack.readDouble( b1, b2, b3, b4, b5, b6, b7, b8 )
-	local sign = b1 > 0x7F
-	local expo = ( b1 % 0x80 ) * 0x10 + math_floor( b2 / 0x10 )
-	local mant = ( ( ( ( ( ( b2 % 0x10 ) * 0x100 + b3 ) * 0x100 + b4 ) * 0x100 + b5 ) * 0x100 + b6 ) * 0x100 + b7 ) * 0x100 + b8
+	local sign = b8 > 0x7F
+	local expo = ( b8 % 0x80 ) * 0x10 + math_floor( b7 / 0x10 )
+	local mant = ( ( ( ( ( ( b7 % 0x10 ) * 0x100 + b6 ) * 0x100 + b5 ) * 0x100 + b4 ) * 0x100 + b3 ) * 0x100 + b2 ) * 0x100 + b1
 
 	if mant == 0 and expo == 0 then
 		if sign then
@@ -1037,7 +1039,7 @@ end
 
 --- [SHARED AND MENU]
 ---
---- Writes signed 8-byte (64 bit) float (double) as big endian bytes.
+--- Writes signed 8-byte (64 bit) float (double) as little endian bytes.
 ---
 ---@param value number The signed 8-byte float.
 ---@return integer b1 The first byte.
@@ -1077,12 +1079,12 @@ function bytepack.writeDouble( value )
 	mant = math_floor( ( mant * 2.0 - 1.0 ) * math_ldexp( 0.5, 53 ) )
 	expo = expo + 0x3FE
 
-	return ( sign and 0x80 or 0 ) + math_floor( expo / 0x10 ),
-		( expo % 0x10 ) * 0x10 + math_floor( mant / 0x1000000000000 ),
-		math_floor( mant / 0x10000000000 ) % 0x100,
-		math_floor( mant / 0x100000000 ) % 0x100,
-		math_floor( mant / 0x1000000 ) % 0x100,
-		math_floor( mant / 0x10000 ) % 0x100,
+	return mant % 0x100,
 		math_floor( mant / 0x100 ) % 0x100,
-		mant % 0x100
+		math_floor( mant / 0x10000 ) % 0x100,
+		math_floor( mant / 0x1000000 ) % 0x100,
+		math_floor( mant / 0x100000000 ) % 0x100,
+		math_floor( mant / 0x10000000000 ) % 0x100,
+		( expo % 0x10 ) * 0x10 + math_floor( mant / 0x1000000000000 ),
+		( sign and 0x80 or 0 ) + math_floor( expo / 0x10 )
 end

@@ -841,14 +841,15 @@ dofile( "engine.lua" )
 dofile( "std/game.lua" )
 
 dofile( "std/crypto.lua" )
-dofile( "std/crypto.uuid.lua" )
-dofile( "std/crypto.base64.lua" )
 
 -- TODO: manage loading queue
 
 dofile( "std/crypto.bitpack.lua" )
 dofile( "std/crypto.bytepack.lua" )
 dofile( "std/crypto.pack.lua" )
+
+dofile( "std/crypto.uuid.lua" )
+dofile( "std/crypto.base64.lua" )
 
 do
 
