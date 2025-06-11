@@ -1,3 +1,4 @@
+---@class gpm.std
 local std = _G.gpm.std
 
 local string = std.string
@@ -7,7 +8,8 @@ local string_byte = string.byte
 local string_len = string.len
 
 ---@class gpm.std.file
-local file = std.file
+local file = std.file or {}
+std.file = file
 
 --- [SHARED AND MENU]
 ---

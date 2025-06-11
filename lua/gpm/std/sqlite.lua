@@ -81,6 +81,7 @@ do
             end
         end
 
+        ---@type table | false | nil
         local result = sql_Query( str )
         if result == false then
             error( glua_sql.m_strError, 2 )

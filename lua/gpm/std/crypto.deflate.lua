@@ -10,10 +10,15 @@ local assert = std.assert
 local raw_pairs = std.raw.pairs
 
 local table = std.table
-local table_concat, table_insert, table_sort = table.concat, table.insert, table.sort
+local table_sort = table.sort
+local table_concat = table.concat
+local table_insert = table.insert
 
 local string = std.string
-local string_byte, string_char, string_find, string_gsub, string_sub, string_len = string.byte, string.char, string.find, string.gsub, string.sub, string.len
+local string_len = string.len
+local string_find = string.find
+local string_gsub, string_sub = string.gsub, string.sub
+local string_byte, string_char = string.byte, string.char
 
 ---@class gpm.std.crypto
 local crypto = std.crypto
@@ -33,41 +38,12 @@ crypto.deflate = deflate
 local zlib = {}
 crypto.zlib = zlib
 
+-- TODO: remove this crap and replace with luajited fucntions :p
 -- Converts i to 2^i, (0<=i<=32)
 -- This is used to implement bit left shift and bit right shift.
 -- "x >> y" in C:   "(x-x%_pow2[y])/_pow2[y]" in Lua
 -- "x << y" in C:   "x*_pow2[y]" in Lua
 local _pow2 = {}
-
--- Converts any byte to a character, (0<=byte<=255)
-local _byte_to_char = {
-    [0] = "\0", "\1", "\2", "\3", "\4", "\5", "\6", "\7", "\8", "\9", "\10",
-    "\11", "\12", "\13", "\14", "\15", "\16", "\17", "\18", "\19", "\20",
-    "\21", "\22", "\23", "\24", "\25", "\26", "\27", "\28", "\29", "\30",
-    "\31", "\32", "\33", "\34", "\35", "\36", "\37", "\38", "\39", "\40",
-    "\41", "\42", "\43", "\44", "\45", "\46", "\47", "\48", "\49", "\50",
-    "\51", "\52", "\53", "\54", "\55", "\56", "\57", "\58", "\59", "\60",
-    "\61", "\62", "\63", "\64", "\65", "\66", "\67", "\68", "\69", "\70",
-    "\71", "\72", "\73", "\74", "\75", "\76", "\77", "\78", "\79", "\80",
-    "\81", "\82", "\83", "\84", "\85", "\86", "\87", "\88", "\89", "\90",
-    "\91", "\92", "\93", "\94", "\95", "\96", "\97", "\98", "\99", "\100",
-    "\101", "\102", "\103", "\104", "\105", "\106", "\107", "\108", "\109", "\110",
-    "\111", "\112", "\113", "\114", "\115", "\116", "\117", "\118", "\119", "\120",
-    "\121", "\122", "\123", "\124", "\125", "\126", "\127", "\128", "\129", "\130",
-    "\131", "\132", "\133", "\134", "\135", "\136", "\137", "\138", "\139", "\140",
-    "\141", "\142", "\143", "\144", "\145", "\146", "\147", "\148", "\149", "\150",
-    "\151", "\152", "\153", "\154", "\155", "\156", "\157", "\158", "\159", "\160",
-    "\161", "\162", "\163", "\164", "\165", "\166", "\167", "\168", "\169", "\170",
-    "\171", "\172", "\173", "\174", "\175", "\176", "\177", "\178", "\179", "\180",
-    "\181", "\182", "\183", "\184", "\185", "\186", "\187", "\188", "\189", "\190",
-    "\191", "\192", "\193", "\194", "\195", "\196", "\197", "\198", "\199", "\200",
-    "\201", "\202", "\203", "\204", "\205", "\206", "\207", "\208", "\209", "\210",
-    "\211", "\212", "\213", "\214", "\215", "\216", "\217", "\218", "\219", "\220",
-    "\221", "\222", "\223", "\224", "\225", "\226", "\227", "\228", "\229", "\230",
-    "\231", "\232", "\233", "\234", "\235", "\236", "\237", "\238", "\239", "\240",
-    "\241", "\242", "\243", "\244", "\245", "\246", "\247", "\248", "\249", "\250",
-    "\251", "\252", "\253", "\254", "\255"
-}
 
 -- _reverseBitsTbl[len][val] stores the bit reverse of the number with bit length "len" and value "val"
 -- For example, decimal number 6 with bits length 5 is binary 00110
@@ -76,6 +52,7 @@ local _byte_to_char = {
 -- The reason for 1<=len<=9 is that the max of min bitlen of huffman code of a huffman alphabet is 9?
 local _reverse_bits_tbl = {}
 
+-- TODO: maybe move this into separate libraries like LZ77 and huffman libs
 -- Convert a LZ77 length (3<=len<=258) to a deflate literal/LZ77_length code (257<=code<=285)
 local _length_to_deflate_code = {}
 
@@ -215,7 +192,7 @@ end
 
 for i = 1, 9 do
     _reverse_bits_tbl[ i ] = {}
-    for j = 0, _pow2[ i + 1 ] - 1 do
+    for j = 0, 2 ^ ( i + 1 ) - 1 do
         local reverse = 0
         local value = j
         for _ = 1, i do
@@ -581,13 +558,16 @@ local function createWriter()
         -- Only bulk to buffer every 4 bytes. This is quicker.
         if cache_bitlen >= 32 then
             buffer_size = buffer_size + 1
-            buffer[ buffer_size ] = _byte_to_char[ cache % 0x100 ] ..
-                                    _byte_to_char[ ( cache - cache % 0x100 ) / 0x100 % 0x100 ] ..
-                                    _byte_to_char[ ( cache - cache % 0x10000 ) / 0x10000 % 0x100 ] ..
-                                    _byte_to_char[ ( cache - cache % 0x1000000 ) / 0x1000000 % 0x100 ]
+            buffer[ buffer_size ] = string_char(
+                cache % 0x100,
+                ( cache - cache % 0x100 ) / 0x100 % 0x100,
+                ( cache - cache % 0x10000 ) / 0x10000 % 0x100,
+                ( cache - cache % 0x1000000 ) / 0x1000000 % 0x100
+            )
 
             local rshift_mask = _pow2[ 32 - cache_bitlen + bitlen ]
             cache = ( value - value % rshift_mask ) / rshift_mask
+
             cache_bitlen = cache_bitlen - 32
         end
     end
@@ -636,7 +616,7 @@ local function createWriter()
 
                 for _ = 1, cache_bitlen, 8 do
                     buffer_size = buffer_size + 1
-                    buffer[ buffer_size ] = _byte_to_char[ cache % 0x100 ]
+                    buffer[ buffer_size ] = string_char( cache % 0x100 )
                     cache = ( cache - cache % 0x100 ) / 0x100
                 end
 
@@ -2165,7 +2145,7 @@ local function decodeUntilEndOfBlock( state, lcodes_huffman_bitlens, lcodes_huff
         buffer_end = -dict_strlen + 1
 
         for i = 0, ( -dict_strlen + 1 ) < -257 and -257 or ( -dict_strlen + 1 ), -1 do
-            buffer[ i ] = _byte_to_char[ dict_string_table[ dict_strlen + i ] ]
+            buffer[ i ] = string_char( dict_string_table[ dict_strlen + i ] )
         end
     end
 
@@ -2176,7 +2156,7 @@ local function decodeUntilEndOfBlock( state, lcodes_huffman_bitlens, lcodes_huff
             return -10
         elseif symbol < 256 then -- Literal
             buffer_size = buffer_size + 1
-            buffer[ buffer_size ] = _byte_to_char[ symbol ]
+            buffer[ buffer_size ] = string_char( symbol )
         elseif symbol > 256 then -- Length code
             symbol = symbol - 256
             local bitlen = _literal_deflate_code_to_base_len[ symbol ]
@@ -2207,7 +2187,7 @@ local function decodeUntilEndOfBlock( state, lcodes_huffman_bitlens, lcodes_huff
                 char_buffer_index = dict_strlen + char_buffer_index
                 for _ = 1, bitlen do
                     buffer_size = buffer_size + 1
-                    buffer[ buffer_size ] = _byte_to_char[ dict_string_table[ char_buffer_index ] ]
+                    buffer[ buffer_size ] = string_char( dict_string_table[ char_buffer_index ] )
                     char_buffer_index = char_buffer_index + 1
                 end
             end
@@ -2775,7 +2755,7 @@ function deflate.createCodec( reserved_chars, escape_chars, map_chars )
                 end
             end
 
-            local char_r = _byte_to_char[ r ]
+            local char_r = string_char( r )
 
             encode_translate[ char ] = escape_char .. char_r
 
@@ -2888,7 +2868,7 @@ do
     local function generateWoWChatChannelCodec()
         local r = {}
         for i = 128, 255 do
-            r[ i - 127 ] = _byte_to_char[ i ]
+            r[ i - 127 ] = string_char( i )
         end
 
         return deflate.createCodec( "sS\000\010\013\124%" .. table_concat( r ) , "\029\031", "\015\020" )
@@ -3171,7 +3151,7 @@ function deflate.decodeForPrint( str )
         local b2 = cache % 0x100
         local b3 = ( cache - b2 ) / 0x100
         buffer_size = buffer_size + 1
-        buffer[ buffer_size ] = _byte_to_char[ b1 ] .. _byte_to_char[ b2 ] .. _byte_to_char[ b3 ]
+        buffer[ buffer_size ] = string_char( b1, b2, b3 )
     end
 
     local cache = 0
@@ -3188,8 +3168,10 @@ function deflate.decodeForPrint( str )
 
     while cache_bitlen >= 8 do
         local byte = cache % 0x100
+
         buffer_size = buffer_size + 1
-        buffer[ buffer_size ] = _byte_to_char[ byte ]
+        buffer[ buffer_size ] = string_char( byte )
+
         cache = ( cache - byte ) / 0x100
         cache_bitlen = cache_bitlen - 8
     end

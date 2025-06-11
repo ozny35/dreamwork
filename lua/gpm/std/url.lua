@@ -10,7 +10,10 @@ local tostring = std.tostring
 -- TODO: glua functions below
 
 local string = std.string
-local string_byte, string_char, string_sub, string_gsub, string_lower, string_format, string_len = string.byte, string.char, string.sub, string.gsub, string.lower, string.format, string.len
+local string_format = string.format
+local string_sub, string_gsub = string.sub, string.gsub
+local string_byte, string_char = string.byte, string.char
+local string_len, string_lower = string.len, string.lower
 
 local bit = std.bit
 local bit_rshift, bit_lshift, bit_band, bit_bor = bit.rshift, bit.lshift, bit.band, bit.bor
