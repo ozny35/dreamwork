@@ -20,7 +20,7 @@ do
 
     do
 
-        local md5_hash = crypto.md5.hash
+        local md5_digest = crypto.MD5.digest
 
         --- [SHARED AND MENU]
         ---
@@ -37,7 +37,7 @@ do
                 error( "invalid namespace UUID format", 2 )
             end
 
-            local b1, b2, b3, b4, b5, b6, b7, b8, b9, b10, b11, b12, b13, b14, b15, b16 = string_byte( string_fromHex( md5_hash( string_fromHex( uuid ) .. name ) ), 1, 16 )
+            local b1, b2, b3, b4, b5, b6, b7, b8, b9, b10, b11, b12, b13, b14, b15, b16 = string_byte( md5_digest( string_fromHex( uuid ) .. name, false ), 1, 16 )
 
             return string_format( "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
                 b1, b2, b3, b4, b5, b6, bit_bor( bit_band( b7, 0x0F ), 0x30 ),

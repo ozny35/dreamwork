@@ -29,7 +29,7 @@ do
     function key_normalize( key, hash_fn, block_size )
         local key_length = string_len( key )
         if key_length > block_size then
-            return key_normalize( string_fromHex( hash_fn( key ) ), hash_fn, block_size )
+            return key_normalize( hash_fn( key ), hash_fn, block_size )
         elseif key_length < block_size then
             return key .. string_rep( "\0", block_size - key_length )
         else
@@ -140,10 +140,11 @@ do
     ---@param key string The key to use.
     ---@param hash_fn function The hash function that must return hex string.
     ---@param block_size integer The block size of the hash function.
-    ---@return string hex_str The hex hmac string of the message.
-    local function hash( msg, key, hash_fn, block_size )
+    ---@param as_hex? boolean If true, the result will be a hex string.
+    ---@return string str_result The hmac string of the message.
+    local function hash( msg, key, hash_fn, block_size, as_hex )
         local outer, inner = key_padding( key_normalize( key, hash_fn, block_size ), block_size )
-        return hash_fn( outer .. string_fromHex( hash_fn( inner .. msg ) ) )
+        return hash_fn( outer .. hash_fn( inner .. msg ), as_hex )
     end
 
     hmac.hash = hash
@@ -154,12 +155,14 @@ do
     ---
     ---@param hash_fn function The hash function that must return hex string.
     ---@param block_size integer The block size of the hash function.
+    ---@return fun( message: string, key: string, as_hex?: boolean ): string
     function hmac.preset( hash_fn, block_size )
         ---@param message string The message to compute hmac for.
         ---@param key string The key to use.
-        ---@return string hex_str The hex hmac string of the message.
-        return function( message, key )
-            return hash( message, key, hash_fn, block_size )
+        ---@param as_hex? boolean If true, the result will be a hex string.
+        ---@return string str_result The hmac string of the message.
+        return function( message, key, as_hex )
+            return hash( message, key, hash_fn, block_size, as_hex )
         end
     end
 
@@ -169,7 +172,7 @@ end
 ---
 --- Computes a hmac using the md5 hash function.
 ---
-hmac.md5 = hmac.preset( crypto.md5.hash, crypto.md5.block )
+hmac.md5 = hmac.preset( crypto.MD5.digest, crypto.MD5.block_size )
 
 --- [SHARED AND MENU]
 ---

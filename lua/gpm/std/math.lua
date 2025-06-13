@@ -400,17 +400,6 @@ do
 
     math.trunc = math_trunc
 
-    --- [SHARED AND MENU]
-    ---
-    --- Splits a number into its integer and fractional parts.
-    ---
-    ---@param x number The number to split.
-    ---@return number integer The integer part of the number.
-    ---@return number fraction The fractional part of the number.
-    function math.split( x )
-        return math_trunc( x ), x % 1
-    end
-
 end
 
 --- [SHARED AND MENU]
@@ -735,5 +724,19 @@ function math.toInt( unsigned, bit_count )
         return unsigned - 2 ^ bit_count
     else
         return unsigned
+    end
+end
+
+--- [SHARED AND MENU]
+---
+--- Returns a function that bucketizes a number.
+---
+---@generic T : number | integer The type of the number to bucketize.
+---@param y T The bucket size.
+---@return fun( x: number ): T bucketizer The bucketizer function.
+function math.bucketize( y )
+    local div = 1 / y
+    return function( x )
+        return math_floor( x * div ) * y
     end
 end

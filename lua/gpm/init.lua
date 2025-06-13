@@ -848,6 +848,10 @@ dofile( "std/crypto.bitpack.lua" )
 dofile( "std/crypto.bytepack.lua" )
 dofile( "std/crypto.pack.lua" )
 
+dofile( "std/crypto.md5.lua" )
+dofile( "std/crypto.sha1.lua" )
+dofile( "std/crypto.sha256.lua" )
+
 dofile( "std/crypto.uuid.lua" )
 dofile( "std/crypto.base64.lua" )
 
