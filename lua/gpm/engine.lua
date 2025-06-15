@@ -867,13 +867,13 @@ else
     end )
 end
 
+local glua_util = _G.util
+
 if std.SHARED and engine.networkRegister == nil then
 
-    local glua_util = _G.util or {}
-
-    local add_fn = glua_util.AddNetworkString or debug_fempty
-    local get_id_fn = glua_util.NetworkStringToID or debug_fempty
-    local get_name_fn = glua_util.NetworkIDToString or debug_fempty
+    local add_fn = glua_util ~= nil and glua_util.AddNetworkString or debug_fempty
+    local get_id_fn = glua_util ~= nil and glua_util.NetworkStringToID or debug_fempty
+    local get_name_fn = glua_util ~= nil and glua_util.NetworkIDToString or debug_fempty
 
     ---@type table<string, integer>
     local id2name = {}
@@ -967,6 +967,13 @@ if std.SHARED and engine.networkRegister == nil then
         end
     end
 
+end
+
+if glua_util ~= nil then
+    engine.MD5 = glua_util.MD5
+    engine.CRC32 = glua_util.CRC
+    engine.SHA1 = glua_util.SHA1
+    engine.SHA256 = glua_util.SHA256
 end
 
 -- TODO: matproxy

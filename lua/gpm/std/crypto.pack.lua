@@ -3418,4 +3418,98 @@ function pack.writeNullTerminatedString( str )
 	return str .. "\0"
 end
 
+do
+
+	local debug_getmetatable = std.debug.getmetatable
+	local raw_get = std.raw.get
+
+	--- [SHARED AND MENU]
+	---
+	--- Serializes the specified object.
+	---
+	---@param obj gpm.std.Object
+	---@param ... any
+	function Writer:serialize( obj, ... )
+		---@type gpm.std.Object | nil
+		local base = debug_getmetatable( obj )
+		if base == nil then
+			error( "base not found", 2 )
+		end
+
+		local fn = base.__serialize
+		if fn == nil then
+			error( "base method __serialize is missing", 2 )
+		end
+
+		fn( obj, self, ... )
+	end
+
+	--- [SHARED AND MENU]
+	---
+	--- Serializes the specified object.
+	---
+	---@param obj gpm.std.Object
+	---@param ... any
+	---@return string
+	function pack.serialize( obj, ... )
+		local writer = WriterClass()
+		writer:open()
+
+		writer:serialize( obj, ... )
+
+		local data = writer:flush()
+		writer:close()
+		return data
+	end
+
+	--- [SHARED AND MENU]
+	---
+	--- Deserializes the data into the specified object or if it is a class, into a new empty object.
+	---
+	---@param value gpm.std.Object | gpm.std.Class
+	function Reader:deserialize( value, ... )
+		---@type gpm.std.Object | nil
+		local base = raw_get( value, "__base" )
+		if base == nil then
+			base = debug_getmetatable( value )
+		else
+			value = std.class.new( base )
+		end
+
+		---@cast value gpm.std.Object
+
+		if base == nil then
+			error( "metatable not found", 2 )
+		end
+
+		local fn = base.__deserialize
+		if fn == nil then
+			error( "metatable method __deserialize is missing", 2 )
+		end
+
+		fn( value, self, ... )
+
+		return value
+	end
+
+	--- [SHARED AND MENU]
+	---
+	--- Deserializes the data into the specified object or if it is a class, into a new empty object.
+	---
+	---@param data string
+	---@param value gpm.std.Object | gpm.std.Class
+	---@param ... any
+	---@return gpm.std.Object
+	function pack.deserialize( data, value, ... )
+		local reader = ReaderClass()
+		reader:open( data )
+
+		local object = reader:deserialize( value, ... )
+
+		reader:close()
+		return object
+	end
+
+end
+
 -- TODO: Zip

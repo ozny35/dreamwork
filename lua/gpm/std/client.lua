@@ -148,9 +148,10 @@ do
     --- [CLIENT AND MENU]
     ---
     --- Take a screenshot.
+    ---
     ---@param quality integer The quality of the screenshot (0-100), only used if `useTGA` is `false`.
     ---@param fileName string The name of the screenshot.
-    function client.screencap( quality, fileName )
+    function client.screenshot( quality, fileName )
         if std.menu.visible then
             return false, "The menu is open, can't take a screenshot."
         end
@@ -164,7 +165,7 @@ do
         if last_one == nil then
             count = 0
         else
-            count = ( std.tonumber( std.string.sub( std.file.path.stripExtension( last_one, false ), #fileName + 2 ), 10 ) or 0 ) + 1
+            count = ( std.tonumber( std.string.sub( std.file.path.splitExtension( last_one, false ), #fileName + 2 ), 10 ) or 0 ) + 1
         end
 
         fileName = std.string.format( "%s_%04d", fileName, count )

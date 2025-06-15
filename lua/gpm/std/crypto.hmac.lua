@@ -170,22 +170,18 @@ end
 
 --- [SHARED AND MENU]
 ---
---- Computes a hmac using the md5 hash function.
+--- Computes a hmac using the MD5 hashing.
 ---
 hmac.md5 = hmac.preset( crypto.MD5.digest, crypto.MD5.block_size )
 
 --- [SHARED AND MENU]
 ---
---- Computes a hmac using the sha1 hash function.
+--- Computes a hmac using the SHA-1 hashing.
 ---
-hmac.sha1 = hmac.preset( crypto.sha1.hash, crypto.sha1.block )
+hmac.sha1 = hmac.preset( crypto.SHA1.digest, crypto.SHA1.block_size )
 
-if std.SHARED then
-
-    --- [SHARED]
-    ---
-    --- Computes a hmac using the sha256 hash function.
-    ---
-    hmac.sha256 = hmac.preset( crypto.sha256.hash, crypto.sha256.block )
-
-end
+--- [SHARED AND MENU]
+---
+--- Computes a hmac using the SHA-256 hashing.
+---
+hmac.sha256 = hmac.preset( crypto.SHA256.digest, crypto.SHA256.block_size )

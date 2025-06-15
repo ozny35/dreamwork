@@ -39,28 +39,27 @@ function crypto.pbkdf2( options )
         error( "hash name not specified", 2 )
     end
 
-    ---@cast hash gpm.std.crypto.hashlib
+    local digest_size = hash.digest_size
+    local block_size = hash.block_size
+    local digest_fn = hash.digest
 
-    local digest_length = hash.digest
-    local hash_fn = hash.hash
-
-    local hmac_outer, hmac_inner = hmac_padding( hmac_key( pbkdf2_password, hash_fn, hash.block ), hash.block )
-    local block_count = math_ceil( pbkdf2_length / digest_length )
+    local hmac_outer, hmac_inner = hmac_padding( hmac_key( pbkdf2_password, digest_fn, block_size ), block_size )
+    local block_count = math_ceil( pbkdf2_length / digest_size )
     local blocks = {}
 
     for block = 1, block_count, 1 do
-        local u = hmac_computeBinary( hash_fn, hmac_outer, hmac_inner, pbkdf2_salt .. pack_writeUInt32( block, true ) )
-        local t = { string_byte( u, 1, digest_length ) }
+        local u = hmac_computeBinary( digest_fn, hmac_outer, hmac_inner, pbkdf2_salt .. pack_writeUInt32( block, true ) )
+        local t = { string_byte( u, 1, digest_size ) }
 
         for _ = 2, pbkdf2_iterations, 1 do
-            u = hmac_computeBinary( hash_fn, hmac_outer, hmac_inner, u )
+            u = hmac_computeBinary( digest_fn, hmac_outer, hmac_inner, u )
 
-            for j = 1, digest_length, 1 do
+            for j = 1, digest_size, 1 do
                 t[ j ] = bit_bxor( t[ j ], string_byte( u, j ) )
             end
         end
 
-        blocks[ block ] = string_char( table_unpack( t, 1, digest_length ) )
+        blocks[ block ] = string_char( table_unpack( t, 1, digest_size ) )
     end
 
     local pbkdf2_hash = string_toHex( table_concat( blocks, "", 1, block_count ) )

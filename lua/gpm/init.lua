@@ -106,9 +106,11 @@ if SERVER then
     ---@diagnostic disable-next-line: undefined-field
     local AddCSLuaFile = _G.AddCSLuaFile
     if AddCSLuaFile ~= nil then
-        AddCSLuaFile( "database.lua" )
+        AddCSLuaFile( "init.lua" )
         AddCSLuaFile( "detour.lua" )
         AddCSLuaFile( "engine.lua" )
+        AddCSLuaFile( "database.lua" )
+        AddCSLuaFile( "transport.lua" )
 
         AddCSLuaFile( "package/init.lua" )
 
@@ -155,7 +157,7 @@ if transducers == nil then
 
 end
 
-if std.CLIENT_SERVER then
+if CLIENT or SERVER then
     local glua_util = _G.util
     if glua_util ~= nil then
         local fn = glua_util.GetActivityIDByName
@@ -1025,6 +1027,7 @@ do
         "Love Wins Again ♪",
         "Made with love <3",
         "Blazing fast ☄",
+        "Ancient Tech ♪",
         "Here For You ♪",
         "Good Enough ♪",
         "MAKE A MOVE ♪",
@@ -1193,7 +1196,7 @@ do
             local success, result = pcall( gmbc_load_bytecode, bytecode )
             if success then
                 setfenv( result, env or getfenv( 2 ) )
-                return result
+                return result, nil
             else
                 return nil, result
             end
@@ -1354,7 +1357,7 @@ if coroutine.wait == nil then
 
 end
 
-if std.CLIENT_SERVER then
+if CLIENT or SERVER then
     dofile( "std/physics.lua" )
     dofile( "std/entity.lua" )
     dofile( "std/player.lua" )
@@ -1368,7 +1371,11 @@ if _G.TYPE_COUNT ~= 44 then
 end
 
 if _G._VERSION ~= "Lua 5.1" then
-    logger:warn( "Lua version changed, possible unpredictable behavior. (" .. std.tostring( _G._VERSION or "missing") .. ")" )
+    logger:warn( "Lua version changed, possible unpredictable behavior. (" .. std.tostring( _G._VERSION or "unknown" ) .. ")" )
+end
+
+if CLIENT or SERVER then
+    dofile( "transport.lua" )
 end
 
 logger:info( "Start-up time: %.2f ms.", ( getTime() - gpm.StartTime ) * 1000 )
@@ -1385,6 +1392,10 @@ do
 
     logger:info( "Migration completed, time spent: %.2f ms.", ( getTime() - start_time ) * 1000 )
 
+end
+
+if CLIENT or SERVER then
+    gpm.transport.startup()
 end
 
 -- TODO: package manager start-up ( aka starting package loading )

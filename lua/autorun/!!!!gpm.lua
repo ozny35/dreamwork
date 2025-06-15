@@ -1,7 +1,3 @@
-if gpm == nil then
-    if SERVER then
-        AddCSLuaFile( "gpm/init.lua" )
-    end
-
+if _G.gpm == nil then
     include( "gpm/init.lua" )
 end

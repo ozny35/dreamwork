@@ -73,61 +73,6 @@ do
 
 end
 
-do
-
-    --- [SHARED AND MENU]
-    ---
-    --- SHA-1 is a cryptographic hash function that produces a 160-bit hash value.
-    ---
-    --- Like other hash functions, it takes input data ( string )
-    --- and produces a digest ( string ) — a
-    --- fixed-size output string that represents that data.
-    ---
-    --- **SHA1 is insecure**
-    ---
-    --- Because of collision attacks,
-    --- attackers can find two different inputs
-    --- that produce the same hash.
-    ---
-    --- This violates one of the basic principles
-    --- of a secure hash function - collision resistance.
-    ---
-    ---@class gpm.std.crypto.sha1 : gpm.std.crypto.hashlib
-    local sha1 = crypto.sha1 or {}
-    crypto.sha1 = sha1
-
-    sha1.block = 64
-    sha1.digest = 20
-    sha1.hex = 40
-
-    sha1.hash = sha1.hash or glua_util.SHA1
-
-end
-
-if std.SHARED then
-
-    --- [SHARED]
-    ---
-    --- SHA-256 stands for Secure Hash Algorithm 256-bit, part of the SHA-2 family.
-    ---
-    --- This hash algorithm is recommended because it is fast and secure.
-    ---
-    --- Like other hash functions, it takes input data ( string )
-    --- and produces a digest ( string ) — a
-    --- fixed-size output string that represents that data.
-    ---
-    ---@class gpm.std.crypto.sha256 : gpm.std.crypto.hashlib
-    local sha256 = crypto.sha256 or {}
-    crypto.sha256 = sha256
-
-    sha256.block = 64
-    sha256.digest = 32
-    sha256.hex = 64
-
-    sha256.hash = sha256.hash or glua_util.SHA256
-
-end
-
 local string_byte, string_len = std.string.byte, std.string.len
 
 do

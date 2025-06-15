@@ -1,6 +1,7 @@
 -- Based on https://github.com/kikito/md5.lua
 
-local std = _G.gpm.std
+local gpm = _G.gpm
+local std = gpm.std
 
 local bit = std.bit
 local math = std.math
@@ -27,27 +28,34 @@ local bytepack_writeUInt32 = crypto.bytepack.writeUInt32
 ---
 --- MD5 object.
 ---
---- Commonly used for checksums, data integrity verification, and hashing strings or files.
----
----@class gpm.std.MD5 : gpm.std.Object
----@field __class gpm.std.MD5Class
+---@class gpm.std.crypto.MD5 : gpm.std.Object
+---@field __class gpm.std.crypto.MD5Class
 local MD5 = std.class.base( "MD5" )
 
----@alias MD5 gpm.std.MD5
+---@alias MD5 gpm.std.crypto.MD5
 
 --- [SHARED AND MENU]
 ---
---- MD5 class.
+--- MD5 class that computes a cryptographic 128-bit hash value.
 ---
---- Provides functionality for creating and manipulating MD5 hash objects.
+--- Like other hash classes, it takes input data ( string )
+--- and produces a digest ( string ) — a
+--- fixed-size output string that represents that data.
 ---
---- Commonly used for checksums, data integrity verification, and hashing strings or files.
+--- **MD5 is insecure**
 ---
----@class gpm.std.MD5Class : gpm.std.MD5
----@field __base gpm.std.MD5
+--- Because of collision attacks,
+--- attackers can find two different inputs
+--- that produce the same hash.
+---
+--- This violates one of the basic principles
+--- of a secure hash function - collision resistance.
+---
+---@class gpm.std.crypto.MD5Class : gpm.std.crypto.MD5
+---@field __base gpm.std.crypto.MD5
 ---@field digest_size integer
 ---@field block_size integer
----@overload fun(): gpm.std.MD5
+---@overload fun(): gpm.std.crypto.MD5
 local MD5Class = std.class.create( MD5 )
 crypto.MD5 = MD5Class
 
@@ -208,7 +216,7 @@ end
 ---
 --- It returns the MD5 object for method chaining.
 ---
----@return gpm.std.MD5 obj The reset MD5 object.
+---@return gpm.std.crypto.MD5 obj The reset MD5 object.
 function MD5:reset()
     self.a, self.b, self.c, self.d = 0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476
 
@@ -230,7 +238,7 @@ local bucket64 = math.bucketize( 64 )
 --- It returns the MD5 object for method chaining.
 ---
 ---@param str string The string to update the MD5 object with.
----@return gpm.std.MD5 obj The updated MD5 object.
+---@return gpm.std.crypto.MD5 obj The updated MD5 object.
 function MD5:update( str )
     local str_length = string_len( str )
 
@@ -305,9 +313,9 @@ function MD5:digest( as_hex )
     return string_char( b1, b2, b3, b4, b5, b6, b7, b8, b9, b10, b11, b12, b13, b14, b15, b16 )
 end
 
-local md5_fn = ( _G.util or {} ).MD5
+local engine_MD5 = gpm.engine.MD5
 
-if md5_fn == nil then
+if engine_MD5 == nil then
 
     --- [SHARED AND MENU]
     ---
@@ -371,7 +379,7 @@ else
     ---@param as_hex? boolean If true, the result will be a hex string.
     ---@return string str_result The MD5 string of the message.
     function MD5Class.digest( message, as_hex )
-        local hex = md5_fn( message )
+        local hex = engine_MD5( message )
         if as_hex then
             return hex
         else

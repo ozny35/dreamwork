@@ -12,7 +12,7 @@ local std = gpm.std
 ---
 --- In gpm this library has additional functions.
 ---
----@class gpm.std.debug : debuglib
+---@class gpm.std.debug
 local debug = std.debug or {}
 std.debug = debug
 

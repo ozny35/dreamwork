@@ -1788,14 +1788,9 @@ do
     ---@type integer | nil
     options.length = 16
 
-    --- The hash algorithm to use in HMAC.
+    --- The hash algorithm class to use in HMAC.
     ---
-    --- Common algorithms:
-    --- * **MD5** → `md5`
-    --- * **SHA-1** → `sha1`
-    --- * **SHA-256** → `sha256`
-    ---
-    ---@type gpm.std.crypto.hashlib
+    ---@type gpm.std.crypto.MD5Class | gpm.std.crypto.SHA1Class | gpm.std.crypto.SHA256Class
     options.hash = nil
 
 end
