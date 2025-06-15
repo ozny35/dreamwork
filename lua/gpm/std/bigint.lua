@@ -55,7 +55,7 @@ end
 ---
 --- The big integer class.
 ---
----@class gpm.std.BigIntClass: gpm.std.BigInt
+---@class gpm.std.BigIntClass : gpm.std.BigInt
 ---@overload fun( value: string | number, base: number? ): gpm.std.BigInt
 local BigIntClass = std.class.create( BigInt )
 std.BigInt = BigIntClass
@@ -582,36 +582,56 @@ do
             ---
             --- Converts the big integer to a binary string [01].
             ---
-            ---@param size? integer
-            ---@param big_endian? boolean
-            ---@return string
+            ---@param size? integer The size of the binary string.
+            ---@param big_endian? boolean If `true`, the binary string will be in big endian.
+            ---@return string binary_str The binary string representation of the big integer.
+            ---@return integer binary_length The length of the binary string.
             function BigInt:toBinary( size, big_endian )
                 local byte_count = #self
                 if byte_count == 0 then
-                    return string_rep( "\0", size or byte_count or 1 )
+                    size = size or byte_count or 1
+                    return string_rep( "\0", size ), size
                 elseif size == nil then
                     size = byte_count
                 elseif size < 1 then
-                    return ""
+                    return "", 0
                 end
 
-                local sub_size = math_min( size, byte_count )
+                local str_size = math_min( size, byte_count )
+                local str = string_char( table_unpack( self, 1, str_size ) )
 
-                local str = string_char( table_unpack( self, 1, sub_size ) )
-
-                if sub_size < size then
-                    str = str .. string_rep( "\0", size - sub_size )
+                if str_size ~= size then
+                    str = str .. string_rep( "\0", size - str_size )
                 end
 
                 if big_endian then
-                    return string_reverse( str )
+                    return string_reverse( str ), size
                 else
-                    return str
+                    return str, size
                 end
+            end
+
+            ---@param writer gpm.std.crypto.pack.Writer
+            ---@protected
+            function BigInt:__serialize( writer )
+                writer:writeCountedString( string_char( self[ 0 ], table_unpack( self, 1, #self ) ), 16, false )
             end
 
         end
 
+    end
+
+    ---@param reader gpm.std.crypto.pack.Reader
+    function BigInt:__deserialize( reader )
+        local binary_str, binary_length, err_msg = reader:readCountedString( 16, false )
+
+        if binary_str == nil then
+            error( "failed to deserialize big integer, " .. err_msg, 3 )
+        end
+
+        for i = 1, binary_length, 1 do
+            self[ i - 1 ] = string_byte( binary_str, i, i )
+        end
     end
 
     local string_sub = string.sub
@@ -689,7 +709,7 @@ do
             end
 
             -- add digit
-            j, carry = 1, tonumber( string_sub( str, i, i ), base )
+            j, carry = 1, tonumber( string_sub( str, i, i ), base ) or 0
             while carry ~= 0 do
                 local sum = ( object[ j ] or 0 ) + carry
                 object[ j ] = sum % 256

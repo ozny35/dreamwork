@@ -3428,8 +3428,7 @@ do
 	--- Serializes the specified object.
 	---
 	---@param obj gpm.std.Object
-	---@param ... any
-	function Writer:serialize( obj, ... )
+	function Writer:serialize( obj )
 		---@type gpm.std.Object | nil
 		local base = debug_getmetatable( obj )
 		if base == nil then
@@ -3441,7 +3440,7 @@ do
 			error( "base method __serialize is missing", 2 )
 		end
 
-		fn( obj, self, ... )
+		fn( obj, self )
 	end
 
 	--- [SHARED AND MENU]
@@ -3449,13 +3448,12 @@ do
 	--- Serializes the specified object.
 	---
 	---@param obj gpm.std.Object
-	---@param ... any
 	---@return string
-	function pack.serialize( obj, ... )
+	function pack.serialize( obj )
 		local writer = WriterClass()
 		writer:open()
 
-		writer:serialize( obj, ... )
+		writer:serialize( obj )
 
 		local data = writer:flush()
 		writer:close()
@@ -3467,7 +3465,7 @@ do
 	--- Deserializes the data into the specified object or if it is a class, into a new empty object.
 	---
 	---@param value gpm.std.Object | gpm.std.Class
-	function Reader:deserialize( value, ... )
+	function Reader:deserialize( value )
 		---@type gpm.std.Object | nil
 		local base = raw_get( value, "__base" )
 		if base == nil then
@@ -3487,7 +3485,7 @@ do
 			error( "metatable method __deserialize is missing", 2 )
 		end
 
-		fn( value, self, ... )
+		fn( value, self )
 
 		return value
 	end
@@ -3498,13 +3496,12 @@ do
 	---
 	---@param data string
 	---@param value gpm.std.Object | gpm.std.Class
-	---@param ... any
 	---@return gpm.std.Object
-	function pack.deserialize( data, value, ... )
+	function pack.deserialize( data, value )
 		local reader = ReaderClass()
 		reader:open( data )
 
-		local object = reader:deserialize( value, ... )
+		local object = reader:deserialize( value )
 
 		reader:close()
 		return object

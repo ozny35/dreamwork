@@ -57,7 +57,7 @@ function transport.startup()
     if fn == nil then
         local default_name = selected_transport.default
         if name == default_name then
-            gpm.Logger:error( "Transport '" .. name .. "' failed to start." )
+            gpm.Logger:error( "Transport '" .. name .. "' does not exist." )
             return
         end
 
