@@ -37,8 +37,8 @@ if dofile == nil then
 end
 
 ---@diagnostic disable-next-line: undefined-field
-local getTime = _G.SysTime or _G.os.time
-gpm.StartTime = getTime()
+local getUptime = _G.SysTime or ( _G.os or {} ).clock or ( _G.os or {} ).time or function() return 0 end
+gpm.StartTime = getUptime()
 
 gpm.VERSION = version
 gpm.PREFIX = "gpm@" .. version
@@ -666,12 +666,12 @@ do
 
         debug.gc.stop()
 
-        local st = getTime()
+        local st = getUptime()
         for _ = 1, iter do
             fn()
         end
 
-        st = getTime() - st
+        st = getUptime() - st
         debug.gc.restart()
         std.printf( "%d iterations of %s, took %f sec.", iter, name, st )
         return st
@@ -1063,8 +1063,8 @@ do
 end
 
 if math.randomseed == 0 then
-    math.randomseed = std.os.time()
-    logger:info( "Random seed was re-synchronized with unix time." )
+    math.randomseed = std.os.timestamp()
+    logger:info( "Random seed was re-synchronized with milliseconds since the Unix epoch." )
 end
 
 dofile( "std/sqlite.lua" )
@@ -1341,16 +1341,17 @@ dofile( "std/level.lua" )
 
 if coroutine.wait == nil then
 
+    local os_clock = std.os.clock
+
     ---@class gpm.std.coroutine
     local coroutine = std.coroutine
     local coroutine_yield = coroutine.yield
-    local server_getUptime = std.server.getUptime
 
     ---@async
     function coroutine.wait( seconds )
-        local endtime = server_getUptime() + seconds
+        local endtime = os_clock() + seconds
         while true do
-            if endtime < server_getUptime() then return end
+            if endtime < os_clock() then return end
             coroutine_yield()
         end
     end
@@ -1378,19 +1379,19 @@ if CLIENT or SERVER then
     dofile( "transport.lua" )
 end
 
-logger:info( "Start-up time: %.2f ms.", ( getTime() - gpm.StartTime ) * 1000 )
+logger:info( "Start-up time: %.2f ms.", ( getUptime() - gpm.StartTime ) * 1000 )
 
 do
 
     logger:info( "Preparing the database to begin migration..." )
-    local start_time = getTime()
+    local start_time = getUptime()
 
     local db = gpm.db
     db.optimize()
     db.prepare()
     db.migrate( "initial file table" )
 
-    logger:info( "Migration completed, time spent: %.2f ms.", ( getTime() - start_time ) * 1000 )
+    logger:info( "Migration completed, time spent: %.2f ms.", ( getUptime() - start_time ) * 1000 )
 
 end
 
@@ -1401,9 +1402,9 @@ end
 -- TODO: package manager start-up ( aka starting package loading )
 
 do
-    local start_time = getTime()
+    local start_time = getUptime()
     debug.gc.collect()
-    logger:info( "Clean-up time: %.2f ms.", ( getTime() - start_time ) * 1000 )
+    logger:info( "Clean-up time: %.2f ms.", ( getUptime() - start_time ) * 1000 )
 end
 
 -- TODO: put https://wiki.facepunch.com/gmod/Global.DynamicLight somewhere

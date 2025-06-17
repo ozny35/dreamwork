@@ -1,8 +1,8 @@
 local std = _G.gpm.std
 
-local game_getUptime = std.game.getUptime
 local raw_tonumber = std.raw.tonumber
 local tostring = std.tostring
+local os_clock = std.os.clock
 
 ---@class gpm.std.http
 local http = std.http
@@ -90,12 +90,12 @@ local function request( method, pathname, headers, body, do_cache )
 
     -- Rate limit mutative requests
     if method > 1 and method < 6 then
-        local diff = next_mutation_time - game_getUptime()
+        local diff = next_mutation_time - os_clock()
         if diff > 0 then
             next_mutation_time = next_mutation_time + 1000
             futures_sleep( diff )
         else
-            next_mutation_time = game_getUptime() + 1000
+            next_mutation_time = os_clock() + 1000
         end
     end
 

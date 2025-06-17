@@ -166,9 +166,9 @@ end
 
 local http_cache_get, http_cache_set = gpm.http_cache.get, gpm.http_cache.set
 local json_serialize = std.crypto.json.serialize
-local game_getUptime = std.game.getUptime
 local string_gmatch = std.string.gmatch
 local raw_tonumber = std.raw.tonumber
+local os_clock = std.os.clock
 
 ---@class gpm.std.http.Request.session_cache
 ---@field future gpm.std.futures.Future
@@ -259,7 +259,7 @@ local function request( options )
         local identifier = json_serialize( { url, method, options.parameters, options.headers }, false )
 
         local data = session_cache[ identifier ]
-        if data ~= nil and ( game_getUptime() - data.start ) < data.age then
+        if data ~= nil and ( os_clock() - data.start ) < data.age then
             return data.future:await()
         end
 
@@ -275,7 +275,7 @@ local function request( options )
         ---@type gpm.std.http.Request.session_cache
         data = {
             future = f,
-            start = game_getUptime(),
+            start = os_clock(),
             age = cache_ttl
         }
 

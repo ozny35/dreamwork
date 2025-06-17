@@ -1,10 +1,8 @@
 local std = _G.gpm.std
 
-local math = std.math
-local math_random = math.random
-
 local string = std.string
 local string_format = string.format
+local math_random = std.math.random
 
 local bit_band, bit_bor = std.bit.band, std.bit.bor
 
@@ -114,12 +112,11 @@ end
 
 do
 
+    local os_timestamp = std.os.timestamp
+
     local BigInt = std.BigInt
-    local BigInt_band, BigInt_rshift = BigInt.band, BigInt.rshift
     local BigInt_fromNumber = BigInt.fromNumber
-    local game_getUptime = std.game.getUptime
-    local math_floor = math.floor
-    local os_time = std.os.time
+    local BigInt_band, BigInt_rshift = BigInt.band, BigInt.rshift
 
     local bigint_0xFF = BigInt_fromNumber( 0xFF )
 
@@ -142,7 +139,7 @@ do
     ---@return string uuid A UUID v7 string.
     function crypto.UUIDv7( timestamp )
         if timestamp == nil then
-            timestamp = BigInt_fromNumber( math_floor( ( os_time() + game_getUptime() % 1 ) * 1000 ) )
+            timestamp = BigInt_fromNumber( os_timestamp() )
         end
 
         return string_format( "0%s%s%s%s-%s%s-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",

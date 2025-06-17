@@ -13,8 +13,8 @@ end
 local string = std.string
 
 local gc_setTableRules = std.debug.gc.setTableRules
-local game_getUptime = std.game.getUptime
 local table_eject = std.table.eject
+local os_clock = std.os.clock
 
 local timer_RepsLeft = timer.RepsLeft
 local timer_UnPause = timer.UnPause
@@ -311,10 +311,10 @@ do
             repetition_indexes[ self ] = repetition_index
 
             if start_times[ self ] == nil and repetition_index == 1 then
-                start_times[ self ] = game_getUptime() - self.delay
+                start_times[ self ] = os_clock() - self.delay
             end
         elseif start_times[ self ] == nil and self.repetition_index == 1 then
-            start_times[ self ] = game_getUptime() - self.delay
+            start_times[ self ] = os_clock() - self.delay
         end
 
         in_call[ self ] = true
@@ -563,7 +563,7 @@ do
             return
         end
 
-        pause_times[ self ] = game_getUptime()
+        pause_times[ self ] = os_clock()
         timer_Pause( name )
         states[ self ] = 1
     end

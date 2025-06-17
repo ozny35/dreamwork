@@ -354,3 +354,5 @@ if bit.replace == nil then
     end
 
 end
+
+-- TODO: more bit functions

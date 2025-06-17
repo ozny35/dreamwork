@@ -40,7 +40,29 @@ os.time = os.time or glua_os.time
 os.clock = os.clock or glua_os.clock
 os.difftime = os.difftime or glua_os.difftime
 
-do
+-- TODO: think about separate lightweight `time` library for time operations, also port Date class from JS/TS
+-- TODO: deprecate os library and move open folder into window library, other remove
+
+if os.timestamp == nil then
+
+    local math_floor = std.math.floor
+    local os_clock = os.clock
+    local os_time = os.time
+
+    --- [SHARED AND MENU]
+    ---
+    --- Returns the current timestamp as milliseconds since the Unix epoch.
+    ---
+    --- **Note:** This is a light wrapper around `os.time() + os.clock() % 1` so it's not as accurate as real ms timestamp, but it's good enough for our needs.
+    ---
+    ---@return integer timestamp The current timestamp in milliseconds.
+    function os.timestamp()
+        return math_floor( ( os_time() + os_clock() % 1 ) * 1000 )
+    end
+
+end
+
+if os.duration == nil then
 
     local string_gmatch = std.string.gmatch
     local raw_tonumber = std.raw.tonumber
