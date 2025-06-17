@@ -40,6 +40,63 @@ os.time = os.time or glua_os.time
 os.clock = os.clock or glua_os.clock
 os.difftime = os.difftime or glua_os.difftime
 
+do
+
+    local string_gmatch = std.string.gmatch
+    local raw_tonumber = std.raw.tonumber
+
+    ---@type table<string, number>
+    local duration_units = {
+        ns = 1e-9,
+        us = 1e-6,
+        ms = 1e-3,
+        s = 1,
+        m = 60,
+        h = 3600,
+        d = 86400,
+        w = 604800,
+        mo = 2592000,
+        y = 31536000
+    }
+
+    --- [SHARED AND MENU]
+    ---
+    --- Converts a duration string to a timestamp.
+    ---
+    --- The duration string can have the following units: `ns`, `us`, `ms`, `s`, `m`, `h`, `d`, `w`, `y`.
+    ---
+    --- | Suffix | Name         | Value                         |
+    --- |--------|--------------|-------------------------------|
+    --- | `ns`     | Nanosecond   | 1 / 1,000,000,000 seconds     |
+    --- | `us`     | Microsecond  | 1 / 1,000,000 seconds         |
+    --- | `ms`     | Millisecond  | 1 / 1,000 seconds             |
+    --- | `s`      | Second       | 1 second                      |
+    --- | `m`      | Minute       | 60 seconds                    |
+    --- | `h`      | Hour         | 60 minutes                    |
+    --- | `d`      | Day          | 24 hours                      |
+    --- | `w`      | Week         | 7 days                        |
+    --- | `mo`     | Month        | ~30 days                      |
+    --- | `y`      | Year         | 365 days                      |
+    ---
+    ---@param duration_str string The duration string (3s, 1m2s, 2y, 10m, etc) to convert.
+    ---@return number timestamp The timestamp corresponding to the duration string.
+    function os.duration( duration_str )
+        local timestamp = 0
+
+        for value, unit in string_gmatch( duration_str, "(%d+%.?%d*)(%l*)" ) do
+            local multiplier = duration_units[ unit or "s" ]
+            if multiplier == nil then
+                error( "unknown duration unit '" .. unit .. "'", 2 )
+            else
+                timestamp = timestamp + ( raw_tonumber( value, 10 ) or 0 ) * multiplier
+            end
+        end
+
+        return timestamp
+    end
+
+end
+
 os.endianness = os.endianness or std.string.byte( std.string.dump( std.debug.fempty ), 7 ) == 0x00
 
 if std.MENU then

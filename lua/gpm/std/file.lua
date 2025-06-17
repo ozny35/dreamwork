@@ -33,6 +33,8 @@ do
     local title2addon = engine.title2addon
     local name2game = engine.name2game
 
+    -- TODO: remap all local paths like /lua, /materials, /models and etc to local package gma, like file.Read( "lua", "package_name" )
+
     local fstab = {
         { "/lua", ( SERVER and "lsv" or ( CLIENT and "lcl" or ( MENU and "LuaMenu" or "LUA" ) ) ) },
         { "/materials", "GAME", "materials" },
@@ -263,6 +265,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Returns the size of a file or directory by given path.
+---
 ---@param file_path string The path to the file or directory.
 ---@return integer size The size of the file or directory in bytes.
 function file.getSize( file_path )
@@ -295,6 +298,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Deletes a file or directory by given path.
+---
 ---@param file_path string The path to the file or directory to delete.
 ---@param forced? boolean If `true`, then the file or directory will be deleted even if it is not empty. (useless for files)
 function file.delete( file_path, forced )
@@ -329,6 +333,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Creates a directory by given path.
+---
 ---@param file_path string The path to the directory to create. (creates all non-existing directories in the path)
 ---@param forced? boolean If `true`, all files in the path will be deleted if they exist.
 function file.createDirectory( file_path, forced )
@@ -349,8 +354,7 @@ local file_Open = glua_file.Open
 ---@param target_game_path string
 ---@param error_level? integer
 local function file_Copy( source_local_path, source_game_path, target_local_path, target_game_path, error_level )
-    if error_level == nil then error_level = 1 end
-    error_level = error_level + 1
+    error_level = ( error_level or 1 ) + 1
 
     local source_handler = file_Open( source_local_path, "rb", source_game_path )
     if source_handler == nil then
@@ -365,7 +369,7 @@ local function file_Copy( source_local_path, source_game_path, target_local_path
 
     local target_handler = file_Open( target_local_path, "wb", target_game_path )
     if target_handler == nil then
-        error( "File '" .. target_local_path .. "' cannot be written.", error_level )
+        error( "file '" .. target_local_path .. "' is not writable", error_level )
     end
 
     ---@diagnostic disable-next-line: cast-type-mismatch
@@ -403,10 +407,11 @@ end
 --- [SHARED AND MENU]
 ---
 --- Copies file or directory by given paths.
----@param source_path string
----@param target_path? string
----@param forced? boolean
----@return string
+---
+---@param source_path string The path to the file or directory to copy.
+---@param target_path? string The path to the target file or directory.
+---@param forced? boolean If `true`, the target file or directory will be deleted if it already exists.
+---@return string new_path The path to the new file or directory.
 function file.copy( source_path, target_path, forced )
     local resolved_source_path = path_resolve( source_path )
     local source_local_path, source_game_path = path_unpack( resolved_source_path, target_path == nil, 2 )
@@ -430,7 +435,7 @@ function file.copy( source_path, target_path, forced )
         resolved_target_path = path_resolve( target_path )
         target_local_path, target_game_path = path_unpack( resolved_target_path, true, 2 )
         if target_game_path == source_game_path and target_local_path == source_local_path then
-            error( "Source and target paths cannot be the same.", 2 )
+            error( "source and target paths cannot be the same", 2 )
         end
     end
 
@@ -450,6 +455,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Moves file or directory by given paths.
+---
 ---@param source_path string The path to the file or directory to move.
 ---@param target_path string The path to the target file or directory.
 ---@param forced? boolean If `true`, the target file or directory will be deleted if it already exists.
@@ -461,7 +467,7 @@ function file.move( source_path, target_path, forced )
     local source_local_path, source_game_path = path_unpack( path_resolve( source_path ), false, 2 )
 
     if target_game_path == source_game_path and file_IsDir( source_local_path, source_game_path ) and string.startsWith( target_local_path, source_local_path ) then
-        error( "Cannot move a file or directory to itself.", 2 )
+        error( "cannot move the directory to itself", 2 )
     end
 
     if file_Exists( target_local_path, target_game_path ) then
@@ -472,9 +478,9 @@ function file.move( source_path, target_path, forced )
                 file_Delete( target_local_path, target_game_path )
             end
         elseif file_IsDir( target_local_path, target_game_path ) then
-            error( "Directory '" .. target_local_path .. "' already exists.", 2 )
+            error( "directory '" .. resolved_target_path .. "' already exists", 2 )
         else
-            error( "File '" .. target_local_path .. "' already exists.", 2 )
+            error( "file '" .. resolved_target_path .. "' already exists", 2 )
         end
     end
 
@@ -492,31 +498,33 @@ end
 
 --- [SHARED AND MENU]
 ---
---- Reads data from a file by given path.
+--- Reads content from a file by given path.
+---
 ---@param file_path string The path to the file to read.
 ---@param length? integer The number of bytes to read, or `nil` to read the entire file.
----@return string data The data read from the file.
+---@return string content The content of the file or `nil` if failed.
 function file.read( file_path, length )
     local resolved_path = path_resolve( file_path )
     local local_path, game_path = path_unpack( resolved_path, false, 2 )
 
     local handler = file_Open( local_path, "rb", game_path )
     if handler == nil then
-        error( "File '" .. resolved_path .. "' cannot be read.", 2 )
+        error( "file '" .. resolved_path .. "' is not readable", 2 )
     end
 
     ---@diagnostic disable-next-line: cast-type-mismatch
     ---@cast handler File
 
-    local data = FILE_Read( handler, length )
+    local content = FILE_Read( handler, length )
     FILE_Close( handler )
 
-    return data
+    return content
 end
 
 --- [SHARED AND MENU]
 ---
 --- Writes data to a file by given path.
+---
 ---@param file_path string The path to the file to write.
 ---@param data string The data to write to the file.
 ---@param forced? boolean If `true`, the directory will not be created if it does not exist.
@@ -534,7 +542,7 @@ function file.write( file_path, data, forced )
 
     local handler = file_Open( local_path, "wb", game_path )
     if handler == nil then
-        error( "File '" .. resolved_path .. "' cannot be written.", 2 )
+        error( "file '" .. resolved_path .. "' is not writable", 2 )
     end
 
     ---@diagnostic disable-next-line: cast-type-mismatch
@@ -547,6 +555,7 @@ end
 --- [SHARED AND MENU]
 ---
 --- Appends data to a file by given path.
+---
 ---@param file_path string The path to the file to append.
 ---@param data string The data to append to the file.
 ---@param forced? boolean If `true`, the directory will not be created if it does not exist.
@@ -564,7 +573,7 @@ function file.append( file_path, data, forced )
 
     local handler = file_Open( local_path, "ab", game_path )
     if handler == nil then
-        error( "File '" .. resolved_path .. "' cannot be written.", 2 )
+        error( "file '" .. resolved_path .. "' is not writable", 2 )
     end
 
     ---@diagnostic disable-next-line: cast-type-mismatch
@@ -574,126 +583,7 @@ function file.append( file_path, data, forced )
     FILE_Close( handler )
 end
 
-
-local class = std.class
-
-do
-
-    --- [SHARED AND MENU]
-    ---
-    --- TODO
-    ---@alias FileReader gpm.std.file.Reader
-    ---@class gpm.std.file.Reader : gpm.std.Object
-    ---@field __class gpm.std.file.ReaderClass
-    local Reader = class.base( "FileReader" )
-
-    --[[
-
-        [ 0 ] - handler
-        [ 1 ] - file path
-
-    ]]
-
-    ---@protected
-    function Reader:__init( resolving_path )
-        local resolved_path = path_resolve( resolving_path )
-        self[ 1 ] = resolved_path
-
-        local local_path, game_path = path_unpack( resolved_path, false, 3 )
-
-        local handler = file_Open( local_path, "rb", game_path )
-        if handler == nil then
-            error( "Failed to open file '" .. resolved_path .. "'.", 4 )
-        end
-
-        self[ 0 ] = handler
-    end
-
-    ---@return boolean
-    ---@protected
-    function Reader:__isvalid()
-        return self[ 0 ] ~= nil
-    end
-
-    --- [SHARED AND MENU]
-    ---
-    --- Returns the path to the file.
-    function Reader:path()
-        return self[ 1 ]
-    end
-
-    --- [SHARED AND MENU]
-    ---
-    --- Closes the file.
-    function Reader:close()
-        local handler = self[ 0 ]
-        if handler ~= nil then
-            self[ 0 ] = nil
-            FILE_Close( handler )
-        end
-    end
-
-    --- [SHARED AND MENU]
-    ---
-    --- TODO
-    ---@param length? integer
-    ---@return string? content
-    function Reader:read( length )
-        local handler = self[ 0 ]
-        if handler == nil then
-            return nil
-        end
-
-        return FILE_Read( handler, length )
-    end
-
-    --- [SHARED AND MENU]
-    ---
-    --- TODO
-    ---@class gpm.std.file.ReaderClass : gpm.std.file.Reader
-    ---@field __base gpm.std.file.Reader
-    ---@overload fun( file_path: string ): gpm.std.file.Reader
-    local ReaderClass = class.create( Reader )
-    file.Reader = Reader
-
-end
-
-do
-
-    --- [SHARED AND MENU]
-    ---
-    --- TODO
-    ---@alias FileWriter gpm.std.file.Writer
-    ---@class gpm.std.file.Writer : gpm.std.Object
-    ---@field __class gpm.std.file.WriterClass
-    local Writer = class.base( "FileWriter" )
-
-    ---@protected
-    function Writer:__init()
-        self[ 0 ] = {}
-    end
-
-    function Writer:__isvalid()
-        return
-    end
-
-    --[[
-
-        [ 0 ] - queue
-
-
-    --]]
-
-    --- [SHARED AND MENU]
-    ---
-    --- TODO
-    ---@class gpm.std.file.WriterClass : gpm.std.file.Writer
-    ---@field __base gpm.std.file.Writer
-    ---@overload fun( file_path: string ): gpm.std.file.Writer
-    local WriterClass = class.create( Writer )
-    file.Writer = Writer
-
-end
+-- TODO: Reader and Writer or something better like FileClass that can returns FileReader and FileWriter in cases
 
 --[[
 
