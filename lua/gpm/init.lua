@@ -1145,63 +1145,87 @@ end
 do
 
     local getfenv, setfenv = std.getfenv, std.setfenv
+    ---@diagnostic disable-next-line: undefined-field
+    local gmbc_load_bytecode = _G.gmbc_load_bytecode
+    local CompileString = _G.CompileString
+    local file_read = std.file.read
+    local pcall = std.pcall
 
-    do
-
-        local CompileString = _G.CompileString
-
-        --- [SHARED AND MENU]
-        ---
-        --- Loads a string as
-        --- a lua code chunk in the specified environment
-        --- and returns function as a compile result.
-        ---
-        ---@param lua_code string The lua code chunk.
-        ---@param chunk_name string | nil The lua code chunk name.
-        ---@param env table | nil The environment of compiled function.
-        ---@return function | nil fn The compiled function.
-        ---@return string | nil msg The error message.
-        function std.loadstring( lua_code, chunk_name, env )
-            local fn = CompileString( lua_code, chunk_name or "=(loadstring)", false )
-            if fn == nil then
-                return nil, "lua code compilation failed"
-            elseif isstring( fn ) then
-                ---@diagnostic disable-next-line: cast-type-mismatch
-                ---@cast fn string
-                return nil, fn
-            else
-                setfenv( fn, env or getfenv( 2 ) )
-                return fn
-            end
+    --- [SHARED AND MENU]
+    ---
+    --- Loads a string as
+    --- a lua code chunk in the specified environment
+    --- and returns function as a compile result.
+    ---
+    ---@param lua_code string The lua code chunk.
+    ---@param chunk_name string | nil The lua code chunk name.
+    ---@param env table | nil The environment of compiled function.
+    ---@return function | nil fn The compiled function.
+    ---@return string | nil msg The error message.
+    local function loadstring( lua_code, chunk_name, env )
+        local fn = CompileString( lua_code, chunk_name or "=(loadstring)", false )
+        if fn == nil then
+            return nil, "lua code compilation failed"
+        elseif isstring( fn ) then
+            ---@diagnostic disable-next-line: cast-type-mismatch
+            ---@cast fn string
+            return nil, fn
+        else
+            setfenv( fn, env or getfenv( 2 ) )
+            return fn
         end
-
     end
 
-    do
+    std.loadstring = loadstring
 
-        ---@diagnostic disable-next-line: undefined-field
-        local gmbc_load_bytecode = _G.gmbc_load_bytecode
-
-        --- [SHARED AND MENU]
-        ---
-        --- Loads a string as
-        --- a bytecode chunk in the specified environment
-        --- and returns function as a compile result.
-        ---
-        ---@param bytecode string The luajit bytecode chunk.
-        ---@param env table | nil The environment of compiled function.
-        ---@return function | nil fn The compiled function.
-        ---@return string | nil msg The error message.
-        function std.loadbytecode( bytecode, env )
-            local success, result = pcall( gmbc_load_bytecode, bytecode )
-            if success then
-                setfenv( result, env or getfenv( 2 ) )
-                return result, nil
-            else
-                return nil, result
-            end
+    --- [SHARED AND MENU]
+    ---
+    --- Loads a string as
+    --- a bytecode chunk in the specified environment
+    --- and returns function as a compile result.
+    ---
+    ---@param bytecode string The luajit bytecode chunk.
+    ---@param env table | nil The environment of compiled function.
+    ---@return function | nil fn The compiled function.
+    ---@return string | nil msg The error message.
+    local function loadbytecode( bytecode, env )
+        local success, result = pcall( gmbc_load_bytecode, bytecode )
+        if success then
+            setfenv( result, env or getfenv( 2 ) )
+            return result, nil
+        else
+            return nil, result
         end
+    end
 
+    std.loadbytecode = loadbytecode
+
+    --- [SHARED AND MENU]
+    ---
+    --- Loads a file as
+    --- a lua code chunk in the specified environment
+    --- and returns function as a compile result.
+    ---
+    ---@param file_path string The path to the file to read.
+    ---@param is_bytecode boolean If `true`, the file will be loaded as a bytecode chunk.
+    ---@param env table | nil The environment of compiled function.
+    ---@return function | nil fn The compiled function.
+    ---@return string | nil msg The error message.
+    function std.loadfile( file_path, is_bytecode, env )
+        local success, content = pcall( file_read, file_path )
+        if success then
+            if env == nil then
+                env = getfenv( 2 )
+            end
+
+            if is_bytecode then
+                return loadbytecode( content, env )
+            else
+                return loadstring( content, file_path, env )
+            end
+        else
+            return nil, content
+        end
     end
 
 end
@@ -1428,11 +1452,6 @@ end
     TODO: return missing functions
 
     -- dofile - missing in glua
-
-    -- load - missing in glua
-    -- loadfile - missing in glua
-    -- loadstring - is deprecated in lua 5.2
-
     -- require - broken in glua
 
 ]]
