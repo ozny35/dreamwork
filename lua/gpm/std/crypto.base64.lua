@@ -42,8 +42,8 @@ crypto.base64 = base64
 --- The base64 encoding/decoding alphabet.
 ---
 ---@class gpm.std.crypto.base64.Alphabet
----@field [1] integer[] The encoding alphabet.
----@field [2] integer[] The decoding alphabet.
+---@field [1] table<integer, integer> The encoding map.
+---@field [2] table<integer, integer> The decoding map.
 
 do
 
@@ -53,30 +53,30 @@ do
     ---
     --- Creates a base64 alphabet with encoding and decoding maps.
     ---
-    ---@param str_alphabet string The alphabet string.
+    ---@param alphabet_str string The alphabet string.
     ---@return gpm.std.crypto.base64.Alphabet alphabet The alphabet.
-    function base64.alphabet( str_alphabet )
-        if string_len( str_alphabet ) ~= 64 then
+    function base64.alphabet( alphabet_str )
+        if string_len( alphabet_str ) ~= 64 then
             error( "alphabet must be 64 characters long", 2 )
         end
 
-        local encode_alphabet = { string_byte( str_alphabet, 1, 64 ) }
-        encode_alphabet[ 0 ] = table_remove( encode_alphabet, 1 )
+        local encode_map = { string_byte( alphabet_str, 1, 64 ) }
+        encode_map[ 0 ] = table_remove( encode_map, 1 )
 
-        local decode_alphabet = {}
+        local decode_map = {}
 
         for i = 0, 63, 1 do
-            local byte = encode_alphabet[ i ]
-            if decode_alphabet[ byte ] == nil then
-                decode_alphabet[ byte ] = i
+            local byte = encode_map[ i ]
+            if decode_map[ byte ] == nil then
+                decode_map[ byte ] = i
             elseif byte > 32 and byte < 127 then
-                error( "alphabet characters must be unique, duplicate character: '" .. string_char( byte ) .. "'", 2 )
+                error( "alphabet characters must be unique, duplicate character: '" .. string_char( byte ) .. "' [" .. ( i + 1 ) .. "]", 2 )
             else
-                error( "alphabet characters must be unique, duplicate character: '\\" .. byte .. "'", 2 )
+                error( "alphabet characters must be unique, duplicate character: '\\" .. byte .. "' [" .. ( i + 1 ) .. "]", 2 )
             end
         end
 
-        return { encode_alphabet, decode_alphabet }
+        return { encode_map, decode_map }
     end
 
 end
@@ -172,14 +172,14 @@ local function perform_options( options )
     end
 end
 
----@param encode_alphabet table<integer, integer>
+---@param encode_map table<integer, integer>
 ---@param do_cache boolean
 ---@param cache_map table<integer, string> | nil
 ---@param b1 integer
 ---@param b2 integer | nil
 ---@param b3 integer | nil
 ---@return string
-local function block_encode( encode_alphabet, do_cache, cache_map, b1, b2, b3 )
+local function block_encode( encode_map, do_cache, cache_map, b1, b2, b3 )
     local bit_sum
 
     if b1 == nil then
@@ -204,21 +204,21 @@ local function block_encode( encode_alphabet, do_cache, cache_map, b1, b2, b3 )
 
     if b2 == nil then
         str_block = string_char(
-            encode_alphabet[ bit_extract( bit_sum, 18, 6 ) ],
-            encode_alphabet[ bit_extract( bit_sum, 12, 6 ) ]
+            encode_map[ bit_extract( bit_sum, 18, 6 ) ],
+            encode_map[ bit_extract( bit_sum, 12, 6 ) ]
         )
     elseif b3 == nil then
         str_block = string_char(
-            encode_alphabet[ bit_extract( bit_sum, 18, 6 ) ],
-            encode_alphabet[ bit_extract( bit_sum, 12, 6 ) ],
-            encode_alphabet[ bit_extract( bit_sum, 6, 6 ) ]
+            encode_map[ bit_extract( bit_sum, 18, 6 ) ],
+            encode_map[ bit_extract( bit_sum, 12, 6 ) ],
+            encode_map[ bit_extract( bit_sum, 6, 6 ) ]
         )
     else
         str_block = string_char(
-            encode_alphabet[ bit_extract( bit_sum, 18, 6 ) ],
-            encode_alphabet[ bit_extract( bit_sum, 12, 6 ) ],
-            encode_alphabet[ bit_extract( bit_sum, 6, 6 ) ],
-            encode_alphabet[ bit_extract( bit_sum, 0, 6 ) ]
+            encode_map[ bit_extract( bit_sum, 18, 6 ) ],
+            encode_map[ bit_extract( bit_sum, 12, 6 ) ],
+            encode_map[ bit_extract( bit_sum, 6, 6 ) ],
+            encode_map[ bit_extract( bit_sum, 0, 6 ) ]
         )
     end
 
@@ -233,27 +233,27 @@ end
 ---
 --- Encodes the specified string to base64.
 ---
----@param str_raw string
+---@param raw_str string
 ---@param options? gpm.std.crypto.base64.Options
 ---@return string
-function base64.encode( str_raw, options )
+function base64.encode( raw_str, options )
     if options == nil then
         if glue_encode == nil then
             ---@diagnostic disable-next-line: cast-local-type
             options = variants.standard
         else
             ---@diagnostic disable-next-line: need-check-nil
-            return glue_encode( str_raw, true )
+            return glue_encode( raw_str, true )
         end
     else
         perform_options( options )
     end
 
-    local encode_alphabet = options.alphabet[ 1 ]
+    local encode_map = options.alphabet[ 1 ]
     local do_cache = not options.ignore_cache
     local pad = options.pad
 
-    local str_length = string_len( str_raw )
+    local str_length = string_len( raw_str )
 	local remainder = str_length % 3
 
     local blocks, block_count = {}, 0
@@ -262,17 +262,15 @@ function base64.encode( str_raw, options )
 
     if do_cache then
         cache_map = options.encode_cache or {}
-    else
-        cache_map = nil
     end
 
     for i = 1, str_length - remainder, 3 do
 		block_count = block_count + 1
-		blocks[ block_count ] = block_encode( encode_alphabet, do_cache, cache_map, string_byte( str_raw, i, i + 2 ) )
+		blocks[ block_count ] = block_encode( encode_map, do_cache, cache_map, string_byte( raw_str, i, i + 2 ) )
 	end
 
     if remainder == 2 then
-        local str_block = block_encode( encode_alphabet, do_cache, cache_map, string_byte( str_raw, str_length - 1, str_length ) )
+        local str_block = block_encode( encode_map, do_cache, cache_map, string_byte( raw_str, str_length - 1, str_length ) )
 
         if pad ~= nil then
             str_block = str_block .. pad
@@ -281,7 +279,7 @@ function base64.encode( str_raw, options )
         block_count = block_count + 1
         blocks[ block_count ] = str_block
 	elseif remainder == 1 then
-        local str_block = block_encode( encode_alphabet, do_cache, cache_map, string_byte( str_raw, str_length ) )
+        local str_block = block_encode( encode_map, do_cache, cache_map, string_byte( raw_str, str_length ) )
 
         if pad ~= nil then
             str_block = str_block .. pad .. pad
@@ -318,10 +316,10 @@ do
     ---
     --- Checks if the specified base64 encoded string is valid.\
     ---
-    ---@param str_base64 string The base64 encoded string to check.
+    ---@param base64_str string The base64 encoded string to check.
     ---@param options? gpm.std.crypto.base64.Options The base64 encoding options.
     ---@return boolean is_valid `true` if the base64 string is valid, `false` otherwise
-    function base64.validate( str_base64, options )
+    function base64.validate( base64_str, options )
         if options == nil then
             ---@diagnostic disable-next-line: cast-local-type
             options = variants.standard
@@ -329,7 +327,7 @@ do
             perform_options( options )
         end
 
-        local str_base64_length = string_len( str_base64 )
+        local base_str_length = string_len( base64_str )
 
         local alphabet = options.alphabet[ 2 ]
 
@@ -339,29 +337,29 @@ do
             if eol ~= nil then
                 local eol_length = string_len( eol )
 
-                local buffer_str = str_base64
-                str_base64 = ""
+                local buffer_str = base64_str
+                base64_str = ""
 
                 local step_size = wrap + eol_length
 
-                for i = wrap, str_base64_length, step_size do
+                for i = wrap, base_str_length, step_size do
                     if string_sub( buffer_str, i + 1, i + eol_length ) == eol then
                         local next_cursor = i + step_size
-                        if next_cursor > str_base64_length then
-                            str_base64 = str_base64 .. string_sub( buffer_str, i - wrap + 1, i ) .. string_sub( buffer_str, i + eol_length + 1, str_base64_length )
+                        if next_cursor > base_str_length then
+                            base64_str = base64_str .. string_sub( buffer_str, i - wrap + 1, i ) .. string_sub( buffer_str, i + eol_length + 1, base_str_length )
                         else
-                            str_base64 = str_base64 .. string_sub( buffer_str, i - wrap + 1, i )
+                            base64_str = base64_str .. string_sub( buffer_str, i - wrap + 1, i )
                         end
                     else
                         return false
                     end
                 end
 
-                str_base64_length = str_base64_length - step_size * math_floor( str_base64_length / step_size )
+                base_str_length = base_str_length - step_size * math_floor( base_str_length / step_size )
             end
         end
 
-        if str_base64_length % 4 ~= 0 then
+        if base_str_length % 4 ~= 0 then
             return false
         end
 
@@ -374,15 +372,15 @@ do
             pad_byte = string_byte( pad, 1, 1 )
         end
 
-        for start_position = 1, str_base64_length, 4 do
+        for start_position = 1, base_str_length, 4 do
             local end_position = start_position + 3
-            local b1, b2, b3, b4 = string_byte( str_base64, start_position, end_position )
+            local b1, b2, b3, b4 = string_byte( base64_str, start_position, end_position )
 
             if not ( alphabet[ b1 ] and alphabet[ b2 ] ) then
                 return false
             end
 
-            if end_position == str_base64_length then
+            if end_position == base_str_length then
                 if not ( ( alphabet[ b3 ] or b3 == pad_byte ) and ( alphabet[ b4 ] or b4 == pad_byte ) ) then
                     return false
                 end
@@ -396,7 +394,7 @@ do
 
 end
 
----@param decode_alphabet table<integer, integer>
+---@param decode_map table<integer, integer>
 ---@param do_cache boolean
 ---@param cache_map table<integer, string> | nil
 ---@param b1 integer
@@ -404,7 +402,7 @@ end
 ---@param b3 integer | nil
 ---@param b4 integer | nil
 ---@return string
-local function block_decode( decode_alphabet, do_cache, cache_map, b1, b2, b3, b4 )
+local function block_decode( decode_map, do_cache, cache_map, b1, b2, b3, b4 )
     if do_cache then
         local cache_key
 
@@ -424,32 +422,32 @@ local function block_decode( decode_alphabet, do_cache, cache_map, b1, b2, b3, b
             return str_block
         end
 
-        str_block = block_decode( decode_alphabet, false, nil, b1, b2, b3, b4 )
+        str_block = block_decode( decode_map, false, nil, b1, b2, b3, b4 )
 
         cache_map[ cache_key ] = str_block
 
         return str_block
     elseif b3 == nil then
-        local bit_sum = ( decode_alphabet[ b1 ] * 0x40000 ) +
-            ( decode_alphabet[ b2 ] * 0x1000 )
+        local bit_sum = ( decode_map[ b1 ] * 0x40000 ) +
+            ( decode_map[ b2 ] * 0x1000 )
 
         return string_char(
             bit_extract( bit_sum, 16, 8 )
         )
     elseif b4 == nil then
-        local bit_sum = ( decode_alphabet[ b1 ] * 0x40000 ) +
-            ( decode_alphabet[ b2 ] * 0x1000 ) +
-            ( decode_alphabet[ b3 ] * 0x40 )
+        local bit_sum = ( decode_map[ b1 ] * 0x40000 ) +
+            ( decode_map[ b2 ] * 0x1000 ) +
+            ( decode_map[ b3 ] * 0x40 )
 
         return string_char(
             bit_extract( bit_sum, 16, 8 ),
             bit_extract( bit_sum, 8, 8 )
         )
     else
-        local bit_sum = ( decode_alphabet[ b1 ] * 0x40000 ) +
-            ( decode_alphabet[ b2 ] * 0x1000 ) +
-            ( decode_alphabet[ b3 ] * 0x40 ) +
-            decode_alphabet[ b4 ]
+        local bit_sum = ( decode_map[ b1 ] * 0x40000 ) +
+            ( decode_map[ b2 ] * 0x1000 ) +
+            ( decode_map[ b3 ] * 0x40 ) +
+            decode_map[ b4 ]
 
         return string_char(
             bit_extract( bit_sum, 16, 8 ),
@@ -463,26 +461,26 @@ end
 ---
 --- Decodes the specified base64 encoded string.
 ---
----@param str_base64 string
+---@param base64_str string
 ---@param options? gpm.std.crypto.base64.Options
 ---@return string str_raw
-function base64.decode( str_base64, options )
+function base64.decode( base64_str, options )
     if options == nil then
         if glue_decode == nil then
             ---@diagnostic disable-next-line: cast-local-type
             options = variants.standard
         else
             ---@diagnostic disable-next-line: need-check-nil
-            return glue_decode( str_base64 )
+            return glue_decode( base64_str )
         end
     else
         perform_options( options )
     end
 
-    local decode_alphabet = options.alphabet[ 2 ]
+    local decode_map = options.alphabet[ 2 ]
     local do_cache = not options.ignore_cache
 
-    local str_base64_length = string_len( str_base64 )
+    local base_str_length = string_len( base64_str )
 
     local remainder
 
@@ -491,14 +489,14 @@ function base64.decode( str_base64, options )
         remainder = 0
     else
 
-        local b3, b4 = string_byte( str_base64, str_base64_length - 1, str_base64_length )
+        local b3, b4 = string_byte( base64_str, base_str_length - 1, base_str_length )
         local pad_byte = string_byte( str_pad, 1, 1 )
 
         if b3 == pad_byte and b4 == pad_byte then
-            str_base64_length = str_base64_length - 4
+            base_str_length = base_str_length - 4
             remainder = 2
         elseif b4 == pad_byte then
-            str_base64_length = str_base64_length - 4
+            base_str_length = base_str_length - 4
             remainder = 1
         else
             remainder = 0
@@ -516,14 +514,14 @@ function base64.decode( str_base64, options )
         cache_map = nil
     end
 
-    for i = 1, str_base64_length, 4 do
+    for i = 1, base_str_length, 4 do
         block_count = block_count + 1
-        blocks[ block_count ] = block_decode( decode_alphabet, do_cache, cache_map, string_byte( str_base64, i, i + 3 ) )
+        blocks[ block_count ] = block_decode( decode_map, do_cache, cache_map, string_byte( base64_str, i, i + 3 ) )
     end
 
     if remainder ~= 0 then
         block_count = block_count + 1
-        blocks[ block_count ] = block_decode( decode_alphabet, do_cache, cache_map, string_byte( str_base64, str_base64_length - 3, str_base64_length - remainder ) )
+        blocks[ block_count ] = block_decode( decode_map, do_cache, cache_map, string_byte( base64_str, base_str_length - 3, base_str_length - remainder ) )
     end
 
     return table_concat( blocks, "", 1, block_count )
