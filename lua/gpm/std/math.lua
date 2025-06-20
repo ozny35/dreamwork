@@ -393,12 +393,23 @@ do
     --- Returns the integer part of the given number.
     ---
     ---@param number number The number to truncate.
-    ---@return number trunced The integer part of the number.
+    ---@return integer trunced The integer part of the number.
     local function math_trunc( number )
         return ( number < 0 and math_ceil or math_floor )( number )
     end
 
     math.trunc = math_trunc
+
+    --- [SHARED AND MENU]
+    ---
+    --- Splits a number into its integer and fractional parts.
+    ---
+    ---@param x number The number to split.
+    ---@return integer integer The integer part of the number.
+    ---@return number fraction The fractional part of the number.
+    function math.split( x )
+        return math_trunc( x ), x % 1
+    end
 
 end
 
