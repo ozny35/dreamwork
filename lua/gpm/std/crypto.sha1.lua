@@ -41,11 +41,13 @@ crypto.SHA1 = SHA1Class
 SHA1Class.digest_size = 20
 SHA1Class.block_size = 64
 
--- TODO: implement
+-- TODO: implement (example: md5)
 
 local engine_SHA1 = gpm.engine.SHA1
 
 if engine_SHA1 == nil then
+
+    -- TODO: implement (example: md5)
 
 else
 

@@ -36,12 +36,13 @@ crypto.SHA256 = SHA256Class
 SHA256Class.digest_size = 32
 SHA256Class.block_size = 64
 
--- TODO: implement
+-- TODO: implement (example: md5)
 
 local engine_SHA256 = gpm.engine.SHA256
 
 if engine_SHA256 == nil then
 
+    -- TODO: implement (example: md5)
 
 else
 
