@@ -66,13 +66,13 @@ do
         local decode_map = {}
 
         for i = 0, 63, 1 do
-            local byte = encode_map[ i ]
-            if decode_map[ byte ] == nil then
-                decode_map[ byte ] = i
-            elseif byte > 32 and byte < 127 then
-                error( "alphabet characters must be unique, duplicate character: '" .. string_char( byte ) .. "' [" .. ( i + 1 ) .. "]", 2 )
+            local uint8 = encode_map[ i ]
+            if decode_map[ uint8 ] == nil then
+                decode_map[ uint8 ] = i
+            elseif uint8 > 32 and uint8 < 127 then
+                error( "alphabet characters must be unique, duplicate character: '" .. string_char( uint8 ) .. "' [" .. ( i + 1 ) .. "]", 2 )
             else
-                error( "alphabet characters must be unique, duplicate character: '\\" .. byte .. "' [" .. ( i + 1 ) .. "]", 2 )
+                error( "alphabet characters must be unique, duplicate character: '\\" .. uint8 .. "' [" .. ( i + 1 ) .. "]", 2 )
             end
         end
 
@@ -308,92 +308,6 @@ function base64.encode( raw_str, options )
     end
 end
 
-do
-
-    local math_floor = std.math.floor
-
-    --- [SHARED AND MENU]
-    ---
-    --- Checks if the specified base64 encoded string is valid.\
-    ---
-    ---@param base64_str string The base64 encoded string to check.
-    ---@param options? gpm.std.crypto.base64.Options The base64 encoding options.
-    ---@return boolean is_valid `true` if the base64 string is valid, `false` otherwise
-    function base64.validate( base64_str, options )
-        if options == nil then
-            ---@diagnostic disable-next-line: cast-local-type
-            options = variants.standard
-        else
-            perform_options( options )
-        end
-
-        local base_str_length = string_len( base64_str )
-
-        local alphabet = options.alphabet[ 2 ]
-
-        local wrap = options.wrap
-        if wrap and wrap > 0 then
-            local eol = options.eol
-            if eol ~= nil then
-                local eol_length = string_len( eol )
-
-                local buffer_str = base64_str
-                base64_str = ""
-
-                local step_size = wrap + eol_length
-
-                for i = wrap, base_str_length, step_size do
-                    if string_sub( buffer_str, i + 1, i + eol_length ) == eol then
-                        local next_cursor = i + step_size
-                        if next_cursor > base_str_length then
-                            base64_str = base64_str .. string_sub( buffer_str, i - wrap + 1, i ) .. string_sub( buffer_str, i + eol_length + 1, base_str_length )
-                        else
-                            base64_str = base64_str .. string_sub( buffer_str, i - wrap + 1, i )
-                        end
-                    else
-                        return false
-                    end
-                end
-
-                base_str_length = base_str_length - step_size * math_floor( base_str_length / step_size )
-            end
-        end
-
-        if base_str_length % 4 ~= 0 then
-            return false
-        end
-
-        local pad_byte
-
-        local pad = options.pad
-        if pad == nil then
-            pad_byte = -1
-        else
-            pad_byte = string_byte( pad, 1, 1 )
-        end
-
-        for start_position = 1, base_str_length, 4 do
-            local end_position = start_position + 3
-            local b1, b2, b3, b4 = string_byte( base64_str, start_position, end_position )
-
-            if not ( alphabet[ b1 ] and alphabet[ b2 ] ) then
-                return false
-            end
-
-            if end_position == base_str_length then
-                if not ( ( alphabet[ b3 ] or b3 == pad_byte ) and ( alphabet[ b4 ] or b4 == pad_byte ) ) then
-                    return false
-                end
-            elseif not ( alphabet[ b3 ] and alphabet[ b4 ] ) then
-                return false
-            end
-        end
-
-        return true
-    end
-
-end
-
 ---@param decode_map table<integer, integer>
 ---@param do_cache boolean
 ---@param cache_map table<integer, string> | nil
@@ -525,4 +439,90 @@ function base64.decode( base64_str, options )
     end
 
     return table_concat( blocks, "", 1, block_count )
+end
+
+do
+
+    local math_floor = std.math.floor
+
+    --- [SHARED AND MENU]
+    ---
+    --- Checks if the specified base64 encoded string is valid.\
+    ---
+    ---@param base64_str string The base64 encoded string to check.
+    ---@param options? gpm.std.crypto.base64.Options The base64 encoding options.
+    ---@return boolean is_valid `true` if the base64 string is valid, `false` otherwise
+    function base64.validate( base64_str, options )
+        if options == nil then
+            ---@diagnostic disable-next-line: cast-local-type
+            options = variants.standard
+        else
+            perform_options( options )
+        end
+
+        local base_str_length = string_len( base64_str )
+
+        local alphabet = options.alphabet[ 2 ]
+
+        local wrap = options.wrap
+        if wrap and wrap > 0 then
+            local eol = options.eol
+            if eol ~= nil then
+                local eol_length = string_len( eol )
+
+                local buffer_str = base64_str
+                base64_str = ""
+
+                local step_size = wrap + eol_length
+
+                for i = wrap, base_str_length, step_size do
+                    if string_sub( buffer_str, i + 1, i + eol_length ) == eol then
+                        local next_cursor = i + step_size
+                        if next_cursor > base_str_length then
+                            base64_str = base64_str .. string_sub( buffer_str, i - wrap + 1, i ) .. string_sub( buffer_str, i + eol_length + 1, base_str_length )
+                        else
+                            base64_str = base64_str .. string_sub( buffer_str, i - wrap + 1, i )
+                        end
+                    else
+                        return false
+                    end
+                end
+
+                base_str_length = base_str_length - step_size * math_floor( base_str_length / step_size )
+            end
+        end
+
+        if base_str_length % 4 ~= 0 then
+            return false
+        end
+
+        local pad_byte
+
+        local pad = options.pad
+        if pad == nil then
+            pad_byte = -1
+        else
+            pad_byte = string_byte( pad, 1, 1 )
+        end
+
+        for start_position = 1, base_str_length, 4 do
+            local end_position = start_position + 3
+            local b1, b2, b3, b4 = string_byte( base64_str, start_position, end_position )
+
+            if not ( alphabet[ b1 ] and alphabet[ b2 ] ) then
+                return false
+            end
+
+            if end_position == base_str_length then
+                if not ( ( alphabet[ b3 ] or b3 == pad_byte ) and ( alphabet[ b4 ] or b4 == pad_byte ) ) then
+                    return false
+                end
+            elseif not ( alphabet[ b3 ] and alphabet[ b4 ] ) then
+                return false
+            end
+        end
+
+        return true
+    end
+
 end
