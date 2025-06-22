@@ -861,14 +861,16 @@ dofile( "std/crypto.pack.lua" )
 
 -- encoders
 dofile( "std/crypto.base16.lua" )
+-- dofile( "std/crypto.base32.lua" )
+-- dofile( "std/crypto.base58.lua" )
 dofile( "std/crypto.base64.lua" )
-dofile( "std/crypto.percent.lua" )
-dofile( "std/crypto.punycode.lua" )
+-- dofile( "std/crypto.percent.lua" )
+-- dofile( "std/crypto.punycode.lua" )
 
 -- checksum functions
 dofile( "std/crypto.crc.lua" )
 dofile( "std/crypto.adler.lua" )
-dofile( "std/crypto.fletcher.lua" )
+-- dofile( "std/crypto.fletcher.lua" )
 
 -- hashers
 dofile( "std/crypto.md5.lua" )
@@ -932,6 +934,8 @@ local logger = std.console.Logger( {
 } )
 
 gpm.Logger = logger
+
+-- dofile( "std/message.lua" )
 
 do
 
@@ -1395,7 +1399,7 @@ if CLIENT or SERVER then
     dofile( "std/physics.lua" )
     dofile( "std/entity.lua" )
     dofile( "std/player.lua" )
-    -- dofile( "std/net.lua" )
+    -- dofile( "std/network.lua" )
 end
 
 dofile( "std/input.lua" )
