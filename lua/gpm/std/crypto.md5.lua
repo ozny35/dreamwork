@@ -2,11 +2,11 @@
 
 local gpm = _G.gpm
 local std = gpm.std
+---@class gpm.std.crypto
+local crypto = std.crypto
 
 local bit = std.bit
 local math = std.math
----@class gpm.std.crypto
-local crypto = std.crypto
 local string = std.string
 
 local bit_bxor = bit.bxor
@@ -296,21 +296,21 @@ function MD5:digest( as_hex )
         a, b, c, d = transform( a, b, c, d, block, index )
     end
 
-    local b1, b2, b3, b4 = bytepack_writeUInt32( a )
-    local b5, b6, b7, b8 = bytepack_writeUInt32( b )
-    local b9, b10, b11, b12 = bytepack_writeUInt32( c )
-    local b13, b14, b15, b16 = bytepack_writeUInt32( d )
+    local uint8_1, uint8_2, uint8_3, uint8_4 = bytepack_writeUInt32( a )
+    local uint8_5, uint8_6, uint8_7, uint8_8 = bytepack_writeUInt32( b )
+    local uint8_9, uint8_10, uint8_11, uint8_12 = bytepack_writeUInt32( c )
+    local uint8_13, uint8_14, uint8_15, uint8_16 = bytepack_writeUInt32( d )
 
     if as_hex then
         return string_format( "%08x%08x%08x%08x",
-            bytepack_readUInt32( b4, b3, b2, b1 ),
-            bytepack_readUInt32( b8, b7, b6, b5 ),
-            bytepack_readUInt32( b12, b11, b10, b9 ),
-            bytepack_readUInt32( b16, b15, b14, b13 )
+            bytepack_readUInt32( uint8_4, uint8_3, uint8_2, uint8_1 ),
+            bytepack_readUInt32( uint8_8, uint8_7, uint8_6, uint8_5 ),
+            bytepack_readUInt32( uint8_12, uint8_11, uint8_10, uint8_9 ),
+            bytepack_readUInt32( uint8_16, uint8_15, uint8_14, uint8_13 )
         )
     end
 
-    return string_char( b1, b2, b3, b4, b5, b6, b7, b8, b9, b10, b11, b12, b13, b14, b15, b16 )
+    return string_char( uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8, uint8_9, uint8_10, uint8_11, uint8_12, uint8_13, uint8_14, uint8_15, uint8_16 )
 end
 
 local engine_MD5 = gpm.engine.MD5
@@ -347,26 +347,26 @@ if engine_MD5 == nil then
             a, b, c, d = transform( a, b, c, d, block, index )
         end
 
-        local b1, b2, b3, b4 = bytepack_writeUInt32( a )
-        local b5, b6, b7, b8 = bytepack_writeUInt32( b )
-        local b9, b10, b11, b12 = bytepack_writeUInt32( c )
-        local b13, b14, b15, b16 = bytepack_writeUInt32( d )
+        local uint8_1, uint8_2, uint8_3, uint8_4 = bytepack_writeUInt32( a )
+        local uint8_5, uint8_6, uint8_7, uint8_8 = bytepack_writeUInt32( b )
+        local uint8_9, uint8_10, uint8_11, uint8_12 = bytepack_writeUInt32( c )
+        local uint8_13, uint8_14, uint8_15, uint8_16 = bytepack_writeUInt32( d )
 
         if as_hex then
             return string_format( "%08x%08x%08x%08x",
-                bytepack_readUInt32( b4, b3, b2, b1 ),
-                bytepack_readUInt32( b8, b7, b6, b5 ),
-                bytepack_readUInt32( b12, b11, b10, b9 ),
-                bytepack_readUInt32( b16, b15, b14, b13 )
+                bytepack_readUInt32( uint8_4, uint8_3, uint8_2, uint8_1 ),
+                bytepack_readUInt32( uint8_8, uint8_7, uint8_6, uint8_5 ),
+                bytepack_readUInt32( uint8_12, uint8_11, uint8_10, uint8_9 ),
+                bytepack_readUInt32( uint8_16, uint8_15, uint8_14, uint8_13 )
             )
         end
 
-        return string_char( b1, b2, b3, b4, b5, b6, b7, b8, b9, b10, b11, b12, b13, b14, b15, b16 )
+        return string_char( uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8, uint8_9, uint8_10, uint8_11, uint8_12, uint8_13, uint8_14, uint8_15, uint8_16 )
     end
 
 else
 
-    local string_fromHex = string.fromHex
+    local base16_decode = crypto.base16.decode
 
     --- [SHARED AND MENU]
     ---
@@ -383,7 +383,7 @@ else
         if as_hex then
             return hex
         else
-            return string_fromHex( hex )
+            return base16_decode( hex )
         end
     end
 

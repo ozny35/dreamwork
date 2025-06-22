@@ -799,12 +799,15 @@ end
 dofile( "std/string.extensions.lua" )
 dofile( "std/math.classes.lua" )
 dofile( "std/string.utf8.lua" )
+
 dofile( "std/structures.lua" )
+dofile( "std/bigint.lua" )
+
+dofile( "std/version.lua" )
+dofile( "std/color.lua" )
+-- dofile( "std/time.lua" )
 
 dofile( "std/futures.lua" )
-dofile( "std/version.lua" )
-dofile( "std/bigint.lua" )
-dofile( "std/color.lua" )
 
 do
 
@@ -842,48 +845,54 @@ dofile( "engine.lua" )
 
 dofile( "std/game.lua" )
 
-dofile( "std/crypto.lua" )
+--- [SHARED AND MENU]
+---
+--- The crypto library.
+---
+---@class gpm.std.crypto
+std.crypto = std.crypto or {}
 
--- TODO: manage loading queue
+---@alias gpm.std.crypto.HashFunction fun( message: string, as_hex?: boolean ): string
 
+-- packers
 dofile( "std/crypto.bitpack.lua" )
 dofile( "std/crypto.bytepack.lua" )
 dofile( "std/crypto.pack.lua" )
 
+-- encoders
+dofile( "std/crypto.base16.lua" )
+dofile( "std/crypto.base64.lua" )
+dofile( "std/crypto.percent.lua" )
+dofile( "std/crypto.punycode.lua" )
+
+-- checksum functions
+dofile( "std/crypto.crc.lua" )
+dofile( "std/crypto.adler.lua" )
+dofile( "std/crypto.fletcher.lua" )
+
+-- hashers
 dofile( "std/crypto.md5.lua" )
 dofile( "std/crypto.sha1.lua" )
 dofile( "std/crypto.sha256.lua" )
 
-dofile( "std/crypto.uuid.lua" )
-dofile( "std/crypto.base64.lua" )
+-- compressors
+dofile( "std/crypto.deflate.lua" )
+dofile( "std/crypto.lzma.lua" )
+dofile( "std/crypto.lzw.lua" )
 
-do
+-- ciphers
+dofile( "std/crypto.chacha20.lua" )
 
-    local crypto = std.crypto
-    local pack_readUInt32 = crypto.pack.readUInt32
-
-    ---@class gpm.std.crypto.lzma
-    local lzma = crypto.lzma
-
-    --- [SHARED AND MENU]
-    ---
-    --- Returns the decompressed size of the given string.
-    ---
-    ---@param str string Compressed string.
-    ---@return integer size The decompressed size in bytes.
-    function lzma.size( str )
-        return pack_readUInt32( str, false, 6 ) or 0
-    end
-
-end
-
+-- keys/passwords
 dofile( "std/crypto.hmac.lua" )
 dofile( "std/crypto.pbkdf2.lua" )
 
-dofile( "std/crypto.deflate.lua" )
-dofile( "std/crypto.lzw.lua" )
+-- utils
+dofile( "std/crypto.uuid.lua" )
 
-dofile( "std/crypto.chacha20.lua" )
+-- serealizers
+dofile( "std/crypto.json.lua" )
+dofile( "std/crypto.vdf.lua" )
 
 dofile( "std/timer.lua" )
 dofile( "std/hook.lua" )
@@ -1423,7 +1432,7 @@ if CLIENT or SERVER then
     gpm.transport.startup()
 end
 
--- TODO: package manager start-up ( aka starting package loading )
+-- TODO: package manager start-up ( aka package loading )
 
 do
     local start_time = getUptime()

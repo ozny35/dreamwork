@@ -1,7 +1,6 @@
 local std = _G.gpm.std
 ---@class gpm.std.crypto
 local crypto = std.crypto
-local string = std.string
 
 --- [SHARED AND MENU]
 ---
@@ -46,7 +45,7 @@ if engine_SHA256 == nil then
 
 else
 
-    local string_fromHex = string.fromHex
+    local base16_decode = crypto.base16.decode
 
     --- [SHARED AND MENU]
     ---
@@ -63,7 +62,7 @@ else
         if as_hex then
             return hex
         else
-            return string_fromHex( hex )
+            return base16_decode( hex )
         end
     end
 

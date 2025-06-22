@@ -175,21 +175,21 @@ end
 ---@param encode_map table<integer, integer>
 ---@param do_cache boolean
 ---@param cache_map table<integer, string> | nil
----@param b1 integer
----@param b2 integer | nil
----@param b3 integer | nil
+---@param uint8_1 integer
+---@param uint8_2 integer | nil
+---@param uint8_3 integer | nil
 ---@return string
-local function block_encode( encode_map, do_cache, cache_map, b1, b2, b3 )
+local function block_encode( encode_map, do_cache, cache_map, uint8_1, uint8_2, uint8_3 )
     local bit_sum
 
-    if b1 == nil then
+    if uint8_1 == nil then
         error( "block must have at least one byte", 2 )
-    elseif b2 == nil then
-        bit_sum = b1 * 0x10000
-    elseif b3 == nil then
-        bit_sum = b1 * 0x10000 + b2 * 0x100
+    elseif uint8_2 == nil then
+        bit_sum = uint8_1 * 0x10000
+    elseif uint8_3 == nil then
+        bit_sum = uint8_1 * 0x10000 + uint8_2 * 0x100
     else
-        bit_sum = b1 * 0x10000 + b2 * 0x100 + b3
+        bit_sum = uint8_1 * 0x10000 + uint8_2 * 0x100 + uint8_3
     end
 
     local str_block
@@ -202,12 +202,12 @@ local function block_encode( encode_map, do_cache, cache_map, b1, b2, b3 )
         end
     end
 
-    if b2 == nil then
+    if uint8_2 == nil then
         str_block = string_char(
             encode_map[ bit_extract( bit_sum, 18, 6 ) ],
             encode_map[ bit_extract( bit_sum, 12, 6 ) ]
         )
-    elseif b3 == nil then
+    elseif uint8_3 == nil then
         str_block = string_char(
             encode_map[ bit_extract( bit_sum, 18, 6 ) ],
             encode_map[ bit_extract( bit_sum, 12, 6 ) ],
@@ -311,23 +311,23 @@ end
 ---@param decode_map table<integer, integer>
 ---@param do_cache boolean
 ---@param cache_map table<integer, string> | nil
----@param b1 integer
----@param b2 integer
----@param b3 integer | nil
----@param b4 integer | nil
+---@param uint8_1 integer
+---@param uint8_2 integer
+---@param uint8_3 integer | nil
+---@param uint8_4 integer | nil
 ---@return string
-local function block_decode( decode_map, do_cache, cache_map, b1, b2, b3, b4 )
+local function block_decode( decode_map, do_cache, cache_map, uint8_1, uint8_2, uint8_3, uint8_4 )
     if do_cache then
         local cache_key
 
-        if b1 == nil then
+        if uint8_1 == nil then
             error( "block must have at least one byte", 2 )
-        elseif b3 == nil then
-            cache_key = b1 * 0x1000000 + b2 * 0x10000
-        elseif b4 == nil then
-            cache_key = b1 * 0x1000000 + b2 * 0x10000 + b3 * 0x100
+        elseif uint8_3 == nil then
+            cache_key = uint8_1 * 0x1000000 + uint8_2 * 0x10000
+        elseif uint8_4 == nil then
+            cache_key = uint8_1 * 0x1000000 + uint8_2 * 0x10000 + uint8_3 * 0x100
         else
-            cache_key = b1 * 0x1000000 + b2 * 0x10000 + b3 * 0x100 + b4
+            cache_key = uint8_1 * 0x1000000 + uint8_2 * 0x10000 + uint8_3 * 0x100 + uint8_4
         end
 
         ---@diagnostic disable-next-line: need-check-nil
@@ -336,32 +336,32 @@ local function block_decode( decode_map, do_cache, cache_map, b1, b2, b3, b4 )
             return str_block
         end
 
-        str_block = block_decode( decode_map, false, nil, b1, b2, b3, b4 )
+        str_block = block_decode( decode_map, false, nil, uint8_1, uint8_2, uint8_3, uint8_4 )
 
         cache_map[ cache_key ] = str_block
 
         return str_block
-    elseif b3 == nil then
-        local bit_sum = ( decode_map[ b1 ] * 0x40000 ) +
-            ( decode_map[ b2 ] * 0x1000 )
+    elseif uint8_3 == nil then
+        local bit_sum = ( decode_map[ uint8_1 ] * 0x40000 ) +
+            ( decode_map[ uint8_2 ] * 0x1000 )
 
         return string_char(
             bit_extract( bit_sum, 16, 8 )
         )
-    elseif b4 == nil then
-        local bit_sum = ( decode_map[ b1 ] * 0x40000 ) +
-            ( decode_map[ b2 ] * 0x1000 ) +
-            ( decode_map[ b3 ] * 0x40 )
+    elseif uint8_4 == nil then
+        local bit_sum = ( decode_map[ uint8_1 ] * 0x40000 ) +
+            ( decode_map[ uint8_2 ] * 0x1000 ) +
+            ( decode_map[ uint8_3 ] * 0x40 )
 
         return string_char(
             bit_extract( bit_sum, 16, 8 ),
             bit_extract( bit_sum, 8, 8 )
         )
     else
-        local bit_sum = ( decode_map[ b1 ] * 0x40000 ) +
-            ( decode_map[ b2 ] * 0x1000 ) +
-            ( decode_map[ b3 ] * 0x40 ) +
-            decode_map[ b4 ]
+        local bit_sum = ( decode_map[ uint8_1 ] * 0x40000 ) +
+            ( decode_map[ uint8_2 ] * 0x1000 ) +
+            ( decode_map[ uint8_3 ] * 0x40 ) +
+            decode_map[ uint8_4 ]
 
         return string_char(
             bit_extract( bit_sum, 16, 8 ),
@@ -403,13 +403,13 @@ function base64.decode( base64_str, options )
         remainder = 0
     else
 
-        local b3, b4 = string_byte( base64_str, base_str_length - 1, base_str_length )
+        local uint8_3, uint8_4 = string_byte( base64_str, base_str_length - 1, base_str_length )
         local pad_byte = string_byte( str_pad, 1, 1 )
 
-        if b3 == pad_byte and b4 == pad_byte then
+        if uint8_3 == pad_byte and uint8_4 == pad_byte then
             base_str_length = base_str_length - 4
             remainder = 2
-        elseif b4 == pad_byte then
+        elseif uint8_4 == pad_byte then
             base_str_length = base_str_length - 4
             remainder = 1
         else
@@ -507,17 +507,17 @@ do
 
         for start_position = 1, base_str_length, 4 do
             local end_position = start_position + 3
-            local b1, b2, b3, b4 = string_byte( base64_str, start_position, end_position )
+            local uint8_1, uint8_2, uint8_3, uint8_4 = string_byte( base64_str, start_position, end_position )
 
-            if not ( alphabet[ b1 ] and alphabet[ b2 ] ) then
+            if not ( alphabet[ uint8_1 ] and alphabet[ uint8_2 ] ) then
                 return false
             end
 
             if end_position == base_str_length then
-                if not ( ( alphabet[ b3 ] or b3 == pad_byte ) and ( alphabet[ b4 ] or b4 == pad_byte ) ) then
+                if not ( ( alphabet[ uint8_3 ] or uint8_3 == pad_byte ) and ( alphabet[ uint8_4 ] or uint8_4 == pad_byte ) ) then
                     return false
                 end
-            elseif not ( alphabet[ b3 ] and alphabet[ b4 ] ) then
+            elseif not ( alphabet[ uint8_3 ] and alphabet[ uint8_4 ] ) then
                 return false
             end
         end

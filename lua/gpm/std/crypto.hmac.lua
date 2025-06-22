@@ -1,9 +1,8 @@
 local std = _G.gpm.std
-local string = std.string
-local string_fromHex = string.fromHex
-
 ---@class gpm.std.crypto
 local crypto = std.crypto
+
+local string = std.string
 
 --- [SHARED AND MENU]
 ---
@@ -108,26 +107,26 @@ end
 ---
 --- Computes hmac and returns the result as a hex string.
 ---
----@param hash_fn function The hash function that must return hex string.
+---@param hash_fn gpm.std.crypto.HashFunction The hash function that must return hex string.
 ---@param outer string The outer hmac padding.
 ---@param inner string The inner hmac padding.
 ---@param msg string The message to compute hmac for.
 ---@return string hex_str The hex hmac string of the message.
 function hmac.computeHex( hash_fn, outer, inner, msg )
-    return hash_fn( outer .. string_fromHex( hash_fn( inner .. msg ) ) )
+    return hash_fn( outer .. hash_fn( inner .. msg, false ), true )
 end
 
 --- [SHARED AND MENU]
 ---
 --- Computes hmac and returns the result as a binary string.
 ---
----@param hash_fn function The hash function that must return hex string.
+---@param hash_fn gpm.std.crypto.HashFunction The hash function that must return hex string.
 ---@param outer string The outer hmac padding.
 ---@param inner string The inner hmac padding.
 ---@param msg string The message to compute hmac for.
 ---@return string hmac_str The binary hmac string of the message.
 function hmac.computeBinary( hash_fn, outer, inner, msg )
-    return string_fromHex( hash_fn( outer .. string_fromHex( hash_fn( inner .. msg ) ) ) )
+    return hash_fn( outer .. hash_fn( inner .. msg, false ), false )
 end
 
 do
@@ -138,7 +137,7 @@ do
     ---
     ---@param msg string The message to compute hmac for.
     ---@param key string The key to use.
-    ---@param hash_fn function The hash function that must return hex string.
+    ---@param hash_fn gpm.std.crypto.HashFunction The hash function that must return hex string.
     ---@param block_size integer The block size of the hash function.
     ---@param as_hex? boolean If true, the result will be a hex string.
     ---@return string str_result The hmac string of the message.
@@ -153,7 +152,7 @@ do
     ---
     --- Returns a function that computes hmac using the given hash function and block length.
     ---
-    ---@param hash_fn function The hash function that must return hex string.
+    ---@param hash_fn gpm.std.crypto.HashFunction The hash function that must return hex string.
     ---@param block_size integer The block size of the hash function.
     ---@return fun( message: string, key: string, as_hex?: boolean ): string
     function hmac.preset( hash_fn, block_size )

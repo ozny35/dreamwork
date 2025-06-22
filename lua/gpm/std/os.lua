@@ -119,6 +119,7 @@ if os.duration == nil then
 
 end
 
+-- TODO: move to global constants as ENDIANNESS or something
 os.endianness = os.endianness or std.string.byte( std.string.dump( std.debug.fempty ), 7 ) == 0x00
 
 if std.MENU then

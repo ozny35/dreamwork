@@ -1455,24 +1455,24 @@ local function add( object, value )
     end
 
     -- perform operation
-    local b1, b2
+    local obj_1, obj_2
 
     if swap_order then
-        b1, b2 = other, object
+        obj_1, obj_2 = other, object
     else
-        b1, b2 = object, other
+        obj_1, obj_2 = object, other
     end
 
-    local byte_count1, byte_count2 = #b1, #b2
+    local byte_count1, byte_count2 = #obj_1, #obj_2
     local carry = 0
 
     for i = 1, byte_count1, 1 do
         local total
 
         if subtract then
-            total = ( b1[ i ] or 0 ) - ( b2[ i ] or 0 ) + carry
+            total = ( obj_1[ i ] or 0 ) - ( obj_2[ i ] or 0 ) + carry
         else
-            total = ( b1[ i ] or 0 ) + ( b2[ i ] or 0 ) + carry
+            total = ( obj_1[ i ] or 0 ) + ( obj_2[ i ] or 0 ) + carry
         end
 
         if not subtract and total >= 256 then
@@ -1488,7 +1488,7 @@ local function add( object, value )
             if swap_order then
                 -- just need to copy remaining bytes
                 for j = i + 1, byte_count1, 1 do
-                    object[ j ] = b1[ j ]
+                    object[ j ] = obj_1[ j ]
                 end
             end
 
@@ -1578,19 +1578,19 @@ local function mul( object, value )
     end
 
     -- general multiplication
-    local b1, b2 = object, other
-    local byte_count1, byte_count2 = #b1, #b2
+    local obj_1, obj_2 = object, other
+    local byte_count1, byte_count2 = #obj_1, #obj_2
 
     if byte_count2 > byte_count1 then
-        -- swap order so that number with more b1 comes first
-        b1, b2, byte_count1, byte_count2 = other, object, byte_count2, byte_count1
+        -- swap order so that number with more obj_1 comes first
+        obj_1, obj_2, byte_count1, byte_count2 = other, object, byte_count2, byte_count1
     end
 
     local result = {}
     local carry = 0
 
     for i = 1, byte_count2, 1 do
-        if b2[ i ] == 0 then
+        if obj_2[ i ] == 0 then
             if result[ i ] == nil then
                 result[ i ] = 0
             end
@@ -1600,7 +1600,7 @@ local function mul( object, value )
             local j = 1
             while j <= byte_count1 do
                 local ri = i + j - 1
-                local product = b1[ j ] * b2[ i ] + carry + ( result[ ri ] or 0 )
+                local product = obj_1[ j ] * obj_2[ i ] + carry + ( result[ ri ] or 0 )
 
                 -- add product to result
                 result[ ri ] = product % 256
@@ -1687,8 +1687,8 @@ do
         end
 
         -- general division
-        local b1, b2 = object:copy(), other:copy()
-        local byte_count1, byte_count2 = #b1, #b2
+        local obj_1, obj_2 = object:copy(), other:copy()
+        local byte_count1, byte_count2 = #obj_1, #obj_2
 
         local result = {}
         local ri = 1
@@ -1702,13 +1702,13 @@ do
                 local found_factor = false
 
                 local size = byte_count2
-                if di + size <= byte_count1 and b1[ di + size ] ~= 0 then
+                if di + size <= byte_count1 and obj_1[ di + size ] ~= 0 then
                     size = size + 1
                 end
 
                 for i = size, 1, -1 do
-                    local byte_value1 = b1[ di + i - 1 ] or 0
-                    local byte_value2 = b2[ i ] or 0
+                    local byte_value1 = obj_1[ di + i - 1 ] or 0
+                    local byte_value2 = obj_2[ i ] or 0
                     if byte_value2 < byte_value1 then
                         found_factor = false
                         break
@@ -1726,7 +1726,7 @@ do
 
                     while i <= size or carry ~= 0 do
                         local j = di + i - 1
-                        local diff = ( b1[ j ] or 0 ) - ( b2[ i ] or 0 ) + carry
+                        local diff = ( obj_1[ j ] or 0 ) - ( obj_2[ i ] or 0 ) + carry
                         if diff < 0 then
                             carry = -1
                             diff = diff + 256
@@ -1734,7 +1734,7 @@ do
                             carry = 0
                         end
 
-                        b1[ j ] = diff
+                        obj_1[ j ] = diff
                         i = i + 1
                     end
                 end
@@ -1747,29 +1747,29 @@ do
             di = di - 1
         end
 
-        local sign1, sign2 = b1[ 0 ], b2[ 0 ]
-        rstrip( b1 )
+        local sign1, sign2 = obj_1[ 0 ], obj_2[ 0 ]
+        rstrip( obj_1 )
 
         -- if remainder is negative, add divisor to make it positive
-        if not ignore_remainder and sign1 == -sign2 and b1[ 0 ] ~= 0 then
-            add( b1, b2 )
+        if not ignore_remainder and sign1 == -sign2 and obj_1[ 0 ] ~= 0 then
+            add( obj_1, obj_2 )
         end
 
-        b2[ 0 ] = sign1 * sign2
+        obj_2[ 0 ] = sign1 * sign2
 
         local reversed, length = table_reversed( result )
 
         for index = 1, length, 1 do
-            b2[ index ] = reversed[ index ]
+            obj_2[ index ] = reversed[ index ]
         end
 
-        rstrip( b2 )
+        rstrip( obj_2 )
 
-        if b1[ 0 ] ~= 0 and sign2 == -1 then
-            b1[ 0 ] = -1
+        if obj_1[ 0 ] ~= 0 and sign2 == -1 then
+            obj_1[ 0 ] = -1
         end
 
-        return b2, b1
+        return obj_2, obj_1
     end
 
     --- [SHARED AND MENU]

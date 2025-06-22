@@ -426,11 +426,11 @@ local function path_normalize( file_path )
     local skip = 0
 
     for index = length, 1, -1 do
-        local b1, b2, b3 = string_byte( parts[ index ], 1, 3 )
-        if b2 == nil and b1 == 0x2E --[[ . ]] then
+        local uint8_1, uint8_2, uint8_3 = string_byte( parts[ index ], 1, 3 )
+        if uint8_2 == nil and uint8_1 == 0x2E --[[ . ]] then
             table_remove( parts, index )
             length = length - 1
-        elseif b3 == nil and b1 == 0x2E --[[ . ]] and b2 == 0x2E --[[ . ]] then
+        elseif uint8_3 == nil and uint8_1 == 0x2E --[[ . ]] and uint8_2 == 0x2E --[[ . ]] then
             table_remove( parts, index )
             length = length - 1
             skip = skip + 1

@@ -4,10 +4,12 @@ local raw_tonumber = std.raw.tonumber
 ---@class gpm.std.math
 local math = std.math
 local math_max = math.max
+local math_floor = math.floor
 
 ---@class gpm.std.string
 local string = std.string
 
+local string_format = string.format
 local string_byte, string_char = string.byte, string.char
 local string_find, string_match = string.find, string.match
 local string_sub, string_rep, string_len = string.sub, string.rep, string.len
@@ -37,7 +39,7 @@ string.bin2dec = bin2dec
 local dec2bin
 do
 
-    local math_ceil, math_floor, math_log, math_ln2 = math.ceil, math.floor, math.log, math.ln2
+    local math_ceil, math_log, math_ln2 = math.ceil, math.log, math.ln2
 
     --- [SHARED AND MENU]
     ---
@@ -108,25 +110,18 @@ end
 
 string.hex2dec = hex2dec
 
-local dec2hex
-do
-
-    local string_format = string.format
-
-    --- [SHARED AND MENU]
-    ---
-    --- Converts a decimal number to a hex string.
-    ---
-    ---@param number integer The decimal number.
-    ---@param with_prefix? boolean Whether to include the "0x" prefix.
-    ---@return string result The hex string.
-    function dec2hex( number, with_prefix )
-        return string_format( with_prefix and "0x%X" or "%X", number )
-    end
-
-    string.dec2hex = dec2hex
-
+--- [SHARED AND MENU]
+---
+--- Converts a decimal number to a hex string.
+---
+---@param number integer The decimal number.
+---@param with_prefix? boolean Whether to include the "0x" prefix.
+---@return string result The hex string.
+local function dec2hex( number, with_prefix )
+    return string_format( with_prefix and "0x%X" or "%X", number )
 end
+
+string.dec2hex = dec2hex
 
 --- [SHARED AND MENU]
 ---
@@ -206,14 +201,14 @@ do
                 result[ length ] = string_sub( str, startPos, index - 1 ) .. "%z"
                 startPos = index + 1
             else
-                local pattern = unsafe_pattern_bytes[ byte ]
-                if pattern then
+                local pattern_str = unsafe_pattern_bytes[ byte ]
+                if pattern_str then
                     length = length + 1
 
                     if startPos == index then
-                        result[ length ] = pattern
+                        result[ length ] = pattern_str
                     else
-                        result[ length ] = string_sub( str, startPos, index - 1 ) .. pattern
+                        result[ length ] = string_sub( str, startPos, index - 1 ) .. pattern_str
                     end
 
                     startPos = index + 1
@@ -238,31 +233,31 @@ do
     --- Removes leading and trailing matches of a string.
     ---
     ---@param str string The string.
-    ---@param pattern? string The pattern to match, `%s` for whitespace.
+    ---@param pattern_str? string The pattern to match, `%s` for whitespace.
     ---@param direction? number The direction to trim. `1` for left, `-1` for right, `0` for both.
     ---@return string str The trimmed string.
-    function string.trim( str, pattern, direction )
-        if pattern == nil then
-            pattern = "%s"
+    function string.trim( str, pattern_str, direction )
+        if pattern_str == nil then
+            pattern_str = "%s"
         else
-            if pattern == "" then
-                pattern = "%s"
+            if pattern_str == "" then
+                pattern_str = "%s"
             else
-                local length = string_len( pattern )
+                local length = string_len( pattern_str )
                 if length == 1 then
-                    pattern = unsafe_pattern_bytes[ string_byte( pattern, 1 ) ] or pattern
-                elseif length ~= 2 or string_byte( pattern, 1 ) ~= 0x25 then
-                    pattern = "[" .. pattern .. "]"
+                    pattern_str = unsafe_pattern_bytes[ string_byte( pattern_str, 1 ) ] or pattern_str
+                elseif length ~= 2 or string_byte( pattern_str, 1 ) ~= 0x25 then
+                    pattern_str = "[" .. pattern_str .. "]"
                 end
             end
         end
 
         if direction == 1 then -- left
-            return string_match( str, "^(.-)" .. pattern .. "*$" ) or str
+            return string_match( str, "^(.-)" .. pattern_str .. "*$" ) or str
         elseif direction == -1 then -- right
-            return string_match( str, "^" .. pattern .. "*(.+)$" ) or str
+            return string_match( str, "^" .. pattern_str .. "*(.+)$" ) or str
         else -- both
-            return string_match( str, "^" .. pattern .. "*(.-)" .. pattern .. "*$" ) or str
+            return string_match( str, "^" .. pattern_str .. "*(.-)" .. pattern_str .. "*$" ) or str
         end
     end
 
@@ -469,62 +464,24 @@ do
 
 end
 
-do
+--- [SHARED AND MENU]
+---
+--- Creates a string that contains all ASCII characters that match the pattern.
+---
+---@param pattern_str string
+---@return string charset
+function string.charset( pattern_str )
+    pattern_str = "[" .. pattern_str .. "]"
 
-    local string_format = string.format
-    local bit_tohex = std.bit.tohex
+    local bytes, byte_count = {}, 0
 
-    --- [SHARED AND MENU]
-    ---
-    --- Converts a string into a hex string.
-    ---
-    --- Basically must be used for binary strings.
-    ---
-    ---@param str string The input string.
-    ---@return string hex_str The hex string.
-    function string.toHex( str )
-        local binary_length = string_len( str )
-        if binary_length == 0 then
-            return ""
-        elseif binary_length > 8000 then
-            local buffer = {}
-
-            for i = 1, binary_length, 1 do
-                buffer[ i ] = bit_tohex( string_byte( str, i ), 2 )
-            end
-
-            return table_concat( buffer, "", 1, binary_length )
-        else
-            return string_format( string_rep( "%02x", binary_length ), string_byte( str, 1, binary_length ) )
+    for uint8 = 1, 255, 1 do
+        local char_str = string_char( uint8 )
+        if string_match( char_str, pattern_str ) then
+            byte_count = byte_count + 1
+            bytes[ byte_count ] = char_str
         end
     end
 
-end
-
-do
-
-    local table_unpack = table.unpack
-
-    --- [SHARED AND MENU]
-    ---
-    --- Converts a hex string into a string.
-    ---
-    ---@param str string The hex string.
-    ---@return string result The string.
-    function string.fromHex( str )
-        local length = string_len( str )
-        if length % 2 ~= 0 then
-            error( "hex string must have an even length", 2 )
-        end
-
-        local buffer, pointer = {}, 0
-
-        for i = 1, string_len( str ), 2 do
-            pointer = pointer + 1
-            buffer[ pointer ] = raw_tonumber( string_sub( str, i, i + 1 ), 16 )
-        end
-
-        return string_char( table_unpack( buffer, 1, pointer ) )
-    end
-
+    return table_concat( bytes, "", 1, byte_count )
 end

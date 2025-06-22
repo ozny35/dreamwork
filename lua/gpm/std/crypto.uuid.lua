@@ -14,7 +14,7 @@ do
     local string_len = string.len
     local string_byte = string.byte
     local string_gsub = string.gsub
-    local string_fromHex = string.fromHex
+    local base16_decode = crypto.base16.decode
 
     do
 
@@ -35,12 +35,12 @@ do
                 error( "invalid namespace UUID format", 2 )
             end
 
-            local b1, b2, b3, b4, b5, b6, b7, b8, b9, b10, b11, b12, b13, b14, b15, b16 = string_byte( MD5_digest( string_fromHex( uuid ) .. name, false ), 1, 16 )
+            local uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8, uint8_9, uint8_10, uint8_11, uint8_12, uint8_13, uint8_14, uint8_15, uint8_16 = string_byte( MD5_digest( base16_decode( uuid ) .. name, false ), 1, 16 )
 
             return string_format( "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
-                b1, b2, b3, b4, b5, b6, bit_bor( bit_band( b7, 0x0F ), 0x30 ),
-                b8, bit_bor( bit_band( b9, 0x3F ), 0x80 ),
-                b10, b11, b12, b13, b14, b15, b16
+                uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, bit_bor( bit_band( uint8_7, 0x0F ), 0x30 ),
+                uint8_8, bit_bor( bit_band( uint8_9, 0x3F ), 0x80 ),
+                uint8_10, uint8_11, uint8_12, uint8_13, uint8_14, uint8_15, uint8_16
             )
         end
 
@@ -65,12 +65,12 @@ do
                 error( "invalid namespace UUID format", 2 )
             end
 
-            local b1, b2, b3, b4, b5, b6, b7, b8, b9, b10, b11, b12, b13, b14, b15, b16 = string_byte( SHA1_digest( string_fromHex( uuid ) .. name, false ), 1, 16 )
+            local uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8, uint8_9, uint8_10, uint8_11, uint8_12, uint8_13, uint8_14, uint8_15, uint8_16 = string_byte( SHA1_digest( base16_decode( uuid ) .. name, false ), 1, 16 )
 
             return string_format( "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
-                b1, b2, b3, b4, b5, b6, bit_bor( bit_band( b7, 0x0F ), 0x50 ),
-                b8, bit_bor( bit_band( b9, 0x3F ), 0x80 ),
-                b10, b11, b12, b13, b14, b15, b16
+                uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, bit_bor( bit_band( uint8_7, 0x0F ), 0x50 ),
+                uint8_8, bit_bor( bit_band( uint8_9, 0x3F ), 0x80 ),
+                uint8_10, uint8_11, uint8_12, uint8_13, uint8_14, uint8_15, uint8_16
             )
         end
 
@@ -173,29 +173,29 @@ end
 ---
 --- UUIDv8 is a flexible version allowing custom data alongside version and variant bits.
 ---
----@param b1? integer Unsigned byte (0..255)
----@param b2? integer Unsigned byte (0..255)
----@param b3? integer Unsigned byte (0..255)
----@param b4? integer Unsigned byte (0..255)
----@param b5? integer Unsigned byte (0..255)
----@param b6? integer Unsigned byte (0..255)
----@param b7? integer Unsigned byte (0..15)
----@param b8? integer Unsigned byte (0..255)
----@param b9? integer Unsigned byte (0..63)
----@param b10? integer Unsigned byte (0..255)
----@param b11? integer Unsigned byte (0..255)
----@param b12? integer Unsigned byte (0..255)
----@param b13? integer Unsigned byte (0..255)
----@param b14? integer Unsigned byte (0..255)
----@param b15? integer Unsigned byte (0..255)
----@param b16? integer Unsigned byte (0..255)
+---@param uint8_1? integer Unsigned byte (0..255)
+---@param uint8_2? integer Unsigned byte (0..255)
+---@param uint8_3? integer Unsigned byte (0..255)
+---@param uint8_4? integer Unsigned byte (0..255)
+---@param uint8_5? integer Unsigned byte (0..255)
+---@param uint8_6? integer Unsigned byte (0..255)
+---@param uint8_7? integer Unsigned byte (0..15)
+---@param uint8_8? integer Unsigned byte (0..255)
+---@param uint8_9? integer Unsigned byte (0..63)
+---@param uint8_10? integer Unsigned byte (0..255)
+---@param uint8_11? integer Unsigned byte (0..255)
+---@param uint8_12? integer Unsigned byte (0..255)
+---@param uint8_13? integer Unsigned byte (0..255)
+---@param uint8_14? integer Unsigned byte (0..255)
+---@param uint8_15? integer Unsigned byte (0..255)
+---@param uint8_16? integer Unsigned byte (0..255)
 ---@return string uuid A UUID v8 string.
-function crypto.UUIDv8( b1, b2, b3, b4, b5, b6, b7, b8, b9, b10, b11, b12, b13, b14, b15, b16 )
+function crypto.UUIDv8( uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8, uint8_9, uint8_10, uint8_11, uint8_12, uint8_13, uint8_14, uint8_15, uint8_16 )
     return string_format(
         "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
-        b1 or 0, b2 or 0, b3 or 0, b4 or 0, b5 or 0, b6 or 0,
-        bit_bor( bit_band( b7 or 0, 0x0F ), 0x80 ), b8 or 0,
-        bit_bor( bit_band( b9 or 0, 0x3F ), 0x80 ), b10 or 0,
-        b11 or 0, b12 or 0, b13 or 0, b14 or 0, b15 or 0, b16 or 0
+        uint8_1 or 0, uint8_2 or 0, uint8_3 or 0, uint8_4 or 0, uint8_5 or 0, uint8_6 or 0,
+        bit_bor( bit_band( uint8_7 or 0, 0x0F ), 0x80 ), uint8_8 or 0,
+        bit_bor( bit_band( uint8_9 or 0, 0x3F ), 0x80 ), uint8_10 or 0,
+        uint8_11 or 0, uint8_12 or 0, uint8_13 or 0, uint8_14 or 0, uint8_15 or 0, uint8_16 or 0
     )
 end

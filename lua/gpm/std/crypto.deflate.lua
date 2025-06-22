@@ -3078,20 +3078,21 @@ function deflate.encodeForPrint( str )
         i = i + 3
 
         local cache = x1 + x2 * 256 + x3 * 65536
-        local b1 = cache % 64
-        cache = ( cache - b1 ) / 64
+        local uint8_1 = cache % 64
+        cache = ( cache - uint8_1 ) / 64
 
-        local b2 = cache % 64
-        cache = ( cache - b2 ) / 64
+        local uint8_2 = cache % 64
+        cache = ( cache - uint8_2 ) / 64
 
-        local b3 = cache % 64
-        local b4 = ( cache - b3 ) / 64
+        local uint8_3 = cache % 64
+        local uint8_4 = ( cache - uint8_3 ) / 64
         buffer_size = buffer_size + 1
-        buffer[ buffer_size ] = _byte_to_6bit_char[ b1 ] .. _byte_to_6bit_char[ b2 ] .. _byte_to_6bit_char[ b3 ] .. _byte_to_6bit_char[ b4 ]
+        buffer[ buffer_size ] = _byte_to_6bit_char[ uint8_1 ] .. _byte_to_6bit_char[ uint8_2 ] .. _byte_to_6bit_char[ uint8_3 ] .. _byte_to_6bit_char[ uint8_4 ]
     end
 
     local cache = 0
     local cache_bitlen = 0
+
     while i <= strlen do
         local x = string_byte( str, i, i )
         cache = cache + x * _pow2[ cache_bitlen ]
@@ -3145,13 +3146,13 @@ function deflate.decodeForPrint( str )
         i = i + 4
 
         local cache = x1 + x2 * 64 + x3 * 4096 + x4 * 262144
-        local b1 = cache % 0x100
-        cache = ( cache - b1 ) / 0x100
+        local uint8_1 = cache % 0x100
+        cache = ( cache - uint8_1 ) / 0x100
 
-        local b2 = cache % 0x100
-        local b3 = ( cache - b2 ) / 0x100
+        local uint8_2 = cache % 0x100
+        local uint8_3 = ( cache - uint8_2 ) / 0x100
         buffer_size = buffer_size + 1
-        buffer[ buffer_size ] = string_char( b1, b2, b3 )
+        buffer[ buffer_size ] = string_char( uint8_1, uint8_2, uint8_3 )
     end
 
     local cache = 0

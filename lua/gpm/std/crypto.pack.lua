@@ -496,17 +496,17 @@ function pack.readUInt16( binary_str, big_endian, start_position )
 		start_position = 1
 	end
 
-	local b1, b2 = string_byte( binary_str, start_position, start_position + 1 )
+	local uint8_1, uint8_2 = string_byte( binary_str, start_position, start_position + 1 )
 
-	if b2 == nil then
+	if uint8_2 == nil then
 		return nil, "not enough data"
 	end
 
 	if big_endian then
-		b1, b2 = b2, b1
+		uint8_1, uint8_2 = uint8_2, uint8_1
 	end
 
-	return bytepack_readUInt16( b1, b2 )
+	return bytepack_readUInt16( uint8_1, uint8_2 )
 end
 
 --- [SHARED AND MENU]
@@ -532,17 +532,17 @@ function Reader:readUInt16( big_endian )
 	local end_position = start_position + 1
 	self.position = end_position
 
-	local b1, b2 = string_byte( self.data, start_position, end_position )
+	local uint8_1, uint8_2 = string_byte( self.data, start_position, end_position )
 
-	if b2 == nil then
+	if uint8_2 == nil then
 		return nil, "not enough data"
 	end
 
 	if big_endian then
-		b1, b2 = b2, b1
+		uint8_1, uint8_2 = uint8_2, uint8_1
 	end
 
-	return bytepack_readUInt16( b1, b2 )
+	return bytepack_readUInt16( uint8_1, uint8_2 )
 end
 
 do
@@ -562,13 +562,13 @@ do
 			return nil, "UInt16 value out of range"
 		end
 
-		local b1, b2 = bytepack_writeUInt16( value )
+		local uint8_1, uint8_2 = bytepack_writeUInt16( value )
 
 		if big_endian then
-			b1, b2 = b2, b1
+			uint8_1, uint8_2 = uint8_2, uint8_1
 		end
 
-		return string_char( b1, b2 )
+		return string_char( uint8_1, uint8_2 )
 	end
 
 	--- [SHARED AND MENU]
@@ -605,17 +605,17 @@ function pack.readUInt24( binary_str, big_endian, start_position )
 		start_position = 1
 	end
 
-	local b1, b2, b3 = string_byte( binary_str, start_position, start_position + 2 )
+	local uint8_1, uint8_2, uint8_3 = string_byte( binary_str, start_position, start_position + 2 )
 
-	if b3 == nil then
+	if uint8_3 == nil then
 		return nil, "not enough data"
 	end
 
 	if big_endian then
-		b1, b2, b3 = b3, b2, b1
+		uint8_1, uint8_2, uint8_3 = uint8_3, uint8_2, uint8_1
 	end
 
-	return bytepack_readUInt24( b1, b2, b3 )
+	return bytepack_readUInt24( uint8_1, uint8_2, uint8_3 )
 end
 
 --- [SHARED AND MENU]
@@ -633,13 +633,13 @@ function pack.writeUInt24( value, big_endian )
 		return nil, "UInt24 value out of range"
 	end
 
-	local b1, b2, b3 = bytepack_writeUInt24( value )
+	local uint8_1, uint8_2, uint8_3 = bytepack_writeUInt24( value )
 
 	if big_endian then
-		b1, b2, b3 = b3, b2, b1
+		uint8_1, uint8_2, uint8_3 = uint8_3, uint8_2, uint8_1
 	end
 
-	return string_char( b1, b2, b3 )
+	return string_char( uint8_1, uint8_2, uint8_3 )
 end
 
 --- [SHARED AND MENU]
@@ -658,17 +658,17 @@ function pack.readUInt32( binary_str, big_endian, start_position )
 		start_position = 1
 	end
 
-	local b1, b2, b3, b4 = string_byte( binary_str, start_position, start_position + 3 )
+	local uint8_1, uint8_2, uint8_3, uint8_4 = string_byte( binary_str, start_position, start_position + 3 )
 
-	if b4 == nil then
+	if uint8_4 == nil then
 		return nil, "not enough data"
 	end
 
 	if big_endian then
-		b1, b2, b3, b4 = b4, b3, b2, b1
+		uint8_1, uint8_2, uint8_3, uint8_4 = uint8_4, uint8_3, uint8_2, uint8_1
 	end
 
-	return bytepack_readUInt32( b1, b2, b3, b4 )
+	return bytepack_readUInt32( uint8_1, uint8_2, uint8_3, uint8_4 )
 end
 
 --- [SHARED AND MENU]
@@ -695,17 +695,17 @@ function Reader:readUInt32( big_endian )
 	local end_position = start_position + 3
 	self.position = end_position
 
-	local b1, b2, b3, b4 = string_byte( self.data, start_position, end_position )
+	local uint8_1, uint8_2, uint8_3, uint8_4 = string_byte( self.data, start_position, end_position )
 
-	if b4 == nil then
+	if uint8_4 == nil then
 		return nil, "not enough data"
 	end
 
 	if big_endian then
-		b1, b2, b3, b4 = b4, b3, b2, b1
+		uint8_1, uint8_2, uint8_3, uint8_4 = uint8_4, uint8_3, uint8_2, uint8_1
 	end
 
-	return bytepack_readUInt32( b1, b2, b3, b4 )
+	return bytepack_readUInt32( uint8_1, uint8_2, uint8_3, uint8_4 )
 end
 
 do
@@ -725,13 +725,13 @@ do
 			return nil, "UInt32 value out of range"
 		end
 
-		local b1, b2, b3, b4 = bytepack_writeUInt32( value )
+		local uint8_1, uint8_2, uint8_3, uint8_4 = bytepack_writeUInt32( value )
 
 		if big_endian then
-			b1, b2, b3, b4 = b4, b3, b2, b1
+			uint8_1, uint8_2, uint8_3, uint8_4 = uint8_4, uint8_3, uint8_2, uint8_1
 		end
 
-		return string_char( b1, b2, b3, b4 )
+		return string_char( uint8_1, uint8_2, uint8_3, uint8_4 )
 	end
 
 	pack.writeUInt32 = pack_writeUInt32
@@ -773,17 +773,17 @@ function pack.readUInt40( binary_str, big_endian, start_position )
 		start_position = 1
 	end
 
-	local b1, b2, b3, b4, b5 = string_byte( binary_str, start_position, start_position + 4 )
+	local uint8_1, uint8_2, uint8_3, uint8_4, uint8_5 = string_byte( binary_str, start_position, start_position + 4 )
 
-	if b5 == nil then
+	if uint8_5 == nil then
 		return nil, "not enough data"
 	end
 
 	if big_endian then
-		b1, b2, b3, b4, b5 = b5, b4, b3, b2, b1
+		uint8_1, uint8_2, uint8_3, uint8_4, uint8_5 = uint8_5, uint8_4, uint8_3, uint8_2, uint8_1
 	end
 
-	return bytepack_readUInt40( b1, b2, b3, b4, b5 )
+	return bytepack_readUInt40( uint8_1, uint8_2, uint8_3, uint8_4, uint8_5 )
 end
 
 --- [SHARED AND MENU]
@@ -801,13 +801,13 @@ function pack.writeUInt40( value, big_endian )
 		return nil, "UInt40 value out of range"
 	end
 
-	local b1, b2, b3, b4, b5 = bytepack_writeUInt40( value )
+	local uint8_1, uint8_2, uint8_3, uint8_4, uint8_5 = bytepack_writeUInt40( value )
 
 	if big_endian then
-		b1, b2, b3, b4, b5 = b5, b4, b3, b2, b1
+		uint8_1, uint8_2, uint8_3, uint8_4, uint8_5 = uint8_5, uint8_4, uint8_3, uint8_2, uint8_1
 	end
 
-	return string_char( b1, b2, b3, b4, b5 )
+	return string_char( uint8_1, uint8_2, uint8_3, uint8_4, uint8_5 )
 end
 
 --- [SHARED AND MENU]
@@ -826,17 +826,17 @@ function pack.readUInt48( binary_str, big_endian, start_position )
 		start_position = 1
 	end
 
-	local b1, b2, b3, b4, b5, b6 = string_byte( binary_str, start_position, start_position + 5 )
+	local uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6 = string_byte( binary_str, start_position, start_position + 5 )
 
-	if b6 == nil then
+	if uint8_6 == nil then
 		return nil, "not enough data"
 	end
 
 	if big_endian then
-		b1, b2, b3, b4, b5, b6 = b6, b5, b4, b3, b2, b1
+		uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6 = uint8_6, uint8_5, uint8_4, uint8_3, uint8_2, uint8_1
 	end
 
-	return bytepack_readUInt48( b1, b2, b3, b4, b5, b6 )
+	return bytepack_readUInt48( uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6 )
 end
 
 --- [SHARED AND MENU]
@@ -854,13 +854,13 @@ function pack.writeUInt48( value, big_endian )
 		return nil, "UInt48 value out of range"
 	end
 
-	local b1, b2, b3, b4, b5, b6 = bytepack_writeUInt48( value )
+	local uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6 = bytepack_writeUInt48( value )
 
 	if big_endian then
-		b1, b2, b3, b4, b5, b6 = b6, b5, b4, b3, b2, b1
+		uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6 = uint8_6, uint8_5, uint8_4, uint8_3, uint8_2, uint8_1
 	end
 
-	return string_char( b1, b2, b3, b4, b5, b6 )
+	return string_char( uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6 )
 end
 
 --- [SHARED AND MENU]
@@ -881,17 +881,17 @@ function pack.readUInt56( binary_str, big_endian, start_position )
 		start_position = 1
 	end
 
-	local b1, b2, b3, b4, b5, b6, b7 = string_byte( binary_str, start_position, start_position + 6 )
+	local uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7 = string_byte( binary_str, start_position, start_position + 6 )
 
-	if b7 == nil then
+	if uint8_7 == nil then
 		return nil, "not enough data"
 	end
 
 	if big_endian then
-		b1, b2, b3, b4, b5, b6, b7 = b7, b6, b5, b4, b3, b2, b1
+		uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7 = uint8_7, uint8_6, uint8_5, uint8_4, uint8_3, uint8_2, uint8_1
 	end
 
-	return bytepack_readUInt56( b1, b2, b3, b4, b5, b6, b7 )
+	return bytepack_readUInt56( uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7 )
 end
 
 --- [SHARED AND MENU]
@@ -911,13 +911,13 @@ function pack.writeUInt56( value, big_endian )
 		return nil, "UInt56 value out of range"
 	end
 
-	local b1, b2, b3, b4, b5, b6, b7 = bytepack_writeUInt56( value )
+	local uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7 = bytepack_writeUInt56( value )
 
 	if big_endian then
-		b1, b2, b3, b4, b5, b6, b7 = b7, b6, b5, b4, b3, b2, b1
+		uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7 = uint8_7, uint8_6, uint8_5, uint8_4, uint8_3, uint8_2, uint8_1
 	end
 
-	return string_char( b1, b2, b3, b4, b5, b6, b7 )
+	return string_char( uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7 )
 end
 
 --- [SHARED AND MENU]
@@ -938,17 +938,17 @@ function pack.readUInt64( binary_str, big_endian, start_position )
 		start_position = 1
 	end
 
-	local b1, b2, b3, b4, b5, b6, b7, b8 = string_byte( binary_str, start_position, start_position + 7 )
+	local uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8 = string_byte( binary_str, start_position, start_position + 7 )
 
-	if b8 == nil then
+	if uint8_8 == nil then
 		return nil, "not enough data"
 	end
 
 	if big_endian then
-		b1, b2, b3, b4, b5, b6, b7, b8 = b8, b7, b6, b5, b4, b3, b2, b1
+		uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8 = uint8_8, uint8_7, uint8_6, uint8_5, uint8_4, uint8_3, uint8_2, uint8_1
 	end
 
-	return bytepack_readUInt64( b1, b2, b3, b4, b5, b6, b7, b8 )
+	return bytepack_readUInt64( uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8 )
 end
 
 --- [SHARED AND MENU]
@@ -977,17 +977,17 @@ function Reader:readUInt64( big_endian )
 	local end_position = start_position + 7
 	self.position = end_position
 
-	local b1, b2, b3, b4, b5, b6, b7, b8 = string_byte( self.data, start_position, end_position )
+	local uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8 = string_byte( self.data, start_position, end_position )
 
-	if b8 == nil then
+	if uint8_8 == nil then
 		return nil, "not enough data"
 	end
 
 	if big_endian then
-		b1, b2, b3, b4, b5, b6, b7, b8 = b8, b7, b6, b5, b4, b3, b2, b1
+		uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8 = uint8_8, uint8_7, uint8_6, uint8_5, uint8_4, uint8_3, uint8_2, uint8_1
 	end
 
-	return bytepack_readUInt64( b1, b2, b3, b4, b5, b6, b7, b8 )
+	return bytepack_readUInt64( uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8 )
 end
 
 do
@@ -1009,13 +1009,13 @@ do
 			return nil, "UInt64 value out of range"
 		end
 
-		local b1, b2, b3, b4, b5, b6, b7, b8 = bytepack_writeUInt64( value )
+		local uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8 = bytepack_writeUInt64( value )
 
 		if big_endian then
-			b1, b2, b3, b4, b5, b6, b7, b8 = b8, b7, b6, b5, b4, b3, b2, b1
+			uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8 = uint8_8, uint8_7, uint8_6, uint8_5, uint8_4, uint8_3, uint8_2, uint8_1
 		end
 
-		return string_char( b1, b2, b3, b4, b5, b6, b7, b8 )
+		return string_char( uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8 )
 	end
 
 	pack.writeUInt64 = pack_writeUInt64
@@ -1089,38 +1089,38 @@ function Reader:readUInt( bit_count, big_endian )
 		return string_byte( self.data, position + 1 )
 	end
 
-	local b1, b2, b3, b4, b5, b6, b7, b8 = string_byte( self.data, position + 1, position + byte_count )
+	local uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8 = string_byte( self.data, position + 1, position + byte_count )
 
 	if big_endian then
 		if byte_count == 2 then
-			return bytepack_readUInt16( b1, b2 )
+			return bytepack_readUInt16( uint8_1, uint8_2 )
 		elseif byte_count == 3 then
-			return bytepack_readUInt24( b1, b2, b3 )
+			return bytepack_readUInt24( uint8_1, uint8_2, uint8_3 )
 		elseif byte_count == 4 then
-			return bytepack_readUInt32( b1, b2, b3, b4 )
+			return bytepack_readUInt32( uint8_1, uint8_2, uint8_3, uint8_4 )
 		elseif byte_count == 5 then
-			return bytepack_readUInt40( b1, b2, b3, b4, b5 )
+			return bytepack_readUInt40( uint8_1, uint8_2, uint8_3, uint8_4, uint8_5 )
 		elseif byte_count == 6 then
-			return bytepack_readUInt48( b1, b2, b3, b4, b5, b6 )
+			return bytepack_readUInt48( uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6 )
 		elseif byte_count == 7 then
-			return bytepack_readUInt56( b1, b2, b3, b4, b5, b6, b7 )
+			return bytepack_readUInt56( uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7 )
 		else
-			return bytepack_readUInt64( b1, b2, b3, b4, b5, b6, b7, b8 )
+			return bytepack_readUInt64( uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8 )
 		end
 	elseif byte_count == 2 then
-		return bytepack_readUInt16( b2, b1 )
+		return bytepack_readUInt16( uint8_2, uint8_1 )
 	elseif byte_count == 3 then
-		return bytepack_readUInt24( b3, b2, b1 )
+		return bytepack_readUInt24( uint8_3, uint8_2, uint8_1 )
 	elseif byte_count == 4 then
-		return bytepack_readUInt32( b4, b3, b2, b1 )
+		return bytepack_readUInt32( uint8_4, uint8_3, uint8_2, uint8_1 )
 	elseif byte_count == 5 then
-		return bytepack_readUInt40( b5, b4, b3, b2, b1 )
+		return bytepack_readUInt40( uint8_5, uint8_4, uint8_3, uint8_2, uint8_1 )
 	elseif byte_count == 6 then
-		return bytepack_readUInt48( b6, b5, b4, b3, b2, b1 )
+		return bytepack_readUInt48( uint8_6, uint8_5, uint8_4, uint8_3, uint8_2, uint8_1 )
 	elseif byte_count == 7 then
-		return bytepack_readUInt56( b7, b6, b5, b4, b3, b2, b1 )
+		return bytepack_readUInt56( uint8_7, uint8_6, uint8_5, uint8_4, uint8_3, uint8_2, uint8_1 )
 	else
-		return bytepack_readUInt64( b8, b7, b6, b5, b4, b3, b2, b1 )
+		return bytepack_readUInt64( uint8_8, uint8_7, uint8_6, uint8_5, uint8_4, uint8_3, uint8_2, uint8_1 )
 	end
 end
 
@@ -1157,61 +1157,61 @@ function Writer:writeUInt( value, bit_count, big_endian )
 	if byte_count == 1 then
 		self:write( string_char( value ) )
 	elseif byte_count == 2 then
-		local b1, b2 = bytepack_writeUInt16( value )
+		local uint8_1, uint8_2 = bytepack_writeUInt16( value )
 
 		if big_endian then
-			b1, b2 = b2, b1
+			uint8_1, uint8_2 = uint8_2, uint8_1
 		end
 
-		self:write( string_char( b1, b2 ) )
+		self:write( string_char( uint8_1, uint8_2 ) )
 	elseif byte_count == 3 then
-		local b1, b2, b3 = bytepack_writeUInt24( value )
+		local uint8_1, uint8_2, uint8_3 = bytepack_writeUInt24( value )
 
 		if big_endian then
-			b1, b2, b3 = b3, b2, b1
+			uint8_1, uint8_2, uint8_3 = uint8_3, uint8_2, uint8_1
 		end
 
-		self:write( string_char( b1, b2, b3 ) )
+		self:write( string_char( uint8_1, uint8_2, uint8_3 ) )
 	elseif byte_count == 4 then
-		local b1, b2, b3, b4 = bytepack_writeUInt32( value )
+		local uint8_1, uint8_2, uint8_3, uint8_4 = bytepack_writeUInt32( value )
 
 		if big_endian then
-			b1, b2, b3, b4 = b4, b3, b2, b1
+			uint8_1, uint8_2, uint8_3, uint8_4 = uint8_4, uint8_3, uint8_2, uint8_1
 		end
 
-		self:write( string_char( b1, b2, b3, b4 ) )
+		self:write( string_char( uint8_1, uint8_2, uint8_3, uint8_4 ) )
 	elseif byte_count == 5 then
-		local b1, b2, b3, b4, b5 = bytepack_writeUInt40( value )
+		local uint8_1, uint8_2, uint8_3, uint8_4, uint8_5 = bytepack_writeUInt40( value )
 
 		if big_endian then
-			b1, b2, b3, b4, b5 = b5, b4, b3, b2, b1
+			uint8_1, uint8_2, uint8_3, uint8_4, uint8_5 = uint8_5, uint8_4, uint8_3, uint8_2, uint8_1
 		end
 
-		self:write( string_char( b1, b2, b3, b4, b5 ) )
+		self:write( string_char( uint8_1, uint8_2, uint8_3, uint8_4, uint8_5 ) )
 	elseif byte_count == 6 then
-		local b1, b2, b3, b4, b5, b6 = bytepack_writeUInt48( value )
+		local uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6 = bytepack_writeUInt48( value )
 
 		if big_endian then
-			b1, b2, b3, b4, b5, b6 = b6, b5, b4, b3, b2, b1
+			uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6 = uint8_6, uint8_5, uint8_4, uint8_3, uint8_2, uint8_1
 		end
 
-		self:write( string_char( b1, b2, b3, b4, b5, b6 ) )
+		self:write( string_char( uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6 ) )
 	elseif byte_count == 7 then
-		local b1, b2, b3, b4, b5, b6, b7 = bytepack_writeUInt56( value )
+		local uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7 = bytepack_writeUInt56( value )
 
 		if big_endian then
-			b1, b2, b3, b4, b5, b6, b7 = b7, b6, b5, b4, b3, b2, b1
+			uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7 = uint8_7, uint8_6, uint8_5, uint8_4, uint8_3, uint8_2, uint8_1
 		end
 
-		self:write( string_char( b1, b2, b3, b4, b5, b6, b7 ) )
+		self:write( string_char( uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7 ) )
 	elseif byte_count == 8 then
-		local b1, b2, b3, b4, b5, b6, b7, b8 = bytepack_writeUInt64( value )
+		local uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8 = bytepack_writeUInt64( value )
 
 		if big_endian then
-			b1, b2, b3, b4, b5, b6, b7, b8 = b8, b7, b6, b5, b4, b3, b2, b1
+			uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8 = uint8_8, uint8_7, uint8_6, uint8_5, uint8_4, uint8_3, uint8_2, uint8_1
 		end
 
-		self:write( string_char( b1, b2, b3, b4, b5, b6, b7, b8 ) )
+		self:write( string_char( uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8 ) )
 	else
 		error( "invalid number of bits", 2 )
 	end
@@ -1259,52 +1259,52 @@ do
 			start_position = 1
 		end
 
-		local b1, b2, b3, b4, b5, b6, b7, b8 = string_byte( binary_str, start_position, start_position + byte_count )
+		local uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8 = string_byte( binary_str, start_position, start_position + byte_count )
 
-		if byte_count == 1 and b1 ~= nil then
-			return bytepack_readUnsignedFixedPoint( n, b1 ), nil
-		elseif byte_count == 2 and b2 ~= nil then
+		if byte_count == 1 and uint8_1 ~= nil then
+			return bytepack_readUnsignedFixedPoint( n, uint8_1 ), nil
+		elseif byte_count == 2 and uint8_2 ~= nil then
 			if big_endian then
-				b1, b2 = b2, b1
+				uint8_1, uint8_2 = uint8_2, uint8_1
 			end
 
-			return bytepack_readUnsignedFixedPoint( n, b1, b2 ), nil
-		elseif byte_count == 3 and b3 ~= nil then
+			return bytepack_readUnsignedFixedPoint( n, uint8_1, uint8_2 ), nil
+		elseif byte_count == 3 and uint8_3 ~= nil then
 			if big_endian then
-				b1, b2, b3 = b3, b2, b1
+				uint8_1, uint8_2, uint8_3 = uint8_3, uint8_2, uint8_1
 			end
 
-			return bytepack_readUnsignedFixedPoint( n, b1, b2, b3 ), nil
-		elseif byte_count == 4 and b4 ~= nil then
+			return bytepack_readUnsignedFixedPoint( n, uint8_1, uint8_2, uint8_3 ), nil
+		elseif byte_count == 4 and uint8_4 ~= nil then
 			if big_endian then
-				b1, b2, b3, b4 = b4, b3, b2, b1
+				uint8_1, uint8_2, uint8_3, uint8_4 = uint8_4, uint8_3, uint8_2, uint8_1
 			end
 
-			return bytepack_readUnsignedFixedPoint( n, b1, b2, b3, b4 ), nil
-		elseif byte_count == 5 and b5 ~= nil then
+			return bytepack_readUnsignedFixedPoint( n, uint8_1, uint8_2, uint8_3, uint8_4 ), nil
+		elseif byte_count == 5 and uint8_5 ~= nil then
 			if big_endian then
-				b1, b2, b3, b4, b5 = b5, b4, b3, b2, b1
+				uint8_1, uint8_2, uint8_3, uint8_4, uint8_5 = uint8_5, uint8_4, uint8_3, uint8_2, uint8_1
 			end
 
-			return bytepack_readUnsignedFixedPoint( n, b1, b2, b3, b4, b5 ), nil
-		elseif byte_count == 6 and b6 ~= nil then
+			return bytepack_readUnsignedFixedPoint( n, uint8_1, uint8_2, uint8_3, uint8_4, uint8_5 ), nil
+		elseif byte_count == 6 and uint8_6 ~= nil then
 			if big_endian then
-				b1, b2, b3, b4, b5, b6 = b6, b5, b4, b3, b2, b1
+				uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6 = uint8_6, uint8_5, uint8_4, uint8_3, uint8_2, uint8_1
 			end
 
-			return bytepack_readUnsignedFixedPoint( n, b1, b2, b3, b4, b5, b6 ), nil
-		elseif byte_count == 7 and b7 ~= nil then
+			return bytepack_readUnsignedFixedPoint( n, uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6 ), nil
+		elseif byte_count == 7 and uint8_7 ~= nil then
 			if big_endian then
-				b1, b2, b3, b4, b5, b6, b7 = b7, b6, b5, b4, b3, b2, b1
+				uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7 = uint8_7, uint8_6, uint8_5, uint8_4, uint8_3, uint8_2, uint8_1
 			end
 
-			return bytepack_readUnsignedFixedPoint( n, b1, b2, b3, b4, b5, b6, b7 ), nil
-		elseif byte_count == 8 and b8 ~= nil then
+			return bytepack_readUnsignedFixedPoint( n, uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7 ), nil
+		elseif byte_count == 8 and uint8_8 ~= nil then
 			if big_endian then
-				b1, b2, b3, b4, b5, b6, b7, b8 = b8, b7, b6, b5, b4, b3, b2, b1
+				uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8 = uint8_8, uint8_7, uint8_6, uint8_5, uint8_4, uint8_3, uint8_2, uint8_1
 			end
 
-			return bytepack_readUnsignedFixedPoint( n, b1, b2, b3, b4, b5, b6, b7, b8 ), nil
+			return bytepack_readUnsignedFixedPoint( n, uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8 ), nil
 		end
 
 		return nil, "not enough data"
@@ -1348,54 +1348,54 @@ do
 			return nil, "not enough data"
 		end
 
-		local b1, b2, b3, b4, b5, b6, b7, b8 = string_byte( self.data, position + 1, position + byte_count )
+		local uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8 = string_byte( self.data, position + 1, position + byte_count )
 
 		self.position = position + byte_count
 
-		if byte_count == 1 and b1 ~= nil then
-			return bytepack_readUnsignedFixedPoint( n, b1 ), nil
-		elseif byte_count == 2 and b2 ~= nil then
+		if byte_count == 1 and uint8_1 ~= nil then
+			return bytepack_readUnsignedFixedPoint( n, uint8_1 ), nil
+		elseif byte_count == 2 and uint8_2 ~= nil then
 			if big_endian then
-				b1, b2 = b2, b1
+				uint8_1, uint8_2 = uint8_2, uint8_1
 			end
 
-			return bytepack_readUnsignedFixedPoint( n, b1, b2 ), nil
-		elseif byte_count == 3 and b3 ~= nil then
+			return bytepack_readUnsignedFixedPoint( n, uint8_1, uint8_2 ), nil
+		elseif byte_count == 3 and uint8_3 ~= nil then
 			if big_endian then
-				b1, b2, b3 = b3, b2, b1
+				uint8_1, uint8_2, uint8_3 = uint8_3, uint8_2, uint8_1
 			end
 
-			return bytepack_readUnsignedFixedPoint( n, b1, b2, b3 ), nil
-		elseif byte_count == 4 and b4 ~= nil then
+			return bytepack_readUnsignedFixedPoint( n, uint8_1, uint8_2, uint8_3 ), nil
+		elseif byte_count == 4 and uint8_4 ~= nil then
 			if big_endian then
-				b1, b2, b3, b4 = b4, b3, b2, b1
+				uint8_1, uint8_2, uint8_3, uint8_4 = uint8_4, uint8_3, uint8_2, uint8_1
 			end
 
-			return bytepack_readUnsignedFixedPoint( n, b1, b2, b3, b4 ), nil
-		elseif byte_count == 5 and b5 ~= nil then
+			return bytepack_readUnsignedFixedPoint( n, uint8_1, uint8_2, uint8_3, uint8_4 ), nil
+		elseif byte_count == 5 and uint8_5 ~= nil then
 			if big_endian then
-				b1, b2, b3, b4, b5 = b5, b4, b3, b2, b1
+				uint8_1, uint8_2, uint8_3, uint8_4, uint8_5 = uint8_5, uint8_4, uint8_3, uint8_2, uint8_1
 			end
 
-			return bytepack_readUnsignedFixedPoint( n, b1, b2, b3, b4, b5 ), nil
-		elseif byte_count == 6 and b6 ~= nil then
+			return bytepack_readUnsignedFixedPoint( n, uint8_1, uint8_2, uint8_3, uint8_4, uint8_5 ), nil
+		elseif byte_count == 6 and uint8_6 ~= nil then
 			if big_endian then
-				b1, b2, b3, b4, b5, b6 = b6, b5, b4, b3, b2, b1
+				uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6 = uint8_6, uint8_5, uint8_4, uint8_3, uint8_2, uint8_1
 			end
 
-			return bytepack_readUnsignedFixedPoint( n, b1, b2, b3, b4, b5, b6 ), nil
-		elseif byte_count == 7 and b7 ~= nil then
+			return bytepack_readUnsignedFixedPoint( n, uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6 ), nil
+		elseif byte_count == 7 and uint8_7 ~= nil then
 			if big_endian then
-				b1, b2, b3, b4, b5, b6, b7 = b7, b6, b5, b4, b3, b2, b1
+				uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7 = uint8_7, uint8_6, uint8_5, uint8_4, uint8_3, uint8_2, uint8_1
 			end
 
-			return bytepack_readUnsignedFixedPoint( n, b1, b2, b3, b4, b5, b6, b7 ), nil
-		elseif byte_count == 8 and b8 ~= nil then
+			return bytepack_readUnsignedFixedPoint( n, uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7 ), nil
+		elseif byte_count == 8 and uint8_8 ~= nil then
 			if big_endian then
-				b1, b2, b3, b4, b5, b6, b7, b8 = b8, b7, b6, b5, b4, b3, b2, b1
+				uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8 = uint8_8, uint8_7, uint8_6, uint8_5, uint8_4, uint8_3, uint8_2, uint8_1
 			end
 
-			return bytepack_readUnsignedFixedPoint( n, b1, b2, b3, b4, b5, b6, b7, b8 ), nil
+			return bytepack_readUnsignedFixedPoint( n, uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8 ), nil
 		end
 
 		return nil, "not enough data"
@@ -1439,84 +1439,84 @@ do
 			return string_rep( "\0", byte_count ), nil
 		end
 
-		local b1, b2, b3, b4, b5, b6, b7, b8 = bytepack_writeUnsignedFixedPoint( value, m, n )
+		local uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8 = bytepack_writeUnsignedFixedPoint( value, m, n )
 
 		if byte_count == 1 then
-			if b1 == nil then
+			if uint8_1 == nil then
 				return nil, "invalid value"
 			end
 
-			return string_char( b1 ), nil
+			return string_char( uint8_1 ), nil
 		elseif byte_count == 2 then
-			if b2 == nil then
+			if uint8_2 == nil then
 				return nil, "invalid value"
 			end
 
 			if big_endian then
-				b1, b2 = b2, b1
+				uint8_1, uint8_2 = uint8_2, uint8_1
 			end
 
-			return string_char( b1, b2 ), nil
+			return string_char( uint8_1, uint8_2 ), nil
 		elseif byte_count == 3 then
-			if b3 == nil then
+			if uint8_3 == nil then
 				return nil, "invalid value"
 			end
 
 			if big_endian then
-				b1, b2, b3 = b3, b2, b1
+				uint8_1, uint8_2, uint8_3 = uint8_3, uint8_2, uint8_1
 			end
 
-			return string_char( b1, b2, b3 ), nil
+			return string_char( uint8_1, uint8_2, uint8_3 ), nil
 		elseif byte_count == 4 then
-			if b4 == nil then
+			if uint8_4 == nil then
 				return nil, "invalid value"
 			end
 
 			if big_endian then
-				b1, b2, b3, b4 = b4, b3, b2, b1
+				uint8_1, uint8_2, uint8_3, uint8_4 = uint8_4, uint8_3, uint8_2, uint8_1
 			end
 
-			return string_char( b1, b2, b3, b4 ), nil
+			return string_char( uint8_1, uint8_2, uint8_3, uint8_4 ), nil
 		elseif byte_count == 5 then
-			if b5 == nil then
+			if uint8_5 == nil then
 				return nil, "invalid value"
 			end
 
 			if big_endian then
-				b1, b2, b3, b4, b5 = b5, b4, b3, b2, b1
+				uint8_1, uint8_2, uint8_3, uint8_4, uint8_5 = uint8_5, uint8_4, uint8_3, uint8_2, uint8_1
 			end
 
-			return string_char( b1, b2, b3, b4, b5 ), nil
+			return string_char( uint8_1, uint8_2, uint8_3, uint8_4, uint8_5 ), nil
 		elseif byte_count == 6 then
-			if b6 == nil then
+			if uint8_6 == nil then
 				return nil, "invalid value"
 			end
 
 			if big_endian then
-				b1, b2, b3, b4, b5, b6 = b6, b5, b4, b3, b2, b1
+				uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6 = uint8_6, uint8_5, uint8_4, uint8_3, uint8_2, uint8_1
 			end
 
-			return string_char( b1, b2, b3, b4, b5, b6 ), nil
+			return string_char( uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6 ), nil
 		elseif byte_count == 7 then
-			if b7 == nil then
+			if uint8_7 == nil then
 				return nil, "invalid value"
 			end
 
 			if big_endian then
-				b1, b2, b3, b4, b5, b6, b7 = b7, b6, b5, b4, b3, b2, b1
+				uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7 = uint8_7, uint8_6, uint8_5, uint8_4, uint8_3, uint8_2, uint8_1
 			end
 
-			return string_char( b1, b2, b3, b4, b5, b6, b7 ), nil
+			return string_char( uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7 ), nil
 		elseif byte_count == 8 then
-			if b8 == nil then
+			if uint8_8 == nil then
 				return nil, "invalid value"
 			end
 
 			if big_endian then
-				b1, b2, b3, b4, b5, b6, b7, b8 = b8, b7, b6, b5, b4, b3, b2, b1
+				uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8 = uint8_8, uint8_7, uint8_6, uint8_5, uint8_4, uint8_3, uint8_2, uint8_1
 			end
 
-			return string_char( b1, b2, b3, b4, b5, b6, b7, b8 ), nil
+			return string_char( uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8 ), nil
 		end
 
 		return nil, "unsupported byte count"
@@ -1644,17 +1644,17 @@ function pack.readInt16( binary_str, big_endian, start_position )
 		start_position = 1
 	end
 
-	local b1, b2 = string_byte( binary_str, start_position, start_position + 1 )
+	local uint8_1, uint8_2 = string_byte( binary_str, start_position, start_position + 1 )
 
-	if b2 == nil then
+	if uint8_2 == nil then
 		return nil, "not enough data"
 	end
 
 	if big_endian then
-		b1, b2 = b2, b1
+		uint8_1, uint8_2 = uint8_2, uint8_1
 	end
 
-	return bytepack_readInt16( b1, b2 )
+	return bytepack_readInt16( uint8_1, uint8_2 )
 end
 
 --- [SHARED AND MENU]
@@ -1681,13 +1681,13 @@ function Reader:readInt16( big_endian )
 	local end_position = start_position + 1
 	self.position = end_position
 
-	local b1, b2 = string_byte( self.data, start_position, end_position )
+	local uint8_1, uint8_2 = string_byte( self.data, start_position, end_position )
 
 	if big_endian then
-		b1, b2 = b2, b1
+		uint8_1, uint8_2 = uint8_2, uint8_1
 	end
 
-	return bytepack_readInt16( b1, b2 )
+	return bytepack_readInt16( uint8_1, uint8_2 )
 end
 
 do
@@ -1707,13 +1707,13 @@ do
 			return nil, "Int16 value out of range"
 		end
 
-		local b1, b2 = bytepack_writeInt16( value )
+		local uint8_1, uint8_2 = bytepack_writeInt16( value )
 
 		if big_endian then
-			b1, b2 = b2, b1
+			uint8_1, uint8_2 = uint8_2, uint8_1
 		end
 
-		return string_char( b1, b2 )
+		return string_char( uint8_1, uint8_2 )
 	end
 
 	pack.writeInt16 = pack_writeInt16
@@ -1753,17 +1753,17 @@ function pack.readInt24( binary_str, big_endian, start_position )
 		start_position = 1
 	end
 
-	local b1, b2, b3 = string_byte( binary_str, start_position, start_position + 2 )
+	local uint8_1, uint8_2, uint8_3 = string_byte( binary_str, start_position, start_position + 2 )
 
-	if b3 == nil then
+	if uint8_3 == nil then
 		return nil, "not enough data"
 	end
 
 	if big_endian then
-		b1, b2, b3 = b3, b2, b1
+		uint8_1, uint8_2, uint8_3 = uint8_3, uint8_2, uint8_1
 	end
 
-	return bytepack_readInt24( b1, b2, b3 )
+	return bytepack_readInt24( uint8_1, uint8_2, uint8_3 )
 end
 
 --- [SHARED AND MENU]
@@ -1781,13 +1781,13 @@ function pack.writeInt24( value, big_endian )
 		return nil, "Int24 value out of range"
 	end
 
-	local b1, b2, b3 = bytepack_writeInt24( value )
+	local uint8_1, uint8_2, uint8_3 = bytepack_writeInt24( value )
 
 	if big_endian then
-		b1, b2, b3 = b3, b2, b1
+		uint8_1, uint8_2, uint8_3 = uint8_3, uint8_2, uint8_1
 	end
 
-	return string_char( b1, b2, b3 )
+	return string_char( uint8_1, uint8_2, uint8_3 )
 end
 
 --- [SHARED AND MENU]
@@ -1806,17 +1806,17 @@ function pack.readInt32( binary_str, big_endian, start_position )
 		start_position = 1
 	end
 
-	local b1, b2, b3, b4 = string_byte( binary_str, start_position, start_position + 3 )
+	local uint8_1, uint8_2, uint8_3, uint8_4 = string_byte( binary_str, start_position, start_position + 3 )
 
-	if b4 == nil then
+	if uint8_4 == nil then
 		return nil, "not enough data"
 	end
 
 	if big_endian then
-		b1, b2, b3, b4 = b4, b3, b2, b1
+		uint8_1, uint8_2, uint8_3, uint8_4 = uint8_4, uint8_3, uint8_2, uint8_1
 	end
 
-	return bytepack_readInt32( b1, b2, b3, b4 )
+	return bytepack_readInt32( uint8_1, uint8_2, uint8_3, uint8_4 )
 end
 
 --- [SHARED AND MENU]
@@ -1843,13 +1843,13 @@ function Reader:readInt32( big_endian )
 	local end_position = start_position + 3
 	self.position = end_position
 
-	local b1, b2, b3, b4 = string_byte( self.data, start_position, end_position )
+	local uint8_1, uint8_2, uint8_3, uint8_4 = string_byte( self.data, start_position, end_position )
 
 	if big_endian then
-		b1, b2, b3, b4 = b4, b3, b2, b1
+		uint8_1, uint8_2, uint8_3, uint8_4 = uint8_4, uint8_3, uint8_2, uint8_1
 	end
 
-	return bytepack_readInt32( b1, b2, b3, b4 )
+	return bytepack_readInt32( uint8_1, uint8_2, uint8_3, uint8_4 )
 end
 
 do
@@ -1869,13 +1869,13 @@ do
 			return nil, "Int32 value out of range"
 		end
 
-		local b1, b2, b3, b4 = bytepack_writeInt32( value )
+		local uint8_1, uint8_2, uint8_3, uint8_4 = bytepack_writeInt32( value )
 
 		if big_endian then
-			b1, b2, b3, b4 = b4, b3, b2, b1
+			uint8_1, uint8_2, uint8_3, uint8_4 = uint8_4, uint8_3, uint8_2, uint8_1
 		end
 
-		return string_char( b1, b2, b3, b4 )
+		return string_char( uint8_1, uint8_2, uint8_3, uint8_4 )
 	end
 
 	pack.writeInt32 = pack_writeInt32
@@ -1914,17 +1914,17 @@ function pack.readInt40( binary_str, big_endian, start_position )
 		start_position = 1
 	end
 
-	local b1, b2, b3, b4, b5 = string_byte( binary_str, start_position, start_position + 4 )
+	local uint8_1, uint8_2, uint8_3, uint8_4, uint8_5 = string_byte( binary_str, start_position, start_position + 4 )
 
-	if b5 == nil then
+	if uint8_5 == nil then
 		return nil, "not enough data"
 	end
 
 	if big_endian then
-		b1, b2, b3, b4, b5 = b5, b4, b3, b2, b1
+		uint8_1, uint8_2, uint8_3, uint8_4, uint8_5 = uint8_5, uint8_4, uint8_3, uint8_2, uint8_1
 	end
 
-	return bytepack_readInt40( b1, b2, b3, b4, b5 )
+	return bytepack_readInt40( uint8_1, uint8_2, uint8_3, uint8_4, uint8_5 )
 end
 
 --- [SHARED AND MENU]
@@ -1942,13 +1942,13 @@ function pack.writeInt40( value, big_endian )
 		return nil, "Int40 value out of range"
 	end
 
-	local b1, b2, b3, b4, b5 = bytepack_writeInt40( value )
+	local uint8_1, uint8_2, uint8_3, uint8_4, uint8_5 = bytepack_writeInt40( value )
 
 	if big_endian then
-		b1, b2, b3, b4, b5 = b5, b4, b3, b2, b1
+		uint8_1, uint8_2, uint8_3, uint8_4, uint8_5 = uint8_5, uint8_4, uint8_3, uint8_2, uint8_1
 	end
 
-	return string_char( b1, b2, b3, b4, b5 )
+	return string_char( uint8_1, uint8_2, uint8_3, uint8_4, uint8_5 )
 end
 
 --- [SHARED AND MENU]
@@ -1967,17 +1967,17 @@ function pack.readInt48( binary_str, big_endian, start_position )
 		start_position = 1
 	end
 
-	local b1, b2, b3, b4, b5, b6 = string_byte( binary_str, start_position, start_position + 5 )
+	local uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6 = string_byte( binary_str, start_position, start_position + 5 )
 
-	if b6 == nil then
+	if uint8_6 == nil then
 		return nil, "not enough data"
 	end
 
 	if big_endian then
-		b1, b2, b3, b4, b5, b6 = b6, b5, b4, b3, b2, b1
+		uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6 = uint8_6, uint8_5, uint8_4, uint8_3, uint8_2, uint8_1
 	end
 
-	return bytepack_readInt48( b1, b2, b3, b4, b5, b6 )
+	return bytepack_readInt48( uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6 )
 end
 
 --- [SHARED AND MENU]
@@ -1995,13 +1995,13 @@ function pack.writeInt48( value, big_endian )
 		return nil, "Int48 value out of range"
 	end
 
-	local b1, b2, b3, b4, b5, b6 = bytepack_writeInt48( value )
+	local uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6 = bytepack_writeInt48( value )
 
 	if big_endian then
-		b1, b2, b3, b4, b5, b6 = b6, b5, b4, b3, b2, b1
+		uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6 = uint8_6, uint8_5, uint8_4, uint8_3, uint8_2, uint8_1
 	end
 
-	return string_char( b1, b2, b3, b4, b5, b6 )
+	return string_char( uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6 )
 end
 
 --- [SHARED AND MENU]
@@ -2020,17 +2020,17 @@ function pack.readInt56( binary_str, big_endian, start_position )
 		start_position = 1
 	end
 
-	local b1, b2, b3, b4, b5, b6, b7 = string_byte( binary_str, start_position, start_position + 6 )
+	local uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7 = string_byte( binary_str, start_position, start_position + 6 )
 
-	if b7 == nil then
+	if uint8_7 == nil then
 		return nil, "not enough data"
 	end
 
 	if big_endian then
-		b1, b2, b3, b4, b5, b6, b7 = b7, b6, b5, b4, b3, b2, b1
+		uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7 = uint8_7, uint8_6, uint8_5, uint8_4, uint8_3, uint8_2, uint8_1
 	end
 
-	return bytepack_readInt56( b1, b2, b3, b4, b5, b6, b7 )
+	return bytepack_readInt56( uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7 )
 end
 
 --- [SHARED AND MENU]
@@ -2048,13 +2048,13 @@ function pack.writeInt56( value, big_endian )
 		return nil, "Int56 value out of range"
 	end
 
-	local b1, b2, b3, b4, b5, b6, b7 = bytepack_writeInt56( value )
+	local uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7 = bytepack_writeInt56( value )
 
 	if big_endian then
-		b1, b2, b3, b4, b5, b6, b7 = b7, b6, b5, b4, b3, b2, b1
+		uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7 = uint8_7, uint8_6, uint8_5, uint8_4, uint8_3, uint8_2, uint8_1
 	end
 
-	return string_char( b1, b2, b3, b4, b5, b6, b7 )
+	return string_char( uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7 )
 end
 
 --- [SHARED AND MENU]
@@ -2075,17 +2075,17 @@ function pack.readInt64( binary_str, big_endian, start_position )
 		start_position = 1
 	end
 
-	local b1, b2, b3, b4, b5, b6, b7, b8 = string_byte( binary_str, start_position, start_position + 7 )
+	local uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8 = string_byte( binary_str, start_position, start_position + 7 )
 
-	if b8 == nil then
+	if uint8_8 == nil then
 		return nil, "not enough data"
 	end
 
 	if big_endian then
-		b1, b2, b3, b4, b5, b6, b7, b8 = b8, b7, b6, b5, b4, b3, b2, b1
+		uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8 = uint8_8, uint8_7, uint8_6, uint8_5, uint8_4, uint8_3, uint8_2, uint8_1
 	end
 
-	return bytepack_readInt64( b1, b2, b3, b4, b5, b6, b7, b8 )
+	return bytepack_readInt64( uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8 )
 end
 
 --- [SHARED AND MENU]
@@ -2114,13 +2114,13 @@ function Reader:readInt64( big_endian )
 	local end_position = start_position + 7
 	self.position = end_position
 
-	local b1, b2, b3, b4, b5, b6, b7, b8 = string_byte( self.data, start_position, end_position )
+	local uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8 = string_byte( self.data, start_position, end_position )
 
 	if big_endian then
-		b1, b2, b3, b4, b5, b6, b7, b8 = b8, b7, b6, b5, b4, b3, b2, b1
+		uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8 = uint8_8, uint8_7, uint8_6, uint8_5, uint8_4, uint8_3, uint8_2, uint8_1
 	end
 
-	return bytepack_readInt64( b1, b2, b3, b4, b5, b6, b7, b8 )
+	return bytepack_readInt64( uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8 )
 end
 
 do
@@ -2142,13 +2142,13 @@ do
 			return nil, "Int64 value out of range"
 		end
 
-		local b1, b2, b3, b4, b5, b6, b7, b8 = bytepack_writeInt64( value )
+		local uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8 = bytepack_writeInt64( value )
 
 		if big_endian then
-			b1, b2, b3, b4, b5, b6, b7, b8 = b8, b7, b6, b5, b4, b3, b2, b1
+			uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8 = uint8_8, uint8_7, uint8_6, uint8_5, uint8_4, uint8_3, uint8_2, uint8_1
 		end
 
-		return string_char( b1, b2, b3, b4, b5, b6, b7, b8 )
+		return string_char( uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8 )
 	end
 
 	pack.writeInt64 = pack_writeInt64
@@ -2222,38 +2222,38 @@ function Reader:readInt( bit_count, big_endian )
 		return string_byte( self.data, position + 1 )
 	end
 
-	local b1, b2, b3, b4, b5, b6, b7, b8 = string_byte( self.data, position + 1, position + byte_count )
+	local uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8 = string_byte( self.data, position + 1, position + byte_count )
 
 	if big_endian then
 		if byte_count == 2 then
-			return bytepack_readInt16( b1, b2 )
+			return bytepack_readInt16( uint8_1, uint8_2 )
 		elseif byte_count == 3 then
-			return bytepack_readInt24( b1, b2, b3 )
+			return bytepack_readInt24( uint8_1, uint8_2, uint8_3 )
 		elseif byte_count == 4 then
-			return bytepack_readInt32( b1, b2, b3, b4 )
+			return bytepack_readInt32( uint8_1, uint8_2, uint8_3, uint8_4 )
 		elseif byte_count == 5 then
-			return bytepack_readInt40( b1, b2, b3, b4, b5 )
+			return bytepack_readInt40( uint8_1, uint8_2, uint8_3, uint8_4, uint8_5 )
 		elseif byte_count == 6 then
-			return bytepack_readInt48( b1, b2, b3, b4, b5, b6 )
+			return bytepack_readInt48( uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6 )
 		elseif byte_count == 7 then
-			return bytepack_readInt56( b1, b2, b3, b4, b5, b6, b7 )
+			return bytepack_readInt56( uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7 )
 		else
-			return bytepack_readInt64( b1, b2, b3, b4, b5, b6, b7, b8 )
+			return bytepack_readInt64( uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8 )
 		end
 	elseif byte_count == 2 then
-		return bytepack_readInt16( b2, b1 )
+		return bytepack_readInt16( uint8_2, uint8_1 )
 	elseif byte_count == 3 then
-		return bytepack_readInt24( b3, b2, b1 )
+		return bytepack_readInt24( uint8_3, uint8_2, uint8_1 )
 	elseif byte_count == 4 then
-		return bytepack_readInt32( b4, b3, b2, b1 )
+		return bytepack_readInt32( uint8_4, uint8_3, uint8_2, uint8_1 )
 	elseif byte_count == 5 then
-		return bytepack_readInt40( b5, b4, b3, b2, b1 )
+		return bytepack_readInt40( uint8_5, uint8_4, uint8_3, uint8_2, uint8_1 )
 	elseif byte_count == 6 then
-		return bytepack_readInt48( b6, b5, b4, b3, b2, b1 )
+		return bytepack_readInt48( uint8_6, uint8_5, uint8_4, uint8_3, uint8_2, uint8_1 )
 	elseif byte_count == 7 then
-		return bytepack_readInt56( b7, b6, b5, b4, b3, b2, b1 )
+		return bytepack_readInt56( uint8_7, uint8_6, uint8_5, uint8_4, uint8_3, uint8_2, uint8_1 )
 	else
-		return bytepack_readInt64( b8, b7, b6, b5, b4, b3, b2, b1 )
+		return bytepack_readInt64( uint8_8, uint8_7, uint8_6, uint8_5, uint8_4, uint8_3, uint8_2, uint8_1 )
 	end
 end
 
@@ -2290,61 +2290,61 @@ function Writer:writeInt( value, bit_count, big_endian )
 	if byte_count == 1 then
 		self:write( string_char( value ) )
 	elseif byte_count == 2 then
-		local b1, b2 = bytepack_writeInt16( value )
+		local uint8_1, uint8_2 = bytepack_writeInt16( value )
 
 		if big_endian then
-			b1, b2 = b2, b1
+			uint8_1, uint8_2 = uint8_2, uint8_1
 		end
 
-		self:write( string_char( b1, b2 ) )
+		self:write( string_char( uint8_1, uint8_2 ) )
 	elseif byte_count == 3 then
-		local b1, b2, b3 = bytepack_writeInt24( value )
+		local uint8_1, uint8_2, uint8_3 = bytepack_writeInt24( value )
 
 		if big_endian then
-			b1, b2, b3 = b3, b2, b1
+			uint8_1, uint8_2, uint8_3 = uint8_3, uint8_2, uint8_1
 		end
 
-		self:write( string_char( b1, b2, b3 ) )
+		self:write( string_char( uint8_1, uint8_2, uint8_3 ) )
 	elseif byte_count == 4 then
-		local b1, b2, b3, b4 = bytepack_writeInt32( value )
+		local uint8_1, uint8_2, uint8_3, uint8_4 = bytepack_writeInt32( value )
 
 		if big_endian then
-			b1, b2, b3, b4 = b4, b3, b2, b1
+			uint8_1, uint8_2, uint8_3, uint8_4 = uint8_4, uint8_3, uint8_2, uint8_1
 		end
 
-		self:write( string_char( b1, b2, b3, b4 ) )
+		self:write( string_char( uint8_1, uint8_2, uint8_3, uint8_4 ) )
 	elseif byte_count == 5 then
-		local b1, b2, b3, b4, b5 = bytepack_writeInt40( value )
+		local uint8_1, uint8_2, uint8_3, uint8_4, uint8_5 = bytepack_writeInt40( value )
 
 		if big_endian then
-			b1, b2, b3, b4, b5 = b5, b4, b3, b2, b1
+			uint8_1, uint8_2, uint8_3, uint8_4, uint8_5 = uint8_5, uint8_4, uint8_3, uint8_2, uint8_1
 		end
 
-		self:write( string_char( b1, b2, b3, b4, b5 ) )
+		self:write( string_char( uint8_1, uint8_2, uint8_3, uint8_4, uint8_5 ) )
 	elseif byte_count == 6 then
-		local b1, b2, b3, b4, b5, b6 = bytepack_writeInt48( value )
+		local uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6 = bytepack_writeInt48( value )
 
 		if big_endian then
-			b1, b2, b3, b4, b5, b6 = b6, b5, b4, b3, b2, b1
+			uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6 = uint8_6, uint8_5, uint8_4, uint8_3, uint8_2, uint8_1
 		end
 
-		self:write( string_char( b1, b2, b3, b4, b5, b6 ) )
+		self:write( string_char( uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6 ) )
 	elseif byte_count == 7 then
-		local b1, b2, b3, b4, b5, b6, b7 = bytepack_writeInt56( value )
+		local uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7 = bytepack_writeInt56( value )
 
 		if big_endian then
-			b1, b2, b3, b4, b5, b6, b7 = b7, b6, b5, b4, b3, b2, b1
+			uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7 = uint8_7, uint8_6, uint8_5, uint8_4, uint8_3, uint8_2, uint8_1
 		end
 
-		self:write( string_char( b1, b2, b3, b4, b5, b6, b7 ) )
+		self:write( string_char( uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7 ) )
 	elseif byte_count == 8 then
-		local b1, b2, b3, b4, b5, b6, b7, b8 = bytepack_writeInt64( value )
+		local uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8 = bytepack_writeInt64( value )
 
 		if big_endian then
-			b1, b2, b3, b4, b5, b6, b7, b8 = b8, b7, b6, b5, b4, b3, b2, b1
+			uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8 = uint8_8, uint8_7, uint8_6, uint8_5, uint8_4, uint8_3, uint8_2, uint8_1
 		end
 
-		self:write( string_char( b1, b2, b3, b4, b5, b6, b7, b8 ) )
+		self:write( string_char( uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8 ) )
 	else
 		error( "invalid number of bits", 2 )
 	end
@@ -2391,52 +2391,52 @@ do
 			start_position = 1
 		end
 
-		local b1, b2, b3, b4, b5, b6, b7, b8 = string_byte( binary_str, start_position, start_position + byte_count )
+		local uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8 = string_byte( binary_str, start_position, start_position + byte_count )
 
-		if byte_count == 1 and b1 ~= nil then
-			return bytepack_readFixedPoint( n, b1 ), nil
-		elseif byte_count == 2 and b2 ~= nil then
+		if byte_count == 1 and uint8_1 ~= nil then
+			return bytepack_readFixedPoint( n, uint8_1 ), nil
+		elseif byte_count == 2 and uint8_2 ~= nil then
 			if big_endian then
-				b1, b2 = b2, b1
+				uint8_1, uint8_2 = uint8_2, uint8_1
 			end
 
-			return bytepack_readFixedPoint( n, b1, b2 ), nil
-		elseif byte_count == 3 and b3 ~= nil then
+			return bytepack_readFixedPoint( n, uint8_1, uint8_2 ), nil
+		elseif byte_count == 3 and uint8_3 ~= nil then
 			if big_endian then
-				b1, b2, b3 = b3, b2, b1
+				uint8_1, uint8_2, uint8_3 = uint8_3, uint8_2, uint8_1
 			end
 
-			return bytepack_readFixedPoint( n, b1, b2, b3 ), nil
-		elseif byte_count == 4 and b4 ~= nil then
+			return bytepack_readFixedPoint( n, uint8_1, uint8_2, uint8_3 ), nil
+		elseif byte_count == 4 and uint8_4 ~= nil then
 			if big_endian then
-				b1, b2, b3, b4 = b4, b3, b2, b1
+				uint8_1, uint8_2, uint8_3, uint8_4 = uint8_4, uint8_3, uint8_2, uint8_1
 			end
 
-			return bytepack_readFixedPoint( n, b1, b2, b3, b4 ), nil
-		elseif byte_count == 5 and b5 ~= nil then
+			return bytepack_readFixedPoint( n, uint8_1, uint8_2, uint8_3, uint8_4 ), nil
+		elseif byte_count == 5 and uint8_5 ~= nil then
 			if big_endian then
-				b1, b2, b3, b4, b5 = b5, b4, b3, b2, b1
+				uint8_1, uint8_2, uint8_3, uint8_4, uint8_5 = uint8_5, uint8_4, uint8_3, uint8_2, uint8_1
 			end
 
-			return bytepack_readFixedPoint( n, b1, b2, b3, b4, b5 ), nil
-		elseif byte_count == 6 and b6 ~= nil then
+			return bytepack_readFixedPoint( n, uint8_1, uint8_2, uint8_3, uint8_4, uint8_5 ), nil
+		elseif byte_count == 6 and uint8_6 ~= nil then
 			if big_endian then
-				b1, b2, b3, b4, b5, b6 = b6, b5, b4, b3, b2, b1
+				uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6 = uint8_6, uint8_5, uint8_4, uint8_3, uint8_2, uint8_1
 			end
 
-			return bytepack_readFixedPoint( n, b1, b2, b3, b4, b5, b6 ), nil
-		elseif byte_count == 7 and b7 ~= nil then
+			return bytepack_readFixedPoint( n, uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6 ), nil
+		elseif byte_count == 7 and uint8_7 ~= nil then
 			if big_endian then
-				b1, b2, b3, b4, b5, b6, b7 = b7, b6, b5, b4, b3, b2, b1
+				uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7 = uint8_7, uint8_6, uint8_5, uint8_4, uint8_3, uint8_2, uint8_1
 			end
 
-			return bytepack_readFixedPoint( n, b1, b2, b3, b4, b5, b6, b7 ), nil
-		elseif byte_count == 8 and b8 ~= nil then
+			return bytepack_readFixedPoint( n, uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7 ), nil
+		elseif byte_count == 8 and uint8_8 ~= nil then
 			if big_endian then
-				b1, b2, b3, b4, b5, b6, b7, b8 = b8, b7, b6, b5, b4, b3, b2, b1
+				uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8 = uint8_8, uint8_7, uint8_6, uint8_5, uint8_4, uint8_3, uint8_2, uint8_1
 			end
 
-			return bytepack_readFixedPoint( n, b1, b2, b3, b4, b5, b6, b7, b8 ), nil
+			return bytepack_readFixedPoint( n, uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8 ), nil
 		end
 
 		return nil, "not enough data"
@@ -2480,54 +2480,54 @@ do
 			return nil, "not enough data"
 		end
 
-		local b1, b2, b3, b4, b5, b6, b7, b8 = string_byte( self.data, position + 1, position + byte_count )
+		local uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8 = string_byte( self.data, position + 1, position + byte_count )
 
 		self.position = position + byte_count
 
-		if byte_count == 1 and b1 ~= nil then
-			return bytepack_readFixedPoint( n, b1 ), nil
-		elseif byte_count == 2 and b2 ~= nil then
+		if byte_count == 1 and uint8_1 ~= nil then
+			return bytepack_readFixedPoint( n, uint8_1 ), nil
+		elseif byte_count == 2 and uint8_2 ~= nil then
 			if big_endian then
-				b1, b2 = b2, b1
+				uint8_1, uint8_2 = uint8_2, uint8_1
 			end
 
-			return bytepack_readFixedPoint( n, b1, b2 ), nil
-		elseif byte_count == 3 and b3 ~= nil then
+			return bytepack_readFixedPoint( n, uint8_1, uint8_2 ), nil
+		elseif byte_count == 3 and uint8_3 ~= nil then
 			if big_endian then
-				b1, b2, b3 = b3, b2, b1
+				uint8_1, uint8_2, uint8_3 = uint8_3, uint8_2, uint8_1
 			end
 
-			return bytepack_readFixedPoint( n, b1, b2, b3 ), nil
-		elseif byte_count == 4 and b4 ~= nil then
+			return bytepack_readFixedPoint( n, uint8_1, uint8_2, uint8_3 ), nil
+		elseif byte_count == 4 and uint8_4 ~= nil then
 			if big_endian then
-				b1, b2, b3, b4 = b4, b3, b2, b1
+				uint8_1, uint8_2, uint8_3, uint8_4 = uint8_4, uint8_3, uint8_2, uint8_1
 			end
 
-			return bytepack_readFixedPoint( n, b1, b2, b3, b4 ), nil
-		elseif byte_count == 5 and b5 ~= nil then
+			return bytepack_readFixedPoint( n, uint8_1, uint8_2, uint8_3, uint8_4 ), nil
+		elseif byte_count == 5 and uint8_5 ~= nil then
 			if big_endian then
-				b1, b2, b3, b4, b5 = b5, b4, b3, b2, b1
+				uint8_1, uint8_2, uint8_3, uint8_4, uint8_5 = uint8_5, uint8_4, uint8_3, uint8_2, uint8_1
 			end
 
-			return bytepack_readFixedPoint( n, b1, b2, b3, b4, b5 ), nil
-		elseif byte_count == 6 and b6 ~= nil then
+			return bytepack_readFixedPoint( n, uint8_1, uint8_2, uint8_3, uint8_4, uint8_5 ), nil
+		elseif byte_count == 6 and uint8_6 ~= nil then
 			if big_endian then
-				b1, b2, b3, b4, b5, b6 = b6, b5, b4, b3, b2, b1
+				uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6 = uint8_6, uint8_5, uint8_4, uint8_3, uint8_2, uint8_1
 			end
 
-			return bytepack_readFixedPoint( n, b1, b2, b3, b4, b5, b6 ), nil
-		elseif byte_count == 7 and b7 ~= nil then
+			return bytepack_readFixedPoint( n, uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6 ), nil
+		elseif byte_count == 7 and uint8_7 ~= nil then
 			if big_endian then
-				b1, b2, b3, b4, b5, b6, b7 = b7, b6, b5, b4, b3, b2, b1
+				uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7 = uint8_7, uint8_6, uint8_5, uint8_4, uint8_3, uint8_2, uint8_1
 			end
 
-			return bytepack_readFixedPoint( n, b1, b2, b3, b4, b5, b6, b7 ), nil
-		elseif byte_count == 8 and b8 ~= nil then
+			return bytepack_readFixedPoint( n, uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7 ), nil
+		elseif byte_count == 8 and uint8_8 ~= nil then
 			if big_endian then
-				b1, b2, b3, b4, b5, b6, b7, b8 = b8, b7, b6, b5, b4, b3, b2, b1
+				uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8 = uint8_8, uint8_7, uint8_6, uint8_5, uint8_4, uint8_3, uint8_2, uint8_1
 			end
 
-			return bytepack_readFixedPoint( n, b1, b2, b3, b4, b5, b6, b7, b8 ), nil
+			return bytepack_readFixedPoint( n, uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8 ), nil
 		end
 
 		return nil, "not enough data"
@@ -2571,84 +2571,84 @@ do
 			return string_rep( "\0", byte_count ), nil
 		end
 
-		local b1, b2, b3, b4, b5, b6, b7, b8 = bytepack_writeFixedPoint( value, m, n )
+		local uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8 = bytepack_writeFixedPoint( value, m, n )
 
 		if byte_count == 1 then
-			if b1 == nil then
+			if uint8_1 == nil then
 				return nil, "invalid value"
 			end
 
-			return string_char( b1 ), nil
+			return string_char( uint8_1 ), nil
 		elseif byte_count == 2 then
-			if b2 == nil then
+			if uint8_2 == nil then
 				return nil, "invalid value"
 			end
 
 			if big_endian then
-				b1, b2 = b2, b1
+				uint8_1, uint8_2 = uint8_2, uint8_1
 			end
 
-			return string_char( b1, b2 ), nil
+			return string_char( uint8_1, uint8_2 ), nil
 		elseif byte_count == 3 then
-			if b3 == nil then
+			if uint8_3 == nil then
 				return nil, "invalid value"
 			end
 
 			if big_endian then
-				b1, b2, b3 = b3, b2, b1
+				uint8_1, uint8_2, uint8_3 = uint8_3, uint8_2, uint8_1
 			end
 
-			return string_char( b1, b2, b3 ), nil
+			return string_char( uint8_1, uint8_2, uint8_3 ), nil
 		elseif byte_count == 4 then
-			if b4 == nil then
+			if uint8_4 == nil then
 				return nil, "invalid value"
 			end
 
 			if big_endian then
-				b1, b2, b3, b4 = b4, b3, b2, b1
+				uint8_1, uint8_2, uint8_3, uint8_4 = uint8_4, uint8_3, uint8_2, uint8_1
 			end
 
-			return string_char( b1, b2, b3, b4 ), nil
+			return string_char( uint8_1, uint8_2, uint8_3, uint8_4 ), nil
 		elseif byte_count == 5 then
-			if b5 == nil then
+			if uint8_5 == nil then
 				return nil, "invalid value"
 			end
 
 			if big_endian then
-				b1, b2, b3, b4, b5 = b5, b4, b3, b2, b1
+				uint8_1, uint8_2, uint8_3, uint8_4, uint8_5 = uint8_5, uint8_4, uint8_3, uint8_2, uint8_1
 			end
 
-			return string_char( b1, b2, b3, b4, b5 ), nil
+			return string_char( uint8_1, uint8_2, uint8_3, uint8_4, uint8_5 ), nil
 		elseif byte_count == 6 then
-			if b6 == nil then
+			if uint8_6 == nil then
 				return nil, "invalid value"
 			end
 
 			if big_endian then
-				b1, b2, b3, b4, b5, b6 = b6, b5, b4, b3, b2, b1
+				uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6 = uint8_6, uint8_5, uint8_4, uint8_3, uint8_2, uint8_1
 			end
 
-			return string_char( b1, b2, b3, b4, b5, b6 ), nil
+			return string_char( uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6 ), nil
 		elseif byte_count == 7 then
-			if b7 == nil then
+			if uint8_7 == nil then
 				return nil, "invalid value"
 			end
 
 			if big_endian then
-				b1, b2, b3, b4, b5, b6, b7 = b7, b6, b5, b4, b3, b2, b1
+				uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7 = uint8_7, uint8_6, uint8_5, uint8_4, uint8_3, uint8_2, uint8_1
 			end
 
-			return string_char( b1, b2, b3, b4, b5, b6, b7 ), nil
+			return string_char( uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7 ), nil
 		elseif byte_count == 8 then
-			if b8 == nil then
+			if uint8_8 == nil then
 				return nil, "invalid value"
 			end
 
 			if big_endian then
-				b1, b2, b3, b4, b5, b6, b7, b8 = b8, b7, b6, b5, b4, b3, b2, b1
+				uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8 = uint8_8, uint8_7, uint8_6, uint8_5, uint8_4, uint8_3, uint8_2, uint8_1
 			end
 
-			return string_char( b1, b2, b3, b4, b5, b6, b7, b8 ), nil
+			return string_char( uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8 ), nil
 		end
 
 		return nil, "unsupported byte count"
@@ -2704,17 +2704,17 @@ do
 			start_position = 1
 		end
 
-		local b1, b2, b3, b4 = string_byte( binary_str, start_position, start_position + 3 )
+		local uint8_1, uint8_2, uint8_3, uint8_4 = string_byte( binary_str, start_position, start_position + 3 )
 
-		if b4 == nil then
+		if uint8_4 == nil then
 			return nil, "not enough data"
 		end
 
 		if big_endian then
-			b1, b2, b3, b4 = b4, b3, b2, b1
+			uint8_1, uint8_2, uint8_3, uint8_4 = uint8_4, uint8_3, uint8_2, uint8_1
 		end
 
-		return bytepack_readFloat( b1, b2, b3, b4 ), nil
+		return bytepack_readFloat( uint8_1, uint8_2, uint8_3, uint8_4 ), nil
 	end
 
 	--- [SHARED AND MENU]
@@ -2739,17 +2739,17 @@ do
 		local end_position = start_position + 3
 		self.position = end_position
 
-		local b1, b2, b3, b4 = string_byte( self.data, start_position, end_position )
+		local uint8_1, uint8_2, uint8_3, uint8_4 = string_byte( self.data, start_position, end_position )
 
-		if b4 == nil then
+		if uint8_4 == nil then
 			return nil, "not enough data"
 		end
 
 		if big_endian then
-			b1, b2, b3, b4 = b4, b3, b2, b1
+			uint8_1, uint8_2, uint8_3, uint8_4 = uint8_4, uint8_3, uint8_2, uint8_1
 		end
 
-		return bytepack_readFloat( b1, b2, b3, b4 ), nil
+		return bytepack_readFloat( uint8_1, uint8_2, uint8_3, uint8_4 ), nil
 	end
 
 end
@@ -2768,13 +2768,13 @@ do
 	---@param big_endian? boolean `true` for big endian, `false` for little endian.
 	---@return string binary_str The binary string.
 	local function pack_writeFloat( value, big_endian )
-		local b1, b2, b3, b4 = bytepack_writeFloat( value )
+		local uint8_1, uint8_2, uint8_3, uint8_4 = bytepack_writeFloat( value )
 
 		if big_endian then
-			b1, b2, b3, b4 = b4, b3, b2, b1
+			uint8_1, uint8_2, uint8_3, uint8_4 = uint8_4, uint8_3, uint8_2, uint8_1
 		end
 
-		return string_char( b1, b2, b3, b4 )
+		return string_char( uint8_1, uint8_2, uint8_3, uint8_4 )
 	end
 
 	pack.writeFloat = pack_writeFloat
@@ -2812,17 +2812,17 @@ do
 			start_position = 1
 		end
 
-		local b1, b2, b3, b4, b5, b6, b7, b8 = string_byte( binary_str, start_position, start_position + 7 )
+		local uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8 = string_byte( binary_str, start_position, start_position + 7 )
 
-		if b8 == nil then
+		if uint8_8 == nil then
 			return nil, "not enough data"
 		end
 
 		if big_endian then
-			b1, b2, b3, b4, b5, b6, b7, b8 = b8, b7, b6, b5, b4, b3, b2, b1
+			uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8 = uint8_8, uint8_7, uint8_6, uint8_5, uint8_4, uint8_3, uint8_2, uint8_1
 		end
 
-		return bytepack_readDouble( b1, b2, b3, b4, b5, b6, b7, b8 )
+		return bytepack_readDouble( uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8 )
 	end
 
 	--- [SHARED AND MENU]
@@ -2847,17 +2847,17 @@ do
 		local end_position = start_position + 7
 		self.position = end_position
 
-		local b1, b2, b3, b4, b5, b6, b7, b8 = string_byte( self.data, start_position, end_position )
+		local uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8 = string_byte( self.data, start_position, end_position )
 
-		if b8 == nil then
+		if uint8_8 == nil then
 			return nil, "not enough data"
 		end
 
 		if big_endian then
-			b1, b2, b3, b4, b5, b6, b7, b8 = b8, b7, b6, b5, b4, b3, b2, b1
+			uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8 = uint8_8, uint8_7, uint8_6, uint8_5, uint8_4, uint8_3, uint8_2, uint8_1
 		end
 
-		return bytepack_readDouble( b1, b2, b3, b4, b5, b6, b7, b8 ), nil
+		return bytepack_readDouble( uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8 ), nil
 	end
 
 end
@@ -2874,13 +2874,13 @@ do
 	---@param big_endian? boolean `true` for big endian, `false` for little endian.
 	---@return string binary_str The binary string.
 	local function pack_writeDouble( value, big_endian )
-		local b1, b2, b3, b4, b5, b6, b7, b8 = bytepack_writeDouble( value )
+		local uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8 = bytepack_writeDouble( value )
 
 		if big_endian then
-			b1, b2, b3, b4, b5, b6, b7, b8 = b8, b7, b6, b5, b4, b3, b2, b1
+			uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8 = uint8_8, uint8_7, uint8_6, uint8_5, uint8_4, uint8_3, uint8_2, uint8_1
 		end
 
-		return string_char( b1, b2, b3, b4, b5, b6, b7, b8 )
+		return string_char( uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8 )
 	end
 
 	pack.writeDouble = pack_writeDouble
@@ -2918,17 +2918,17 @@ do
 			start_position = 1
 		end
 
-		local b1, b2 = string_byte( binary_str, start_position, start_position + 1 )
+		local uint8_1, uint8_2 = string_byte( binary_str, start_position, start_position + 1 )
 
-		if b2 == nil then
+		if uint8_2 == nil then
 			return nil, nil, nil, "not enough data"
 		end
 
 		if big_endian then
-			b1, b2 = b2, b1
+			uint8_1, uint8_2 = uint8_2, uint8_1
 		end
 
-		return bytepack_readDate( b1, b2 )
+		return bytepack_readDate( uint8_1, uint8_2 )
 	end
 
 	--- [SHARED AND MENU]
@@ -2955,17 +2955,17 @@ do
 		local end_position = start_position + 1
 		self.position = end_position
 
-		local b1, b2 = string_byte( self.data, start_position, end_position )
+		local uint8_1, uint8_2 = string_byte( self.data, start_position, end_position )
 
-		if b2 == nil then
+		if uint8_2 == nil then
 			return nil, nil, nil, "not enough data"
 		end
 
 		if big_endian then
-			b1, b2 = b2, b1
+			uint8_1, uint8_2 = uint8_2, uint8_1
 		end
 
-		return bytepack_readDate( b1, b2 )
+		return bytepack_readDate( uint8_1, uint8_2 )
 	end
 
 end
@@ -2984,13 +2984,13 @@ do
 	---@param big_endian? boolean `true` for big endian, `false` for little endian.
 	---@return string binary_str The binary string.
 	local function pack_writeDate( day, month, year, big_endian )
-		local b1, b2 = bytepack_writeDate( day, month, year )
+		local uint8_1, uint8_2 = bytepack_writeDate( day, month, year )
 
 		if big_endian then
-			b1, b2 = b2, b1
+			uint8_1, uint8_2 = uint8_2, uint8_1
 		end
 
-		return string_char( b1, b2 )
+		return string_char( uint8_1, uint8_2 )
 	end
 
 	pack.writeDate = pack_writeDate
@@ -3030,17 +3030,17 @@ do
 			start_position = 1
 		end
 
-		local b1, b2 = string_byte( binary_str, start_position, start_position + 1 )
+		local uint8_1, uint8_2 = string_byte( binary_str, start_position, start_position + 1 )
 
-		if b2 == nil then
+		if uint8_2 == nil then
 			return nil, nil, nil, "not enough data"
 		end
 
 		if big_endian then
-			b1, b2 = b2, b1
+			uint8_1, uint8_2 = uint8_2, uint8_1
 		end
 
-		return bytepack_readTime( b1, b2 )
+		return bytepack_readTime( uint8_1, uint8_2 )
 	end
 
 	--- [SHARED AND MENU]
@@ -3067,17 +3067,17 @@ do
 		local end_position = start_position + 1
 		self.position = end_position
 
-		local b1, b2 = string_byte( self.data, start_position, end_position )
+		local uint8_1, uint8_2 = string_byte( self.data, start_position, end_position )
 
-		if b2 == nil then
+		if uint8_2 == nil then
 			return nil, nil, nil, "not enough data"
 		end
 
 		if big_endian then
-			b1, b2 = b2, b1
+			uint8_1, uint8_2 = uint8_2, uint8_1
 		end
 
-		return bytepack_readTime( b1, b2 )
+		return bytepack_readTime( uint8_1, uint8_2 )
 	end
 
 end
@@ -3096,13 +3096,13 @@ do
 	---@param big_endian? boolean `true` for big endian, `false` for little endian.
 	---@return string binary_str The binary string.
 	local function pack_writeTime( hours, minutes, seconds, big_endian )
-		local b1, b2 = bytepack_writeTime( hours, minutes, seconds )
+		local uint8_1, uint8_2 = bytepack_writeTime( hours, minutes, seconds )
 
 		if big_endian then
-			b1, b2 = b2, b1
+			uint8_1, uint8_2 = uint8_2, uint8_1
 		end
 
-		return string_char( b1, b2 )
+		return string_char( uint8_1, uint8_2 )
 	end
 
 	pack.writeTime = pack_writeTime
@@ -3221,41 +3221,41 @@ function pack.readCountedString( binary_str, byte_count, big_endian, start_posit
 		start_position = 1
 	end
 
-	local b1, b2, b3, b4, b5, b6, b7, b8 = string_byte( binary_str, start_position, start_position + byte_count )
+	local uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8 = string_byte( binary_str, start_position, start_position + byte_count )
 	local length
 
 	if byte_count == 1 then
-		length = b1
+		length = uint8_1
 	elseif big_endian then
 		if byte_count == 2 then
-			length = bytepack_readUInt16( b1, b2 )
+			length = bytepack_readUInt16( uint8_1, uint8_2 )
 		elseif byte_count == 3 then
-			length = bytepack_readUInt24( b1, b2, b3 )
+			length = bytepack_readUInt24( uint8_1, uint8_2, uint8_3 )
 		elseif byte_count == 4 then
-			length = bytepack_readUInt32( b1, b2, b3, b4 )
+			length = bytepack_readUInt32( uint8_1, uint8_2, uint8_3, uint8_4 )
 		elseif byte_count == 5 then
-			length = bytepack_readUInt40( b1, b2, b3, b4, b5 )
+			length = bytepack_readUInt40( uint8_1, uint8_2, uint8_3, uint8_4, uint8_5 )
 		elseif byte_count == 6 then
-			length = bytepack_readUInt48( b1, b2, b3, b4, b5, b6 )
+			length = bytepack_readUInt48( uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6 )
 		elseif byte_count == 7 then
-			length = bytepack_readUInt56( b1, b2, b3, b4, b5, b6, b7 )
+			length = bytepack_readUInt56( uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7 )
 		else
-			length = bytepack_readUInt64( b1, b2, b3, b4, b5, b6, b7, b8 )
+			length = bytepack_readUInt64( uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8 )
 		end
 	elseif byte_count == 2 then
-		length = bytepack_readUInt16( b2, b1 )
+		length = bytepack_readUInt16( uint8_2, uint8_1 )
 	elseif byte_count == 3 then
-		length = bytepack_readUInt24( b3, b2, b1 )
+		length = bytepack_readUInt24( uint8_3, uint8_2, uint8_1 )
 	elseif byte_count == 4 then
-		length = bytepack_readUInt32( b4, b3, b2, b1 )
+		length = bytepack_readUInt32( uint8_4, uint8_3, uint8_2, uint8_1 )
 	elseif byte_count == 5 then
-		length = bytepack_readUInt40( b5, b4, b3, b2, b1 )
+		length = bytepack_readUInt40( uint8_5, uint8_4, uint8_3, uint8_2, uint8_1 )
 	elseif byte_count == 6 then
-		length = bytepack_readUInt48( b6, b5, b4, b3, b2, b1 )
+		length = bytepack_readUInt48( uint8_6, uint8_5, uint8_4, uint8_3, uint8_2, uint8_1 )
 	elseif byte_count == 7 then
-		length = bytepack_readUInt56( b7, b6, b5, b4, b3, b2, b1 )
+		length = bytepack_readUInt56( uint8_7, uint8_6, uint8_5, uint8_4, uint8_3, uint8_2, uint8_1 )
 	else
-		length = bytepack_readUInt64( b8, b7, b6, b5, b4, b3, b2, b1 )
+		length = bytepack_readUInt64( uint8_8, uint8_7, uint8_6, uint8_5, uint8_4, uint8_3, uint8_2, uint8_1 )
 	end
 
 	if length == 0 then
@@ -3329,26 +3329,26 @@ do
 				uint_str = string_char( bytepack_writeUInt64( length ) )
 			end
 		elseif byte_count == 2 then
-			local b1, b2 = bytepack_writeUInt16( length )
-			uint_str = string_char( b2, b1 )
+			local uint8_1, uint8_2 = bytepack_writeUInt16( length )
+			uint_str = string_char( uint8_2, uint8_1 )
 		elseif byte_count == 3 then
-			local b1, b2, b3 = bytepack_writeUInt24( length )
-			uint_str = string_char( b3, b2, b1 )
+			local uint8_1, uint8_2, uint8_3 = bytepack_writeUInt24( length )
+			uint_str = string_char( uint8_3, uint8_2, uint8_1 )
 		elseif byte_count == 4 then
-			local b1, b2, b3, b4 = bytepack_writeUInt32( length )
-			uint_str = string_char( b4, b3, b2, b1 )
+			local uint8_1, uint8_2, uint8_3, uint8_4 = bytepack_writeUInt32( length )
+			uint_str = string_char( uint8_4, uint8_3, uint8_2, uint8_1 )
 		elseif byte_count == 5 then
-			local b1, b2, b3, b4, b5 = bytepack_writeUInt40( length )
-			uint_str = string_char( b5, b4, b3, b2, b1 )
+			local uint8_1, uint8_2, uint8_3, uint8_4, uint8_5 = bytepack_writeUInt40( length )
+			uint_str = string_char( uint8_5, uint8_4, uint8_3, uint8_2, uint8_1 )
 		elseif byte_count == 6 then
-			local b1, b2, b3, b4, b5, b6 = bytepack_writeUInt48( length )
-			uint_str = string_char( b6, b5, b4, b3, b2, b1 )
+			local uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6 = bytepack_writeUInt48( length )
+			uint_str = string_char( uint8_6, uint8_5, uint8_4, uint8_3, uint8_2, uint8_1 )
 		elseif byte_count == 7 then
-			local b1, b2, b3, b4, b5, b6, b7 = bytepack_writeUInt56( length )
-			uint_str = string_char( b7, b6, b5, b4, b3, b2, b1 )
+			local uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7 = bytepack_writeUInt56( length )
+			uint_str = string_char( uint8_7, uint8_6, uint8_5, uint8_4, uint8_3, uint8_2, uint8_1 )
 		elseif byte_count == 8 then
-			local b1, b2, b3, b4, b5, b6, b7, b8 = bytepack_writeUInt64( length )
-			uint_str = string_char( b8, b7, b6, b5, b4, b3, b2, b1 )
+			local uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8 = bytepack_writeUInt64( length )
+			uint_str = string_char( uint8_8, uint8_7, uint8_6, uint8_5, uint8_4, uint8_3, uint8_2, uint8_1 )
 		else
 			return nil, nil, "unsupported number of bytes"
 		end

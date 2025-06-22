@@ -44,12 +44,13 @@ if bit.tohex == nil then
     --- [SHARED AND MENU]
     ---
     --- Returns the hexadecimal representation of the number with the specified digits.
+    ---
     ---@param value integer The value to be converted.
     ---@param length integer? The number of digits. Defaults to 8.
     ---@return string str The hexadecimal representation.
     ---@diagnostic disable-next-line: duplicate-set-field
     function bit.tohex( value, length )
-        return string_format( "%0" .. ( length or 8 ) .. "X", value )
+        return string_format( "%0" .. ( length or 8 ) .. "x", value )
     end
 
 end

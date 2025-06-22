@@ -23,7 +23,7 @@ do
     string.dump = string.dump or glua_string.dump
     string.find = string.find or glua_string.find
     string.format = string.format or glua_string.format
-    string.gmatch = string.gmatch or glua_string.gmatch
+    string.gmatch = string.gmatch or glua_string.gmatch or glua_string.gfind
     string.gsub = string.gsub or glua_string.gsub
     string.len = string.len or glua_string.len
     string.lower = string.lower or glua_string.lower
@@ -70,13 +70,13 @@ end
 --- Divides the string by the pattern.
 ---
 ---@param str string The input string.
----@param pattern string The pattern to divide by.
+---@param pattern_str string The pattern to divide by.
 ---@param from number? The start index.
 ---@param with_pattern boolean? If set to true, the pattern will be included in the resulting strings.
 ---@return string The first part of the strin.
 ---@return string The second part of the string.
-function string.divide( str, pattern, from, with_pattern )
-    local startPos, endPos = string_find( str, pattern, from or 1, with_pattern ~= true )
+function string.divide( str, pattern_str, from, with_pattern )
+    local startPos, endPos = string_find( str, pattern_str, from or 1, with_pattern ~= true )
     if startPos == nil then
         return str, ""
     else
@@ -210,14 +210,14 @@ end
 --- Splits the string.
 ---
 ---@param str string The input string.
----@param pattern? string The pattern to split by.
+---@param pattern_str? string The pattern to split by.
 ---@param with_pattern? boolean If the pattern is used.
 ---@return string[] result The string array.
 ---@return number length The length of the array.
-function string.split( str, pattern, with_pattern )
-    if pattern == nil then
+function string.split( str, pattern_str, with_pattern )
+    if pattern_str == nil then
         return { str }, 1
-    elseif pattern == "" then
+    elseif pattern_str == "" then
         local result, length = {}, string_len( str )
         for index = 1, length, 1 do
             result[ index ] = string_sub( str, index, index )
@@ -230,7 +230,7 @@ function string.split( str, pattern, with_pattern )
     with_pattern = with_pattern ~= true
 
     while true do
-        local startPos, endPos = string_find( str, pattern, pointer, with_pattern )
+        local startPos, endPos = string_find( str, pattern_str, pointer, with_pattern )
         if startPos == nil then
             break
         else
@@ -251,12 +251,12 @@ end
 --- Extracts the string.
 ---
 ---@param str string The input string.
----@param pattern string The pattern to extract by.
+---@param pattern_str string The pattern to extract by.
 ---@param default? string  The default value.
 ---@return string result The resulting string.
 ---@return string? extracted The extracted string.
-function string.extract( str, pattern, default )
-    local startPos, endPos, matched = string_find( str, pattern, 1, false )
+function string.extract( str, pattern_str, default )
+    local startPos, endPos, matched = string_find( str, pattern_str, 1, false )
     if startPos == nil then
         return str, default
     else
@@ -269,13 +269,13 @@ end
 --- Returns the number of matches of a string.
 ---
 ---@param str string The input string.
----@param pattern? string The pattern to count by.
+---@param pattern_str? string The pattern to count by.
 ---@param with_pattern? boolean If the pattern is used.
 ---@return number count The number of matches.
-function string.count( str, pattern, with_pattern )
-    if pattern == nil then
+function string.count( str, pattern_str, with_pattern )
+    if pattern_str == nil then
         return 0
-    elseif pattern == "" then
+    elseif pattern_str == "" then
         return string_len( str )
     end
 
@@ -283,7 +283,7 @@ function string.count( str, pattern, with_pattern )
     local pointer, length = 1, 0
 
     while true do
-        local startPos, endPos = string_find( str, pattern, pointer, with_pattern )
+        local startPos, endPos = string_find( str, pattern_str, pointer, with_pattern )
         if startPos == nil then
             break
         else
@@ -531,8 +531,8 @@ do
             start_position = 1
         end
 
-        local b1, b2, b3, b4 = string_byte( str, start_position, start_position + 3 )
-        return b1 == 0x1B and b2 == 0x4C and b3 == 0x4A and b4 == jit_version
+        local uint8_1, uint8_2, uint8_3, uint8_4 = string_byte( str, start_position, start_position + 3 )
+        return uint8_1 == 0x1B and uint8_2 == 0x4C and uint8_3 == 0x4A and uint8_4 == jit_version
     end
 
 end
