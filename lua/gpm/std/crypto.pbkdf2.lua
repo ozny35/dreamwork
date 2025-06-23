@@ -9,9 +9,9 @@ local hmac_padding = hmac.padding
 local hmac_computeBinary = hmac.computeBinary
 
 local pack_writeUInt32 = crypto.pack.writeUInt32
+local base16_encode = crypto.base16.encode
 
 local string = std.string
-local string_toHex = string.toHex
 local string_len, string_sub = string.len, string.sub
 local string_char, string_byte = string.char, string.byte
 
@@ -62,7 +62,7 @@ function crypto.pbkdf2( options )
         blocks[ block ] = string_char( table_unpack( t, 1, digest_size ) )
     end
 
-    local pbkdf2_hash = string_toHex( table_concat( blocks, "", 1, block_count ) )
+    local pbkdf2_hash = base16_encode( table_concat( blocks, "", 1, block_count ) )
 
     if string_len( pbkdf2_hash ) ~= pbkdf2_length then
         pbkdf2_hash = string_sub( pbkdf2_hash, 1, pbkdf2_length )
