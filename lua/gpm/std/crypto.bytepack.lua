@@ -1127,7 +1127,7 @@ do
 
 		--- [SHARED AND MENU]
 		---
-		--- Reads unsigned 1-byte (8 bit) integer from little endian hex bytes.
+		--- Reads unsigned 1-byte (8 bit) integer from big endian hex bytes.
 		---
 		---@param uint8_1 integer The first byte.
 		---@param uint8_2 integer The second byte.
@@ -1140,7 +1140,7 @@ do
 
 	--- [SHARED AND MENU]
 	---
-	--- Reads unsigned 2-byte (16 bit) integer from little endian hex bytes.
+	--- Reads unsigned 2-byte (16 bit) integer from big endian hex bytes.
 	---
 	---@param uint8_1 integer The first byte.
 	---@param uint8_2 integer The second byte.
@@ -1158,7 +1158,7 @@ do
 
 	--- [SHARED AND MENU]
 	---
-	--- Reads unsigned 3-byte (24 bit) integer from little endian hex bytes.
+	--- Reads unsigned 3-byte (24 bit) integer from big endian hex bytes.
 	---
 	---@param uint8_1 integer The first byte.
 	---@param uint8_2 integer The second byte.
@@ -1182,7 +1182,7 @@ do
 
 	--- [SHARED AND MENU]
 	---
-	--- Reads unsigned 4-byte (32 bit) integer from little endian hex bytes.
+	--- Reads unsigned 4-byte (32 bit) integer from big endian hex bytes.
 	---
 	---@param uint8_1 integer The first byte.
 	---@param uint8_2 integer The second byte.
@@ -1246,7 +1246,7 @@ do
 
 		--- [SHARED AND MENU]
 		---
-		--- Encodes unsigned 1-byte (8 bit) integer to little endian hex bytes.
+		--- Encodes unsigned 1-byte (8 bit) integer to big endian hex bytes.
 		---
 		--- Valid values without loss of precision: `0` - `255`
 		---
@@ -1261,7 +1261,7 @@ do
 
 	--- [SHARED AND MENU]
 	---
-	--- Encodes unsigned 2-byte (16 bit) integer to little endian hex bytes.
+	--- Encodes unsigned 2-byte (16 bit) integer to big endian hex bytes.
 	---
 	--- Valid values without loss of precision: `0` - `65535`
 	---
@@ -1271,15 +1271,15 @@ do
 	---@return integer uint8_3 The third byte.
 	---@return integer uint8_4 The fourth byte.
 	function bytepack.writeHex16( uint16 )
-		return encode_map[ bit_band( uint16, 0x0F ) ],
-			encode_map[ bit_band( bit_rshift( uint16, 4 ), 0x0F ) ],
+		return encode_map[ bit_band( bit_rshift( uint16, 12 ), 0x0F ) ],
 			encode_map[ bit_band( bit_rshift( uint16, 8 ), 0x0F ) ],
-			encode_map[ bit_band( bit_rshift( uint16, 12 ), 0x0F ) ]
+			encode_map[ bit_band( bit_rshift( uint16, 4 ), 0x0F ) ],
+			encode_map[ bit_band( uint16, 0x0F ) ]
 	end
 
 	--- [SHARED AND MENU]
 	---
-	--- Encodes unsigned 3-byte (24 bit) integer to little endian hex bytes.
+	--- Encodes unsigned 3-byte (24 bit) integer to big endian hex bytes.
 	---
 	--- Valid values without loss of precision: `0` - `16777215`
 	---
@@ -1291,17 +1291,17 @@ do
 	---@return integer uint8_5 The fifth byte.
 	---@return integer uint8_6 The sixth byte.
 	function bytepack.writeHex24( uint24 )
-		return encode_map[ bit_band( uint24, 0x0F ) ],
-			encode_map[ bit_band( bit_rshift( uint24, 4 ), 0x0F ) ],
-			encode_map[ bit_band( bit_rshift( uint24, 8 ), 0x0F ) ],
-			encode_map[ bit_band( bit_rshift( uint24, 12 ), 0x0F ) ],
+		return encode_map[ bit_band( bit_rshift( uint24, 20 ), 0x0F ) ],
 			encode_map[ bit_band( bit_rshift( uint24, 16 ), 0x0F ) ],
-			encode_map[ bit_band( bit_rshift( uint24, 20 ), 0x0F ) ]
+			encode_map[ bit_band( bit_rshift( uint24, 12 ), 0x0F ) ],
+			encode_map[ bit_band( bit_rshift( uint24, 8 ), 0x0F ) ],
+			encode_map[ bit_band( bit_rshift( uint24, 4 ), 0x0F ) ],
+			encode_map[ bit_band( uint24, 0x0F ) ]
 	end
 
 	--- [SHARED AND MENU]
 	---
-	--- Encodes unsigned 4-byte (32 bit) integer to little endian hex bytes.
+	--- Encodes unsigned 4-byte (32 bit) integer to big endian hex bytes.
 	---
 	--- Valid values without loss of precision: `0` - `4294967295`
 	---
@@ -1315,14 +1315,14 @@ do
 	---@return integer uint8_7 The seventh byte.
 	---@return integer uint8_8 The eighth byte.
 	function bytepack.writeHex32( uint32 )
-		return encode_map[ bit_band( uint32, 0x0F ) ],
-			encode_map[ bit_band( bit_rshift( uint32, 4 ), 0x0F ) ],
-			encode_map[ bit_band( bit_rshift( uint32, 8 ), 0x0F ) ],
-			encode_map[ bit_band( bit_rshift( uint32, 12 ), 0x0F ) ],
-			encode_map[ bit_band( bit_rshift( uint32, 16 ), 0x0F ) ],
-			encode_map[ bit_band( bit_rshift( uint32, 20 ), 0x0F ) ],
+		return encode_map[ bit_band( bit_rshift( uint32, 28 ), 0x0F ) ],
 			encode_map[ bit_band( bit_rshift( uint32, 24 ), 0x0F ) ],
-			encode_map[ bit_band( bit_rshift( uint32, 28 ), 0x0F ) ]
+			encode_map[ bit_band( bit_rshift( uint32, 20 ), 0x0F ) ],
+			encode_map[ bit_band( bit_rshift( uint32, 16 ), 0x0F ) ],
+			encode_map[ bit_band( bit_rshift( uint32, 12 ), 0x0F ) ],
+			encode_map[ bit_band( bit_rshift( uint32, 8 ), 0x0F ) ],
+			encode_map[ bit_band( bit_rshift( uint32, 4 ), 0x0F ) ],
+			encode_map[ bit_band( uint32, 0x0F ) ]
 	end
 
 end
