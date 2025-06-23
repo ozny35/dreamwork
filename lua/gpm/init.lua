@@ -864,7 +864,7 @@ dofile( "std/crypto.base16.lua" )
 -- dofile( "std/crypto.base32.lua" )
 -- dofile( "std/crypto.base58.lua" )
 dofile( "std/crypto.base64.lua" )
--- dofile( "std/crypto.percent.lua" )
+dofile( "std/crypto.percent.lua" )
 -- dofile( "std/crypto.punycode.lua" )
 
 -- checksum functions
