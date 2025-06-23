@@ -3509,4 +3509,143 @@ do
 
 end
 
+do
+
+	local bytepack_readHex8 = bytepack.readHex8
+
+	--- [SHARED AND MENU]
+	---
+	--- Reads unsigned 1-byte (8 bit) integer from hex string (2-bytes).
+	---
+	---@param hex8_str string The hex string.
+	---@param start_position? integer The start position in hex string, default is `1`.
+	---@return integer uint8 The unsigned 1-byte integer.
+	function pack.readHex8( hex8_str, start_position )
+		if start_position == nil then
+			start_position = 1
+		end
+
+		return bytepack_readHex8( string_byte( hex8_str, start_position, start_position + 1 ) )
+	end
+
+end
+
+do
+
+	local bytepack_writeHex8 = bytepack.writeHex8
+
+	--- [SHARED AND MENU]
+	---
+	--- Writes unsigned 1-byte (8 bit) integer as a hex string (2-bytes).
+	---
+	---@param uint8 integer The unsigned 1-byte integer.
+	---@return string hex8_str The hex string.
+	function pack.writeHex8( uint8 )
+		return string_char( bytepack_writeHex8( uint8 ) )
+	end
+
+end
+
+do
+
+	local bytepack_readHex16 = bytepack.readHex16
+
+	--- [SHARED AND MENU]
+	---
+	--- Reads unsigned 2-byte (16 bit) integer from hex string (4-bytes).
+	---
+	---@param hex16_str string The hex string.
+	---@param big_endian? boolean The endianness of the hex string, default is `true` (big endian).
+	---@param start_position? integer The start position in hex string, default is `1`.
+	---@return integer uint16 The unsigned 2-byte integer.
+	function pack.readHex16( hex16_str, big_endian, start_position )
+		if start_position == nil then
+			start_position = 1
+		end
+
+		local uint8_1, uint8_2, uint8_3, uint8_4 = string_byte( hex16_str, start_position, start_position + 3 )
+
+		if big_endian == false then
+			uint8_1, uint8_2, uint8_3, uint8_4 = uint8_3, uint8_4, uint8_1, uint8_2
+		end
+
+		return bytepack_readHex16( uint8_1, uint8_2, uint8_3, uint8_4 )
+	end
+
+end
+
+do
+
+	local bytepack_writeHex16 = bytepack.writeHex16
+
+	--- [SHARED AND MENU]
+	---
+	--- Writes unsigned 2-byte (16 bit) integer as a hex string (4-bytes).
+	---
+	---@param uint16 integer The unsigned 2-byte integer.
+	---@param big_endian? boolean The endianness of the hex string, default is `true` (big endian).
+	---@return string hex16_str The hex string.
+	function pack.writeHex16( uint16, big_endian )
+		local uint8_1, uint8_2, uint8_3, uint8_4 = bytepack_writeHex16( uint16 )
+
+		if big_endian == false then
+			uint8_1, uint8_2, uint8_3, uint8_4 = uint8_3, uint8_4, uint8_1, uint8_2
+		end
+
+		return string_char( uint8_1, uint8_2, uint8_3, uint8_4 )
+	end
+
+end
+
+do
+
+	local bytepack_readHex32 = bytepack.readHex32
+
+	--- [SHARED AND MENU]
+	---
+	--- Reads unsigned 4-byte (32 bit) integer from hex string (8-bytes).
+	---
+	---@param hex32_str string The hex string.
+	---@param big_endian? boolean The endianness of the hex string, default is `true` (big endian).
+	---@param start_position? integer The start position in hex string, default is `1`.
+	---@return integer uint32 The unsigned 4-byte integer.
+	function pack.readHex32( hex32_str, big_endian, start_position )
+		if start_position == nil then
+			start_position = 1
+		end
+
+		local uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8 = string_byte( hex32_str, start_position, start_position + 7 )
+
+		if big_endian == false then
+			uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8 = uint8_7, uint8_8, uint8_5, uint8_6, uint8_3, uint8_4, uint8_1, uint8_2
+		end
+
+		return bytepack_readHex32( uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8 )
+	end
+
+end
+
+do
+
+	local bytepack_writeHex32 = bytepack.writeHex32
+
+	--- [SHARED AND MENU]
+	---
+	--- Writes unsigned 4-byte (32 bit) integer as a hex string (8-bytes).
+	---
+	---@param uint32 integer The unsigned 4-byte integer.
+	---@param big_endian? boolean The endianness of the hex string, default is `true` (big endian).
+	---@return string hex32_str The hex string.
+	function pack.writeHex32( uint32, big_endian )
+		local uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8 = bytepack_writeHex32( uint32 )
+
+		if big_endian == false then
+			uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8 = uint8_7, uint8_8, uint8_5, uint8_6, uint8_3, uint8_4, uint8_1, uint8_2
+		end
+
+		return string_char( uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8 )
+	end
+
+end
+
 -- TODO: Zip
