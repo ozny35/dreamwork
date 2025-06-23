@@ -3,7 +3,8 @@ local std = _G.gpm.std
 local crypto = std.crypto
 
 local string = std.string
-local string_byte, string_len = string.byte, string.len
+local string_len = string.len
+local string_byte = string.byte
 
 --- [SHARED AND MENU]
 ---
@@ -11,7 +12,7 @@ local string_byte, string_len = string.byte, string.len
 ---
 --- See RFC1950 Page 9 https://tools.ietf.org/html/rfc1950 for the definition of Adler-32 checksum.
 ---@param str string The string used to calculate the Adler-32 checksum.
----@return number checksum The Adler-32 checksum, which is greater or equal to 0, and less than 2^32 (0x100000000).
+---@return integer checksum The Adler-32 checksum, which is greater or equal to 0, and less than 2^32 (0x100000000).
 function crypto.adler32( str )
     local length = string_len( str )
     local index = length % 16
