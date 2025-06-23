@@ -1,20 +1,19 @@
 local _G = _G
-
 local std = _G.gpm.std
 ---@class gpm.std.crypto
 local crypto = std.crypto
 
-local string = std.string
-local string_len = string.len
-local string_byte = string.byte
+local crc32 = ( _G.util or {} ).CRC
+if crc32 == nil then
 
-local bit = std.bit
-local bit_band = bit.band
-local bit_rshift = bit.rshift
-local bit_bnot, bit_bxor = bit.bnot, bit.bxor
+    local string = std.string
+    local string_len = string.len
+    local string_byte = string.byte
 
-local glua_util = _G.util
-if glua_util.CRC == nil then
+    local bit = std.bit
+    local bit_band = bit.band
+    local bit_rshift = bit.rshift
+    local bit_bnot, bit_bxor = bit.bnot, bit.bxor
 
     local crc32_lookup = {}
 
@@ -42,15 +41,19 @@ if glua_util.CRC == nil then
     function crypto.crc32( str )
         local crc = 0xFFFFFFFF
 
-        for i = 1, string_len( str ), 1 do
-            crc = bit_bxor( bit_rshift( crc, 8 ), crc32_lookup[ bit_band( bit_bxor( crc, string_byte( str, i ) ), 0xFF ) ] )
+        for index = 1, string_len( str ), 1 do
+            crc = bit_bxor( bit_rshift( crc, 8 ), crc32_lookup[ bit_band( bit_bxor( crc, string_byte( str, index, index ) ), 0xFF ) ] )
         end
 
-        return bit_band( bit_bnot( crc ), 0xffffffff )
+        return bit_bnot( crc ) % 0x100000000
     end
 
 else
 
-    crypto.crc32 = glua_util.CRC
+    local raw_tonumber = std.raw.tonumber
+
+    function crypto.crc32_2( str )
+        return raw_tonumber( crc32( str ), 10 ) or 0
+    end
 
 end
