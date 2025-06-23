@@ -356,4 +356,16 @@ if bit.replace == nil then
 
 end
 
+--- [SHARED AND MENU]
+---
+--- Normalizes the specified value and clamps it in the range of a 32-bit integer.
+---
+--- Basically fixes the error when the result of bit execution contains a "magical" minus.
+---
+---@param value integer The value to be normalized.
+---@return integer result The normalized value.
+function bit.signfix( value )
+    return value % 0xFFFFFFFF
+end
+
 -- TODO: more bit functions

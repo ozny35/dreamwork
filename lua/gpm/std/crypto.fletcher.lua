@@ -2,7 +2,6 @@ local std = _G.gpm.std
 ---@class gpm.std.crypto
 local crypto = std.crypto
 
-local math_toUInt = std.math.toUInt
 
 local string = std.string
 local string_len = string.len
@@ -12,6 +11,7 @@ local bit = std.bit
 local bit_bor = bit.bor
 local bit_bxor = bit.bxor
 local bit_lshift = bit.lshift
+local bit_signfix = bit.signfix
 
 --- [SHARED AND MENU]
 ---
@@ -67,7 +67,7 @@ function crypto.fnv0( str )
         hash = bit_bxor( hash, string_byte( str, index, index ) )
     end
 
-    return math_toUInt( hash, 32 )
+    return bit_signfix( hash, 32 )
 end
 
 --- [SHARED AND MENU]
@@ -86,7 +86,7 @@ function crypto.fnv1( str )
         hash = bit_bxor( hash, string_byte( str, index, index ) )
     end
 
-    return math_toUInt( hash, 32 )
+    return bit_signfix( hash, 32 )
 end
 
 --- [SHARED AND MENU]
@@ -105,5 +105,5 @@ function crypto.fnv1a( str )
         hash = hash + bit_lshift( hash, 1 ) + bit_lshift( hash, 4 ) + bit_lshift( hash, 7 ) + bit_lshift( hash, 8 ) +bit_lshift( hash, 24 )
     end
 
-    return math_toUInt( hash, 32 )
+    return bit_signfix( hash, 32 )
 end

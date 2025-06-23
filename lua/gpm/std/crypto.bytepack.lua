@@ -1178,7 +1178,7 @@ do
 		)
 	end
 
-	local math_toUInt = std.math.toUInt
+	local bit_signfix = bit.signfix
 
 	--- [SHARED AND MENU]
 	---
@@ -1194,7 +1194,7 @@ do
 	---@param uint8_8 integer The eighth byte.
 	---@return integer value The unsigned 4-byte integer.
 	function bytepack.readHex32( uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8 )
-		return math_toUInt( bit_bor(
+		return bit_signfix( bit_bor(
 			bit_lshift( decode_map[ uint8_1 ], 28 ),
 			bit_lshift( decode_map[ uint8_2 ], 24 ),
 			bit_lshift( decode_map[ uint8_3 ], 20 ),
@@ -1203,7 +1203,7 @@ do
 			bit_lshift( decode_map[ uint8_6 ], 8 ),
 			bit_lshift( decode_map[ uint8_7 ], 4 ),
 			decode_map[ uint8_8 ]
-		), 32 )
+		) )
 	end
 
 end
