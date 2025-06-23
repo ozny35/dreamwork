@@ -67,7 +67,7 @@ function crypto.fnv0( str )
         hash = bit_bxor( hash, string_byte( str, index, index ) )
     end
 
-    return bit_signfix( hash, 32 )
+    return bit_signfix( hash )
 end
 
 --- [SHARED AND MENU]
@@ -86,7 +86,7 @@ function crypto.fnv1( str )
         hash = bit_bxor( hash, string_byte( str, index, index ) )
     end
 
-    return bit_signfix( hash, 32 )
+    return bit_signfix( hash )
 end
 
 --- [SHARED AND MENU]
@@ -105,5 +105,5 @@ function crypto.fnv1a( str )
         hash = hash + bit_lshift( hash, 1 ) + bit_lshift( hash, 4 ) + bit_lshift( hash, 7 ) + bit_lshift( hash, 8 ) +bit_lshift( hash, 24 )
     end
 
-    return bit_signfix( hash, 32 )
+    return bit_signfix( hash )
 end
