@@ -10,7 +10,7 @@ local string_len = std.string.len
 
 --- [SHARED AND MENU]
 ---
---- Base16 (hexadecimal) encoding/decoding functions.
+--- Base16 (hexadecimal) encoding/decoding library.
 ---
 --- See https://en.wikipedia.org/wiki/Hexadecimal
 ---
