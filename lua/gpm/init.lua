@@ -870,7 +870,7 @@ dofile( "std/crypto.base64.lua" )
 -- checksum functions
 dofile( "std/crypto.crc.lua" )
 dofile( "std/crypto.adler.lua" )
--- dofile( "std/crypto.fletcher.lua" )
+dofile( "std/crypto.fletcher.lua" )
 
 -- hashers
 dofile( "std/crypto.md5.lua" )
