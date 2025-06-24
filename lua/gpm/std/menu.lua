@@ -3,7 +3,7 @@ local gpm = _G.gpm
 
 ---@class gpm.std
 local std = gpm.std
-local window = std.os.window
+local window = std.window
 
 --- [CLIENT AND MENU]
 ---

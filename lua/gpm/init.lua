@@ -106,6 +106,16 @@ local jit = std.jit or _G.jit or {
 
 std.jit = jit
 
+do
+
+    local jit_os = jit.os
+
+    std.OSX = jit_os == "OSX"
+    std.LINUX = jit_os == "Linux"
+    std.WINDOWS = jit_os == "Windows"
+
+end
+
 local CLIENT, SERVER, MENU = std.CLIENT, std.SERVER, std.MENU
 
 -- client-side files
@@ -809,13 +819,12 @@ dofile( "std/math.classes.lua" )
 dofile( "std/string.utf8.lua" )
 
 dofile( "std/structures.lua" )
-dofile( "std/bigint.lua" )
+dofile( "std/futures.lua" )
+dofile( "std/time.lua" )
 
 dofile( "std/version.lua" )
+dofile( "std/bigint.lua" )
 dofile( "std/color.lua" )
--- dofile( "std/time.lua" )
-
-dofile( "std/futures.lua" )
 
 do
 

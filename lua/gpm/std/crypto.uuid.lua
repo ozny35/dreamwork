@@ -112,11 +112,15 @@ end
 
 do
 
-    local os_timestamp = std.os.timestamp
+    local time_now = std.time.now
 
     local BigInt = std.BigInt
     local BigInt_fromNumber = BigInt.fromNumber
     local BigInt_band, BigInt_rshift = BigInt.band, BigInt.rshift
+
+    local bint = BigInt.__base
+    local bint_band = bint.band
+    local bint_toHex = bint.toHex
 
     local bigint_0xFF = BigInt_fromNumber( 0xFF )
 
@@ -139,17 +143,17 @@ do
     ---@return string uuid A UUID v7 string.
     function crypto.UUIDv7( timestamp )
         if timestamp == nil then
-            timestamp = BigInt_fromNumber( os_timestamp() )
+            timestamp = BigInt_fromNumber( time_now( "ms" ) )
         end
 
         return string_format( "0%s%s%s%s-%s%s-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
-            BigInt_rshift( timestamp, 40 ):band( bigint_0xFF ):toHex( true ),
-            BigInt_rshift( timestamp, 32 ):band( bigint_0xFF ):toHex( true ),
-            BigInt_rshift( timestamp, 24 ):band( bigint_0xFF ):toHex( true ),
-            BigInt_rshift( timestamp, 16 ):band( bigint_0xFF ):toHex( true ),
+            bint_toHex( bint_band( BigInt_rshift( timestamp, 40 ), bigint_0xFF ), true ),
+            bint_toHex( bint_band( BigInt_rshift( timestamp, 32 ), bigint_0xFF ), true ),
+            bint_toHex( bint_band( BigInt_rshift( timestamp, 24 ), bigint_0xFF ), true ),
+            bint_toHex( bint_band( BigInt_rshift( timestamp, 16 ), bigint_0xFF ), true ),
 
-            BigInt_rshift( timestamp, 8 ):band( bigint_0xFF ):toHex( true ),
-            BigInt_band( timestamp, bigint_0xFF ):toHex( true ),
+            bint_toHex( bint_band( BigInt_rshift( timestamp, 8 ), bigint_0xFF ), true ),
+            bint_toHex( BigInt_band( timestamp, bigint_0xFF ), true ),
             bit_bor( bit_band( math_random( 0, 255 ), 0x0F ), 0x70 ),
             math_random( 0, 255 ),
 

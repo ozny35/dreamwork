@@ -16,6 +16,6 @@ if glua_system ~= nil then
 
     steam.getAwayTime = steam.getAwayTime or glua_system.UpTime or function() return 0 end
     steam.getAppTime = steam.getAppTime or glua_system.AppTime or function() return 0 end
-    steam.time = steam.time or glua_system.SteamTime or std.os.time
+    steam.time = steam.time or glua_system.SteamTime or std.time.now
 
 end

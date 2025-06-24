@@ -4,13 +4,12 @@ local _G = _G
 local gpm = _G.gpm
 local std = gpm.std
 
-local os_time = std.os.time
-
 local sqlite = std.sqlite
-
 local sqlite_transaction = sqlite.transaction
 local sqlite_query, sqlite_rawQuery = sqlite.query, sqlite.rawQuery
 local sqlite_queryOne, sqlite_queryValue = sqlite.queryOne, sqlite.queryValue
+
+local time_now = std.time.now
 
 -- http_cache table, used for etag caching in http library
 do
@@ -60,7 +59,7 @@ do
             return
         end
 
-        sqlite_query( "insert or replace into 'gpm.http_cache' (url, etag, timestamp, content) values (?, ?, ?, ?)", url, etag, os_time(), content )
+        sqlite_query( "insert or replace into 'gpm.http_cache' (url, etag, timestamp, content) values (?, ?, ?, ?)", url, etag, time_now(), content )
     end
 
     gpm.http_cache = http_cache
@@ -424,7 +423,7 @@ do
                         id integer primary key autoincrement,
                         path text not null unique,
                         size integer not null,
-                        os_time number,
+                        os_time integer,
                         hash text
                     )
                 ]] )
@@ -481,7 +480,7 @@ do
             gpm.Logger:info( "Running migration '" .. tostring( migration.name ) .. "'...")
 
             if xpcall( sqlite_transaction, display_error, migration.execute ) then
-                sqlite_query( "insert into 'gpm.migration_history' (name, timestamp) values (?, ?)", migration.name, os_time() )
+                sqlite_query( "insert into 'gpm.migration_history' (name, timestamp) values (?, ?)", migration.name, time_now() )
                 return true
             else
                 return false

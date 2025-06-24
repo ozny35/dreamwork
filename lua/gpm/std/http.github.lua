@@ -1,18 +1,16 @@
 local std = _G.gpm.std
-
-local raw_tonumber = std.raw.tonumber
-local tostring = std.tostring
-local os_clock = std.os.clock
-
 ---@class gpm.std.http
 local http = std.http
 
 local json_deserialize = std.crypto.json.deserialize
 local base64_decode = std.crypto.base64.decode
+local raw_tonumber = std.raw.tonumber
+local time_elapsed = std.time.elapsed
 local string_gsub = std.string.gsub
 local http_request = http.request
 local futures_sleep = std.sleep
-local os_time = std.os.time
+local tostring = std.tostring
+local time_now = std.time.now
 
 ---@type string
 local api_token
@@ -78,7 +76,7 @@ local function request( method, pathname, headers, body, do_cache )
 
     local href = "https://api.github.com" .. pathname
 
-    local current_time = os_time()
+    local current_time = time_now()
     if ratelimit_reset_time > current_time then
         local diff = ratelimit_reset_time - current_time
         if diff < 30 then
@@ -90,12 +88,12 @@ local function request( method, pathname, headers, body, do_cache )
 
     -- Rate limit mutative requests
     if method > 1 and method < 6 then
-        local diff = next_mutation_time - os_clock()
+        local diff = next_mutation_time - time_elapsed()
         if diff > 0 then
             next_mutation_time = next_mutation_time + 1000
             futures_sleep( diff )
         else
-            next_mutation_time = os_clock() + 1000
+            next_mutation_time = time_elapsed() + 1000
         end
     end
 
