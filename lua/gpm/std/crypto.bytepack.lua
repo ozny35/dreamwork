@@ -1123,8 +1123,6 @@ do
 			end
 		end
 
-		-- PrintTable( uint8_cache )
-
 		--- [SHARED AND MENU]
 		---
 		--- Reads unsigned 1-byte (8 bit) integer from big endian hex bytes.

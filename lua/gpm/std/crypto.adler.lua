@@ -11,6 +11,7 @@ local string_byte = string.byte
 --- Calculate the Adler-32 checksum of the string.
 ---
 --- See RFC1950 Page 9 https://tools.ietf.org/html/rfc1950 for the definition of Adler-32 checksum.
+---
 ---@param str string The string used to calculate the Adler-32 checksum.
 ---@return integer checksum The Adler-32 checksum, which is greater or equal to 0, and less than 2^32 (0x100000000).
 function crypto.adler32( str )

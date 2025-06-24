@@ -56,6 +56,7 @@ end
 --- The big integer class.
 ---
 ---@class gpm.std.BigIntClass : gpm.std.BigInt
+---@field __base gpm.std.BigInt
 ---@overload fun( value: string | number, base: number? ): gpm.std.BigInt
 local BigIntClass = std.class.create( BigInt )
 std.BigInt = BigIntClass

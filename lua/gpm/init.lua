@@ -16,8 +16,15 @@ end
 
 -- TODO: globally replace all versions, steamids, url, etc. with their classes in gpm, e.g. std.URL, steam.Identifier
 
-
 ---@class gpm.std
+---@field DEVELOPER integer A cached value of `developer` console variable.
+---@field SYSTEM_ENDIANNESS `true` if the operating system is big endianness, `false` if not.
+---@field SYSTEM_COUNTRY string The country code of the operating system. (ISO 3166-1 alpha-2)
+---@field HAS_BATTERY boolean `true` if the operating system has a battery, `false` if not.
+---@field BATTERY_LEVEL integer The battery level, from `0` to `100`.
+---@field OSX boolean `true` if the game is running on OSX.
+---@field LINUX boolean `true` if the game is running on Linux.
+---@field WINDOWS boolean `true` if the game is running on Windows.
 local std = gpm.std
 if std == nil then
     --- [SHARED AND MENU]
@@ -650,8 +657,9 @@ do
 
 end
 
+std.SYSTEM_ENDIANNESS = std.SYSTEM_ENDIANNESS or string.byte( string.dump( std.debug.fempty ), 7 ) == 0x00
+
 dofile( "std/bit.lua" )
-dofile( "std/os.lua" )
 
 -- TODO: remove me later or rewrite
 do
@@ -862,7 +870,6 @@ dofile( "std/crypto.pack.lua" )
 -- encoders
 dofile( "std/crypto.base16.lua" )
 -- dofile( "std/crypto.base32.lua" )
--- dofile( "std/crypto.base58.lua" )
 dofile( "std/crypto.base64.lua" )
 dofile( "std/crypto.percent.lua" )
 -- dofile( "std/crypto.punycode.lua" )
@@ -937,6 +944,8 @@ gpm.Logger = logger
 
 -- dofile( "std/message.lua" )
 
+local key2fn = {}
+
 do
 
     local developer_mode = 1
@@ -957,6 +966,13 @@ do
             if key == "DEVELOPER" then
                 return developer_mode
             end
+
+            local fn = key2fn[ key ]
+            if fn == nil then
+                return
+            end
+
+            return fn()
         end
     } )
 
@@ -1276,96 +1292,61 @@ dofile( "std/steam.workshop.lua" )
 dofile( "std/addon.lua" )
 
 if std.CLIENT_MENU then
-    dofile( "std/os.window.lua" )
+    dofile( "std/window.lua" )
     dofile( "std/menu.lua" )
     dofile( "std/client.lua" )
     dofile( "std/render.lua" )
 end
 
-do
-
-    ---@class gpm.std.os
-    local os = std.os
-
-    ---@class gpm.std.os.window
-    local window = os.window
-
-    local has_battery = false
-    local level = 100
-
-    --- [SHARED AND MENU]
-    ---
-    --- Returns the current battery level.
-    ---
-    ---@return number level The battery level, between 0 and 100.
-    function os.getBatteryLevel()
-        return level
-    end
-
-    --- [SHARED AND MENU]
-    ---
-    --- Checks if the system has a battery.
-    ---
-    ---@return boolean has `true` if the system has a battery, `false` if not.
-    function os.hasBattery()
-        return has_battery
-    end
+if _G.system ~= nil then
 
     local glua_system = _G.system
-    if glua_system ~= nil then
 
-        os.country = os.country or glua_system.GetCountry or function() return "gb" end
+    key2fn.SYSTEM_COUNTRY = glua_system.GetCountry or function() return "gb" end
 
-        if glua_system.BatteryPower ~= nil then
+    if glua_system.BatteryPower ~= nil then
 
-            local system_BatteryPower = glua_system.BatteryPower
+        local system_BatteryPower = glua_system.BatteryPower
 
-            local function update_battery()
-                local battery_power = system_BatteryPower()
-                has_battery = battery_power ~= 255
-                level = has_battery and battery_power or 100
+        local battery_power = 0
+
+        local function update_battery()
+            if battery_power ~= system_BatteryPower() then
+                battery_power = system_BatteryPower()
+                if battery_power == 255 then
+                    std.HAS_BATTERY = false
+                    std.BATTERY_LEVEL = 100
+                else
+                    std.HAS_BATTERY = true
+                    std.BATTERY_LEVEL = battery_power
+                end
             end
-
-            update_battery()
-
-            gpm.TickTimer1:attach( update_battery, "std.os.battery" )
-
         end
 
-        if std.CLIENT_MENU then
+        update_battery()
 
-            window.isWindowed = window.isWindowed or glua_system.IsWindowed or function() return true end
-            window.flash = window.flash or glua_system.FlashWindow or debug_fempty
+        gpm.TickTimer1:attach( update_battery, "gpm::battery" )
 
-            local system_HasFocus = glua_system.HasFocus
-            if system_HasFocus ~= nil then
+    end
 
-                local has_focus = system_HasFocus()
-                window.focus = has_focus
+    if std.CLIENT_MENU then
 
-                gpm.TickTimer0_05:attach( function()
-                    if has_focus ~= system_HasFocus() then
-                        has_focus = not has_focus
-                        window.focus = has_focus
-                    end
-                end, "std.os.window.focus" )
+        local system_HasFocus = glua_system.HasFocus
+        if system_HasFocus ~= nil then
 
-            end
+            ---@class gpm.std.window
+            ---@field focus boolean `true` if the game's window has focus, `false` otherwise.
+            local window = std.window
 
-            if window.isFullscreen == nil then
+            local has_focus = system_HasFocus()
+            window.focus = has_focus
 
-                local system_IsWindowed = window.isWindowed
-
-                --- [CLIENT AND MENU]
-                ---
-                --- Returns whether the game window is fullscreen.
-                ---
-                ---@return boolean is_on `true` if the game window is fullscreen, `false` if not.
-                function window.isFullscreen()
-                    return not system_IsWindowed()
+            gpm.TickTimer0_05:attach( function()
+                if has_focus ~= system_HasFocus() then
+                    has_focus = not has_focus
+                    window.focus = has_focus
                 end
-
-            end
+            end, "gpm::window_focus" )
 
         end
 
@@ -1378,7 +1359,7 @@ dofile( "std/level.lua" )
 
 if coroutine.wait == nil then
 
-    local os_clock = std.os.clock
+    local server_getUptime = std.server.getUptime
 
     ---@class gpm.std.coroutine
     local coroutine = std.coroutine
@@ -1386,9 +1367,9 @@ if coroutine.wait == nil then
 
     ---@async
     function coroutine.wait( seconds )
-        local endtime = os_clock() + seconds
+        local endtime = server_getUptime() + seconds
         while true do
-            if endtime < os_clock() then return end
+            if endtime < server_getUptime() then return end
             coroutine_yield()
         end
     end
