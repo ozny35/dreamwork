@@ -1101,7 +1101,7 @@ do
 end
 
 if math.randomseed == 0 then
-    math.randomseed = std.os.timestamp()
+    math.randomseed = std.time.now( "ms" )
     logger:info( "Random seed was re-synchronized with milliseconds since the Unix epoch." )
 end
 
