@@ -97,6 +97,72 @@ do
         return table_concat( segments, "", 1, segment_count )
     end
 
+    do
+
+        local math_min = std.math.min
+
+        ---@type table<integer, boolean>
+        local hex_bytes = {
+            [ 0x30 ] = true,
+            [ 0x31 ] = true,
+            [ 0x32 ] = true,
+            [ 0x33 ] = true,
+            [ 0x34 ] = true,
+            [ 0x35 ] = true,
+            [ 0x36 ] = true,
+            [ 0x37 ] = true,
+            [ 0x38 ] = true,
+            [ 0x39 ] = true,
+            [ 0x41 ] = true,
+            [ 0x42 ] = true,
+            [ 0x43 ] = true,
+            [ 0x44 ] = true,
+            [ 0x45 ] = true,
+            [ 0x46 ] = true,
+            [ 0x61 ] = true,
+            [ 0x62 ] = true,
+            [ 0x63 ] = true,
+            [ 0x64 ] = true,
+            [ 0x65 ] = true,
+            [ 0x66 ] = true
+        }
+
+        --- [SHARED AND MENU]
+        ---
+        --- Validates the specified percent string.
+        ---
+        ---@param percent_str string The percent string to validate.
+        ---@param whitelist? table The character whitelist, optional.
+        ---@return boolean is_valid `true` if the percent string is valid, otherwise `false`.
+        function percent.validate( percent_str, whitelist )
+            local percent_str_length = string_len( percent_str ) + 1
+            local position = 1
+
+            if whitelist == nil then
+                whitelist = default_whitelist
+            end
+
+            while position ~= percent_str_length do
+                local uint8_0 = string_byte( percent_str, position, position )
+                if uint8_0 == 0x25 --[[ "%" ]] then
+                    local uint8_1, uint8_2 = string_byte( percent_str, position + 1, position + 2 )
+                    if hex_bytes[ uint8_1 ] == nil or hex_bytes[ uint8_2 ] == nil then
+                        return false
+                    end
+
+                    position = math_min( position + 3, percent_str_length )
+                elseif uint8_0 == 0x2B --[[ "+" ]] or whitelist[ uint8_0 ] ~= nil then
+                    position = position + 1
+                else
+                    return false
+                end
+            end
+
+            return true
+        end
+
+    end
+
 end
 
 do
