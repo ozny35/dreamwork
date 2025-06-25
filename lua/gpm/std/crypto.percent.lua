@@ -134,6 +134,7 @@ do
         ---@param percent_str string The percent string to validate.
         ---@param whitelist? table The character whitelist, optional.
         ---@return boolean is_valid `true` if the percent string is valid, otherwise `false`.
+        ---@return nil | string err_msg The error message.
         function percent.validate( percent_str, whitelist )
             local percent_str_length = string_len( percent_str ) + 1
             local position = 1
@@ -147,14 +148,14 @@ do
                 if uint8_0 == 0x25 --[[ "%" ]] then
                     local uint8_1, uint8_2 = string_byte( percent_str, position + 1, position + 2 )
                     if hex_bytes[ uint8_1 ] == nil or hex_bytes[ uint8_2 ] == nil then
-                        return false
+                        return false, "string contains invalid characters"
                     end
 
                     position = math_min( position + 3, percent_str_length )
                 elseif uint8_0 == 0x2B --[[ "+" ]] or whitelist[ uint8_0 ] ~= nil then
                     position = position + 1
                 else
-                    return false
+                    return false, "string contains invalid characters"
                 end
             end
 

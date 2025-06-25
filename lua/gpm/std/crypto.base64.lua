@@ -29,7 +29,7 @@ local glue_decode = glua_util ~= nil and glua_util.Base64Decode
 
 --- [SHARED AND MENU]
 ---
---- The base64 encoding/decoding library.
+--- Base64 encoding/decoding library.
 ---
 --- See https://en.wikipedia.org/wiki/Base64
 ---
@@ -233,9 +233,9 @@ end
 ---
 --- Encodes the specified string to base64.
 ---
----@param raw_str string
----@param options? gpm.std.crypto.base64.Options
----@return string
+---@param raw_str string The string to encode.
+---@param options? gpm.std.crypto.base64.Options The base64 encoding options.
+---@return string base64_str The encoded string.
 function base64.encode( raw_str, options )
     if options == nil then
         if glue_encode == nil then
@@ -375,9 +375,9 @@ end
 ---
 --- Decodes the specified base64 encoded string.
 ---
----@param base64_str string
----@param options? gpm.std.crypto.base64.Options
----@return string str_raw
+---@param base64_str string The base64 encoded string to decode.
+---@param options? gpm.std.crypto.base64.Options The base64 encoding options.
+---@return string str_raw The decoded string.
 function base64.decode( base64_str, options )
     if options == nil then
         if glue_decode == nil then
@@ -447,11 +447,12 @@ do
 
     --- [SHARED AND MENU]
     ---
-    --- Checks if the specified base64 encoded string is valid.\
+    --- Checks if the specified base64 encoded string is valid.
     ---
     ---@param base64_str string The base64 encoded string to check.
     ---@param options? gpm.std.crypto.base64.Options The base64 encoding options.
     ---@return boolean is_valid `true` if the base64 string is valid, `false` otherwise
+    ---@return nil | string err_msg The error message.
     function base64.validate( base64_str, options )
         if options == nil then
             ---@diagnostic disable-next-line: cast-local-type
@@ -484,7 +485,7 @@ do
                             base64_str = base64_str .. string_sub( buffer_str, i - wrap + 1, i )
                         end
                     else
-                        return false
+                        return false, "invalid string eol"
                     end
                 end
 
@@ -493,7 +494,7 @@ do
         end
 
         if base_str_length % 4 ~= 0 then
-            return false
+            return false, "invalid string length"
         end
 
         local pad_byte
@@ -510,15 +511,15 @@ do
             local uint8_1, uint8_2, uint8_3, uint8_4 = string_byte( base64_str, start_position, end_position )
 
             if not ( alphabet[ uint8_1 ] and alphabet[ uint8_2 ] ) then
-                return false
+                return false, "string contains invalid characters"
             end
 
             if end_position == base_str_length then
                 if not ( ( alphabet[ uint8_3 ] or uint8_3 == pad_byte ) and ( alphabet[ uint8_4 ] or uint8_4 == pad_byte ) ) then
-                    return false
+                    return false, "string contains invalid characters"
                 end
             elseif not ( alphabet[ uint8_3 ] and alphabet[ uint8_4 ] ) then
-                return false
+                return false, "string contains invalid characters"
             end
         end
 

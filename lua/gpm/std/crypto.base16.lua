@@ -63,15 +63,16 @@ end
 ---
 ---@param base16_str string The base16 string to validate.
 ---@return boolean is_valid `true` if the base16 string is valid, otherwise `false`.
+---@return nil | string err_msg The error message.
 function base16.validate( base16_str )
     local base16_length = string_len( base16_str )
     if base16_length % 2 ~= 0 then
-        return false
+        return false, "string length must be even"
     end
 
     for index = 1, base16_length, 2 do
         if bytepack_readHex8( string_byte( base16_str, index, index + 1 ) ) == nil then
-            return false
+            return false, "string contains invalid characters"
         end
     end
 
