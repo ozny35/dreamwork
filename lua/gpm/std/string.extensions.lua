@@ -463,25 +463,3 @@ do
     end
 
 end
-
---- [SHARED AND MENU]
----
---- Creates a string that contains all ASCII characters that match the pattern.
----
----@param pattern_str string
----@return string charset
-function string.charset( pattern_str )
-    pattern_str = "[" .. pattern_str .. "]"
-
-    local bytes, byte_count = {}, 0
-
-    for uint8 = 1, 255, 1 do
-        local char_str = string_char( uint8 )
-        if string_match( char_str, pattern_str ) then
-            byte_count = byte_count + 1
-            bytes[ byte_count ] = char_str
-        end
-    end
-
-    return table_concat( bytes, "", 1, byte_count )
-end
