@@ -61,7 +61,7 @@ if engine.hookCatch == nil then
         --- Adds a callback to the `hookCatch` event.
         ---
         ---@param event_name string
-        ---@param fn gpm.std.Hook | fun( ... ): any, any, any, any, any, any
+        ---@param fn gpm.std.Hook | fun( ... ): ...
         ---@param priority integer | nil
         function engine.hookCatch( event_name, fn, priority )
             local lst = engine_hooks[ event_name ]

@@ -166,9 +166,9 @@ do
     --- | `mo`     | Month        | ~30 days                    |
     --- | `y`      | Year         | 365 days                    |
     ---
-    ---@param duration_str gpm.std.time.Duration
-    ---@param unit? gpm.std.time.Unit
-    ---@return integer
+    ---@param duration_str gpm.std.time.Duration The duration string to convert.
+    ---@param unit? gpm.std.time.Unit The unit to convert the duration to, seconds by default.
+    ---@return integer timestamp The duration in the specified unit.
     function time.duration( duration_str, unit )
         local seconds, milliseconds, microseconds, nanoseconds = duration( duration_str, 2 )
 
@@ -220,9 +220,9 @@ do
     --- | `mo`     | Month        | ~30 days                    |
     --- | `y`      | Year         | 365 days                    |
     ---
-    ---@param timestamp integer
-    ---@param unit? gpm.std.time.Unit
-    ---@param duration_str gpm.std.time.Duration
+    ---@param timestamp integer The timestamp to add the duration to.
+    ---@param unit? gpm.std.time.Unit The unit to add the duration to, seconds by default.
+    ---@param duration_str gpm.std.time.Duration The duration string to add.
     ---@return integer
     function time.add( timestamp, unit, duration_str )
         local seconds, milliseconds, microseconds, nanoseconds = duration( duration_str, 2 )
@@ -275,9 +275,9 @@ do
     --- | `mo`     | Month        | ~30 days                    |
     --- | `y`      | Year         | 365 days                    |
     ---
-    ---@param timestamp integer
-    ---@param unit? gpm.std.time.Unit
-    ---@param duration_str gpm.std.time.Duration
+    ---@param timestamp integer The timestamp to subtract the duration from.
+    ---@param unit? gpm.std.time.Unit The unit to subtract the duration from, seconds by default.
+    ---@param duration_str gpm.std.time.Duration The duration string to subtract.
     ---@return integer
     function time.sub( timestamp, unit, duration_str )
         local seconds, milliseconds, microseconds, nanoseconds = duration( duration_str, 2 )
@@ -319,11 +319,11 @@ do
     ---
     --- Transforms a timestamp from one unit to another.
     ---
-    ---@param timestamp integer
-    ---@param unit? gpm.std.time.Unit
-    ---@param target? gpm.std.time.Unit
-    ---@return integer
-    local function transform( timestamp, unit, target, error_level )
+    ---@param timestamp integer The timestamp to transform.
+    ---@param unit? gpm.std.time.Unit The unit to transform the timestamp from, seconds by default.
+    ---@param target? gpm.std.time.Unit The unit to transform the timestamp to, seconds by default.
+    ---@return number timestamp The transformed timestamp.
+    local function transform( timestamp, unit, target, error_level, as_float )
         if error_level == nil then
             error_level = 2
         else
@@ -352,28 +352,32 @@ do
             error( "unknown unit '" .. unit .. "'", error_level )
         end
 
-        if target == "s" or target == nil then
-            return math_floor( timestamp )
-        elseif target == "ns" then
-            return math_floor( timestamp * 1e9 )
+        if target == "ns" then
+            timestamp = timestamp * 1e9
         elseif target == "us" then
-            return math_floor( timestamp * 1e6 )
+            timestamp = timestamp * 1e6
         elseif target == "ms" then
-            return math_floor( timestamp * 1e3 )
+            timestamp = timestamp * 1e3
         elseif target == "m" then
-            return math_floor( timestamp / 60 )
+            timestamp = timestamp / 60
         elseif target == "h" then
-            return math_floor( timestamp / 3600 )
+            timestamp = timestamp / 3600
         elseif target == "d" then
-            return math_floor( timestamp / 86400 )
+            timestamp = timestamp / 86400
         elseif target == "w" then
-            return math_floor( timestamp / 604800 )
+            timestamp = timestamp / 604800
         elseif target == "mo" then
-            return math_floor( timestamp / 2592000 )
+            timestamp = timestamp / 2592000
         elseif target == "y" then
-            return math_floor( timestamp / 31536000 )
-        else
+            timestamp = timestamp / 31536000
+        elseif not ( target == "s" or target == nil ) then
             error( "unknown target unit '" .. target .. "'", error_level )
+        end
+
+        if as_float then
+            return timestamp
+        else
+            return math_floor( timestamp )
         end
     end
 
@@ -381,22 +385,27 @@ do
     ---
     --- Transforms a timestamp to a different unit.
     ---
-    ---@param timestamp integer
-    ---@param unit? gpm.std.time.Unit
-    ---@param target? gpm.std.time.Unit
+    ---@param timestamp integer The timestamp to transform.
+    ---@param unit? gpm.std.time.Unit The unit to transform the timestamp from, seconds by default.
+    ---@param target? gpm.std.time.Unit The unit to transform the timestamp to, seconds by default.
     ---@return integer
     function time.transform( timestamp, unit, target )
-        return transform( timestamp, unit, target, 2 )
+        return transform( timestamp, unit, target, 2, false )
     end
 
     --- [SHARED AND MENU]
     ---
     --- Returns the time elapsed since lua was started.
     ---
-    ---@param unit? gpm.std.time.Unit
-    ---@return integer timestamp
-    function time.elapsed( unit )
-        return transform( math_floor( os_clock() * 1e3 ), "ms", unit, 2 )
+    ---@param as_float? boolean Return the elapsed time as a float instead of an integer.
+    ---@param unit? gpm.std.time.Unit The unit to return the elapsed time in, seconds by default.
+    ---@return number timestamp
+    function time.elapsed( as_float, unit )
+        if as_float and unit == nil then
+            return os_clock()
+        else
+            return transform( os_clock() * 1e3, "ms", unit, 2, as_float )
+        end
     end
 
 end
@@ -474,11 +483,11 @@ do
 
     --- [SHARED AND MENU]
     ---
-    --- Converts a timestamp to a duration.
+    --- Returns a table with the date and time components.
     ---
-    ---@param timestamp integer
-    ---@param unit? gpm.std.time.Unit
-    ---@return gpm.std.time.Date
+    ---@param timestamp integer The timestamp to parse.
+    ---@param unit? gpm.std.time.Unit The unit to parse the timestamp from, seconds by default.
+    ---@return gpm.std.time.Date date_tbl The date and time components.
     function time.parse( timestamp, unit )
         local seconds, milliseconds, microseconds, nanoseconds = split( timestamp, unit, 2 )
 
@@ -554,9 +563,9 @@ do
     --- | `mo`     | Month        | ~30 days                      |
     --- | `y`      | Year         | 365 days                      |
     ---
-    ---@param timestamp integer
-    ---@param unit? gpm.std.time.Unit
-    ---@return string
+    ---@param timestamp integer The timestamp to convert.
+    ---@param unit? gpm.std.time.Unit The unit to convert the timestamp to, seconds by default.
+    ---@return string duration_str The duration string.
     function time.string( timestamp, unit )
         local segments, segment_count = {}, 0
 
@@ -692,10 +701,10 @@ do
     --- | `{date_time}`           | Localized full date and time                           | `Wed Sep 16 23:48:10 1998` |
     --- | `{timezone}`            | Timezone offset                                        | `-0300`                    |
     ---
-    ---@param fmt string
-    ---@param timestamp? integer
-    ---@param unit? gpm.std.time.Unit
-    ---@return string
+    ---@param fmt string The format string.
+    ---@param timestamp? integer The timestamp to format.
+    ---@param unit? gpm.std.time.Unit The timestamp unit, seconds by default.
+    ---@return string str The formatted string.
     function time.format( fmt, timestamp, unit )
         if timestamp == nil then
             timestamp = time.now( unit )

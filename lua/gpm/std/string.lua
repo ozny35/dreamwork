@@ -23,6 +23,7 @@ do
     string.dump = string.dump or glua_string.dump
     string.find = string.find or glua_string.find
     string.format = string.format or glua_string.format
+    ---@diagnostic disable-next-line: deprecated
     string.gmatch = string.gmatch or glua_string.gmatch or glua_string.gfind
     string.gsub = string.gsub or glua_string.gsub
     string.len = string.len or glua_string.len
@@ -34,8 +35,6 @@ do
     string.upper = string.upper or glua_string.upper
 
 end
-
-string.slice = string.sub
 
 local string_byte = string.byte
 local string_sub = string.sub
@@ -378,70 +377,25 @@ function string.byteTrim( str, byte, direction )
     return string_sub( str, startPos, endPos ), endPos - startPos + 1
 end
 
---- [SHARED AND MENU]
----
---- Returns a character from the string by index.
----
----@param str string The input string.
----@param index number The character index.
----@return string char The character.
-function string.get( str, index )
-    return string_sub( str, index, index )
-end
-
---- [SHARED AND MENU]
----
---- Sets a character in the string by index.
----
----@param str string The input string.
----@param index number The character index.
----@param value string The character.
----@return string result The resulting string.
-function string.set( str, index, value )
-    return string_sub( str, 1, index - 1 ) .. value .. string_sub( str, index + 1, string_len( str ) )
-end
-
 do
 
-    local ascii_numbers = {
-        [ 0x30 ] = true, -- 0
-        [ 0x31 ] = true, -- 1
-        [ 0x32 ] = true, -- 2
-        [ 0x33 ] = true, -- 3
-        [ 0x34 ] = true, -- 4
-        [ 0x35 ] = true, -- 5
-        [ 0x36 ] = true, -- 6
-        [ 0x37 ] = true, -- 7
-        [ 0x38 ] = true, -- 8
-        [ 0x39 ] = true  -- 9
-    }
-
-    -- TODO: check performance diff with this and raw.tonumber ~= nil
+    local raw_tonumber = std.raw.tonumber
 
     --- [SHARED AND MENU]
     ---
-    --- Checks if a string is a number.
+    --- Checks if the string is a number.
     ---
-    ---@param str string The string.
-    ---@param from? number The start position.
-    ---@param to? number The end position.
+    ---@param str string The input string.
+    ---@param base? integer The number base, default is `10`.
+    ---@param from? number The start position, default is `1`.
+    ---@param to? number The end position, default is the length of the string.
     ---@return boolean is_number `true` if the string is a number, otherwise `false`.
-    function string.isNumber( str, from, to )
-        if from == nil then from = 1 end
-        if to == nil then to = string_len( str ) end
-
-        for index = from, to, 1 do
-            if index == from then
-                local byte = string_byte( str, index )
-                if ascii_numbers[ byte ] == nil and byte ~= 0x2D --[[ - ]] and byte ~= 0x2B --[[ + ]] then
-                    return false
-                end
-            elseif ascii_numbers[ string_byte( str, index ) ] == nil then
-                return false
-            end
+    function string.isNumber( str, base, from, to )
+        if from == nil and to == nil then
+            return raw_tonumber( str, base ) ~= nil
+        else
+            return raw_tonumber( string_sub( str, from or 1, to ), base ) ~= nil
         end
-
-        return true
     end
 
 end
@@ -517,7 +471,7 @@ do
     local jit_version = ( {
         [ "200" ] = 0x01,
         [ "201" ] = 0x02
-    } )[ string_sub( std.tostring( std.jit.version_num ), 1, 3 ) ]
+    } )[ string_sub( std.tostring( std.JIT_VERSION ), 1, 3 ) ]
 
     --- [SHARED AND MENU]
     ---

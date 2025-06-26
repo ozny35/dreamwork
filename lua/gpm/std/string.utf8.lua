@@ -1300,7 +1300,6 @@ local function sub( str, charStart, charEnd )
 end
 
 utf8.sub = sub
-utf8.slice = sub
 
 --- TODO
 ---@param str string

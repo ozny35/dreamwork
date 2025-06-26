@@ -307,30 +307,6 @@ do
 
 end
 
-if std.jit then
-
-    ---@diagnostic disable-next-line: undefined-field
-    local util_funcinfo = std.jit.util.funcinfo
-
-    --- [SHARED AND MENU]
-    ---
-    --- Checks if the function is jit compilable.
-    ---
-    ---@param fn function The function to check.
-    ---@return boolean bool `true` if the function is jit compilable, otherwise `false`.
-    function debug.isjitcompilable( fn )
-        local info = util_funcinfo( fn )
-        return info and info.ffid ~= nil
-    end
-
-else
-
-    function debug.isjitcompilable()
-        return false
-    end
-
-end
-
 -- do
 
 --     local getfenv = std.getfenv

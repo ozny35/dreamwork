@@ -15,8 +15,11 @@ local string = std.string
 
 local select = std.select
 local setmetatable = std.setmetatable
+
 local table_reversed, table_unpack = table.reversed, table.unpack
-local math_floor, math_max, math_clamp = math.floor, math.max, math.clamp
+
+local math_min, math_max = math.min, math.max
+local math_floor, math_clamp = math.floor, math.clamp
 
 
 --- [SHARED AND MENU]
@@ -574,7 +577,6 @@ do
         do
 
             local string_char = string.char
-            local math_min = math.min
 
             --- [SHARED AND MENU]
             ---
@@ -2075,6 +2077,126 @@ do
     BigInt.__eq = BigInt.eq
     BigInt.__lt = BigInt.lt
     BigInt.__le = BigInt.le
+
+    do
+
+        --- [SHARED AND MENU]
+        ---
+        --- Returns the greatest common divisor (GCD) of two big integer objects.
+        ---
+        ---@param a gpm.std.BigInt The first big integer object.
+        ---@param b gpm.std.BigInt The second big integer object.
+        ---@return gpm.std.BigInt gcd The greatest common divisor.
+        local function gcd( a, b )
+            a = abs( copy( a ) )
+            b = abs( copy( b ) )
+
+            while b[ 0 ] ~= 0 do
+                local temp = b
+                b = a % b
+                a = temp
+            end
+
+            return a
+        end
+
+        BigInt.gcd = gcd
+
+        --- [SHARED AND MENU]
+        ---
+        --- Returns the least common multiple (LCM) of two big integer objects.
+        ---
+        ---@param a gpm.std.BigInt The first big integer object.
+        ---@param b gpm.std.BigInt The second big integer object.
+        ---@return gpm.std.BigInt lcm The least common multiple.
+        function BigInt.lcm( a, b )
+            local temp = copy( a )
+            mul( temp, b )
+
+            ---@diagnostic disable-next-line: redundant-return-value
+            return full_div( temp, gcd( a, b ), true ), nil
+        end
+
+        --- [SHARED AND MENU]
+        ---
+        --- Returns whether two big integer objects are coprime.
+        ---
+        ---@param a gpm.std.BigInt The first big integer object.
+        ---@param b gpm.std.BigInt The second big integer object.
+        ---@return boolean result `true` if the big integer objects are coprime, `false` otherwise.
+        local function coprime( a, b )
+            return compare( gcd( a, b ), one ) == 0
+        end
+
+        BigInt.coprime = coprime
+
+        --- [SHARED AND MENU]
+        ---
+        --- Returns the modular inverse using the extended Euclidean algorithm.
+        ---
+        --- Returns x such that (a * x) % m == 1
+        ---
+        ---@param m gpm.std.BigInt The big integer object to use for the modulus.
+        ---@return gpm.std.BigInt result The result of the operation.
+        function BigInt:modinv( m )
+            local m0 = m
+
+            local x0 = setmetatable( { [ 0 ] = 0 }, BigInt )
+            local x1 = setmetatable( { [ 0 ] = 1, 1 }, BigInt )
+
+            local a = copy( self )
+
+            while compare( a, one ) == 1 do
+                local t = m
+                local q
+
+                q, m = full_div( a, m, false )
+                a = t
+
+                t = x0
+                x0 = x1 - mul( q, x0 )
+                x1 = t
+            end
+
+            if x1[ 0 ] == -1 then
+                add( x1, m0 )
+            end
+
+            return x1
+        end
+
+        local two = setmetatable( { [ 0 ] = 1, 2 }, BigInt )
+
+        --- [SHARED AND MENU]
+        ---
+        --- Modular exponentiation: (base ^ exponent) % modulus
+        ---
+        ---@param base gpm.std.BigInt The big integer object to use for the base.
+        ---@param exponent gpm.std.BigInt The big integer object to use for the exponent.
+        ---@param modulus gpm.std.BigInt The big integer object to use for the modulus.
+        ---@return gpm.std.BigInt result The result of the operation.
+        function BigInt.powmod( base, exponent, modulus )
+            local result = setmetatable( { [ 0 ] = 1, 1 }, BigInt )
+            local _
+
+            _, base = full_div( base, modulus, false )
+
+            while exponent[ 0 ] ~= 0 do
+                local remainder
+
+                exponent, remainder = full_div( exponent, two, false )
+
+                if remainder[ 0 ] == 1 and remainder[ 1 ] == 1 then
+                    _, result = full_div( mul( result, base ), modulus, false )
+                end
+
+                _, base = full_div( mul( base, base ), modulus, false )
+            end
+
+            return result
+        end
+
+    end
 
 end
 

@@ -22,9 +22,10 @@ std.game = game
 
 game.getUptime = game.getUptime or _G.SysTime
 game.addDebugInfo = game.addDebugInfo or _G.DebugInfo
-game.getFrameTime = game.getFrameTime or _G.FrameTime
-game.getTickCount = game.getTickCount or glua_engine.TickCount
-game.getTickInterval = game.getTickInterval or glua_engine.TickInterval
+
+game.getTickTime = game.getTickTime or _G.FrameTime or function() return 1 end
+game.getTickCount = game.getTickCount or glua_engine.TickCount or function() return 1 end
+game.getTickInterval = game.getTickInterval or glua_engine.TickInterval or function() return 0.1 end
 
 do
 
@@ -200,11 +201,11 @@ end
 if std.SHARED then
 
     game.getAbsoluteFrameTime = glua_engine.AbsoluteFrameTime
-    game.isDedicatedServer = glua_game.IsDedicated
-    game.isSinglePlayer = glua_game.SinglePlayer
+    -- game.isDedicatedServer = glua_game.IsDedicated
+    -- game.isSinglePlayer = glua_game.SinglePlayer
     game.getDifficulty = glua_game.GetSkillLevel
-    game.getTimeScale = glua_game.GetTimeScale
-    game.getRealTime = _G.RealTime
+
+    -- game.getRealTime = _G.RealTime
 
     game.getActivityName = glua_util.GetActivityNameByID
     game.getActivityID = glua_util.GetActivityIDByName
@@ -225,15 +226,12 @@ if std.SHARED then
         game.precacheScene = _G.PrecacheScene
     end
 
-    game.getFrameNumber = _G.FrameNumber
+    -- game.getFrameNumber = _G.FrameNumber
 
 end
 
 if std.SERVER then
 
-    game.setDifficulty = glua_game.SetSkillLevel
-    game.setTimeScale = glua_game.SetTimeScale
-    game.exit = glua_engine.CloseServer
-    game.print = _G.PrintMessage
+    game.setDifficulty = game.setDifficulty or glua_game.SetSkillLevel
 
 end

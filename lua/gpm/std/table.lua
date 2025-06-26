@@ -40,7 +40,9 @@ do
     table.unpack = table.unpack or glua_table.unpack or _G.unpack
 
     -- Lua 5.3
-    -- table.move = table.move or glua_table.move
+    if std.debug.jit.isFFIF( glua_table.move ) then
+        table.move = table.move or glua_table.move
+    end
 
     if table.move == nil then
         ---@diagnostic disable-next-line: duplicate-set-field
@@ -64,13 +66,14 @@ local table_remove = table.remove
 --- [SHARED AND MENU]
 ---
 --- Returns a slice of the given table.
+---
 ---@param tbl table The table to slice.
 ---@param to? integer The start position.
 ---@param from? integer The end position.
 ---@param step? integer The step.
 ---@return table slice The sliced table.
 ---@return integer length The length of the sliced table.
-function table.slice( tbl, from, to, step )
+function table.sub( tbl, from, to, step )
     local length = #tbl
 
     if from == nil then

@@ -1,6 +1,8 @@
 local _G = _G
 local gpm = _G.gpm
 
+local transducers = gpm.transducers
+
 ---@class gpm.std
 local std = gpm.std
 
@@ -42,7 +44,7 @@ if std.CLIENT then
                 if key == "entity" then
                     local entity = LocalPlayer()
                     if entity and ENTITY_IsValid( entity ) then
-                        local player = gpm.transducers[ entity ]
+                        local player = transducers[ entity ]
                         client.entity = player
                         return player
                     end
@@ -56,10 +58,46 @@ if std.CLIENT then
 
     -- https://music.youtube.com/watch?v=78PjJ1soEZk (01:00)
     client.screenShake = _G.util.ScreenShake
-    client.getViewEntity = _G.GetViewEntity
-    client.getEyeVector = _G.EyeVector
-    client.getEyeAngles = _G.EyeAngles
-    client.getEyePosition = _G.EyePos
+
+    do
+
+        local GetViewEntity = _G.GetViewEntity
+
+        function client.getViewEntity()
+            return transducers[ GetViewEntity() ]
+        end
+
+    end
+
+    do
+
+        local EyeVector = _G.EyeVector
+
+        function client.getEyeVector()
+            return transducers[ EyeVector() ]
+        end
+
+    end
+
+    do
+
+        local EyeAngles = _G.EyeAngles
+
+        function client.getEyeAngles()
+            return transducers[ EyeAngles() ]
+        end
+
+    end
+
+    do
+
+        local EyePos = _G.EyePos
+
+        function client.getEyePosition()
+            return transducers[ EyePos() ]
+        end
+
+    end
 
     do
 

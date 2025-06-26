@@ -16,8 +16,11 @@ end
 
 -- TODO: globally replace all versions, steamids, url, etc. with their classes in gpm, e.g. std.URL, steam.Identifier
 
+--- [SHARED AND MENU]
+---
+--- gpm standard environment
+---
 ---@class gpm.std
----@field DEVELOPER integer A cached value of `developer` console variable.
 ---@field SYSTEM_ENDIANNESS `true` if the operating system is big endianness, `false` if not.
 ---@field SYSTEM_COUNTRY string The country code of the operating system. (ISO 3166-1 alpha-2)
 ---@field HAS_BATTERY boolean `true` if the operating system has a battery, `false` if not.
@@ -25,12 +28,13 @@ end
 ---@field OSX boolean `true` if the game is running on OSX.
 ---@field LINUX boolean `true` if the game is running on Linux.
 ---@field WINDOWS boolean `true` if the game is running on Windows.
+---@field DEVELOPER integer A cached value of `developer` console variable.
+---@field TICK_TIME number The time it takes to run one tick.
+---@field TPS number The number of ticks per second.
+---@field FRAME_TIME number The time it takes to run one frame in seconds. **Client-only**
+---@field FPS number The number of frames per second. **Client-only**
 local std = gpm.std
 if std == nil then
-    --- [SHARED AND MENU]
-    ---
-    --- gpm standard environment
-    ---
     ---@class gpm.std
     std = {}
     gpm.std = std
@@ -96,26 +100,6 @@ std.next = std.next or _G.next
 std.xpcall = std.xpcall or _G.xpcall
 std.pcall = std.pcall or _G.pcall
 
-local raw_get = raw.get
-
--- jit library
-local jit = std.jit or _G.jit or {
-    arch = "unknown",
-    os = "unknown"
-}
-
-std.jit = jit
-
-do
-
-    local jit_os = jit.os
-
-    std.OSX = jit_os == "OSX"
-    std.LINUX = jit_os == "Linux"
-    std.WINDOWS = jit_os == "Windows"
-
-end
-
 local CLIENT, SERVER, MENU = std.CLIENT, std.SERVER, std.MENU
 
 -- client-side files
@@ -139,6 +123,7 @@ end
 
 dofile( "std/debug.lua" )
 dofile( "std/debug.gc.lua" )
+dofile( "std/debug.jit.lua" )
 
 local debug = std.debug
 local debug_fempty = debug.fempty
@@ -146,6 +131,13 @@ local debug_getmetatable = debug.getmetatable
 local debug_getmetavalue = debug.getmetavalue
 
 local setmetatable = std.setmetatable
+local raw_get = raw.get
+
+local JIT_OS = std.JIT_OS
+
+std.OSX = JIT_OS == "OSX"
+std.LINUX = JIT_OS == "Linux"
+std.WINDOWS = JIT_OS == "Windows"
 
 ---@class gpm.transducers
 local transducers = gpm.transducers
@@ -953,37 +945,85 @@ gpm.Logger = logger
 
 -- dofile( "std/message.lua" )
 
-local key2fn = {}
+local std_metatable = getmetatable( std )
 
-do
+if std_metatable == nil then
 
-    local developer_mode = 1
+    local keys = {}
 
-    local developer = std.console.Variable.get( "developer", "number" )
-    if developer ~= nil then
-        developer:attach( function( _, value )
-            ---@cast value number
-            developer_mode = math.floor( value )
-        end, "gpm::std" )
+    std_metatable = {
+        __keys = keys,
+        __index = function( _, key )
+            local fn = keys[ key ]
+            if fn ~= nil then
+                return fn()
+            end
+        end
+    }
 
-        ---@diagnostic disable-next-line: param-type-mismatch
-        developer_mode = math.floor( developer.value )
+    std.setmetatable( std, std_metatable )
+
+    do
+
+        local developer_mode = 1
+
+        local developer = std.console.Variable.get( "developer", "number" )
+        if developer ~= nil then
+            developer:attach( function( _, value )
+                ---@cast value number
+                developer_mode = math.floor( value )
+            end, "gpm::std" )
+
+            ---@diagnostic disable-next-line: param-type-mismatch
+            developer_mode = math.floor( developer.value )
+        end
+
+        function keys.DEVELOPER()
+            return developer_mode
+        end
+
     end
 
-    std.setmetatable( std, {
-        __index = function( _, key )
-            if key == "DEVELOPER" then
-                return developer_mode
-            end
+    do
 
-            local fn = key2fn[ key ]
-            if fn == nil then
-                return
-            end
+        local getTickTime = std.game.getTickTime
 
-            return fn()
+        keys.TICK_TIME = getTickTime
+
+        function keys.TPS()
+            return 1 / getTickTime()
         end
-    } )
+
+    end
+
+    if CLIENT then
+
+        local frame_time = 0
+        local fps = 0
+
+        function keys.FPS()
+            return fps
+        end
+
+        function keys.FRAME_TIME()
+            return frame_time
+        end
+
+        local time_elapsed = std.time.elapsed
+        local last_pre_render = 0
+
+        gpm.engine.hookCatch( "PreRender", function()
+            local elapsed_time = time_elapsed( true )
+
+            if last_pre_render ~= 0 then
+                frame_time = elapsed_time - last_pre_render
+                fps = 1 / frame_time
+            end
+
+            last_pre_render = elapsed_time
+        end, 1 )
+
+    end
 
 end
 
@@ -1111,15 +1151,14 @@ dofile( "database.lua" )
 local loadbinary
 do
 
+    local require = _G.require or debug.fempty
     local file_exists = std.file.exists
-    local require = _G.require
 
-    local isEdge = jit.version_num ~= 20004
-    local is32 = jit.arch == "x86"
-    local os_name = jit.os
+    local isEdge = std.JIT_VERSION ~= 20004
+    local is32 = std.JIT_ARCH == "x86"
 
     local head = "/garrysmod/lua/bin/gm" .. ( ( CLIENT and not MENU ) and "cl" or "sv" ) .. "_"
-    local tail = "_" .. ( { "osx64", "osx", "linux64", "linux", "win64", "win32" } )[ ( os_name == "Windows" and 4 or 0 ) + ( os_name == "Linux" and 2 or 0 ) + ( is32 and 1 or 0 ) + 1 ] .. ".dll"
+    local tail = "_" .. ( { "osx64", "osx", "linux64", "linux", "win64", "win32" } )[ ( JIT_OS == "Windows" and 4 or 0 ) + ( JIT_OS == "Linux" and 2 or 0 ) + ( is32 and 1 or 0 ) + 1 ] .. ".dll"
 
     --- [SHARED AND MENU]
     ---
@@ -1272,10 +1311,6 @@ end
 
     TODO:
 
-    StringReader   StringWriter     __init( str: string )
-    crypto.pack.Reader     crypto.pack.Writer
-    string.Reader          string.Writer
-
     FileReader     FileWriter       __init( file_path: string )
     file.Reader            file.Writer
 
@@ -1311,7 +1346,7 @@ if _G.system ~= nil then
 
     local glua_system = _G.system
 
-    key2fn.SYSTEM_COUNTRY = glua_system.GetCountry or function() return "gb" end
+    std_metatable.__keys.SYSTEM_COUNTRY = glua_system.GetCountry or function() return "gb" end
 
     if glua_system.BatteryPower ~= nil then
 

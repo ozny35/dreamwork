@@ -182,7 +182,7 @@ end
 
 if std.CLIENT_MENU then
 
-    server.getFrameTime = server.getFrameTime or _G.engine.ServerFrameTime or function() return 0 end
+    server.getFrameTime = server.getFrameTime or ( _G.engine or {} ).ServerFrameTime or function() return 0, 0 end
 
     local glua_permissions = _G.permissions or {}
 
@@ -293,6 +293,8 @@ end
 
 if std.SHARED then
 
+    server.getTimeScale = server.getTimeScale or ( _G.game or {} ).GetTimeScale or function() return 1 end
+
     --- [SHARED]
     ---
     --- Checks if cheats are enabled.
@@ -325,6 +327,36 @@ if std.SHARED then
 end
 
 if std.SERVER then
+
+    game.setTimeScale = game.setTimeScale or ( _G.game or {} ).SetTimeScale or std.debug.fempty
+    game.close = game.close or ( _G.engine or {} ).CloseServer
+
+    if server.message == nil then
+
+        local PrintMessage = _G.PrintMessage or std.debug.fempty
+
+        --- [SERVER]
+        ---
+        --- Sends a message to all players on the server.
+        ---
+        --- This message will be displayed in the console, chat or HUD.
+        ---
+        ---@param message string The message to print.
+        ---@param in_chat? boolean `true` to print the message in chat (also in the console), `false` to not print it.
+        ---@param in_hud? boolean `true` to print the message in the HUD (center of the screen), `false` to not print it.
+        function server.message( message, in_chat, in_hud )
+            if in_chat then
+                PrintMessage( 3, message )
+            else
+                PrintMessage( 2, message )
+            end
+
+            if in_hud then
+                PrintMessage( 4, message )
+            end
+        end
+
+    end
 
     server.log = _G.ServerLog
 
