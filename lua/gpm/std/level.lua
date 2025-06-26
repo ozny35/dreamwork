@@ -9,6 +9,8 @@ local std = gpm.std
 local console = std.console
 local console_Variable = console.Variable
 
+-- TODO: think about native bsp parsers (maps like objects) like https://github.com/Nak2/NikNaks/tree/main/lua/niknaks/modules
+
 --- [SHARED AND MENU]
 ---
 --- The game-level library.

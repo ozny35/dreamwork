@@ -178,20 +178,17 @@ local tobigint
 --- Performs an unsigned comparison between two big integers.
 ---
 ---@param object gpm.std.BigInt
----@param value any
+---@param other gpm.std.BigInt
 ---@return integer
-local function compare_unsigned( object, value )
-    local other = tobigint( value )
-    ---@cast other gpm.std.BigInt
-
-    local byte_count1, byte_count2 = #object, #other
-    if byte_count1 < byte_count2 then
+local function compare_unsigned( object, other )
+    local object_size, other_size = #object, #other
+    if object_size < other_size then
         return -1
-    elseif byte_count1 > byte_count2 then
+    elseif object_size > other_size then
         return 1
     end
 
-    for i = byte_count1, 1, -1 do
+    for i = object_size, 1, -1 do
         if object[ i ] < other[ i ] then
             return -1
         elseif object[ i ] > other[ i ] then
@@ -1423,12 +1420,9 @@ end
 ---
 --- Adds big integer to a big integer object.
 ---@param object gpm.std.BigInt The big integer object to add to.
----@param value any The value to add.
+---@param other gpm.std.BigInt The value to add.
 ---@return gpm.std.BigInt object The result of the operation.
-local function add( object, value )
-    local other = tobigint( value )
-    ---@cast other gpm.std.BigInt
-
+local function add( object, other )
     -- addition of 0
     if other[ 0 ] == 0 then
         return object
@@ -1456,24 +1450,24 @@ local function add( object, value )
     end
 
     -- perform operation
-    local obj_1, obj_2
+    local object1, object2
 
     if swap_order then
-        obj_1, obj_2 = other, object
+        object1, object2 = other, object
     else
-        obj_1, obj_2 = object, other
+        object1, object2 = object, other
     end
 
-    local byte_count1, byte_count2 = #obj_1, #obj_2
+    local object1_size, object2_size = #object1, #object2
     local carry = 0
 
-    for i = 1, byte_count1, 1 do
+    for i = 1, object1_size, 1 do
         local total
 
         if subtract then
-            total = ( obj_1[ i ] or 0 ) - ( obj_2[ i ] or 0 ) + carry
+            total = ( object1[ i ] or 0 ) - ( object2[ i ] or 0 ) + carry
         else
-            total = ( obj_1[ i ] or 0 ) + ( obj_2[ i ] or 0 ) + carry
+            total = ( object1[ i ] or 0 ) + ( object2[ i ] or 0 ) + carry
         end
 
         if not subtract and total >= 256 then
@@ -1485,11 +1479,11 @@ local function add( object, value )
         end
 
         -- end loop as soon as possible
-        if i >= byte_count2 and carry == 0 then
+        if i >= object2_size and carry == 0 then
             if swap_order then
                 -- just need to copy remaining bytes
-                for j = i + 1, byte_count1, 1 do
-                    object[ j ] = obj_1[ j ]
+                for j = i + 1, object1_size, 1 do
+                    object[ j ] = object1[ j ]
                 end
             end
 
@@ -1498,7 +1492,7 @@ local function add( object, value )
     end
 
     if carry > 0 then
-        object[ byte_count1 + 1 ] = carry
+        object[ object1_size + 1 ] = carry
     end
 
     if subtract then
@@ -1514,9 +1508,11 @@ end
 
 BigInt.add = add
 
+---@param value any
+---@return gpm.std.BigInt
 ---@protected
 function BigInt:__add( value )
-    return add( copy( self ), value )
+    return add( copy( self ), tobigint( value ) )
 end
 
 --- [SHARED AND MENU]
@@ -1524,17 +1520,19 @@ end
 --- Subtracts big integer from a big integer object.
 ---
 ---@param object gpm.std.BigInt The big integer object to subtract from.
----@param value any The value to subtract.
+---@param other gpm.std.BigInt The value to subtract.
 ---@return gpm.std.BigInt object The result of the operation.
-local function sub( object, value )
-    return add( object, negate( tobigint( value ) ) )
+local function sub( object, other )
+    return add( object, negate( other ) )
 end
 
 BigInt.sub = sub
 
+---@param value any
+---@return gpm.std.BigInt
 ---@protected
 function BigInt:__sub( value )
-    return sub( copy( self ), value )
+    return sub( copy( self ), tobigint( value ) )
 end
 
 --- [SHARED AND MENU]
@@ -1542,12 +1540,9 @@ end
 --- Multiplies big integer with a big integer object.
 ---
 ---@param object gpm.std.BigInt The big integer object to multiply.
----@param value any The value to multiply.
+---@param other gpm.std.BigInt The value to multiply.
 ---@return gpm.std.BigInt object The result of the operation.
-local function mul( object, value )
-    local other = tobigint( value )
-    ---@cast other gpm.std.BigInt
-
+local function mul( object, other )
     -- multiplication by 0
     if object[ 0 ] == 0 then
         return object
@@ -1563,11 +1558,12 @@ local function mul( object, value )
 
     -- multiplication by 1
     if is_one( object ) then
+        local other_copy = copy( other )
         if object[ 0 ] == -1 then
-            negate( other )
+            negate( other_copy )
         end
 
-        return other
+        return other_copy
     end
 
     if is_one( other ) then
@@ -1579,19 +1575,19 @@ local function mul( object, value )
     end
 
     -- general multiplication
-    local obj_1, obj_2 = object, other
-    local byte_count1, byte_count2 = #obj_1, #obj_2
+    local object1, object2 = object, other
+    local object1_size, object2_size = #object1, #object2
 
-    if byte_count2 > byte_count1 then
-        -- swap order so that number with more obj_1 comes first
-        obj_1, obj_2, byte_count1, byte_count2 = other, object, byte_count2, byte_count1
+    if object2_size > object1_size then
+        -- swap order so that number with more object1 comes first
+        object1, object2, object1_size, object2_size = other, object, object2_size, object1_size
     end
 
     local result = {}
     local carry = 0
 
-    for i = 1, byte_count2, 1 do
-        if obj_2[ i ] == 0 then
+    for i = 1, object2_size, 1 do
+        if object2[ i ] == 0 then
             if result[ i ] == nil then
                 result[ i ] = 0
             end
@@ -1599,9 +1595,9 @@ local function mul( object, value )
 
             -- multiply each byte
             local j = 1
-            while j <= byte_count1 do
+            while j <= object1_size do
                 local ri = i + j - 1
-                local product = obj_1[ j ] * obj_2[ i ] + carry + ( result[ ri ] or 0 )
+                local product = object1[ j ] * object2[ i ] + carry + ( result[ ri ] or 0 )
 
                 -- add product to result
                 result[ ri ] = product % 256
@@ -1633,11 +1629,14 @@ end
 
 BigInt.mul = mul
 
+---@param value any
+---@return gpm.std.BigInt
 ---@protected
 function BigInt:__mul( value )
-    return mul( copy( self ), value )
+    return mul( copy( self ), tobigint( value ) )
 end
 
+local full_div
 do
 
     --- [SHARED AND MENU]
@@ -1645,14 +1644,11 @@ do
     --- Divides big integer by a big integer object and returns the quotient and remainder.
     ---
     ---@param object gpm.std.BigInt The big integer object to divide.
-    ---@param value any The value to divide by.
+    ---@param other gpm.std.BigInt The value to divide by.
     ---@param ignore_remainder? boolean Whether to ignore the remainder.
     ---@return gpm.std.BigInt quotient The quotient of the division.
     ---@return gpm.std.BigInt remainder The remainder of the division.
-    local function full_div( object, value, ignore_remainder )
-        local other = tobigint( value )
-        ---@cast other gpm.std.BigInt
-
+    function full_div( object, other, ignore_remainder )
         -- division of/by 0
         if object[ 0 ] == 0 then
             return object, object
@@ -1688,13 +1684,13 @@ do
         end
 
         -- general division
-        local obj_1, obj_2 = object:copy(), other:copy()
-        local byte_count1, byte_count2 = #obj_1, #obj_2
+        local object_copy, other_copy = copy( object ), copy( other )
+        local object_size, other_size = #object_copy, #other_copy
 
         local result = {}
         local ri = 1
 
-        local di = byte_count1 - byte_count2 + 1
+        local di = object_size - other_size + 1
         while di >= 1 do
             local factor = 0
             repeat
@@ -1702,14 +1698,14 @@ do
                 -- check if divisor is smaller
                 local found_factor = false
 
-                local size = byte_count2
-                if di + size <= byte_count1 and obj_1[ di + size ] ~= 0 then
+                local size = other_size
+                if di + size <= object_size and object_copy[ di + size ] ~= 0 then
                     size = size + 1
                 end
 
                 for i = size, 1, -1 do
-                    local byte_value1 = obj_1[ di + i - 1 ] or 0
-                    local byte_value2 = obj_2[ i ] or 0
+                    local byte_value1 = object_copy[ di + i - 1 ] or 0
+                    local byte_value2 = other_copy[ i ] or 0
                     if byte_value2 < byte_value1 then
                         found_factor = false
                         break
@@ -1727,7 +1723,7 @@ do
 
                     while i <= size or carry ~= 0 do
                         local j = di + i - 1
-                        local diff = ( obj_1[ j ] or 0 ) - ( obj_2[ i ] or 0 ) + carry
+                        local diff = ( object_copy[ j ] or 0 ) - ( other_copy[ i ] or 0 ) + carry
                         if diff < 0 then
                             carry = -1
                             diff = diff + 256
@@ -1735,7 +1731,7 @@ do
                             carry = 0
                         end
 
-                        obj_1[ j ] = diff
+                        object_copy[ j ] = diff
                         i = i + 1
                     end
                 end
@@ -1748,47 +1744,51 @@ do
             di = di - 1
         end
 
-        local sign1, sign2 = obj_1[ 0 ], obj_2[ 0 ]
-        rstrip( obj_1 )
+        local object_sign, other_sign = object_copy[ 0 ], other_copy[ 0 ]
+
+        rstrip( object_copy )
 
         -- if remainder is negative, add divisor to make it positive
-        if not ignore_remainder and sign1 == -sign2 and obj_1[ 0 ] ~= 0 then
-            add( obj_1, obj_2 )
+        if not ignore_remainder and object_sign == -other_sign and object_copy[ 0 ] ~= 0 then
+            add( object_copy, other_copy )
         end
 
-        obj_2[ 0 ] = sign1 * sign2
+        other_copy[ 0 ] = object_sign * other_sign
 
         local reversed, length = table_reversed( result )
 
         for index = 1, length, 1 do
-            obj_2[ index ] = reversed[ index ]
+            other_copy[ index ] = reversed[ index ]
         end
 
-        rstrip( obj_2 )
+        rstrip( other_copy )
 
-        if obj_1[ 0 ] ~= 0 and sign2 == -1 then
-            obj_1[ 0 ] = -1
+        if object_copy[ 0 ] ~= 0 and other_sign == -1 then
+            object_copy[ 0 ] = -1
         end
 
-        return obj_2, obj_1
+        return other_copy, object_copy
     end
 
     --- [SHARED AND MENU]
     ---
     --- Divides big integer by a big integer object.
+    ---
     ---@param object gpm.std.BigInt The big integer to divide.
-    ---@param value gpm.std.BigInt The value to divide by.
+    ---@param other gpm.std.BigInt The value to divide by.
     ---@return gpm.std.BigInt quotient The quotient of the division.
-    local function div( object, value )
-        local quotient, _ = full_div( object, value, true )
-        return quotient
+    local function div( object, other )
+        ---@diagnostic disable-next-line: redundant-return-value
+        return full_div( object, other, true ), nil
     end
 
     BigInt.div = div
 
+    ---@param value any
+    ---@return gpm.std.BigInt
     ---@protected
     function BigInt:__div( value )
-        return div( copy( self ), value )
+        return div( self, tobigint( value ) )
     end
 
     --- [SHARED AND MENU]
@@ -1796,18 +1796,20 @@ do
     --- Returns the remainder from dividing two big integers.
     ---
     ---@param object gpm.std.BigInt The big integer to divide.
-    ---@param value gpm.std.BigInt The value to divide by.
+    ---@param other gpm.std.BigInt The value to divide by.
     ---@return gpm.std.BigInt remainder The remainder of the division.
-    local function mod( object, value )
-        local _, remainder = full_div( object, value, false )
+    local function mod( object, other )
+        local _, remainder = full_div( object, other, false )
         return remainder
     end
 
     BigInt.mod = mod
 
+    ---@param value any
+    ---@return gpm.std.BigInt
     ---@protected
     function BigInt:__mod( value )
-        return mod( copy( self ), value )
+        return mod( self, tobigint( value ) )
     end
 
 end
@@ -1878,12 +1880,9 @@ do
     --- Raises a big integer object to a power.
     ---
     ---@param object gpm.std.BigInt The big integer object to raise.
-    ---@param value any The value to raise to.
+    ---@param other gpm.std.BigInt The value to raise to.
     ---@return gpm.std.BigInt object The result of the operation.
-    local function pow( object, value )
-        local other = tobigint( value )
-        ---@cast other gpm.std.BigInt
-
+    local function pow( object, other )
         if other[ 0 ] == 0 then
             return setmetatable( { [ 0 ] = 1, 1 }, BigInt )
         elseif other[ 0 ] == -1 then
@@ -1927,9 +1926,11 @@ do
 
     BigInt.pow = pow
 
+    ---@param value any
+    ---@return gpm.std.BigInt
     ---@protected
     function BigInt:__pow( value )
-        return pow( copy( self ), value )
+        return pow( copy( self ), tobigint( value ) )
     end
 
 end

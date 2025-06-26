@@ -247,6 +247,7 @@ if CLIENT_SERVER then
 end
 
 if CLIENT_SERVER then
+
     --- [SHARED]
     ---
     --- An activity is a code-friendly identifier for an animation, and can point to multiple sequences (animations) depending on the model.
@@ -1854,4 +1855,5 @@ if CLIENT_SERVER then
     }
 
     std.ACT = ACT
+
 end

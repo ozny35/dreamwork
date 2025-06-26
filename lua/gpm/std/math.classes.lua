@@ -1760,3 +1760,11 @@ end
 
 
 -- print( VMatrixClass():identity():copy():multiply( VMatrixClass( 2 ) ):translate( std.Vector3( 1, 2, 1 )) )
+
+--[[
+
+    TODO: make serealizers
+        Vec3 as Nak2 checked must be writed as 3 floats but this required more tests i guess
+        Same for Vec2
+
+]]

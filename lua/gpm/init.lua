@@ -1460,5 +1460,7 @@ end
 ]]
 
 -- TODO: put https://wiki.facepunch.com/gmod/Global.SuppressHostEvents somewhere
+-- TODO: https://github.com/Nak2/NikNaks/blob/main/lua/niknaks/modules/sh_model_extended.lua
+-- TODO: https://github.com/Nak2/NikNaks/blob/main/lua/niknaks/modules/sh_enums.lua
 
 -- TODO: plugins support

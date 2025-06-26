@@ -391,6 +391,8 @@ function http.post( url, parameters, headers, timeout )
     } )
 end
 
+-- TODO: https://github.com/nmap/nmap/blob/master/nselib/http.lua#L1222-L1307
+
 --- [SHARED AND MENU]
 ---
 --- Sends a HEAD request.

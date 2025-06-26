@@ -7,6 +7,9 @@ local os_time = os.time
 local os_date = os.date
 local os_clock = os.clock
 
+-- TODO: add utc argument for funcs that use os_date
+-- TODO: https://github.com/Nak2/NikNaks/blob/main/lua/niknaks/modules/sh_datetime.lua
+
 local math = std.math
 local math_min = math.min
 local math_floor = math.floor

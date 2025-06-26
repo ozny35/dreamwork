@@ -180,3 +180,5 @@ function bitpack.unpack( big_endian, bytes, byte_count )
 
 	return bits, bit_count
 end
+
+-- TODO: Reader/Writer like https://github.com/Nak2/NikNaks/blob/main/lua/niknaks/modules/sh_bitbuffer.lua

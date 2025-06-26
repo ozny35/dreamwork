@@ -325,7 +325,7 @@ do
                 if in_call[ self ] then
                     local success, err_msg = pcall( lst[ i ], self )
                     if not success then
-                        -- TODO: replace with cool new errors that i make later
+                        -- TODO: replace with cool new errors that we make later
                         print( "[gpm] timer callback error: " .. err_msg )
                         table_eject( lst, i - 1, i + 1 )
                     elseif lst[ i + 1 ] then

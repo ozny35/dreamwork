@@ -7,9 +7,9 @@ local glua_vgui = _G.vgui
 
 --[[
 
-https://wiki.facepunch.com/gmod/Global.DisableClipping
+    https://wiki.facepunch.com/gmod/Global.DisableClipping
 
-https://wiki.facepunch.com/gmod/vgui
+    https://wiki.facepunch.com/gmod/vgui
 
 ]]
 
@@ -39,7 +39,7 @@ do
 
     local vgui_GetWorldPanel = glua_vgui.GetWorldPanel
 
-    function PanelClass:getMain()
+    function PanelClass.getMain()
         return transducers[ vgui_GetWorldPanel() ]
     end
 
@@ -49,7 +49,7 @@ do
 
     local vgui_GetHoveredPanel = glua_vgui.GetHoveredPanel
 
-    function PanelClass:getHovered()
+    function PanelClass.getHovered()
         return transducers[ vgui_GetHoveredPanel() ]
     end
 
@@ -59,7 +59,7 @@ if std.CLIENT then
 
     local GetHUDPanel = _G.GetHUDPanel
 
-    function PanelClass:getHUD()
+    function PanelClass.getHUD()
         return transducers[ GetHUDPanel() ]
     end
 
@@ -69,7 +69,7 @@ if std.MENU then
 
     local GetOverlayPanel = _G.GetOverlayPanel
 
-    function PanelClass:getOverlay()
+    function PanelClass.getOverlay()
         return transducers[ GetOverlayPanel() ]
     end
 

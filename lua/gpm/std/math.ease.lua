@@ -353,5 +353,3 @@ function ease.bounceInOut( fraction )
 	return fraction < 0.5 and ( 1 - ease_bounceOut( 1 - 2 * fraction ) ) * 0.5
         or ( 1 + ease_bounceOut( 2 * fraction - 1 ) ) * 0.5
 end
-
-return ease
