@@ -247,7 +247,7 @@ if bit.bxor == nil then
         local bits = {}
         for i = 1, select( "#", value, ... ), 1 do
             local x = args[ i ]
-            for j = 1, 32, 1 do
+            for _ = 1, 32, 1 do
                 if x % 2 ~= 0 then
                     bits[ i ] = not bits[ i ]
                 end
@@ -366,6 +366,25 @@ end
 ---@return integer result The normalized value.
 function bit.signfix( value )
     return value % 0xFFFFFFFF
+end
+
+--- [SHARED AND MENU]
+---
+--- Reverses the bits of the specified value.
+---
+---@param value integer The value to be reversed.
+---@param bits integer The number of bits to reverse.
+---@return integer result The reversed value.
+function bit.reverse( value, bits )
+    local result = 0
+
+    for i = 0, bits - 1, 1 do
+        if bit_band( value, bit_lshift( 1, i ) ) ~= 0 then
+            result = bit_bor( result, bit_lshift( 1, bits - ( i + 1 ) ) )
+        end
+    end
+
+    return result
 end
 
 -- TODO: more bit functions
