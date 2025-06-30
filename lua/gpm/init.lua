@@ -790,7 +790,7 @@ do
         ---
         ---@param value any The argument value.
         ---@param arg_num any The argument number/key.
-        ---@param expected_type string The expected type name.
+        ---@param expected_type "string" | "number" | "boolean" | "table" | "function" | "thread" | "any" | string The expected type name.
         ---@return boolean ok Returns `true` if the argument is of the expected type, `false` otherwise.
         ---@return string? msg The error message.
         function std.arg( value, arg_num, expected_type )
@@ -1303,6 +1303,72 @@ do
         else
             return nil, content
         end
+    end
+
+end
+
+do
+
+    local loadstring = std.loadstring
+    local math_floor = math.floor
+    local math_max = math.max
+    local arg = std.arg
+
+    local empty_env = {}
+
+    --- [SHARED AND MENU]
+    ---
+    --- Creates a function that accepts a variable
+    --- number of arguments and returns them in
+    --- the order of the specified indices.
+    ---
+    --- | `junction(...)` call | `fjn(...)` call | result `...` |
+    --- | ---------------------|-----------------|--------------|
+    --- | `junction(1)`        | `(A, B, C)`     | `A`          |
+    --- | `junction(2)`        | `(A, B, C)`     | `B`          |
+    --- | `junction(3)`        | `(A, B, C)`     | `C`          |
+    --- | `junction(2, 1)`     | `(A, B, C)`     | `B, A`       |
+    --- | `junction(3, 1, 2)`  | `(X, Y, Z)`     | `Z, X, Y`    |
+    ---
+    ---@param ... integer The indices of arguments to return.
+    ---@return fun( ... ): ... fjn
+    function std.junction( ... )
+        local out_arg_count = std.select( '#', ... )
+        local out_args = { ... }
+
+        local in_arg_count = 0
+
+        for i = 1, out_arg_count, 1 do
+            local value = out_args[ i ]
+            local valid, err_msg = arg( value, i, "number" )
+            if valid then
+                out_args[ i ] = math_floor( value )
+                in_arg_count = math_max( in_arg_count, value )
+            else
+                error( err_msg, 2 )
+            end
+        end
+
+        local locals, local_count = {}, 0
+
+        for i = 1, in_arg_count, 1 do
+            local_count = local_count + 1
+            locals[ local_count ] = "arg" .. i
+        end
+
+        local returns, return_count = {}, 0
+
+        for i = 1, out_arg_count, 1 do
+            return_count = return_count + 1
+            returns[ return_count ] = "arg" .. out_args[ i ]
+        end
+
+        local fn, err_msg = loadstring( "local " .. table_concat( locals, ",", 1, local_count ) .. " = ...\r\nreturn " .. table_concat( returns, ",", 1, return_count ), "junction", empty_env )
+        if fn == nil then
+            error( err_msg, 2 )
+        end
+
+        return fn
     end
 
 end
