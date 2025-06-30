@@ -166,8 +166,9 @@ end
 
 local bit_band = std.bit.band
 
-local string_format = std.string.format
-local string_sub = std.string.sub
+local string = std.string
+local string_sub = string.sub
+local string_format = string.format
 
 local debug = std.debug
 local debug_fempty = debug.fempty
@@ -489,10 +490,16 @@ do
         return future:await()
     end
 
+    local string_byte = string.byte
+
     engine.consoleCommandCatch( function( ply, name, args, argument_string )
         local command = commands[ name ]
         if command == nil then
             return nil
+        end
+
+        if string_byte( argument_string, 1 ) == 0x22 --[[ "\"" ]] and string_byte( argument_string, -1 ) == 0x22 --[[ "\"" ]] then
+            argument_string = string_sub( argument_string, 2, -2 )
         end
 
         in_call[ command ] = true
