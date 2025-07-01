@@ -935,6 +935,11 @@ end
 dofile( "std/console.lua" )
 dofile( "std/console.logger.lua")
 
+if SERVER then
+    -- https://github.com/Facepunch/garrysmod-requests/issues/2793
+    std.console.Command.run( "sv_defaultdeployspeed", "1" )
+end
+
 local logger = std.console.Logger( {
     title = gpm.PREFIX,
     color = std.Color( 180, 180, 255 ),
