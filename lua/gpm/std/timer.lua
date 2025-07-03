@@ -598,7 +598,7 @@ do
     ---
     ---@param fn function The callback function.
     ---@param delay? number The delay in seconds, default is `0`.
-    function TimerClass.simple( fn, delay )
+    function std.setTimeout( fn, delay )
         timer_Simple( delay or 0, fn )
     end
 

@@ -6,9 +6,9 @@ local std = gpm.std
 
 local string = std.string
 
-local isstring = std.isstring
-local Timer_simple = std.Timer.simple
 local futures_Future = std.futures.Future
+local setTimeout = std.setTimeout
+local isstring = std.isstring
 
 ---@class gpm.std.steam
 local steam = std.steam
@@ -196,7 +196,7 @@ if std.CLIENT_MENU then
             end
         end )
 
-        Timer_simple( function()
+        setTimeout( function()
             if f:isPending() then
                 f:setError( "failed to get player name for '" .. id:toSteam3() .. "', timed out" )
             end
@@ -537,7 +537,7 @@ do
                 } )
             end )
 
-            Timer_simple( function()
+            setTimeout( function()
                 if f:isPending() then
                     f:setError( "fetch info for '" .. wsid_str .. "' timed out." )
                 end
@@ -606,7 +606,7 @@ if std.CLIENT_MENU then
             end
         end )
 
-        Timer_simple( function()
+        setTimeout( function()
             if f:isPending() then
                 f:setError( "failed to download icon file for '" .. wsid_str .. "', timed out." )
             end
@@ -743,7 +743,7 @@ do
             end
         end )
 
-        Timer_simple( function()
+        setTimeout( function()
             if f:isPending() then
                 f:setError( "failed to download addon '" .. wsid_str .. "', timed out." )
             end
@@ -789,7 +789,7 @@ do
             f:setResult( data )
         end )
 
-        Timer_simple( function()
+        setTimeout( function()
             if f:isPending() then
                 f:setError( "failed to perform quick workshop search, timed out." )
             end
@@ -826,7 +826,7 @@ do
             f:setResult( data )
         end )
 
-        Timer_simple( function()
+        setTimeout( function()
             if f:isPending() then
                 f:setError( "failed to perform quick workshop search, timed out." )
             end
@@ -863,7 +863,7 @@ do
             f:setResult( data )
         end )
 
-        Timer_simple( function()
+        setTimeout( function()
             if f:isPending() then
                 f:setError( "failed to perform quick workshop search, timed out." )
             end
@@ -918,7 +918,7 @@ if std.MENU then
             end
         end, nil, changeLog )
 
-        Timer_simple( function()
+        setTimeout( function()
             if f:isPending() then
                 f:setError( "failed to publish addon, timed out" )
             end
@@ -961,7 +961,7 @@ if std.MENU then
             end
         end, tonumber( wsid, 10 ), changeLog )
 
-        Timer_simple( function()
+        setTimeout( function()
             if f:isPending() then
                 f:setError( "failed to update addon '" .. wsid .. "', timed out" )
             end

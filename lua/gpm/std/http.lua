@@ -8,7 +8,7 @@ local std = gpm.std
 
 local isnumber, isstring = std.isnumber, std.isstring
 local futures_Future = std.futures.Future
-local Timer_simple = std.Timer.simple
+local setTimeout = std.setTimeout
 
 local http_client, client_name
 if std.loadbinary( "reqwest" ) then
@@ -60,7 +60,7 @@ do
         return true
     end
 
-    Timer_simple( function()
+    setTimeout( function()
         make_request = http_client
 
         for i = 1, length, 1 do
@@ -445,7 +445,7 @@ if std.MENU then
         end
 
         if timeout > 0 then
-            Timer_simple( function()
+            setTimeout( function()
                 if f:isPending() then
                     f:setError( "failed to get manifest from Facepunch API, timed out" )
                 end

@@ -536,7 +536,7 @@ if std.MENU then
 
     local futures_Future = std.futures.Future
     local glua_serverlist = _G.serverlist
-    local Timer_simple = std.Timer.simple
+    local setTimeout = std.setTimeout
 
     do
 
@@ -576,7 +576,7 @@ if std.MENU then
             end )
 
             if timeout ~= false then
-                Timer_simple( function()
+                setTimeout( function()
                     if f:isPending() then
                         f:setError( "timed out" )
                     end
@@ -611,7 +611,7 @@ if std.MENU then
             end )
 
             if timeout ~= false then
-                Timer_simple( function()
+                setTimeout( function()
                     if f:isPending() then
                         f:setError( "timed out" )
                     end
