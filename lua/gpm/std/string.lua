@@ -415,8 +415,8 @@ do
     ---@return string str The replaced string.
     function string.replace( str, searchable, replaceable, with_pattern )
         if with_pattern then
-            ---@diagnostic disable-next-line: redundant-return-value
-            return string_gsub( str, searchable, replaceable ), nil
+            local result = string_gsub( str, searchable, replaceable )
+            return result
         else
             local startPos, endPos = string_find( str, searchable, 1, true )
             while startPos ~= nil do

@@ -10,7 +10,6 @@ local math = std.math
 local string = std.string
 
 local bit_bxor = bit.bxor
-local bit_signfix = bit.signfix
 local bit_band, bit_bor = bit.band, bit.bor
 local bit_lshift, bit_rshift = bit.lshift, bit.rshift
 
@@ -202,10 +201,10 @@ local function transform( in_a, in_b, in_c, in_d, in_str, index )
     out_c = z( out_c, out_d, i( out_d, out_a, out_b ), x3, 15, 0x2ad7d2bb )
     out_b = z( out_b, out_c, i( out_c, out_d, out_a ), x10, 21, 0xeb86d391 )
 
-    return bit_signfix( in_a + out_a ),
-        bit_signfix( in_b + out_b ),
-        bit_signfix( in_c + out_c ),
-        bit_signfix( in_d + out_d )
+    return ( in_a + out_a ) % 0xFFFFFFFF,
+        ( in_b + out_b ) % 0xFFFFFFFF,
+        ( in_c + out_c ) % 0xFFFFFFFF,
+        ( in_d + out_d ) % 0xFFFFFFFF
 end
 
 --- [SHARED AND MENU]

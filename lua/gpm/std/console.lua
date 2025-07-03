@@ -289,7 +289,7 @@ do
     ---
     --- Returns the console command with the given name.
     ---
-    ---@return gpm.std.console.Command? obj The console command with the given name, or `nil` if it does not exist.
+    ---@return gpm.std.console.Command | nil obj The console command with the given name, or `nil` if it does not exist.
     function CommandClass.get( name )
         return commands[ name ]
     end
@@ -1020,7 +1020,8 @@ do
     local VariableClass = console.Variable or gpm.std.class.create( Variable )
     console.Variable = VariableClass
 
-    VariableClass.exists = engine.consoleVariableExists
+    local engine_consoleVariableExists = engine.consoleVariableExists
+    VariableClass.exists = engine_consoleVariableExists
 
     --- [SHARED AND MENU]
     ---
@@ -1032,27 +1033,19 @@ do
     function VariableClass.get( str_name, str_type )
         local variable = variables[ str_name ]
         if variable == nil then
-            local cvar = engine_consoleVariableGet( str_name )
-            if cvar == nil then
+            if not engine_consoleVariableExists( str_name ) then
                 return nil
             end
 
-            local options = {
+            return VariableClass( {
+                name = str_name,
                 type = str_type,
-                name = str_name
-            }
-
-            if str_type == "boolean" or str_type == "number" then
-                options.default = 0
-            else
-                options.default = ""
-            end
-
-            return VariableClass( options )
-        else
-            variable.type = str_type
-            return variable
+                default = ( str_type == "boolean" or str_type == "number" ) and 0 or "",
+            } )
         end
+
+        variable.type = str_type
+        return variable
     end
 
     --- [SHARED AND MENU]

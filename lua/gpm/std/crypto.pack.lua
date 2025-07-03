@@ -115,12 +115,7 @@ do
 	---@param new_position integer
 	function Reader:seek( new_position )
 		local data_length = self.data_length
-
-		while new_position < 0 do
-			new_position = new_position + data_length + 1
-		end
-
-		self.position = math_min( new_position, data_length )
+		self.position = math_min( ( new_position % ( data_length + 1 ) ), data_length )
 	end
 
 end
@@ -160,9 +155,7 @@ function Reader:read( length )
 		return nil, "not enough data"
 	end
 
-	while length < 0 do
-		length = length + available + 1
-	end
+	length = ( length % ( available + 1 ) )
 
 	if length == data_length then
 		self.position = data_length
@@ -362,14 +355,7 @@ end
 ---@param position integer
 function Writer:seek( position )
 	self:flush()
-
-	local sub_data_length = string_len( self.sub_data )
-
-	while position < 0 do
-		position = position + sub_data_length + 1
-	end
-
-	self.position = position
+	self.position = position % ( string_len( self.sub_data ) + 1 )
 end
 
 do

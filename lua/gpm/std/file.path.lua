@@ -249,8 +249,8 @@ end
 ---@param file_path string The file path.
 ---@return string new_file_path The new file path.
 function path.stripTrailingSlash( file_path )
-    ---@diagnostic disable-next-line: redundant-return-value
-    return string_gsub( file_path, "[/\\]+$", "" ), nil
+    file_path = string_gsub( file_path, "[/\\]+$", "" )
+    return file_path
 end
 
 --- [SHARED AND MENU]
@@ -274,8 +274,8 @@ end
 ---@param file_path string The file path.
 ---@return string new_file_path The new file path.
 function path.stripLeadingSlash( file_path )
-    ---@diagnostic disable-next-line: redundant-return-value
-    return string_gsub( file_path, "^[/\\]+", "" ), nil
+    file_path = string_gsub( file_path, "^[/\\]+", "" )
+    return file_path
 end
 
 --- [SHARED AND MENU]
@@ -299,8 +299,8 @@ end
 ---@param file_path string The file path.
 ---@return string new_file_path The new file path.
 function path.normalizeSlashes( file_path )
-    ---@diagnostic disable-next-line: redundant-return-value
-    return string_gsub( file_path, "[/\\]+", "/" ), nil
+    file_path = string_gsub( file_path, "[/\\]+", "/" )
+    return file_path
 end
 
 --- [SHARED AND MENU]

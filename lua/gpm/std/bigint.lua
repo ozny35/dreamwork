@@ -104,6 +104,14 @@ local function copy( object )
             object[ 25 ], object[ 26 ], object[ 27 ], object[ 28 ],
             object[ 29 ], object[ 30 ], object[ 31 ], object[ 32 ]
         }, BigInt )
+    elseif length > 8192 then
+        local object_copy = { [ 0 ] = object[ 0 ] }
+        for i = 1, length, 1 do
+            object_copy[ i ] = object[ i ]
+        end
+
+        setmetatable( object_copy, BigInt )
+        return object_copy
     else
         return setmetatable( {
             [ 0 ] = object[ 0 ],

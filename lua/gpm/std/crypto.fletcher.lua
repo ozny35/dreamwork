@@ -11,7 +11,6 @@ local bit = std.bit
 local bit_bor = bit.bor
 local bit_bxor = bit.bxor
 local bit_lshift = bit.lshift
-local bit_signfix = bit.signfix
 
 --- [SHARED AND MENU]
 ---
@@ -67,7 +66,7 @@ function crypto.fnv0( str )
         hash = bit_bxor( hash, string_byte( str, index, index ) )
     end
 
-    return bit_signfix( hash )
+    return hash % 0xFFFFFFFF
 end
 
 --- [SHARED AND MENU]
@@ -86,7 +85,7 @@ function crypto.fnv1( str )
         hash = bit_bxor( hash, string_byte( str, index, index ) )
     end
 
-    return bit_signfix( hash )
+    return hash % 0xFFFFFFFF
 end
 
 --- [SHARED AND MENU]
@@ -105,5 +104,5 @@ function crypto.fnv1a( str )
         hash = hash + bit_lshift( hash, 1 ) + bit_lshift( hash, 4 ) + bit_lshift( hash, 7 ) + bit_lshift( hash, 8 ) +bit_lshift( hash, 24 )
     end
 
-    return bit_signfix( hash )
+    return hash % 0xFFFFFFFF
 end

@@ -873,6 +873,7 @@ dofile( "std/crypto.base16.lua" )
 dofile( "std/crypto.base32.lua" )
 dofile( "std/crypto.base64.lua" )
 dofile( "std/crypto.percent.lua" )
+-- dofile( "std/crypto.unicode.lua" )
 -- dofile( "std/crypto.punycode.lua" )
 
 -- checksum functions
@@ -937,7 +938,10 @@ dofile( "std/console.logger.lua")
 
 if SERVER then
     -- https://github.com/Facepunch/garrysmod-requests/issues/2793
-    std.console.Command.run( "sv_defaultdeployspeed", "1" )
+    local variable = console_Variable.get( "sv_defaultdeployspeed", "number" )
+    if variable ~= nil and variable.value == 4 then
+        variable.value = 1
+    end
 end
 
 local logger = std.console.Logger( {
@@ -1043,7 +1047,7 @@ dofile( "package/init.lua" )
 
 do
 
-    local Timer_simple = std.Timer.simple
+    local setTimeout = std.setTimeout
     local futures = std.futures
 
     --- Puts current thread to sleep for given amount of seconds.
@@ -1060,7 +1064,7 @@ do
 
         ---@cast co thread
 
-        Timer_simple( function()
+        setTimeout( function()
             futures.wakeup( co )
         end, seconds )
 
