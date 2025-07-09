@@ -936,6 +936,8 @@ end
 dofile( "std/console.lua" )
 dofile( "std/console.logger.lua")
 
+local console_Variable = std.console.Variable
+
 if SERVER then
     -- https://github.com/Facepunch/garrysmod-requests/issues/2793
     local variable = console_Variable.get( "sv_defaultdeployspeed", "number" )
