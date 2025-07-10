@@ -2,11 +2,14 @@ local std = _G.gpm.std
 ---@class gpm.std.crypto
 local crypto = std.crypto
 
-local string_byte, string_char = std.string.byte, std.string.char
-local bytepack_writeHex8 = crypto.bytepack.writeHex8
-local bytepack_readHex8 = crypto.bytepack.readHex8
 local table_concat = std.table.concat
-local string_len = std.string.len
+
+local bytepack_readHex8 = crypto.bytepack.readHex8
+local bytepack_writeHex8 = crypto.bytepack.writeHex8
+
+local string = std.string
+local string_len = string.len
+local string_byte, string_char = string.byte, string.char
 
 --- [SHARED AND MENU]
 ---
@@ -42,14 +45,9 @@ end
 ---@param base16_str string The base16 string to decode.
 ---@return string str_raw The decoded string.
 function base16.decode( base16_str )
-    local base16_length = string_len( base16_str )
-    if base16_length % 2 ~= 0 then
-        error( "base16 (hexadecimal) string length must be even", 2 )
-    end
-
     local segments, segment_count = {}, 0
 
-    for index = 1, base16_length, 2 do
+    for index = 1, string_len( base16_str ), 2 do
         segment_count = segment_count + 1
         segments[ segment_count ] = string_char( bytepack_readHex8( string_byte( base16_str, index, index + 1 ) ) )
     end
@@ -77,4 +75,60 @@ function base16.validate( base16_str )
     end
 
     return true
+end
+
+do
+
+    local string_sub = string.sub
+
+    --- [SHARED AND MENU]
+    ---
+    --- Escapes the specified base16 string.
+    ---
+    --- Escape sequence: `\xXX`
+    ---
+    ---@param base16_str string The base16 string to escape.
+    ---@return string base16_escape_str The escaped base16 string.
+    function base16.escape( base16_str )
+        local segments, segment_count = {}, 0
+
+        for index = 1, string_len( base16_str ), 2 do
+            segment_count = segment_count + 1
+            segments[ segment_count ] = "\\x" .. string_sub( base16_str, index, index + 1 )
+        end
+
+        return table_concat( segments, "", 1, segment_count )
+    end
+
+    --- [SHARED AND MENU]
+    ---
+    --- Unescapes the specified base16 string.
+    ---
+    --- Unescape sequence: `\xXX`
+    ---
+    ---@param base16_escape_str string The base16 string to unescape.
+    ---@return string base16_str The unescaped base16 string.
+    function base16.unescape( base16_escape_str )
+        local base16_escape_str_length = string_len( base16_escape_str )
+        local index = 1
+
+        local segments, segment_count = {}, 0
+
+        repeat
+            if string_byte( base16_escape_str, index, index ) == 0x5C --[[ "\" ]] and string_byte( base16_escape_str, index + 1, index + 1 ) == 0x78 --[[ "x" ]] then
+                index = index + 2
+
+                segment_count = segment_count + 1
+                segments[ segment_count ] = string_sub( base16_escape_str, index, index + 1 )
+                index = index + 2
+            else
+                segment_count = segment_count + 1
+                segments[ segment_count ] = string_sub( base16_escape_str, index, index )
+                index = index + 1
+            end
+        until index > base16_escape_str_length
+
+        return table_concat( segments, "", 1, segment_count )
+    end
+
 end
