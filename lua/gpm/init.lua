@@ -815,39 +815,6 @@ dofile( "std/time.lua" )
 
 dofile( "std/version.lua" )
 dofile( "std/bigint.lua" )
-dofile( "std/color.lua" )
-
-do
-
-    local Color = std.Color
-    local scheme = Color.scheme
-
-    scheme.white = Color( 255, 255, 255, 255 )
-    scheme.black = Color( 0, 0, 0, 255 )
-
-    scheme.red = Color( 255, 0, 0, 255 )
-    scheme.green = Color( 0, 255, 0, 255 )
-    scheme.blue = Color( 0, 0, 255, 255 )
-
-    scheme.yellow = Color( 255, 255, 0, 255 )
-    scheme.cyan = Color( 0, 255, 255, 255 )
-    scheme.magenta = Color( 255, 0, 255, 255 )
-
-    scheme.gray = Color( 128, 128, 128, 255 )
-
-    scheme.info = Color( 70, 135, 255 )
-    scheme.warn = Color( 255, 130, 90 )
-    scheme.error = Color( 250, 55, 40 )
-    scheme.debug = Color( 0, 200, 150 )
-
-    scheme.text_primary = Color( 200 )
-    scheme.text_secondary = Color( 150 )
-
-    scheme.realm_menu = Color( 75, 175, 80 )
-    scheme.realm_client = Color( 225, 170, 10 )
-    scheme.realm_server = Color( 5, 170, 250 )
-
-end
 
 dofile( "engine.lua" )
 
@@ -926,9 +893,42 @@ dofile( "std/crypto.pbkdf2.lua" )
 
 dofile( "std/uuid.lua" )
 
+dofile( "std/color.lua" )
 dofile( "std/timer.lua" )
 dofile( "std/hook.lua" )
 dofile( "std/url.lua" )
+
+do
+
+    local Color = std.Color
+    local scheme = Color.scheme
+
+    scheme.white = Color( 255, 255, 255, 255 )
+    scheme.black = Color( 0, 0, 0, 255 )
+
+    scheme.red = Color( 255, 0, 0, 255 )
+    scheme.green = Color( 0, 255, 0, 255 )
+    scheme.blue = Color( 0, 0, 255, 255 )
+
+    scheme.yellow = Color( 255, 255, 0, 255 )
+    scheme.cyan = Color( 0, 255, 255, 255 )
+    scheme.magenta = Color( 255, 0, 255, 255 )
+
+    scheme.gray = Color( 128, 128, 128, 255 )
+
+    scheme.info = Color( 70, 135, 255 )
+    scheme.warn = Color( 255, 130, 90 )
+    scheme.error = Color( 250, 55, 40 )
+    scheme.debug = Color( 0, 200, 150 )
+
+    scheme.text_primary = Color( 200 )
+    scheme.text_secondary = Color( 150 )
+
+    scheme.realm_menu = Color( 75, 175, 80 )
+    scheme.realm_client = Color( 225, 170, 10 )
+    scheme.realm_server = Color( 5, 170, 250 )
+
+end
 
 if gpm.TickTimer0_05 == nil then
     local timer = std.Timer( 0.05, -1, gpm.PREFIX .. "::TickTimer0_05" )
