@@ -6,8 +6,8 @@ local math_floor = math.floor
 
 local table_unpack = std.table.unpack
 
----@class gpm.std.crypto
-local crypto = std.crypto
+---@class gpm.std.binary
+local binary = std.binary
 
 --- [SHARED AND MENU]
 ---
@@ -15,9 +15,9 @@ local crypto = std.crypto
 ---
 --- Library provides functions for reading and writing bits.
 ---
----@class gpm.std.crypto.bitpack
-local bitpack = crypto.bitpack or {}
-crypto.bitpack = bitpack
+---@class gpm.std.binary.bitpack
+local bitpack = binary.bitpack or {}
+binary.bitpack = bitpack
 
 -- TODO: ffi support?
 

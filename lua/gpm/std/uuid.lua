@@ -1,3 +1,4 @@
+---@class gpm.std
 local std = _G.gpm.std
 
 local string = std.string
@@ -6,19 +7,25 @@ local math_random = std.math.random
 
 local bit_band, bit_bor = std.bit.band, std.bit.bor
 
----@class gpm.std.crypto
-local crypto = std.crypto
+--- [SHARED AND MENU]
+---
+--- The UUID generation library.
+---
+---@class gpm.std.uuid
+local uuid = std.uuid or {}
+std.uuid = uuid
 
 do
 
     local string_len = string.len
     local string_byte = string.byte
     local string_gsub = string.gsub
-    local base16_decode = crypto.base16.decode
+
+    local base16_decode = std.encoding.base16.decode
 
     do
 
-        local MD5_digest = crypto.MD5.digest
+        local MD5_digest = std.crypto.MD5.digest
 
         --- [SHARED AND MENU]
         ---
@@ -28,14 +35,14 @@ do
         ---
         ---@param namespace string The namespace UUID (must be a valid UUID string).
         ---@param name string The name to hash within the namespace.
-        ---@return string uuid A UUID v3 string.
-        function crypto.UUIDv3( namespace, name )
-            local uuid = string_gsub( namespace, "-", "" )
-            if string_len( uuid ) ~= 32 then
+        ---@return string uuid_str A UUID v3 string.
+        function uuid.UUIDv3( namespace, name )
+            local uuid_str = string_gsub( namespace, "-", "" )
+            if string_len( uuid_str ) ~= 32 then
                 error( "invalid namespace UUID format", 2 )
             end
 
-            local uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8, uint8_9, uint8_10, uint8_11, uint8_12, uint8_13, uint8_14, uint8_15, uint8_16 = string_byte( MD5_digest( base16_decode( uuid ) .. name, false ), 1, 16 )
+            local uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8, uint8_9, uint8_10, uint8_11, uint8_12, uint8_13, uint8_14, uint8_15, uint8_16 = string_byte( MD5_digest( base16_decode( uuid_str ) .. name, false ), 1, 16 )
 
             return string_format( "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
                 uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, bit_bor( bit_band( uint8_7, 0x0F ), 0x30 ),
@@ -48,7 +55,7 @@ do
 
     do
 
-        local SHA1_digest = crypto.SHA1.digest
+        local SHA1_digest = std.crypto.SHA1.digest
 
         --- [SHARED AND MENU]
         ---
@@ -58,14 +65,14 @@ do
         ---
         ---@param namespace string The namespace UUID (must be a valid UUID string).
         ---@param name string The name to hash within the namespace.
-        ---@return string uuid A UUID v5 string.
-        function crypto.UUIDv5( namespace, name )
-            local uuid = string_gsub( namespace, "-", "" )
-            if string_len( uuid ) ~= 32 then
+        ---@return string uuid_str A UUID v5 string.
+        function uuid.UUIDv5( namespace, name )
+            local uuid_str = string_gsub( namespace, "-", "" )
+            if string_len( uuid_str ) ~= 32 then
                 error( "invalid namespace UUID format", 2 )
             end
 
-            local uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8, uint8_9, uint8_10, uint8_11, uint8_12, uint8_13, uint8_14, uint8_15, uint8_16 = string_byte( SHA1_digest( base16_decode( uuid ) .. name, false ), 1, 16 )
+            local uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8, uint8_9, uint8_10, uint8_11, uint8_12, uint8_13, uint8_14, uint8_15, uint8_16 = string_byte( SHA1_digest( base16_decode( uuid_str ) .. name, false ), 1, 16 )
 
             return string_format( "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
                 uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, bit_bor( bit_band( uint8_7, 0x0F ), 0x50 ),
@@ -85,8 +92,8 @@ end
 --- UUID v4 is generated using random or pseudo-random numbers.
 --- No input is needed; output is a fully random UUID.
 ---
----@return string uuid A UUID v4 string.
-function crypto.UUIDv4()
+---@return string uuid_str A UUID v4 string.
+function uuid.UUIDv4()
     return string_format( "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
         math_random( 0, 255 ),
         math_random( 0, 255 ),
@@ -140,8 +147,8 @@ do
     --- in databases, including distributed ones.
     ---
     ---@param timestamp? gpm.std.BigInt The UNIX-64 timestamp to use.
-    ---@return string uuid A UUID v7 string.
-    function crypto.UUIDv7( timestamp )
+    ---@return string uuid_str A UUID v7 string.
+    function uuid.UUIDv7( timestamp )
         if timestamp == nil then
             timestamp = BigInt_fromNumber( time_now( "ms" ) )
         end
@@ -193,8 +200,8 @@ end
 ---@param uint8_14? integer Unsigned byte (0..255)
 ---@param uint8_15? integer Unsigned byte (0..255)
 ---@param uint8_16? integer Unsigned byte (0..255)
----@return string uuid A UUID v8 string.
-function crypto.UUIDv8( uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8, uint8_9, uint8_10, uint8_11, uint8_12, uint8_13, uint8_14, uint8_15, uint8_16 )
+---@return string uuid_str A UUID v8 string.
+function uuid.UUIDv8( uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8, uint8_9, uint8_10, uint8_11, uint8_12, uint8_13, uint8_14, uint8_15, uint8_16 )
     return string_format(
         "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
         uint8_1 or 0, uint8_2 or 0, uint8_3 or 0, uint8_4 or 0, uint8_5 or 0, uint8_6 or 0,

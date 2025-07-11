@@ -8,8 +8,8 @@ local math_floor = math.floor
 local bit_lshift, bit_rshift = bit.lshift, bit.rshift
 local bit_band, bit_bor = bit.band, bit.bor
 
----@class gpm.std.crypto
-local crypto = std.crypto
+---@class gpm.std.binary
+local binary = std.binary
 
 -- TODO: ffi support?
 
@@ -17,9 +17,9 @@ local crypto = std.crypto
 ---
 --- The bytepack library that packs/unpacks types as bytes.
 ---
----@class gpm.std.crypto.bytepack
+---@class gpm.std.binary.bytepack
 local bytepack = {}
-crypto.bytepack = bytepack
+binary.bytepack = bytepack
 
 --- [SHARED AND MENU]
 ---
@@ -1131,7 +1131,7 @@ do
 		---@param uint8_2 integer The second byte.
 		---@return integer value The unsigned 1-byte integer.
 		function bytepack.readHex8( uint8_1, uint8_2 )
-			return uint8_cache[ bit_lshift( uint8_1, 8 ) + uint8_2 ]
+			return uint8_cache[ bit_lshift( uint8_1, 8 ) + uint8_2 ] or 0x0
 		end
 
 	end

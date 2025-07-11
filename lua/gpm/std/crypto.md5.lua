@@ -20,8 +20,9 @@ local string_char, string_byte = string.char, string.byte
 
 local math_floor = math.floor
 
-local bytepack_readUInt32 = crypto.bytepack.readUInt32
-local bytepack_writeUInt32 = crypto.bytepack.writeUInt32
+local bytepack = std.binary.bytepack
+local bytepack_readUInt32 = bytepack.readUInt32
+local bytepack_writeUInt32 = bytepack.writeUInt32
 
 --- [SHARED AND MENU]
 ---
@@ -365,7 +366,7 @@ if engine_MD5 == nil then
 
 else
 
-    local base16_decode = crypto.base16.decode
+    local base16_decode = std.encoding.base16.decode
 
     --- [SHARED AND MENU]
     ---

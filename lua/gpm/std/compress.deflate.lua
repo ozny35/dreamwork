@@ -20,23 +20,24 @@ local string_find = string.find
 local string_gsub, string_sub = string.gsub, string.sub
 local string_byte, string_char = string.byte, string.char
 
----@class gpm.std.crypto
-local crypto = std.crypto
-local crypto_adler32 = crypto.adler32
+local crypto_adler32 = std.checksum.adler32
+
+---@class gpm.std.compress
+local compress = std.compress
 
 --- [SHARED AND MENU]
 ---
 --- A library for compressing and decompressing data using the deflate algorithm and more.
----@class gpm.std.crypto.deflate
+---@class gpm.std.compress.deflate
 local deflate = {}
-crypto.deflate = deflate
+compress.deflate = deflate
 
 --- [SHARED AND MENU]
 ---
 --- A library for compressing and decompressing data using the zlib algorithm and more.
----@class gpm.std.crypto.zlib
+---@class gpm.std.compress.zlib
 local zlib = {}
-crypto.zlib = zlib
+compress.zlib = zlib
 
 -- TODO: remove this crap and replace with luajited fucntions :p
 -- Converts i to 2^i, (0<=i<=32)

@@ -1,6 +1,7 @@
 local std = _G.gpm.std
+---@class gpm.std.encoding
+local encoding = std.encoding
 
----@class gpm.std.string
 local string = std.string
 local string_len, string_sub = string.len, string.sub
 local string_char, string_byte = string.char, string.byte
@@ -21,15 +22,15 @@ local select = std.select
 ---
 --- In gpm utf8 library rewrited from zero and contains additional functions.
 ---
----@class gpm.std.string.utf8
+---@class gpm.std.encoding.utf8
 ---@field charpattern string This is NOT a function, it's a pattern (a string, not a function) which matches exactly one UTF-8 byte sequence, assuming that the subject is a valid UTF-8 string.
-local utf8 = string.utf8 or {}
-string.utf8 = utf8
+local utf8 = encoding.utf8 or {}
+encoding.utf8 = utf8
 
 utf8.charpattern = "[%z\x01-\x7F\xC2-\xF4][\x80-\xBF]*"
 
-local MAXUNICODE = 0x10FFFF
-local MAXUTF = 0x7FFFFFFF
+-- local MAXUNICODE = 0x10FFFF
+-- local MAXUTF = 0x7FFFFFFF
 
 ---@param i integer
 ---@return boolean

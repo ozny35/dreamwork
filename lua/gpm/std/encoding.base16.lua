@@ -1,11 +1,12 @@
 local std = _G.gpm.std
----@class gpm.std.crypto
-local crypto = std.crypto
+---@class gpm.std.encoding
+local encoding = std.encoding
 
 local table_concat = std.table.concat
 
-local bytepack_readHex8 = crypto.bytepack.readHex8
-local bytepack_writeHex8 = crypto.bytepack.writeHex8
+local bytepack = std.binary.bytepack
+local bytepack_readHex8 = bytepack.readHex8
+local bytepack_writeHex8 = bytepack.writeHex8
 
 local string = std.string
 local string_len = string.len
@@ -17,9 +18,9 @@ local string_byte, string_char = string.byte, string.char
 ---
 --- See https://en.wikipedia.org/wiki/Hexadecimal
 ---
----@class gpm.std.crypto.base16
-local base16 = crypto.base16 or {}
-crypto.base16 = base16
+---@class gpm.std.encoding.base16
+local base16 = encoding.base16 or {}
+encoding.base16 = base16
 
 --- [SHARED AND MENU]
 ---

@@ -8,8 +8,8 @@ local hmac_key = hmac.key
 local hmac_padding = hmac.padding
 local hmac_computeBinary = hmac.computeBinary
 
-local pack_writeUInt32 = crypto.pack.writeUInt32
-local base16_encode = crypto.base16.encode
+local pack_writeUInt32 = std.binary.pack.writeUInt32
+local base16_encode = std.encoding.base16.encode
 
 local string = std.string
 local string_len, string_sub = string.len, string.sub

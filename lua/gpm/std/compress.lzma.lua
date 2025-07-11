@@ -1,19 +1,19 @@
 local _G = _G
 local std = _G.gpm.std
----@class gpm.std.crypto
-local crypto = std.crypto
+---@class gpm.std.compress
+local compress = std.compress
 
-local pack_readUInt32 = crypto.pack.readUInt32
+local pack_readUInt32 = std.binary.pack.readUInt32
 local glua_util = _G.util
 
 --- [SHARED AND MENU]
 ---
 --- The lzma format is a lossless data compression algorithm that is used to compress large files.
 ---
----@class gpm.std.crypto.lzma
+---@class gpm.std.compress.lzma
 ---@field PROPS_SIZE number The size of the lzma properties in bytes.
-local lzma = crypto.lzma or { PROPS_SIZE = 5 }
-crypto.lzma = lzma
+local lzma = compress.lzma or { PROPS_SIZE = 5 }
+compress.lzma = lzma
 
 lzma.compress = lzma.compress or glua_util.Compress or function() return "" end
 lzma.decompress = lzma.decompress or glua_util.Decompress or lzma.compress

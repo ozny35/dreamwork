@@ -1,8 +1,8 @@
 --- Based on https://github.com/nmap/nmap/blob/master/nselib/base32.lua
 
 local std = _G.gpm.std
----@class gpm.std.crypto
-local crypto = std.crypto
+---@class gpm.std.encoding
+local encoding = std.encoding
 
 local string = std.string
 local string_len = string.len
@@ -20,15 +20,15 @@ local table_concat = std.table.concat
 ---
 --- See https://en.wikipedia.org/wiki/Base32
 ---
----@class gpm.std.crypto.base32
-local base32 = crypto.base32 or {}
-crypto.base32 = base32
+---@class gpm.std.encoding.base32
+local base32 = encoding.base32 or {}
+encoding.base32 = base32
 
 --- [SHARED AND MENU]
 ---
 --- The base32 encoding/decoding alphabet.
 ---
----@class gpm.std.crypto.base32.Alphabet
+---@class gpm.std.encoding.base32.Alphabet
 ---@field [1] table<integer, string> The encoding map.
 ---@field [2] table<integer, integer> The decoding map.
 
@@ -37,7 +37,7 @@ crypto.base32 = base32
 --- Creates a base32 alphabet with encoding and decoding maps.
 ---
 ---@param alphabet_str string The alphabet string.
----@return gpm.std.crypto.base32.Alphabet alphabet The alphabet.
+---@return gpm.std.encoding.base32.Alphabet alphabet The alphabet.
 function base32.alphabet( alphabet_str )
     if string_len( alphabet_str ) ~= 32 then
         error( "alphabet must be 32 characters long", 2 )
@@ -168,7 +168,7 @@ end
 ---
 ---@param raw_str string The string to encode.
 ---@param ignore_padding? boolean Whether to ignore padding.
----@param alphabet? "standard" | "extended" | gpm.std.crypto.base32.Alphabet The alphabet to use.
+---@param alphabet? "standard" | "extended" | gpm.std.encoding.base32.Alphabet The alphabet to use.
 ---@return string base32_str The encoded string.
 function base32.encode( raw_str, ignore_padding, alphabet )
     local encode_map
@@ -273,7 +273,7 @@ end
 ---
 ---@param base32_str string The base32 encoded string to decode.
 ---@param ignore_padding? boolean Whether to ignore padding.
----@param alphabet? "standard" | "extended" | gpm.std.crypto.base32.Alphabet The alphabet to use.
+---@param alphabet? "standard" | "extended" | gpm.std.encoding.base32.Alphabet The alphabet to use.
 ---@return string str_raw The decoded string.
 function base32.decode( base32_str, ignore_padding, alphabet )
     local base32_str_length = string_len( base32_str )
@@ -334,7 +334,7 @@ end
 ---
 ---@param base32_str string The base32 encoded string to check.
 ---@param ignore_padding? boolean Whether to ignore padding.
----@param alphabet? "standard" | "extended" | gpm.std.crypto.base32.Alphabet The alphabet to use.
+---@param alphabet? "standard" | "extended" | gpm.std.encoding.base32.Alphabet The alphabet to use.
 ---@return boolean is_valid `true` if the base32 string is valid, `false` otherwise
 ---@return nil | string err_msg The error message.
 function base32.validate( base32_str, ignore_padding, alphabet )

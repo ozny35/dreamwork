@@ -165,7 +165,7 @@ do
 end
 
 local http_cache_get, http_cache_set = gpm.http_cache.get, gpm.http_cache.set
-local json_serialize = std.crypto.json.serialize
+local json_serialize = std.encoding.json.serialize
 local string_gmatch = std.string.gmatch
 local raw_tonumber = std.raw.tonumber
 local time_elapsed = std.time.elapsed
@@ -413,7 +413,7 @@ end
 
 if std.MENU then
 
-    local json_deserialize = std.crypto.json.deserialize
+    local json_deserialize = std.encoding.json.deserialize
     local glua_GetAPIManifest = _G.GetAPIManifest
 
     --- [MENU]

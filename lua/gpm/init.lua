@@ -808,7 +808,6 @@ end
 
 dofile( "std/string.extensions.lua" )
 dofile( "std/math.classes.lua" )
-dofile( "std/string.utf8.lua" )
 
 dofile( "std/structures.lua" )
 dofile( "std/futures.lua" )
@@ -856,54 +855,76 @@ dofile( "std/game.lua" )
 
 --- [SHARED AND MENU]
 ---
---- The crypto library.
+--- The binary manipulation library.
+---
+---@class gpm.std.binary
+std.binary = std.binary or {}
+
+dofile( "std/binary.bitpack.lua" )
+dofile( "std/binary.bytepack.lua" )
+dofile( "std/binary.pack.lua" )
+
+--- [SHARED AND MENU]
+---
+--- The encoding/decoding libraries.
+---
+---@class gpm.std.encoding
+std.encoding = std.encoding or {}
+
+dofile( "std/encoding.base16.lua" )
+dofile( "std/encoding.base32.lua" )
+dofile( "std/encoding.base64.lua" )
+dofile( "std/encoding.percent.lua" )
+
+dofile( "std/encoding.utf8.lua" )
+dofile( "std/encoding.unicode.lua" )
+dofile( "std/encoding.punycode.lua" )
+
+dofile( "std/encoding.json.lua" )
+dofile( "std/encoding.vdf.lua" )
+
+--- [SHARED AND MENU]
+---
+--- The checksum calculation libraries.
+---
+---@class gpm.std.checksum
+std.checksum = std.checksum or {}
+
+dofile( "std/checksum.crc.lua" )
+dofile( "std/checksum.adler.lua" )
+dofile( "std/checksum.fletcher.lua" )
+
+--- [SHARED AND MENU]
+---
+--- The compression libraries.
+---
+---@class gpm.std.compress
+std.compress = std.compress or {}
+
+dofile( "std/compress.deflate.lua" )
+dofile( "std/compress.lzma.lua" )
+dofile( "std/compress.lzw.lua" )
+
+--- [SHARED AND MENU]
+---
+--- The crypto libraries.
 ---
 ---@class gpm.std.crypto
 std.crypto = std.crypto or {}
 
 ---@alias gpm.std.crypto.HashFunction fun( message: string, as_hex?: boolean ): string
 
--- packers
-dofile( "std/crypto.bitpack.lua" )
-dofile( "std/crypto.bytepack.lua" )
-dofile( "std/crypto.pack.lua" )
-
--- encoders
-dofile( "std/crypto.base16.lua" )
-dofile( "std/crypto.base32.lua" )
-dofile( "std/crypto.base64.lua" )
-dofile( "std/crypto.percent.lua" )
--- dofile( "std/crypto.unicode.lua" )
--- dofile( "std/crypto.punycode.lua" )
-
--- checksum functions
-dofile( "std/crypto.crc.lua" )
-dofile( "std/crypto.adler.lua" )
-dofile( "std/crypto.fletcher.lua" )
-
--- hashers
 dofile( "std/crypto.md5.lua" )
 dofile( "std/crypto.sha1.lua" )
 dofile( "std/crypto.sha256.lua" )
 
--- compressors
-dofile( "std/crypto.deflate.lua" )
-dofile( "std/crypto.lzma.lua" )
-dofile( "std/crypto.lzw.lua" )
+-- TODO: crypto.registerHash
 
--- ciphers
 dofile( "std/crypto.chacha20.lua" )
-
--- keys/passwords
 dofile( "std/crypto.hmac.lua" )
 dofile( "std/crypto.pbkdf2.lua" )
 
--- utils
-dofile( "std/crypto.uuid.lua" )
-
--- serealizers
-dofile( "std/crypto.json.lua" )
-dofile( "std/crypto.vdf.lua" )
+dofile( "std/uuid.lua" )
 
 dofile( "std/timer.lua" )
 dofile( "std/hook.lua" )
@@ -1098,7 +1119,7 @@ do
         "I'm here to show you how great I am!",
         "Millions of pieces without a tether",
         "Why are we always looking for more?",
-        "Never forget to finish your tasks!",
+        "Never forget to finish your Task's!",
         "T2gsIHlvdSdyZSBhIHNtYXJ0IG9uZS4=",
         "Take it in and breathe the light",
         "Don't worry, " .. name .. " :>",
@@ -1576,3 +1597,16 @@ end
 -- TODO: https://github.com/Nak2/NikNaks/blob/main/lua/niknaks/modules/sh_enums.lua
 
 -- TODO: plugins support
+
+--[[
+
+    -- TODO
+
+    concept
+
+    local utf8 = require( "utf8" )
+    local custom_utf8 = require( "package.utf8" )
+
+    local ... = dofile( "./path.to.lua", ... ) -- as compile file
+
+]]

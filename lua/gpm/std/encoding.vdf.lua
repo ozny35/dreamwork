@@ -1,7 +1,7 @@
 local _G = _G
 local std = _G.gpm.std
----@class gpm.std.crypto
-local crypto = std.crypto
+---@class gpm.std.encoding
+local encoding = std.encoding
 
 local glua_util = _G.util
 
@@ -9,9 +9,9 @@ local glua_util = _G.util
 ---
 --- The KeyValues format is used in the Source engine to store meta data for resources, scripts, materials, VGUI elements, and more..
 ---
----@class gpm.std.crypto.vdf
-local vdf = crypto.vdf or {}
-crypto.vdf = vdf
+---@class gpm.std.encoding.vdf
+local vdf = encoding.vdf or {}
+encoding.vdf = vdf
 
 vdf.serialize = vdf.serialize or glua_util.TableToKeyValues
 vdf.deserialize = vdf.deserialize or glua_util.KeyValuesToTable

@@ -1,7 +1,6 @@
 local std = _G.gpm.std
----@class gpm.std.crypto
-local crypto = std.crypto
-
+---@class gpm.std.checksum
+local checksum = std.checksum
 
 local string = std.string
 local string_len = string.len
@@ -20,7 +19,7 @@ local bit_lshift = bit.lshift
 ---
 ---@param str string The string used to calculate the Fletcher-16 checksum.
 ---@return integer checksum The Fletcher-16 checksum, which is greater or equal to 0, and less than 2^16 (0x10000).
-function crypto.fletcher16( str )
+function checksum.fletcher16( str )
     local x, y = 0, 0
 
     for index = 1, string_len( str ), 1 do
@@ -39,7 +38,7 @@ end
 ---
 ---@param str string The string used to calculate the Fletcher-32 checksum.
 ---@return integer checksum The Fletcher-32 checksum, which is greater or equal to 0, and less than 2^32 (0x100000000).
-function crypto.fletcher32( str )
+function checksum.fletcher32( str )
     local x, y = 0, 0
 
     for index = 1, string_len( str ), 1 do
@@ -58,7 +57,7 @@ end
 ---
 ---@param str string The string used to calculate the Fowler-Noll-Vo hash.
 ---@return integer checksum The Fowler-Noll-Vo hash, which is greater or equal to 0, and less than 2^32 (0x100000000).
-function crypto.fnv0( str )
+function checksum.fnv0( str )
     local hash = 0
 
     for index = 1, string_len( str ), 1 do
@@ -77,7 +76,7 @@ end
 ---
 ---@param str string The string used to calculate the Fowler-Noll-Vo hash.
 ---@return integer checksum The Fowler-Noll-Vo hash, which is greater or equal to 0, and less than 2^32 (0x100000000).
-function crypto.fnv1( str )
+function checksum.fnv1( str )
     local hash = 0x811c9dc5
 
     for index = 1, string_len( str ), 1 do
@@ -96,7 +95,7 @@ end
 ---
 ---@param str string The string used to calculate the Fowler-Noll-Vo hash.
 ---@return integer checksum The Fowler-Noll-Vo hash, which is greater or equal to 0, and less than 2^32 (0x100000000).
-function crypto.fnv1a( str )
+function checksum.fnv1a( str )
     local hash = 0x811c9dc5
 
     for index = 1, string_len( str ), 1 do

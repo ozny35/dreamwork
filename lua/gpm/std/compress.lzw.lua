@@ -14,16 +14,16 @@ local string_len = string.len
 
 local table_concat = std.table.concat
 
----@class gpm.std.crypto
-local crypto = std.crypto
+---@class gpm.std.compress
+local compress = std.compress
 
 --- [SHARED AND MENU]
 ---
 --- A lzw library.
 ---
----@class gpm.std.crypto.lzw
-local lzw = crypto.lzw or {}
-crypto.lzw = lzw
+---@class gpm.std.compress.lzw
+local lzw = compress.lzw or {}
+compress.lzw = lzw
 
 local basedictcompress = {}
 local basedictdecompress = {}

@@ -50,7 +50,7 @@ if engine_SHA1 == nil then
 
 else
 
-    local base16_decode = crypto.base16.decode
+    local base16_decode = std.encoding.base16.decode
 
     --- [SHARED AND MENU]
     ---

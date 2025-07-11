@@ -619,7 +619,7 @@ do
                 end
             end
 
-            ---@param writer gpm.std.crypto.pack.Writer
+            ---@param writer gpm.std.binary.pack.Writer
             ---@protected
             function BigInt:__serialize( writer )
                 writer:writeCountedString( string_char( self[ 0 ], table_unpack( self, 1, #self ) ), 16, false )
@@ -629,7 +629,7 @@ do
 
     end
 
-    ---@param reader gpm.std.crypto.pack.Reader
+    ---@param reader gpm.std.binary.pack.Reader
     function BigInt:__deserialize( reader )
         local binary_str, binary_length, err_msg = reader:readCountedString( 16, false )
 

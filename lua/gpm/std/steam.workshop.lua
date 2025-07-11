@@ -235,7 +235,7 @@ end
 
 do
 
-    local json_deserialize = std.crypto.json.deserialize
+    local json_deserialize = std.encoding.json.deserialize
     local Identifier_from64 = steam.Identifier.from64
     local http_StatusCodes = std.http.StatusCodes
     local http_request = std.http.request
@@ -499,6 +499,7 @@ do
                 ---@diagnostic disable-next-line: undefined-field
                 local warnings = item.content_descriptors
                 if warnings and #warnings == 0 then
+                    ---@diagnostic disable-next-line: cast-local-type
                     warnings = nil
                 end
 

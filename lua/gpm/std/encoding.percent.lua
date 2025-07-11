@@ -1,6 +1,8 @@
 local std = _G.gpm.std
----@class gpm.std.crypto
-local crypto = std.crypto
+---@class gpm.std.encoding
+local encoding = std.encoding
+
+local bytepack = std.binary.bytepack
 
 local string = std.string
 local string_len = string.len
@@ -20,9 +22,9 @@ local table_concat = std.table.concat
 ---
 --- See https://en.wikipedia.org/wiki/Percent-encoding & https://datatracker.ietf.org/doc/html/rfc3986#section-2.1
 ---
----@class gpm.std.crypto.percent
-local percent = crypto.percent or {}
-crypto.percent = percent
+---@class gpm.std.encoding.percent
+local percent = encoding.percent or {}
+encoding.percent = percent
 
 --- [SHARED AND MENU]
 ---
@@ -54,7 +56,7 @@ end
 
 do
 
-    local bytepack_writeHex8 = crypto.bytepack.writeHex8
+    local bytepack_writeHex8 = bytepack.writeHex8
 
     local default_whitelist = percent.whitelist( "%w%-_%.~" )
 
@@ -168,7 +170,7 @@ end
 
 do
 
-    local bytepack_readHex8 = crypto.bytepack.readHex8
+    local bytepack_readHex8 = bytepack.readHex8
     local math_min = std.math.min
 
     --- [SHARED AND MENU]

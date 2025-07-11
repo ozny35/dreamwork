@@ -9,12 +9,12 @@ local string_len = string.len
 local math = std.math
 local math_ceil = math.ceil
 
----@class gpm.std.crypto
-local crypto = std.crypto
+---@class gpm.std.binary
+local binary = std.binary
 
 -- TODO: ffi support?
 
-local bytepack = crypto.bytepack
+local bytepack = binary.bytepack
 
 local bytepack_readUInt16, bytepack_writeUInt16 = bytepack.readUInt16, bytepack.writeUInt16
 local bytepack_readUInt24, bytepack_writeUInt24 = bytepack.readUInt24, bytepack.writeUInt24
@@ -37,24 +37,24 @@ local bytepack_readInt64, bytepack_writeInt64 = bytepack.readInt64, bytepack.wri
 ---
 --- The binary pack/unpack library.
 ---
----@class gpm.std.crypto.pack
-local pack = crypto.pack or {}
-crypto.pack = pack
+---@class gpm.std.binary.pack
+local pack = binary.pack or {}
+binary.pack = pack
 
 --- [SHARED AND MENU]
 ---
 --- The binary reader object.
 ---
----@class gpm.std.crypto.pack.Reader : gpm.std.Object
----@field __class gpm.std.crypto.pack.ReaderClass
+---@class gpm.std.binary.pack.Reader : gpm.std.Object
+---@field __class gpm.std.binary.pack.ReaderClass
 ---@field protected position integer The current position of the reader in bytes. **READ-ONLY**
 ---@field protected data_length integer The size of the reader in bytes. **READ-ONLY**
 ---@field protected data string The content of the reader. **READ-ONLY**
-local Reader = std.class.base( "crypto.pack.Reader" )
+local Reader = std.class.base( "binary.pack.Reader" )
 
 ---@protected
 function Reader:__tostring()
-	return string.format( "crypto.pack.Reader: %p [%d/%d bytes]", self, self.position, self.data_length )
+	return string.format( "binary.pack.Reader: %p [%d/%d bytes]", self, self.position, self.data_length )
 end
 
 ---@protected
@@ -170,9 +170,9 @@ end
 ---
 --- The binary reader class.
 ---
----@class gpm.std.crypto.pack.ReaderClass : gpm.std.crypto.pack.Reader
----@field __base gpm.std.crypto.pack.Reader
----@overload fun(): gpm.std.crypto.pack.Reader
+---@class gpm.std.binary.pack.ReaderClass : gpm.std.binary.pack.Reader
+---@field __base gpm.std.binary.pack.Reader
+---@overload fun(): gpm.std.binary.pack.Reader
 local ReaderClass = std.class.create( Reader )
 pack.Reader = ReaderClass
 
@@ -180,17 +180,17 @@ pack.Reader = ReaderClass
 ---
 --- The binary writer object.
 ---
----@class gpm.std.crypto.pack.Writer : gpm.std.Object
----@field __class gpm.std.crypto.pack.WriterClass
+---@class gpm.std.binary.pack.Writer : gpm.std.Object
+---@field __class gpm.std.binary.pack.WriterClass
 ---@field protected position integer The current position of the reader in bytes. **READ-ONLY**
 ---@field protected data_length integer The size of the reader in bytes. **READ-ONLY**
 ---@field protected data string The content of the reader. **READ-ONLY**
-local Writer = std.class.base( "crypto.pack.Writer" )
+local Writer = std.class.base( "binary.pack.Writer" )
 
 ---@protected
 ---@return string
 function Writer:__tostring()
-	return string.format( "crypto.pack.Writer: %p [%d/%d bytes]", self, self.position, self:size() )
+	return string.format( "binary.pack.Writer: %p [%d/%d bytes]", self, self.position, self:size() )
 end
 
 ---@protected
@@ -378,9 +378,9 @@ end
 ---
 --- The binary writer class.
 ---
----@class gpm.std.crypto.pack.WriterClass : gpm.std.crypto.pack.Writer
----@field __base gpm.std.crypto.pack.Writer
----@overload fun(): gpm.std.crypto.pack.Writer
+---@class gpm.std.binary.pack.WriterClass : gpm.std.binary.pack.Writer
+---@field __base gpm.std.binary.pack.Writer
+---@overload fun(): gpm.std.binary.pack.Writer
 local WriterClass = std.class.create( Writer )
 pack.Writer = WriterClass
 
@@ -3635,3 +3635,108 @@ do
 end
 
 -- TODO: Zip
+
+-- ReadZipFile = function(self, doCRC)
+-- 	if self:Read(4) ~= "PK\x03\x04" then
+-- 		return
+-- 	end
+-- 	local data = { }
+-- 	self:Skip(4)
+-- 	local compressionMethod = self:ReadUShort()
+-- 	data.compression = compressionMethod
+-- 	data.time = self:ReadTime()
+-- 	local crc = self:ReadULong()
+-- 	data.crc = crc
+-- 	local compressedSize = self:ReadULong()
+-- 	data.size = self:ReadULong()
+-- 	local pathLength = self:ReadUShort()
+-- 	local extraLength = self:ReadUShort()
+-- 	data.path = self:Read(pathLength)
+-- 	self:Skip(extraLength)
+-- 	local method = compressionMethods[compressionMethod]
+-- 	if not method then
+-- 		return data, "compression method not supported"
+-- 	end
+-- 	local content = method[2](self:Read(compressedSize))
+-- 	data.content = content
+-- 	if doCRC and content and crc ~= CRC(content) then
+-- 		return data, "crc-32 mismatch"
+-- 	end
+-- 	return data
+-- end
+
+-- --[[
+-- 	0 = No compression
+-- 	1 = LZW compression
+
+-- 	2 = REDUCE (Factor 1)
+-- 	3 = REDUCE (Factor 2)
+-- 	4 = REDUCE (Factor 3)
+-- 	5 = REDUCE (Factor 4)
+
+-- 	6 = IMPLODE
+
+-- 	8 = Deflate (most common)
+
+-- 	9 = DEFLATE64 (Zip64)
+
+-- 	12 = BZIP2
+
+-- 	14 = LZMA
+
+-- 	19 = LZ77
+-- 	20 = JPEG
+
+-- 	21 = WavPack
+-- 	22 = PPMd
+-- 	23 = AES (WinZip)
+-- 	24 = Zstandard (ZSTD)
+-- 	25 = MP3
+-- ]]
+
+-- --[[
+
+-- 	Version Mapping (Hex & Decimal)
+-- 		Hex	Decimal	Features Required
+-- 		0x000A	10	No compression (Stored)
+-- 		0x0014	20	Deflate compression, ZIP encryption
+-- 		0x002D	45	ZIP64 format (files > 4GB)
+-- 		0x002E	46	BZIP2 compression
+-- 		0x002F	47	LZMA compression
+-- 		0x0032	50	AES encryption
+-- 		0x003F	63	PPMd compression
+
+-- --]]
+
+-- function ByteWriter:writeZipString( file_path, content, compression, unix_time, password )
+-- 	if compression == nil then compression = 0 end
+-- 	if unix_time == nil then unix_time = 0 end
+
+-- 	local result = {
+-- 		"PK\x03\x04", -- signature
+-- 		"\3\20", -- unix and zip version 2.0 ( maybe 45?, required ZIP64 )
+-- 		"\50", -- todo, depends on compression
+-- 	}
+
+-- 	local method = compressionMethods[compressionMethod]
+-- 	if not method then
+-- 		throw("Unsupported compression method: " .. compressionMethod)
+-- 		return nil
+-- 	end
+-- 	self:WriteUShort(compressionMethod)
+-- 	self:WriteTime(unixTime)
+-- 	self:WriteULong(tonumber(CRC(content), 10))
+
+-- 	local real_size = string_len( content )
+-- 	content = method[1](content)
+
+-- 	self:WriteULong( string_len( content ) )
+
+-- 	self:WriteULong( real_size )
+-- 	self:WriteUShort(string_len(fileName))
+-- 	self:WriteUShort(0)
+-- 	self:Write(fileName)
+-- 	self:Write(content)
+-- end
+
+-- end

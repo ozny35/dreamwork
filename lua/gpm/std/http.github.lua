@@ -2,8 +2,8 @@ local std = _G.gpm.std
 ---@class gpm.std.http
 local http = std.http
 
-local json_deserialize = std.crypto.json.deserialize
-local base64_decode = std.crypto.base64.decode
+local json_deserialize = std.encoding.json.deserialize
+local base64_decode = std.encoding.base64.decode
 local raw_tonumber = std.raw.tonumber
 local time_elapsed = std.time.elapsed
 local string_gsub = std.string.gsub

@@ -18,7 +18,7 @@ local string_len = string.len
 ---@class gpm.std.crypto
 local crypto = std.crypto
 
-local pack = crypto.pack
+local pack = std.binary.pack
 local pack_readUInt32 = pack.readUInt32
 local pack_writeUInt32 = pack.writeUInt32
 
@@ -103,54 +103,70 @@ local function chacha20( plain_text, key, nonce_str, counter )
 
         -- first block
         block_count = block_count + 1
+        ---@diagnostic disable-next-line: param-type-mismatch
         blocks[ block_count ] = pack_writeUInt32( bit_bxor( pack_readUInt32( plain_text, false, pointer ), bit_band( 0x61707865 + state[ 1 ], 0xffffffff ) ), false )
 
         block_count = block_count + 1
+        ---@diagnostic disable-next-line: param-type-mismatch
         blocks[ block_count ] = pack_writeUInt32( bit_bxor( pack_readUInt32( plain_text, false, pointer + 4 ), bit_band( 0x3320646e + state[ 2 ], 0xffffffff ) ), false )
 
         block_count = block_count + 1
+        ---@diagnostic disable-next-line: param-type-mismatch
         blocks[ block_count ] = pack_writeUInt32( bit_bxor( pack_readUInt32( plain_text, false, pointer + 8 ), bit_band( 0x79622d32 + state[ 3 ], 0xffffffff ) ), false )
 
         block_count = block_count + 1
+        ---@diagnostic disable-next-line: param-type-mismatch
         blocks[ block_count ] = pack_writeUInt32( bit_bxor( pack_readUInt32( plain_text, false, pointer + 12 ), bit_band( 0x6b206574 + state[ 4 ], 0xffffffff ) ), false )
 
         -- second block
         block_count = block_count + 1
+        ---@diagnostic disable-next-line: param-type-mismatch
         blocks[ block_count ] = pack_writeUInt32( bit_bxor( pack_readUInt32( plain_text, false, pointer + 16 ), bit_band( k1 + state[ 5 ], 0xffffffff ) ), false )
 
         block_count = block_count + 1
+        ---@diagnostic disable-next-line: param-type-mismatch
         blocks[ block_count ] = pack_writeUInt32( bit_bxor( pack_readUInt32( plain_text, false, pointer + 20 ), bit_band( k2 + state[ 6 ], 0xffffffff ) ), false )
 
         block_count = block_count + 1
+        ---@diagnostic disable-next-line: param-type-mismatch
         blocks[ block_count ] = pack_writeUInt32( bit_bxor( pack_readUInt32( plain_text, false, pointer + 24 ), bit_band( k3 + state[ 7 ], 0xffffffff ) ), false )
 
         block_count = block_count + 1
+        ---@diagnostic disable-next-line: param-type-mismatch
         blocks[ block_count ] = pack_writeUInt32( bit_bxor( pack_readUInt32( plain_text, false, pointer + 28 ), bit_band( k4 + state[ 8 ], 0xffffffff ) ), false )
 
         -- third block
         block_count = block_count + 1
+        ---@diagnostic disable-next-line: param-type-mismatch
         blocks[ block_count ] = pack_writeUInt32( bit_bxor( pack_readUInt32( plain_text, false, pointer + 32 ), bit_band( k5 + state[ 9 ], 0xffffffff ) ), false )
 
         block_count = block_count + 1
+        ---@diagnostic disable-next-line: param-type-mismatch
         blocks[ block_count ] = pack_writeUInt32( bit_bxor( pack_readUInt32( plain_text, false, pointer + 36 ), bit_band( k6 + state[ 10 ], 0xffffffff ) ), false )
 
         block_count = block_count + 1
+        ---@diagnostic disable-next-line: param-type-mismatch
         blocks[ block_count ] = pack_writeUInt32( bit_bxor( pack_readUInt32( plain_text, false, pointer + 40 ), bit_band( k7 + state[ 11 ], 0xffffffff ) ), false )
 
         block_count = block_count + 1
+        ---@diagnostic disable-next-line: param-type-mismatch
         blocks[ block_count ] = pack_writeUInt32( bit_bxor( pack_readUInt32( plain_text, false, pointer + 44 ), bit_band( k8 + state[ 12 ], 0xffffffff ) ), false )
 
         -- fourth block
         block_count = block_count + 1
+        ---@diagnostic disable-next-line: param-type-mismatch
         blocks[ block_count ] = pack_writeUInt32( bit_bxor( pack_readUInt32( plain_text, false, pointer + 48 ), bit_band( counter + state[ 13 ], 0xffffffff ) ), false )
 
         block_count = block_count + 1
+        ---@diagnostic disable-next-line: param-type-mismatch
         blocks[ block_count ] = pack_writeUInt32( bit_bxor( pack_readUInt32( plain_text, false, pointer + 52 ), bit_band( n1 + state[ 14 ], 0xffffffff ) ), false )
 
         block_count = block_count + 1
+        ---@diagnostic disable-next-line: param-type-mismatch
         blocks[ block_count ] = pack_writeUInt32( bit_bxor( pack_readUInt32( plain_text, false, pointer + 56 ), bit_band( n2 + state[ 15 ], 0xffffffff ) ), false )
 
         block_count = block_count + 1
+        ---@diagnostic disable-next-line: param-type-mismatch
         blocks[ block_count ] = pack_writeUInt32( bit_bxor( pack_readUInt32( plain_text, false, pointer + 60 ), bit_band( n3 + state[ 16 ], 0xffffffff ) ), false )
 
         counter = counter + 1
@@ -184,83 +200,99 @@ local function chacha20( plain_text, key, nonce_str, counter )
 
         -- first block
         block_count = block_count + 1
+        ---@diagnostic disable-next-line: param-type-mismatch
         blocks[ block_count ] = pack_writeUInt32( bit_bxor( pack_readUInt32( segment, false, 1 ), bit_band( 0x61707865 + state[ 1 ], 0xffffffff ) ), false )
 
         if segment_length >= 8 then
             block_count = block_count + 1
+            ---@diagnostic disable-next-line: param-type-mismatch
             blocks[ block_count ] = pack_writeUInt32( bit_bxor( pack_readUInt32( segment, false, 5 ), bit_band( 0x3320646e + state[ 2 ], 0xffffffff ) ), false )
         end
 
         if segment_length >= 12 then
             block_count = block_count + 1
+            ---@diagnostic disable-next-line: param-type-mismatch
             blocks[ block_count ] = pack_writeUInt32( bit_bxor( pack_readUInt32( segment, false, 9 ), bit_band( 0x79622d32 + state[ 3 ], 0xffffffff ) ), false )
         end
 
         if segment_length >= 16 then
             block_count = block_count + 1
+            ---@diagnostic disable-next-line: param-type-mismatch
             blocks[ block_count ] = pack_writeUInt32( bit_bxor( pack_readUInt32( segment, false, 13 ), bit_band( 0x6b206574 + state[ 4 ], 0xffffffff ) ), false )
         end
 
         -- second block
         if segment_length >= 20 then
             block_count = block_count + 1
+            ---@diagnostic disable-next-line: param-type-mismatch
             blocks[ block_count ] = pack_writeUInt32( bit_bxor( pack_readUInt32( segment, false, 17 ), bit_band( k1 + state[ 5 ], 0xffffffff ) ), false )
         end
 
         if segment_length >= 24 then
             block_count = block_count + 1
+            ---@diagnostic disable-next-line: param-type-mismatch
             blocks[ block_count ] = pack_writeUInt32( bit_bxor( pack_readUInt32( segment, false, 21 ), bit_band( k2 + state[ 6 ], 0xffffffff ) ), false )
         end
 
         if segment_length >= 28 then
             block_count = block_count + 1
+            ---@diagnostic disable-next-line: param-type-mismatch
             blocks[ block_count ] = pack_writeUInt32( bit_bxor( pack_readUInt32( segment, false, 25 ), bit_band( k3 + state[ 7 ], 0xffffffff ) ), false )
         end
 
         if segment_length >= 32 then
             block_count = block_count + 1
+            ---@diagnostic disable-next-line: param-type-mismatch
             blocks[ block_count ] = pack_writeUInt32( bit_bxor( pack_readUInt32( segment, false, 29 ), bit_band( k4 + state[ 8 ], 0xffffffff ) ), false )
         end
 
         -- third block
         if segment_length >= 36 then
             block_count = block_count + 1
+            ---@diagnostic disable-next-line: param-type-mismatch
             blocks[ block_count ] = pack_writeUInt32( bit_bxor( pack_readUInt32( segment, false, 33 ), bit_band( k5 + state[ 9 ], 0xffffffff ) ), false )
         end
 
         if segment_length >= 40 then
             block_count = block_count + 1
+            ---@diagnostic disable-next-line: param-type-mismatch
             blocks[ block_count ] = pack_writeUInt32( bit_bxor( pack_readUInt32( segment, false, 37 ), bit_band( k6 + state[ 10 ], 0xffffffff ) ), false )
         end
 
         if segment_length >= 44 then
             block_count = block_count + 1
+            ---@diagnostic disable-next-line: param-type-mismatch
             blocks[ block_count ] = pack_writeUInt32( bit_bxor( pack_readUInt32( segment, false, 41 ), bit_band( k7 + state[ 11 ], 0xffffffff ) ), false )
         end
 
         if segment_length >= 48 then
             block_count = block_count + 1
+            ---@diagnostic disable-next-line: param-type-mismatch
             blocks[ block_count ] = pack_writeUInt32( bit_bxor( pack_readUInt32( segment, false, 45 ), bit_band( k8 + state[ 12 ], 0xffffffff ) ), false )
         end
 
         -- fourth block
         if segment_length >= 52 then
             block_count = block_count + 1
+            ---@diagnostic disable-next-line: param-type-mismatch
             blocks[ block_count ] = pack_writeUInt32( bit_bxor( pack_readUInt32( segment, false, 49 ), bit_band( counter + state[ 13 ], 0xffffffff ) ), false )
         end
 
         if segment_length >= 56 then
             block_count = block_count + 1
+            ---@diagnostic disable-next-line: param-type-mismatch
             blocks[ block_count ] = pack_writeUInt32( bit_bxor( pack_readUInt32( segment, false, 53 ), bit_band( n1 + state[ 14 ], 0xffffffff ) ), false )
         end
 
         if segment_length >= 60 then
             block_count = block_count + 1
+            ---@diagnostic disable-next-line: param-type-mismatch
             blocks[ block_count ] = pack_writeUInt32( bit_bxor( pack_readUInt32( segment, false, 57 ), bit_band( n2 + state[ 15 ], 0xffffffff ) ), false )
         end
 
         if segment_length >= 64 then
             block_count = block_count + 1
+            ---@diagnostic disable-next-line: param-type-mismatch
             blocks[ block_count ] = pack_writeUInt32( bit_bxor( pack_readUInt32( segment, false, 61 ), bit_band( n3 + state[ 16 ], 0xffffffff ) ), false )
         end
 

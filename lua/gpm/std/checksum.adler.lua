@@ -1,6 +1,6 @@
 local std = _G.gpm.std
----@class gpm.std.crypto
-local crypto = std.crypto
+---@class gpm.std.checksum
+local checksum = std.checksum
 
 local string = std.string
 local string_len = string.len
@@ -14,7 +14,7 @@ local string_byte = string.byte
 ---
 ---@param str string The string used to calculate the Adler-32 checksum.
 ---@return integer checksum The Adler-32 checksum, which is greater or equal to 0, and less than 2^32 (0x100000000).
-function crypto.adler32( str )
+function checksum.adler32( str )
     local length = string_len( str )
     local index = length % 16
     local a, b = 1, 0

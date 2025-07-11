@@ -1,8 +1,8 @@
 local _G = _G
 
 local std = _G.gpm.std
----@class gpm.std.crypto
-local crypto = std.crypto
+---@class gpm.std.encoding
+local encoding = std.encoding
 
 local glua_util = _G.util
 
@@ -10,9 +10,9 @@ local glua_util = _G.util
 ---
 ---
 ---
----@class gpm.std.crypto.json
-local json = crypto.json or {}
-crypto.json = json
+---@class gpm.std.encoding.json
+local json = encoding.json or {}
+encoding.json = json
 
 if json.deserialize == nil then
 

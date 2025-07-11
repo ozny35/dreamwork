@@ -1,16 +1,25 @@
 local std = _G.gpm.std
----@class gpm.std.crypto
-local crypto = std.crypto
+---@class gpm.std.encoding
+local encoding = std.encoding
 
-local utf8 = std.string.utf8
+local string = std.string
+local utf8 = encoding.utf8
 
 --- [SHARED AND MENU]
 ---
 --- The unicode library provides functions for the manipulation of unicode encoded UTF-8 strings.
 ---
----@class gpm.std.crypto.unicode
-local unicode = crypto.unicode or {}
-crypto.unicode = unicode
+---@class gpm.std.encoding.unicode
+local unicode = encoding.unicode or {}
+encoding.unicode = unicode
+
+function unicode.codepoint( )
+
+end
+
+function unicode.escape( str )
+
+end
 
 -- TODO: make this library
 

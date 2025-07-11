@@ -11,9 +11,8 @@
 --]]
 
 local std = _G.gpm.std
-
----@class gpm.std.crypto
-local crypto = std.crypto
+---@class gpm.std.encoding
+local encoding = std.encoding
 
 local string = std.string
 local string_len = string.len
@@ -33,15 +32,15 @@ local glue_decode = glua_util ~= nil and glua_util.Base64Decode
 ---
 --- See https://en.wikipedia.org/wiki/Base64
 ---
----@class gpm.std.crypto.base64
-local base64 = crypto.base64 or {}
-crypto.base64 = base64
+---@class gpm.std.encoding.base64
+local base64 = encoding.base64 or {}
+encoding.base64 = base64
 
 --- [SHARED AND MENU]
 ---
 --- The base64 encoding/decoding alphabet.
 ---
----@class gpm.std.crypto.base64.Alphabet
+---@class gpm.std.encoding.base64.Alphabet
 ---@field [1] table<integer, integer> The encoding map.
 ---@field [2] table<integer, integer> The decoding map.
 
@@ -54,7 +53,7 @@ do
     --- Creates a base64 alphabet with encoding and decoding maps.
     ---
     ---@param alphabet_str string The alphabet string.
-    ---@return gpm.std.crypto.base64.Alphabet alphabet The alphabet.
+    ---@return gpm.std.encoding.base64.Alphabet alphabet The alphabet.
     function base64.alphabet( alphabet_str )
         if string_len( alphabet_str ) ~= 64 then
             error( "alphabet must be 64 characters long", 2 )
@@ -88,8 +87,8 @@ local urlsafe = base64.alphabet( "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrst
 ---
 --- Base64 encoding/decoding options variant.
 ---
----@class gpm.std.crypto.base64.Variant
----@field alphabet gpm.std.crypto.base64.Alphabet The 64-character alphabet used for encoding and decoding.
+---@class gpm.std.encoding.base64.Variant
+---@field alphabet gpm.std.encoding.base64.Alphabet The 64-character alphabet used for encoding and decoding.
 ---@field pad string | nil Optional padding character (usually "="). When `nil`, padding is disabled.
 ---@field wrap integer | nil Optional line wrap length. If `nil`, no wrapping is applied.
 ---@field eol string | nil Optional end-of-line character(s) used if `wrap` is set (e.g., "\r\n").
@@ -97,7 +96,7 @@ local urlsafe = base64.alphabet( "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrst
 ---@field encode_cache table<integer, string> | nil A cache of encoded strings.
 ---@field decode_cache table<integer, string> | nil A cache of decoded strings.
 
----@type table<string, gpm.std.crypto.base64.Variant>
+---@type table<string, gpm.std.encoding.base64.Variant>
 local variants = {
     standard = {
         alphabet = standard,
@@ -122,11 +121,11 @@ variants.jwt = variants.urlsafe
 ---
 --- Base64 encoding/decoding options.
 ---
----@class gpm.std.crypto.base64.Options : gpm.std.crypto.base64.Variant
+---@class gpm.std.encoding.base64.Options : gpm.std.encoding.base64.Variant
 ---@field variant "standard" | "urlsafe" | "mime" | "jwt" | "custom" The base64 variant to use.
----@field alphabet gpm.std.crypto.base64.Alphabet | nil The 64-character alphabet used for encoding and decoding.
+---@field alphabet gpm.std.encoding.base64.Alphabet | nil The 64-character alphabet used for encoding and decoding.
 
----@param options gpm.std.crypto.base64.Options
+---@param options gpm.std.encoding.base64.Options
 local function perform_options( options )
     local variant = options.variant or "standard"
     options.variant = nil
@@ -234,7 +233,7 @@ end
 --- Encodes the specified string to base64.
 ---
 ---@param raw_str string The string to encode.
----@param options? gpm.std.crypto.base64.Options The base64 encoding options.
+---@param options? gpm.std.encoding.base64.Options The base64 encoding options.
 ---@return string base64_str The encoded string.
 function base64.encode( raw_str, options )
     if options == nil then
@@ -376,7 +375,7 @@ end
 --- Decodes the specified base64 encoded string.
 ---
 ---@param base64_str string The base64 encoded string to decode.
----@param options? gpm.std.crypto.base64.Options The base64 encoding options.
+---@param options? gpm.std.encoding.base64.Options The base64 encoding options.
 ---@return string str_raw The decoded string.
 function base64.decode( base64_str, options )
     if options == nil then
@@ -450,7 +449,7 @@ do
     --- Checks if the specified base64 encoded string is valid.
     ---
     ---@param base64_str string The base64 encoded string to check.
-    ---@param options? gpm.std.crypto.base64.Options The base64 encoding options.
+    ---@param options? gpm.std.encoding.base64.Options The base64 encoding options.
     ---@return boolean is_valid `true` if the base64 string is valid, `false` otherwise
     ---@return nil | string err_msg The error message.
     function base64.validate( base64_str, options )

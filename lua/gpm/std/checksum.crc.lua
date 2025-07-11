@@ -1,7 +1,7 @@
 local _G = _G
 local std = _G.gpm.std
----@class gpm.std.crypto
-local crypto = std.crypto
+---@class gpm.std.checksum
+local checksum = std.checksum
 
 local bit = std.bit
 local bit_bxor = bit.bxor
@@ -98,7 +98,7 @@ do
         return bit_band( crc, 0xFF )
     end
 
-    crypto.crc8 = crypto_crc8
+    checksum.crc8 = crypto_crc8
 
     --- [SHARED AND MENU]
     ---
@@ -108,7 +108,7 @@ do
     ---
     ---@param raw_str string The string used to calculate the CRC-8 checksum.
     ---@return integer checksum The CRC-8 checksum, which is greater or equal to 0, and less than 2^8 (0x100).
-    function crypto.crc8maxim( raw_str )
+    function checksum.crc8maxim( raw_str )
         return crypto_crc8( raw_str, 0x31, 0x00, true, true )
     end
 
@@ -120,7 +120,7 @@ do
     ---
     ---@param raw_str string The string used to calculate the CRC-8 checksum.
     ---@return integer checksum The CRC-8 checksum, which is greater or equal to 0, and less than 2^8 (0x100).
-    function crypto.crc8rohc( raw_str )
+    function checksum.crc8rohc( raw_str )
         return crypto_crc8( raw_str, 0x07, 0xFF, true, true )
     end
 
@@ -132,7 +132,7 @@ do
     ---
     ---@param raw_str string The string used to calculate the CRC-8 checksum.
     ---@return integer checksum The CRC-8 checksum, which is greater or equal to 0, and less than 2^8 (0x100).
-    function crypto.crc8cdma2000( raw_str )
+    function checksum.crc8cdma2000( raw_str )
         return crypto_crc8( raw_str, 0x9B, 0xFF, false, false )
     end
 
@@ -243,7 +243,7 @@ do
         return bit_band( crc, 0xFFFF )
     end
 
-    crypto.crc16 = crypto_crc16
+    checksum.crc16 = crypto_crc16
 
     --- [SHARED AND MENU]
     ---
@@ -253,7 +253,7 @@ do
     ---
     ---@param raw_str string The string used to calculate the CRC-16 checksum.
     ---@return integer checksum The CRC-16 checksum, which is greater or equal to 0, and less than 2^16 (0x10000).
-    function crypto.crc16maxim( raw_str )
+    function checksum.crc16maxim( raw_str )
         return crypto_crc16( raw_str, 0x8005, 0x0000, true, true )
     end
 
@@ -265,7 +265,7 @@ do
     ---
     ---@param raw_str string The string used to calculate the CRC-16 checksum.
     ---@return integer checksum The CRC-16 checksum, which is greater or equal to 0, and less than 2^16 (0x10000).
-    function crypto.crc16xmodem( raw_str )
+    function checksum.crc16xmodem( raw_str )
         return crypto_crc16( raw_str, 0x1021, 0x0000, false, false )
     end
 
@@ -277,7 +277,7 @@ do
     ---
     ---@param raw_str string The string used to calculate the CRC-16 checksum.
     ---@return integer checksum The CRC-16 checksum, which is greater or equal to 0, and less than 2^16 (0x10000).
-    function crypto.crc16usb( raw_str )
+    function checksum.crc16usb( raw_str )
         return crypto_crc16( raw_str, 0x8005, 0xFFFF, true, true, 0xFFFF )
     end
 
@@ -372,7 +372,7 @@ do
         return bit_bxor( crc, xor_out ) % 0x100000000
     end
 
-    crypto.crc32 = crypto_crc32
+    checksum.crc32 = crypto_crc32
 
     --- [SHARED AND MENU]
     ---
@@ -382,7 +382,7 @@ do
     ---
     ---@param raw_str string The string used to calculate the CRC-32 checksum.
     ---@return integer checksum The CRC-32 checksum, which is greater or equal to 0, and less than 2^32 (0x100000000).
-    function crypto.crc32bzip2( raw_str )
+    function checksum.crc32bzip2( raw_str )
         return crypto_crc32( raw_str, 0x04C11DB7, 0xFFFFFFFF, false, false, 0xFFFFFFFF )
     end
 
@@ -394,7 +394,7 @@ do
     ---
     ---@param raw_str string The string used to calculate the CRC-32 checksum.
     ---@return integer checksum The CRC-32 checksum, which is greater or equal to 0, and less than 2^32 (0x100000000).
-    function crypto.crc32c( raw_str )
+    function checksum.crc32c( raw_str )
         return crypto_crc32( raw_str, 0x1EDC6F41, 0xFFFFFFFF, true, true, 0xFFFFFFFF )
     end
 
@@ -406,7 +406,7 @@ do
     ---
     ---@param raw_str string The string used to calculate the CRC-32 checksum.
     ---@return integer checksum The CRC-32 checksum, which is greater or equal to 0, and less than 2^32 (0x100000000).
-    function crypto.crc32d( raw_str )
+    function checksum.crc32d( raw_str )
         return crypto_crc32( raw_str, 0xA833982B, 0xFFFFFFFF, true, true, 0xFFFFFFFF )
     end
 
@@ -418,7 +418,7 @@ do
     ---
     ---@param raw_str string The string used to calculate the CRC-32 checksum.
     ---@return integer checksum The CRC-32 checksum, which is greater or equal to 0, and less than 2^32 (0x100000000).
-    function crypto.crc32jamcrc( raw_str )
+    function checksum.crc32jamcrc( raw_str )
         return crypto_crc32( raw_str, 0x04C11DB7, 0xFFFFFFFF, true, true, 0x00000000 )
     end
 
@@ -430,7 +430,7 @@ do
     ---
     ---@param raw_str string The string used to calculate the CRC-32 checksum.
     ---@return integer checksum The CRC-32 checksum, which is greater or equal to 0, and less than 2^32 (0x100000000).
-    function crypto.crc32mpeg2( raw_str )
+    function checksum.crc32mpeg2( raw_str )
         return crypto_crc32( raw_str, 0x04C11DB7, 0xFFFFFFFF, false, false, 0x00000000 )
     end
 
@@ -442,7 +442,7 @@ do
     ---
     ---@param raw_str string The string used to calculate the CRC-32 checksum.
     ---@return integer checksum The CRC-32 checksum, which is greater or equal to 0, and less than 2^32 (0x100000000).
-    function crypto.crc32posix( raw_str )
+    function checksum.crc32posix( raw_str )
         return crypto_crc32( raw_str, 0x04C11DB7, 0x00000000, false, false, 0xFFFFFFFF )
     end
 
@@ -454,7 +454,7 @@ do
     ---
     ---@param raw_str string The string used to calculate the CRC-32 checksum.
     ---@return integer checksum The CRC-32 checksum, which is greater or equal to 0, and less than 2^32 (0x100000000).
-    function crypto.crc32q( raw_str )
+    function checksum.crc32q( raw_str )
         return crypto_crc32( raw_str, 0x814141AB, 0x00000000, false, false, 0x00000000 )
     end
 
@@ -466,7 +466,7 @@ do
     ---
     ---@param raw_str string The string used to calculate the CRC-32 checksum.
     ---@return integer checksum The CRC-32 checksum, which is greater or equal to 0, and less than 2^32 (0x100000000).
-    function crypto.crc32xfer( raw_str )
+    function checksum.crc32xfer( raw_str )
         return crypto_crc32( raw_str, 0x000000AF, 0x00000000, false, false, 0x00000000 )
     end
 
