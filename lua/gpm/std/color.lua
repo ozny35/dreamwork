@@ -187,7 +187,7 @@ end
 ---@param value gpm.std.Color
 ---@protected
 function Color:__concat( value )
-    return self:toHex() .. tostring( value )
+    return "#" .. self:toHex() .. tostring( value )
 end
 
 --- [SHARED AND MENU]
@@ -253,13 +253,17 @@ end
 ---
 --- Returns the color as hex string.
 ---
----@param withAlpha boolean? Whether to include alpha.
+---@param with_alpha boolean? Whether to include alpha.
 ---@return string hex_str The hex string.
-function Color:toHex( withAlpha )
-    if withAlpha then
-        return string_format( "#%02x%02x%02x%02x", self.r, self.g, self.b, self.a )
+function Color:toHex( with_alpha, alpha_first )
+    if with_alpha then
+        if alpha_first then
+            return string_format( "%02x%02x%02x%02x", self.a, self.r, self.g, self.b )
+        else
+            return string_format( "%02x%02x%02x%02x", self.r, self.g, self.b, self.a )
+        end
     else
-        return string_format( "#%02x%02x%02x", self.r, self.g, self.b )
+        return string_format( "%02x%02x%02x", self.r, self.g, self.b )
     end
 end
 
@@ -271,10 +275,10 @@ do
     ---
     --- Returns the color as 32-bit integer.
     ---
-    ---@param withAlpha boolean? Whether to include alpha.
+    ---@param with_alpha boolean? Whether to include alpha.
     ---@return integer uint32 The 32-bit integer.
-    function Color:toUInt32( withAlpha )
-        if withAlpha then
+    function Color:toUInt32( with_alpha )
+        if with_alpha then
             return bit_bor( self.r, bit_lshift( self.g, 8 ), bit_lshift( self.b, 16 ), bit_lshift( self.a, 24 ) )
         else
             return bit_bor( self.r, bit_lshift( self.g, 8 ), bit_lshift( self.b, 16 ) )
@@ -287,10 +291,10 @@ end
 ---
 --- Returns the color as binary string.
 ---
----@param withAlpha boolean? Whether to include alpha.
+---@param with_alpha boolean? Whether to include alpha.
 ---@return string bin_str The binary string.
-function Color:toBinary( withAlpha )
-    return withAlpha and string_char( self.r, self.g, self.b, self.a ) or string_char( self.r, self.g, self.b )
+function Color:toBinary( with_alpha )
+    return with_alpha and string_char( self.r, self.g, self.b, self.a ) or string_char( self.r, self.g, self.b )
 end
 
 --- [SHARED AND MENU]
@@ -402,16 +406,16 @@ do
     ---
     ---@param color gpm.std.Color The color to lerp.
     ---@param frac number? The fraction to lerp [0, 1].
-    ---@param withAlpha boolean? Whether to lerp alpha channel.
+    ---@param with_alpha boolean? Whether to lerp alpha channel.
     ---@return gpm.std.Color
-    function Color:lerp( color, frac, withAlpha )
+    function Color:lerp( color, frac, with_alpha )
         frac = frac and math_min( math_max( frac, 0 ), 1 ) or 0.5
 
         self.r = math_lerp( frac, self.r, color.r )
         self.g = math_lerp( frac, self.g, color.g )
         self.b = math_lerp( frac, self.b, color.b )
 
-        if withAlpha then
+        if with_alpha then
             self.a = math_lerp( frac, self.a, color.a )
         end
 
@@ -426,10 +430,10 @@ end
 ---
 ---@param color gpm.std.Color The "from" color.
 ---@param frac number? The fraction [0, 1].
----@param withAlpha boolean? Whether to lerp alpha channel.
+---@param with_alpha boolean? Whether to lerp alpha channel.
 ---@return gpm.std.Color color The color object.
-function Color:getLerped( color, frac, withAlpha )
-    return self:copy():lerp( color, frac, withAlpha )
+function Color:getLerped( color, frac, with_alpha )
+    return self:copy():lerp( color, frac, with_alpha )
 end
 
 --- [SHARED AND MENU]
@@ -665,21 +669,21 @@ do
     --- Changes the color to 32-bit uint.
     ---
     ---@param uint32 integer The 32-bit uint.
-    ---@param withAlpha boolean? Whether to include alpha.
+    ---@param with_alpha boolean? Whether to include alpha.
     ---@return gpm.std.Color color The color object.
-    function Color:fromUInt32( uint32, withAlpha )
-        withAlpha = withAlpha == true
+    function Color:fromUInt32( uint32, with_alpha )
+        with_alpha = with_alpha == true
 
-        self.r = bit_rshift( bit_band( uint32, 0xFF000000 ), withAlpha and 24 or 16 )
-        self.g = bit_rshift( bit_band( uint32, 0x00FF0000 ), withAlpha and 16 or 8 )
+        self.r = bit_rshift( bit_band( uint32, 0xFF000000 ), with_alpha and 24 or 16 )
+        self.g = bit_rshift( bit_band( uint32, 0x00FF0000 ), with_alpha and 16 or 8 )
 
-        if withAlpha then
+        if with_alpha then
             self.b = bit_rshift( bit_band( uint32, 0x0000FF00 ), 8 )
         else
             self.b = bit_band( uint32, 0x0000FF00 )
         end
 
-        if withAlpha then
+        if with_alpha then
             self.a = bit_band( uint32, 0x000000FF )
         else
             self.a = 255
@@ -693,10 +697,10 @@ do
     --- Creates a color object from 32-bit uint.
     ---
     ---@param uint32 integer The 32-bit uint.
-    ---@param withAlpha boolean? Whether to include alpha.
+    ---@param with_alpha boolean? Whether to include alpha.
     ---@return gpm.std.Color color The color object.
-    function ColorClass.fromUInt32( uint32, withAlpha )
-        return from_rgba( 0, 0, 0, 255 ):fromUInt32( uint32, withAlpha )
+    function ColorClass.fromUInt32( uint32, with_alpha )
+        return from_rgba( 0, 0, 0, 255 ):fromUInt32( uint32, with_alpha )
     end
 
 end
