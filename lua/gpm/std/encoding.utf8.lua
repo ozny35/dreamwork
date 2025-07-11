@@ -24,13 +24,12 @@ local select = std.select
 ---
 ---@class gpm.std.encoding.utf8
 ---@field charpattern string This is NOT a function, it's a pattern (a string, not a function) which matches exactly one UTF-8 byte sequence, assuming that the subject is a valid UTF-8 string.
+---@field MAX integer The maximum number of characters that can be stored in a UTF-8 string.
 local utf8 = encoding.utf8 or {}
 encoding.utf8 = utf8
 
 utf8.charpattern = "[%z\x01-\x7F\xC2-\xF4][\x80-\xBF]*"
-
--- local MAXUNICODE = 0x10FFFF
--- local MAXUTF = 0x7FFFFFFF
+utf8.MAX = 0x7FFFFFFF
 
 ---@param i integer
 ---@return boolean
@@ -534,7 +533,7 @@ do
 		local utf8_codepoint, utf8_sequence_length = decode( utf8_string, index, str_length, strict, 2 )
 		if strict then
 			if utf8_codepoint == nil or utf8_codepoint > 0x10FFFF then
-				error( string.format( "invalid UTF-8 code point '0x%06X' at position %d", utf8_codepoint, index ), 2 )
+				error( string.format( "invalid UTF-8 code point '0x%08X' at position %d", utf8_codepoint, index ), 2 )
 			elseif utf8_sequence_length == nil then
 				error( string.format( "invalid UTF-8 sequence '0x%02X' at position %d", string_byte( utf8_string, index, index ), index ), 2 )
 			end
@@ -563,16 +562,23 @@ end
 --- Encodes a sequence of code points into a UTF-8 string.
 ---
 ---@param utf8_codepoints integer[] The code points to encode.
----@param utf8_codepoint_count integer The number of code points to encode.
+---@param utf8_codepoint_count? integer The number of code points to encode.
 ---@param lax? boolean `true` if lax mode should be used.
 ---@return string utf8_string The UTF-8 string.
 local function pack( utf8_codepoints, utf8_codepoint_count, lax )
-	lax = lax ~= true
+	if utf8_codepoint_count == nil then
+		utf8_codepoint_count = #utf8_codepoints
+	end
+
+	if utf8_codepoint_count == 0 then
+		return ""
+	end
 
 	---@type string[]
 	local utf8_sequences = {}
+	lax = lax ~= true
 
-	for i = 1, ( utf8_codepoint_count or #utf8_codepoints ), 1 do
+	for i = 1, utf8_codepoint_count, 1 do
 		utf8_sequences[ i ] = encode( utf8_codepoints[ i ], lax, 2 )
 	end
 
@@ -664,6 +670,10 @@ do
 	---@param replacement_str? string The string to replace invalid UTF-8 code points with, by default `0xFFFD`.
 	---@return string utf8_normalized The normalized UTF-8 string.
 	function utf8.normalize( utf8_string, replacement_str )
+		if string_byte( utf8_string, 1, 1 ) == nil then
+			return utf8_string
+		end
+
 		if replacement_str == nil then
 			replacement_str = default_replacement_str
 		end
@@ -2558,6 +2568,10 @@ function utf8.lower( utf8_string, lax )
 	---@type integer
 	local str_length = string_len( utf8_string )
 
+	if str_length == 0 then
+		return utf8_string
+	end
+
 	local utf8_sequence_count = 0
 	local index = 1
 
@@ -2591,6 +2605,10 @@ end
 function utf8.upper( utf8_string, lax )
 	---@type integer
 	local str_length = string_len( utf8_string )
+
+	if str_length == 0 then
+		return utf8_string
+	end
 
 	local utf8_sequence_count = 0
 	local index = 1
