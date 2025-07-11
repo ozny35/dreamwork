@@ -578,30 +578,7 @@ end
 
 do
 
-    local string_sub = string.sub
-
-    local byte2number = {}
-
-    setmetatable( byte2number, {
-        __index = function()
-            return 0
-        end
-    } )
-
-    -- 0-9
-    for i = 48, 57, 1 do
-        byte2number[ i ] = i - 48
-    end
-
-    -- A-F
-    for i = 65, 70, 1 do
-        byte2number[ i ] = i - 55
-    end
-
-    -- a-f
-    for i = 97, 102, 1 do
-        byte2number[ i ] = i - 87
-    end
+    local bytepack_readHex8 = std.binary.bytepack.readHex8
 
     --- [SHARED AND MENU]
     ---
@@ -610,52 +587,57 @@ do
     --- Supports hex strings from `0` to `8` characters.
     ---
     ---@param hex string The hex string. If the first character is `#`, it will be ignored.
+    ---@param alpha_first? boolean In specific cases alpha is first hex characters, so if this is `true`, alpha will be first.
     ---@return gpm.std.Color color The color object.
-    function Color:fromHex( hex )
+    function Color:fromHex( hex, alpha_first )
+        local index
         if string_byte( hex, 1 ) == 0x23 --[[ # ]] then
-            hex = string_sub( hex, 2 )
+            index = 2
+        else
+            index = 1
         end
 
         local length = string_len( hex )
         if length == 1 then
-            local b1 = byte2number[ string_byte( hex, 1 ) ]
-            self.r = b1 * 0x10 + b1
+            local uint8_1 = string_byte( hex, index, index )
+            self.r = bytepack_readHex8( uint8_1, uint8_1 )
             self.g = 0
             self.b = 0
             self.a = 255
         elseif length == 2 then
-            local b1, b2 = string_byte( hex, 1, 2 )
-            b1, b2 = byte2number[ b1 ], byte2number[ b2 ]
-            self.r = b1 * 0x10 + b1
-            self.g = b2 * 0x10 + b2
+            local uint8_1, uint8_2 = string_byte( hex, index, index + 1 )
+            self.r = bytepack_readHex8( uint8_1, uint8_1 )
+            self.g = bytepack_readHex8( uint8_2, uint8_2 )
             self.b = 0
             self.a = 255
         elseif length == 3 then
-            local b1, b2, b3 = string_byte( hex, 1, 3 )
-            b1, b2, b3 = byte2number[ b1 ], byte2number[ b2 ], byte2number[ b3 ]
-            self.r = b1 * 0x10 + b1
-            self.g = b2 * 0x10 + b2
-            self.b = b3 * 0x10 + b3
+            local uint8_1, uint8_2, uint8_3 = string_byte( hex, index, index + 2 )
+            self.r = bytepack_readHex8( uint8_1, uint8_1 )
+            self.g = bytepack_readHex8( uint8_2, uint8_2 )
+            self.b = bytepack_readHex8( uint8_3, uint8_3 )
             self.a = 255
         elseif length == 4 then
-            local b1, b2, b3, b4 = string_byte( hex, 1, 4 )
-            b1, b2, b3, b4 = byte2number[ b1 ], byte2number[ b2 ], byte2number[ b3 ], byte2number[ b4 ]
-            self.r = b1 * 0x10 + b1
-            self.g = b2 * 0x10 + b2
-            self.b = b3 * 0x10 + b3
-            self.a = b4 * 0x10 + b4
+            local uint8_1, uint8_2, uint8_3, uint8_4 = string_byte( hex, index, index + 3 )
+            self.r = bytepack_readHex8( uint8_1, uint8_1 )
+            self.g = bytepack_readHex8( uint8_2, uint8_2 )
+            self.b = bytepack_readHex8( uint8_3, uint8_3 )
+            self.a = bytepack_readHex8( uint8_4, uint8_4 )
         elseif length == 6 then
-            local b1, b2, b3, b4, b5, b6 = string_byte( hex, 1, 6 )
-            self.r = byte2number[ b1 ] * 0x10 + byte2number[ b2 ]
-            self.g = byte2number[ b3 ] * 0x10 + byte2number[ b4 ]
-            self.b = byte2number[ b5 ] * 0x10 + byte2number[ b6 ]
+            local uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6 = string_byte( hex, index, index + 5 )
+            self.r = bytepack_readHex8( uint8_1, uint8_2 )
+            self.g = bytepack_readHex8( uint8_3, uint8_4 )
+            self.b = bytepack_readHex8( uint8_5, uint8_6 )
             self.a = 255
         elseif length == 8 then
-            local b1, b2, b3, b4, b5, b6, b7, b8 = string_byte( hex, 1, 8 )
-            self.r = byte2number[ b1 ] * 0x10 + byte2number[ b2 ]
-            self.g = byte2number[ b3 ] * 0x10 + byte2number[ b4 ]
-            self.b = byte2number[ b5 ] * 0x10 + byte2number[ b6 ]
-            self.a = byte2number[ b7 ] * 0x10 + byte2number[ b8 ]
+            local uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8 = string_byte( hex, index, index + 7 )
+            self.r = bytepack_readHex8( uint8_1, uint8_2 )
+            self.g = bytepack_readHex8( uint8_3, uint8_4 )
+            self.b = bytepack_readHex8( uint8_5, uint8_6 )
+            self.a = bytepack_readHex8( uint8_7, uint8_8 )
+        end
+
+        if alpha_first then
+            self.a, self.r, self.g, self.b = self.r, self.g, self.b, self.a
         end
 
         return self
@@ -666,9 +648,10 @@ do
     --- Creates a color object from hex string.
     ---
     ---@param hex string The hex string. If the first character is `#`, it will be ignored.
+    ---@param alpha_first? boolean In specific cases alpha is first hex characters, so if this is `true`, alpha will be first.
     ---@return gpm.std.Color color The color object.
-    function ColorClass.fromHex( hex )
-        return from_rgba( 0, 0, 0, 255 ):fromHex( hex )
+    function ColorClass.fromHex( hex, alpha_first )
+        return from_rgba( 0, 0, 0, 255 ):fromHex( hex, alpha_first )
     end
 
 end
