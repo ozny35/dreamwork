@@ -582,6 +582,21 @@ end
 
 do
 
+    local math_ceil = math.ceil
+
+    --- [SHARED AND MENU]
+    ---
+    --- Returns the color's luminance.
+    ---
+    ---@return number luminance The luminance as integer [0, 255].
+    function Color:getLuminance()
+        return math_ceil( self.r * 0.2126 + self.g * 0.7152 + self.b * 0.0722 )
+    end
+
+end
+
+do
+
     local bytepack_readHex8 = std.binary.bytepack.readHex8
 
     --- [SHARED AND MENU]
