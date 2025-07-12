@@ -6,6 +6,7 @@ local utf8 = encoding.utf8
 local string = std.string
 local table = std.table
 
+local raw_tonumber = std.raw.tonumber
 local string_format = string.format
 local table_concat = table.concat
 
@@ -28,6 +29,22 @@ unicode.MAX = 0x10FFFF
 ---@return string utf8_tag The string representation of the codepoint, in the format `U+XXXX` or `U+XXXXX`.
 function unicode.tag( utf8_codepoint )
     return string_format( utf8_codepoint > 0xFFFF and "U+%06X" or "U+%04X", utf8_codepoint )
+end
+
+do
+
+    local string_sub = string.sub
+
+    --- [SHARED AND MENU]
+    ---
+    --- Returns the unicode codepoint represented by the given string.
+    ---
+    ---@param utf8_tag string The string representation of a unicode codepoint, in the format `U+XXXX` or `U+XXXXX`.
+    ---@return integer utf8_codepoint The unicode codepoint represented by the string.
+    function unicode.untag( utf8_tag )
+        return raw_tonumber( string_sub( utf8_tag, 3 ), 16 )
+    end
+
 end
 
 do
@@ -70,7 +87,6 @@ end
 
 do
 
-    local raw_tonumber = std.raw.tonumber
     local string_gsub = string.gsub
     local utf8_char = utf8.char
 
