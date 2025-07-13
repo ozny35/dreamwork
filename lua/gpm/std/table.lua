@@ -333,6 +333,8 @@ end
 ---
 --- The keys are now the values and the values are now the keys.
 ---
+--- `{ key = value } -> { value = key }`
+---
 ---@param tbl table The table to flip.
 function table.flip( tbl )
     local keys, length = {}, 0
@@ -355,6 +357,8 @@ end
 --- The original table is not modified.
 ---
 --- The flipped table has the values as keys and the keys as values.
+---
+--- `{ key = value } -> { value = key }`
 ---
 ---@param tbl table The table to flip.
 ---@return table result The flipped table.

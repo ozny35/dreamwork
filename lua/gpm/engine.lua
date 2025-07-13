@@ -907,7 +907,6 @@ if std.SHARED and engine.networkRegister == nil then
         end
     } )
 
-
     --- [SHARED AND MENU]
     ---
     --- Get all the registered networks.

@@ -455,7 +455,7 @@ local function punycodeEncode( str, startPos, endPos )
 		end
 
 		-- Increase delta enough to advance the decoder's <n,i> state to <m,0>, but guard against overflow
-		if m - n > (0x7FFFFFFF - delta) / (h + 1) then
+		if m - n > ( 0x7FFFFFFF - delta ) / ( h + 1 ) then
 			error("Invalid URL: Punycode overflow")
 		end
 

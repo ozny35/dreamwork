@@ -36,7 +36,7 @@ do
         ---@param namespace string The namespace UUID (must be a valid UUID string).
         ---@param name string The name to hash within the namespace.
         ---@return string uuid_str A UUID v3 string.
-        function uuid.UUIDv3( namespace, name )
+        function uuid.v3( namespace, name )
             local uuid_str = string_gsub( namespace, "-", "" )
             if string_len( uuid_str ) ~= 32 then
                 error( "invalid namespace UUID format", 2 )
@@ -66,7 +66,7 @@ do
         ---@param namespace string The namespace UUID (must be a valid UUID string).
         ---@param name string The name to hash within the namespace.
         ---@return string uuid_str A UUID v5 string.
-        function uuid.UUIDv5( namespace, name )
+        function uuid.v5( namespace, name )
             local uuid_str = string_gsub( namespace, "-", "" )
             if string_len( uuid_str ) ~= 32 then
                 error( "invalid namespace UUID format", 2 )
@@ -93,7 +93,7 @@ end
 --- No input is needed; output is a fully random UUID.
 ---
 ---@return string uuid_str A UUID v4 string.
-function uuid.UUIDv4()
+function uuid.v4()
     return string_format( "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
         math_random( 0, 255 ),
         math_random( 0, 255 ),
@@ -148,7 +148,7 @@ do
     ---
     ---@param timestamp? gpm.std.BigInt The UNIX-64 timestamp to use.
     ---@return string uuid_str A UUID v7 string.
-    function uuid.UUIDv7( timestamp )
+    function uuid.v7( timestamp )
         if timestamp == nil then
             timestamp = BigInt_fromNumber( time_now( "ms" ) )
         end
@@ -201,7 +201,7 @@ end
 ---@param uint8_15? integer Unsigned byte (0..255)
 ---@param uint8_16? integer Unsigned byte (0..255)
 ---@return string uuid_str A UUID v8 string.
-function uuid.UUIDv8( uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8, uint8_9, uint8_10, uint8_11, uint8_12, uint8_13, uint8_14, uint8_15, uint8_16 )
+function uuid.v8( uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8, uint8_9, uint8_10, uint8_11, uint8_12, uint8_13, uint8_14, uint8_15, uint8_16 )
     return string_format(
         "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
         uint8_1 or 0, uint8_2 or 0, uint8_3 or 0, uint8_4 or 0, uint8_5 or 0, uint8_6 or 0,

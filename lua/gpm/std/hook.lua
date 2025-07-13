@@ -434,7 +434,7 @@ end
 
 do
 
-    local crypto_UUIDv7 = std.crypto.UUIDv7
+    local uuid_v7 = std.uuid.v7
 
     --- [SHARED AND MENU]
     ---
@@ -443,7 +443,7 @@ do
     ---@param fn function | gpm.std.Hook.Type The callback function or the type of the hook if `identifier` is a Hook.
     ---@param hook_type? gpm.std.Hook.Type The type of the hook, default is `0`.
     function Hook:once( fn, hook_type )
-        local identifier = crypto_UUIDv7()
+        local identifier = uuid_v7()
         self:attach( function( ... )
             self:detach( identifier )
             return fn( ... )

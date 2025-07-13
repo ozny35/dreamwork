@@ -71,8 +71,8 @@ do
     --- Creates a new class base ( metatable ).
     ---
     ---@param name string The name of the class.
-    ---@param private boolean? If the class is private.
-    ---@param parent gpm.std.Class? The parent of the class.
+    ---@param private? boolean If the class is private.
+    ---@param parent? gpm.std.Class | unknown The parent of the class.
     ---@return gpm.std.Object base The base of the class.
     function class.base( name, private, parent )
         local base

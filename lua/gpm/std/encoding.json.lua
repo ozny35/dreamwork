@@ -30,4 +30,4 @@ if json.deserialize == nil then
 
 end
 
-json.serialize = json.serialize or glua_util.TableToJSON or function() return "" end
+json.serialize = json.serialize or glua_util.TableToJSON
