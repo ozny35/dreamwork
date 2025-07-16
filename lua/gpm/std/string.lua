@@ -36,11 +36,12 @@ do
 
 end
 
-local string_byte = string.byte
-local string_sub = string.sub
-local string_len = string.len
-local string_find = string.find
-local string_rep = string.rep
+local string_char, string_byte = string.char, string.byte
+local string_match, string_find = string.match, string.find
+local string_sub, string_rep, string_len = string.sub, string.rep, string.len
+
+local table = std.table
+local table_concat = table.concat
 
 --- [SHARED AND MENU]
 ---
@@ -454,19 +455,17 @@ do
 
 end
 
+--- [SHARED AND MENU]
+---
+--- Checks if a string is a URL.
+---
+---@param str string The string.
+---@return boolean result `true` if the string is a URL, otherwise `false`.
+function string.isURL( str )
+    return string_match( str, "^%l[%l+-.]+%:[^%z\x01-\x20\x7F-\xFF\"<>^`:{-}]*$" ) ~= nil
+end
+
 do
-
-    local string_match = string.match
-
-    --- [SHARED AND MENU]
-    ---
-    --- Checks if a string is a URL.
-    ---
-    ---@param str string The string.
-    ---@return boolean result `true` if the string is a URL, otherwise `false`.
-    function string.isURL( str )
-        return string_match( str, "^%l[%l+-.]+%:[^%z\x01-\x20\x7F-\xFF\"<>^`:{-}]*$" ) ~= nil
-    end
 
     local jit_version = ( {
         [ "200" ] = 0x01,
@@ -489,4 +488,336 @@ do
         return uint8_1 == 0x1B and uint8_2 == 0x4C and uint8_3 == 0x4A and uint8_4 == jit_version
     end
 
+end
+
+do
+
+    local unsafe_pattern_bytes = {
+        -- ()
+        [ 0x28 ] = "%(",
+        [ 0x29 ] = "%)",
+
+        -- []
+        [ 0x5B ] = "%[",
+        [ 0x5D ] = "%]",
+
+        -- .
+        [ 0x2E ] = "%.",
+
+        -- %
+        [ 0x25 ] = "%%",
+
+        -- +-
+        [ 0x2B ] = "%+",
+        [ 0x2D ] = "%-",
+
+        -- *
+        [ 0x2A ] = "%*",
+
+        -- ?
+        [ 0x3F ] = "%?",
+
+        -- ^
+        [ 0x5E ] = "%^",
+
+        -- $
+        [ 0x24 ] = "%$"
+    }
+
+    --- [SHARED AND MENU]
+    ---
+    --- Returns a pattern-safe string.
+    ---
+    ---@param str string The string.
+    ---@return string
+    function string.makePatternSafe( str )
+        local startPos, strLength = 1, string_len( str )
+        local result, length = {}, 0
+
+        for index = 1, strLength do
+            local byte = string_byte( str, index )
+            if byte == 0 then
+                length = length + 1
+                result[ length ] = string_sub( str, startPos, index - 1 ) .. "%z"
+                startPos = index + 1
+            else
+                local pattern_str = unsafe_pattern_bytes[ byte ]
+                if pattern_str then
+                    length = length + 1
+
+                    if startPos == index then
+                        result[ length ] = pattern_str
+                    else
+                        result[ length ] = string_sub( str, startPos, index - 1 ) .. pattern_str
+                    end
+
+                    startPos = index + 1
+                end
+            end
+        end
+
+        length = length + 1
+        result[ length ] = string_sub( str, startPos, strLength )
+
+        if length == 0 then
+            return str
+        elseif length == 1 then
+            return result[ 1 ]
+        end
+
+        return table_concat( result, "", 1, length )
+    end
+
+    --- [SHARED AND MENU]
+    ---
+    --- Removes leading and trailing matches of a string.
+    ---
+    ---@param str string The string.
+    ---@param pattern_str? string The pattern to match, `%s` for whitespace.
+    ---@param direction? number The direction to trim. `1` for left, `-1` for right, `0` for both.
+    ---@return string str The trimmed string.
+    function string.trim( str, pattern_str, direction )
+        if pattern_str == nil then
+            pattern_str = "%s"
+        else
+            if pattern_str == "" then
+                pattern_str = "%s"
+            else
+                local length = string_len( pattern_str )
+                if length == 1 then
+                    pattern_str = unsafe_pattern_bytes[ string_byte( pattern_str, 1 ) ] or pattern_str
+                elseif length ~= 2 or string_byte( pattern_str, 1 ) ~= 0x25 then
+                    pattern_str = "[" .. pattern_str .. "]"
+                end
+            end
+        end
+
+        if direction == 1 then -- left
+            return string_match( str, "^(.-)" .. pattern_str .. "*$" ) or str
+        elseif direction == -1 then -- right
+            return string_match( str, "^" .. pattern_str .. "*(.+)$" ) or str
+        else -- both
+            return string_match( str, "^" .. pattern_str .. "*(.-)" .. pattern_str .. "*$" ) or str
+        end
+    end
+
+end
+
+do
+
+    local extended_ascii_alphabet = {}
+    local lowercase_alphabet = {}
+    local uppercase_alphabet = {}
+    local numberic_alphabet = {}
+    local symbol_alphabet = {}
+
+    do
+
+        local extended_ascii_alphabet_size = 0
+        local lowercase_alphabet_size = 0
+        local uppercase_alphabet_size = 0
+        local numberic_alphabet_size = 0
+        local symbol_alphabet_size = 0
+
+        for i = 33, 47, 1 do
+            symbol_alphabet_size = symbol_alphabet_size + 1
+            symbol_alphabet[ symbol_alphabet_size ] = i
+        end
+
+        for i = 48, 57, 1 do
+            numberic_alphabet_size = numberic_alphabet_size + 1
+            numberic_alphabet[ numberic_alphabet_size ] = i
+        end
+
+        for i = 58, 64, 1 do
+            symbol_alphabet_size = symbol_alphabet_size + 1
+            symbol_alphabet[ symbol_alphabet_size ] = i
+        end
+
+        for i = 65, 90, 1 do
+            uppercase_alphabet_size = uppercase_alphabet_size + 1
+            uppercase_alphabet[ uppercase_alphabet_size ] = i
+        end
+
+        for i = 91, 96, 1 do
+            symbol_alphabet_size = symbol_alphabet_size + 1
+            symbol_alphabet[ symbol_alphabet_size ] = i
+        end
+
+        for i = 97, 122, 1 do
+            lowercase_alphabet_size = lowercase_alphabet_size + 1
+            lowercase_alphabet[ lowercase_alphabet_size ] = i
+        end
+
+        for i = 123, 126, 1 do
+            symbol_alphabet_size = symbol_alphabet_size + 1
+            symbol_alphabet[ symbol_alphabet_size ] = i
+        end
+
+        for i = 128, 255, 1 do
+            extended_ascii_alphabet_size = extended_ascii_alphabet_size + 1
+            extended_ascii_alphabet[ extended_ascii_alphabet_size ] = i
+        end
+
+        lowercase_alphabet[ 0 ] = lowercase_alphabet_size
+        uppercase_alphabet[ 0 ] = uppercase_alphabet_size
+        numberic_alphabet[ 0 ] = numberic_alphabet_size
+        symbol_alphabet[ 0 ] = symbol_alphabet_size
+
+    end
+
+    local math_random = std.math.random
+    local table_unpack = table.unpack
+
+    --- [SHARED AND MENU]
+    ---
+    --- Generates a random string.
+    ---
+    --- Can be used to generate a password/key/secret.
+    ---
+    --- The length of the string is 8 by default.
+    ---
+    ---@param length? integer The length of the string, defaults to 8.
+    ---@param lowercase? boolean Whether to include lowercase letters.
+    ---@param uppercase? boolean Whether to include uppercase letters.
+    ---@param numbers? boolean Whether to include numbers.
+    ---@param symbols? boolean Whether to include symbols.
+    ---@param extended_ascii? boolean Whether to include extended ASCII characters.
+    ---@return string
+    function string.random( length, lowercase, uppercase, numbers, symbols, extended_ascii )
+        if length == nil then
+            length = 8
+        elseif length == 0 then
+            return ""
+        end
+
+        local alphabets, alphabet_count = {}, 0
+
+        if lowercase ~= false then
+            alphabet_count = alphabet_count + 1
+            alphabets[ alphabet_count ] = lowercase_alphabet
+        end
+
+        if uppercase then
+            alphabet_count = alphabet_count + 1
+            alphabets[ alphabet_count ] = uppercase_alphabet
+        end
+
+        if numbers ~= false then
+            alphabet_count = alphabet_count + 1
+            alphabets[ alphabet_count ] = numberic_alphabet
+        end
+
+        if symbols then
+            alphabet_count = alphabet_count + 1
+            alphabets[ alphabet_count ] = symbol_alphabet
+        end
+
+        if extended_ascii then
+            alphabet_count = alphabet_count + 1
+            alphabets[ alphabet_count ] = extended_ascii_alphabet
+        end
+
+        local chars, char_count = {}, 0
+
+        for _ = 1, length, 1 do
+            local alphabet = alphabets[ math_random( 1, alphabet_count ) ]
+
+            char_count = char_count + 1
+            chars[ char_count ] = alphabet[ math_random( 1, alphabet[ 0 ] ) ]
+        end
+
+        return string_char( table_unpack( chars, 1, char_count ) )
+    end
+
+end
+
+local isDomain
+do
+
+    local string_byteSplit = string.byteSplit
+
+    --- [SHARED AND MENU]
+    ---
+    --- Checks if a string is a domain.
+    ---
+    ---@param str string The string.
+    ---@return boolean isDomain Whether the string is a domain.
+    ---@return string | nil err_msg The error message.
+    function isDomain( str )
+        if str == "" then
+            return false, "empty string"
+        end
+
+        local length = string_len( str )
+        if length > 253 then
+            return false, "domain is too long"
+        end
+
+        if string_byte( str, 1 ) == 0x2E --[[ . ]] then
+            return false, "first character in domain cannot be a dot"
+        end
+
+        if string_byte( str, length ) == 0x2E --[[ . ]] then
+            return false, "last character in domain cannot be a dot"
+        end
+
+        if string_match( str, "^[%l][%l%d.]*%.[%l]+$") then
+            local labels = string_byteSplit( str, 0x2E --[[ . ]] )
+            for index = 1, #labels do
+                local label = labels[ index ]
+                if label == "" then
+                    return false, "empty label in domain"
+                elseif string_len( label ) > 63 then
+                    return false, "label '" .. label .. "' in domain is too long"
+                end
+            end
+
+            return true
+        end
+
+        return false, "invalid domain"
+    end
+
+end
+
+--- [SHARED AND MENU]
+---
+--- Checks if a string is an email.
+---
+---@param str string The string.
+---@return boolean isEmail Whether the string is an email.
+---@return nil | string err_msg The error message.
+function string.isEmail( str )
+    if str == "" then
+        return false, "empty string"
+    end
+
+    local last_at = string_find( str, "[^%@]+$" )
+    if last_at == nil then
+        return false, "@ symbol is missing"
+    end
+
+    if last_at >= 65 then
+        return false, "username is too long"
+    end
+
+    local username = string_sub( str, 1, last_at - 2 )
+    if username == nil or username == "" then
+        return false, "username is missing"
+    end
+
+    if string_find( username, "[%c]" ) then
+        return false, "invalid characters in username"
+    end
+
+    if string_find( username, "%p%p" ) then
+        return false, "too many periods in username"
+    end
+
+    if string_byte( username, 1 ) == 0x22 --[[ " ]] and string_byte( username, string_len( username ) ) ~= 0x22 --[[ " ]] then
+        return false, "invalid usage of quotes"
+    end
+
+    return isDomain( string_sub( str, last_at, string_len( str ) ) )
 end

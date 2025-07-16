@@ -15,6 +15,7 @@ if gpm == nil then
 end
 
 -- TODO: globally replace all versions, steamids, url, etc. with their classes in gpm, e.g. std.URL, steam.Identifier
+-- TODO: add https://eprosync.github.io/interstellar-docs/ support
 
 --- [SHARED AND MENU]
 ---
@@ -635,7 +636,9 @@ do
 
 end
 
+dofile( "std/table.lua" )
 dofile( "std/string.lua" )
+dofile( "std/bit.lua" )
 
 local string = std.string
 STRING.__len = string.len
@@ -660,8 +663,6 @@ do
 end
 
 std.SYSTEM_ENDIANNESS = std.SYSTEM_ENDIANNESS or string.byte( string.dump( std.debug.fempty ), 7 ) == 0x00
-
-dofile( "std/bit.lua" )
 
 -- TODO: remove me later or rewrite
 do
@@ -688,8 +689,6 @@ do
     end
 
 end
-
-dofile( "std/table.lua" )
 
 local table_concat = std.table.concat
 
@@ -806,7 +805,6 @@ do
 
 end
 
-dofile( "std/string.extensions.lua" )
 dofile( "std/math.classes.lua" )
 
 dofile( "std/structures.lua" )
@@ -891,6 +889,7 @@ dofile( "std/crypto.chacha20.lua" )
 dofile( "std/crypto.hmac.lua" )
 dofile( "std/crypto.pbkdf2.lua" )
 
+dofile( "std/utils.lua" )
 dofile( "std/uuid.lua" )
 
 dofile( "std/color.lua" )

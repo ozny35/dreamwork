@@ -4,8 +4,10 @@ local _G = _G
 local std = _G.gpm.std
 
 local select = std.select
-local raw_get, raw_set, raw_pairs = std.raw.get, std.raw.set, std.raw.pairs
-local string_sub, string_find, string_len = std.string.sub, std.string.find, std.string.len
+
+local raw = std.raw
+local raw_pairs = raw.pairs
+local raw_get, raw_set = raw.get, raw.set
 
 --- [SHARED AND MENU]
 ---
@@ -17,6 +19,7 @@ std.table = table
 
 do
 
+    local jit_isFFI = std.debug.jit.isFFI
     local glua_table = _G.table
 
     -- Lua 5.1
@@ -28,7 +31,9 @@ do
     table.maxn = table.maxn or glua_table.maxn -- removed in Lua 5.2
 
     -- Lua 5.2
-    table.pack = table.pack or glua_table.pack
+    if jit_isFFI( glua_table.pack ) then
+        table.pack = table.pack or glua_table.pack
+    end
 
     if table.pack == nil then
         ---@diagnostic disable-next-line: duplicate-set-field
@@ -40,7 +45,7 @@ do
     table.unpack = table.unpack or glua_table.unpack or _G.unpack
 
     -- Lua 5.3
-    if std.debug.jit.isFFIF( glua_table.move ) then
+    if jit_isFFI( glua_table.move ) then
         table.move = table.move or glua_table.move
     end
 
@@ -386,90 +391,6 @@ function table.pairs( tbl )
     end
 
     return result, length
-end
-
---- [SHARED AND MENU]
----
---- Returns the value of the given key path.
----
---- If the key path does not exist, returns `nil`.
----
---- Example:
----
---- ```lua
----     local t = { a = { b = { c = { d = { e = "e value!" } } } } }
----     print( table.get( t, "a.b.c.d.e" ) ) -- e value!
---- ```
----@param tbl table The table to get the value from.
----@param str string The key path to get.
----@return any value The value of the key path.
-function table.get( tbl, str )
-    local pointer = 1
-
-    for _ = 1, string_len( str ), 1 do
-        local startPos = string_find( str, ".", pointer, true )
-        if startPos == nil then
-            break
-        else
-            tbl = tbl[ string_sub( str, pointer, startPos - 1 ) ]
-            if tbl == nil then
-                return nil
-            else
-                pointer = startPos + 1
-            end
-        end
-    end
-
-    return tbl[ string_sub( str, pointer ) ]
-end
-
-do
-
-    local istable = std.istable
-
-    --- [SHARED AND MENU]
-    ---
-    --- Sets the value of the given key path.
-    ---
-    --- Tables are created if they do not exist.
-    ---
-    --- Example:
-    ---
-    --- ```lua
-    ---     local t = {}
-    ---     table.set( t, "a.b.c.d.e", "e value!" )
-    ---     print( t.a.b.c.d.e ) -- e value!
-    --- ```
-    ---
-    ---@param tbl table The table to set the value in.
-    ---@param str string The key path.
-    ---@param value any The value to set.
-    function table.set( tbl, str, value )
-        local pointer = 1
-
-        for _ = 1, string_len( str ), 1 do
-            local startPos = string_find( str, ".", pointer, true )
-            if startPos == nil then
-                break
-            else
-                local key = string_sub( str, pointer, startPos - 1 )
-                pointer = startPos + 1
-
-
-                local tbl_value = raw_get( tbl, key )
-                if tbl_value and istable( tbl_value ) then
-                    tbl = tbl_value
-                else
-                    local new_tbl = {}
-                    raw_set( tbl, key, new_tbl )
-                    tbl = new_tbl
-                end
-            end
-        end
-
-        tbl[ string_sub( str, pointer ) ] = value
-    end
-
 end
 
 --- [SHARED AND MENU]

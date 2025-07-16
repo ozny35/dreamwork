@@ -90,7 +90,7 @@ do
                 segments[ segment_count ] = "+"
             else
                 segment_count = segment_count + 1
-                segments[ segment_count ] = string_char( 0x25, bytepack_writeHex8( uint8 ) )
+                segments[ segment_count ] = string_char( 0x25 --[[ "%" ]], bytepack_writeHex8( uint8 ) )
             end
 
             uint8_last = uint8

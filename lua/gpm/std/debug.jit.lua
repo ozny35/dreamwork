@@ -132,8 +132,8 @@ end
 
 if util_funcinfo == nil then
 
-    function jit.isFFIF()
-        return false
+    function jit.isFFI( fn )
+        return fn ~= nil
     end
 
 else
@@ -144,9 +144,13 @@ else
     ---
     ---@param fn function The function to check.
     ---@return boolean is_ffi `true` if the function is a FFI function, `false` otherwise.
-    function jit.isFFIF( fn )
-        local info = util_funcinfo( fn )
-        return info ~= nil and info.ffid ~= nil
+    function jit.isFFI( fn )
+        if fn == nil then
+            return false
+        else
+            local info = util_funcinfo( fn )
+            return info ~= nil and info.ffid ~= nil
+        end
     end
 
 end
