@@ -31,7 +31,10 @@ binary.bytepack = bytepack
 ---@param uint8_2 integer The second byte.
 ---@return integer value The unsigned 2-byte integer.
 local function readUInt16( uint8_1, uint8_2 )
-	return uint8_2 * 0x100 + uint8_1
+	return bit_bor(
+		bit_lshift( uint8_2, 8 ),
+		uint8_1
+	)
 end
 
 bytepack.readUInt16 = readUInt16
@@ -63,7 +66,11 @@ bytepack.writeUInt16 = writeUInt16
 ---@param uint8_3 integer The third byte.
 ---@return integer value The unsigned 3-byte integer.
 local function readUInt24( uint8_1, uint8_2, uint8_3 )
-	return ( uint8_3 * 0x100 + uint8_2 ) * 0x100 + uint8_1
+	return bit_bor(
+		bit_lshift( uint8_3, 16 ),
+		bit_lshift( uint8_2, 8 ),
+		uint8_1
+	)
 end
 
 bytepack.readUInt24 = readUInt24
