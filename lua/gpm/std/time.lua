@@ -51,87 +51,311 @@ std.time = time
 ---| "1y" One year.
 ---| string
 
+local transform
 do
 
-    local time_now = _G.SysTime or os_clock
+    ---@type table<integer, fun( ts: number ): number>
+    local transformation_map
+
+    do
+
+        local function ts_m1e_3( ts )
+            return ts * 1e-3
+        end
+
+        local function ts_m1e_6( ts )
+            return ts * 1e-6
+        end
+
+        local function ts_m1e3( ts )
+            return ts * 1e3
+        end
+
+        local function ts_m1e6( ts )
+            return ts * 1e6
+        end
+
+        local function ts_d60( ts )
+            return ts / 60
+        end
+
+        transformation_map = {
+            -- ns -> other
+            [ 0x7375736E ] = ts_m1e_3, -- ns to us
+            [ 0x736D736E ] = ts_m1e_6, -- ns to ms
+            [ 0x73736E ]   = function( ts ) return ts * 1e-9 end,        -- ns to s
+            [ 0x6D736E ]   = function( ts ) return ( ts * 1e-9 ) / 60 end,   -- ns to m
+            [ 0x68736E ]   = function( ts ) return ( ts * 1e-9 ) / 3600 end, -- ns to h
+            [ 0x64736E ]   = function( ts ) return ( ts * 1e-9 ) / 86400 end, -- ns to d
+            [ 0x77736E ]   = function( ts ) return ( ts * 1e-9 ) / 604800 end, -- ns to w
+            [ 0x6F6D736E ] = function( ts ) return ( ts * 1e-9 ) / 2592000 end, -- ns to mo
+            [ 0x79736E ]   = function( ts ) return ( ts * 1e-9 ) / 31536000 end, -- ns to y
+
+            -- us -> other
+            [ 0x736E7375 ] = ts_m1e3,  -- us to ns
+            [ 0x736D7375 ] = ts_m1e_3, -- us to ms
+            [ 0x737375 ]   = ts_m1e_6, -- us to s
+            [ 0x6D7375 ]   = function( ts ) return ( ts * 1e-6 ) / 60 end,   -- us to m
+            [ 0x687375 ]   = function( ts ) return ( ts * 1e-6 ) / 3600 end, -- us to h
+            [ 0x647375 ]   = function( ts ) return ( ts * 1e-6 ) / 86400 end, -- us to d
+            [ 0x777375 ]   = function( ts ) return ( ts * 1e-6 ) / 604800 end, -- us to w
+            [ 0x6F6D7375 ] = function( ts ) return ( ts * 1e-6 ) / 2592000 end, -- us to mo
+            [ 0x797375 ]   = function( ts ) return ( ts * 1e-6 ) / 31536000 end, -- us to y
+
+            -- ms -> other
+            [ 0x736E736D ] = ts_m1e6,         -- ms to ns
+            [ 0x7375736D ] = ts_m1e3,         -- ms to us
+            [ 0x73736D ]   = ts_m1e_3, -- ms to s
+            [ 0x6D736D ]   = function( ts ) return ( ts * 1e-3 ) / 60 end,   -- ms to m
+            [ 0x68736D ]   = function( ts ) return ( ts * 1e-3 ) / 3600 end, -- ms to h
+            [ 0x64736D ]   = function( ts ) return ( ts * 1e-3 ) / 86400 end, -- ms to d
+            [ 0x77736D ]   = function( ts ) return ( ts * 1e-3 ) / 604800 end, -- ms to w
+            [ 0x6F6D736D ] = function( ts ) return ( ts * 1e-3 ) / 2592000 end, -- ms to mo
+            [ 0x79736D ]   = function( ts ) return ( ts * 1e-3 ) / 31536000 end, -- ms to y
+
+            -- s -> other
+            [ 0x736E0073 ] = function( ts ) return ts * 1e9 end,         -- s to ns
+            [ 0x73750073 ] = ts_m1e6,         -- s to us
+            [ 0x736D0073 ] = ts_m1e3,         -- s to ms
+            [ 0x6D0073 ]   = ts_d60,          -- s to m
+            [ 0x680073 ]   = function( ts ) return ts / 3600 end,        -- s to h
+            [ 0x640073 ]   = function( ts ) return ts / 86400 end,       -- s to d
+            [ 0x770073 ]   = function( ts ) return ts / 604800 end,      -- s to w
+            [ 0x6F6D0073 ] = function( ts ) return ts / 2592000 end,     -- s to mo
+            [ 0x790073 ]   = function( ts ) return ts / 31536000 end,    -- s to y
+
+            -- m -> other
+            [ 0x736E006D ] = function( ts ) return ( ts * 60 ) * 1e9 end,    -- m to ns
+            [ 0x7375006D ] = function( ts ) return ( ts * 60 ) * 1e6 end,    -- m to us
+            [ 0x736D006D ] = function( ts ) return ( ts * 60 ) * 1e3 end,    -- m to ms
+            [ 0x73006D ]   = function( ts ) return ( ts * 60 ) end,          -- m to s
+            [ 0x68006D ]   = ts_d60,          -- m to h
+            [ 0x64006D ]   = function( ts ) return ts / 1440 end,        -- m to d
+            [ 0x77006D ]   = function( ts ) return ts / 10080 end,       -- m to w
+            [ 0x6F6D006D ] = function( ts ) return ts / 43200 end,       -- m to mo
+            [ 0x79006D ]   = function( ts ) return ts / 525600 end,      -- m to y
+
+            -- h -> other
+            [ 0x736E0068 ] = function( ts ) return ( ts * 3600 ) * 1e9 end,  -- h to ns
+            [ 0x73750068 ] = function( ts ) return ( ts * 3600 ) * 1e6 end,  -- h to us
+            [ 0x736D0068 ] = function( ts ) return ( ts * 3600 ) * 1e3 end,  -- h to ms
+            [ 0x730068 ]   = function( ts ) return ( ts * 3600 ) end,        -- h to s
+            [ 0x6D0068 ]   = function( ts ) return ( ts * 60 ) end,          -- h to m
+            [ 0x640068 ]   = function( ts ) return ts / 24 end,          -- h to d
+            [ 0x770068 ]   = function( ts ) return ts / 168 end,         -- h to w
+            [ 0x6F6D0068 ] = function( ts ) return ts / 720 end,         -- h to mo
+            [ 0x790068 ]   = function( ts ) return ts / 8760 end,        -- h to y
+
+            -- d -> other
+            [ 0x736E0064 ] = function( ts ) return ( ts * 86400 ) * 1e9 end, -- d to ns
+            [ 0x73750064 ] = function( ts ) return ( ts * 86400 ) * 1e6 end, -- d to us
+            [ 0x736D0064 ] = function( ts ) return ( ts * 86400 ) * 1e3 end, -- d to ms
+            [ 0x730064 ]   = function( ts ) return ( ts * 86400 ) end,       -- d to s
+            [ 0x6D0064 ]   = function( ts ) return ts * 1440 end,        -- d to m
+            [ 0x680064 ]   = function( ts ) return ts * 24 end,          -- d to h
+            [ 0x770064 ]   = function( ts ) return ts / 7 end,           -- d to w
+            [ 0x6F6D0064 ] = function( ts ) return ts / 30 end,          -- d to mo
+            [ 0x790064 ]   = function( ts ) return ts / 365 end,         -- d to y
+
+            -- w -> other
+            [ 0x736E0077 ] = function( ts ) return ( ts * 604800 ) * 1e9 end, -- w to ns
+            [ 0x73750077 ] = function( ts ) return ( ts * 604800 ) * 1e6 end, -- w to us
+            [ 0x736D0077 ] = function( ts ) return ( ts * 604800 ) * 1e3 end, -- w to ms
+            [ 0x730077 ]   = function( ts ) return ( ts * 604800 ) end,      -- w to s
+            [ 0x6D0077 ]   = function( ts ) return ts * 10080 end,       -- w to m
+            [ 0x680077 ]   = function( ts ) return ts * 168 end,         -- w to h
+            [ 0x640077 ]   = function( ts ) return ts * 7 end,           -- w to d
+            [ 0x6F6D0077 ] = function( ts ) return ts / 4.285714286 end, -- w to mo
+            [ 0x790077 ]   = function( ts ) return ts / 52.142857143 end, -- w to y
+
+            -- mo -> other
+            [ 0x736E6F6D ] = function( ts ) return ( ts * 2592000 ) * 1e9 end, -- mo to ns
+            [ 0x73756F6D ] = function( ts ) return ( ts * 2592000 ) * 1e6 end, -- mo to us
+            [ 0x736D6F6D ] = function( ts ) return ( ts * 2592000 ) * 1e3 end, -- mo to ms
+            [ 0x736F6D ]   = function( ts ) return ( ts * 2592000 ) end,     -- mo to s
+            [ 0x6D6F6D ]   = function( ts ) return ts * 43200 end,       -- mo to m
+            [ 0x686F6D ]   = function( ts ) return ts * 720 end,         -- mo to h
+            [ 0x646F6D ]   = function( ts ) return ts * 30 end,          -- mo to d
+            [ 0x776F6D ]   = function( ts ) return ts * 4.285714286 end, -- mo to w
+            [ 0x796F6D ]   = function( ts ) return ts / 12 end,          -- mo to y
+
+            -- y -> other
+            [ 0x736E0079 ] = function( ts ) return ( ts * 31536000 ) * 1e9 end, -- y to ns
+            [ 0x73750079 ] = function( ts ) return ( ts * 31536000 ) * 1e6 end, -- y to us
+            [ 0x736D0079 ] = function( ts ) return ( ts * 31536000 ) * 1e3 end, -- y to ms
+            [ 0x730079 ]   = function( ts ) return ( ts * 31536000 ) end,    -- y to s
+            [ 0x6D0079 ]   = function( ts ) return ts * 525600 end,      -- y to m
+            [ 0x680079 ]   = function( ts ) return ts * 8760 end,        -- y to h
+            [ 0x640079 ]   = function( ts ) return ts * 365 end,         -- y to d
+            [ 0x770079 ]   = function( ts ) return ts * 52.142857143 end, -- y to w
+            [ 0x6F6D0079 ] = function( ts ) return ts * 12 end           -- y to mo
+        }
+
+    end
+
+    local bit_lshift = bit.lshift
+    local bit_bor = bit.bor
 
     --- [SHARED AND MENU]
     ---
-    --- Returns the current time in the specified unit.
+    --- Transforms a timestamp from one unit to another.
     ---
-    ---@param unit? gpm.std.time.Unit The unit to return the current time in, seconds by default.
-    ---@return integer timestamp The current timestamp in the specified unit.
-    function time.now( unit )
-        local timestamp = os_time()
-
+    ---@param timestamp integer The timestamp to transform.
+    ---@param unit? gpm.std.time.Unit The unit to transform the timestamp from, seconds by default.
+    ---@param target? gpm.std.time.Unit The unit to transform the timestamp to, seconds by default.
+    ---@param as_float? boolean Whether to return the timestamp as a float, `false` by default.
+    ---@param error_level? integer The error level to use, 2 by default.
+    ---@return number timestamp The transformed timestamp.
+    function transform( timestamp, unit, target, as_float, error_level )
+        local unit_uint8_1, unit_uint8_2
         if unit == nil then
-            unit = "s"
+            unit_uint8_1, unit_uint8_2 = 0x73 --[[ `s` ]], 0x0
+        else
+
+            unit_uint8_1, unit_uint8_2 = string_byte( unit, 1, 2 )
+
+            if unit_uint8_1 == nil then
+                error( "unit cannot be empty string", ( error_level or 1 ) + 1 )
+            end
+
+            if unit_uint8_2 == nil then
+                unit_uint8_2 = 0x0
+            end
+
         end
 
-        if unit == "s" then
+        local target_uint8_1, target_uint8_2
+        if target == nil then
+            target_uint8_1, target_uint8_2 = 0x73 --[[ `s` ]], 0x0
+        else
+
+            target_uint8_1, target_uint8_2 = string_byte( target, 1, 2 )
+
+            if target_uint8_1 == nil then
+                error( "target cannot be empty string", ( error_level or 1 ) + 1 )
+            end
+
+            if target_uint8_2 == nil then
+                target_uint8_2 = 0x0
+            end
+
+        end
+
+        if unit_uint8_1 ~= target_uint8_1 or unit_uint8_2 ~= target_uint8_2 then
+            local transform_fn = transformation_map[ bit_bor(
+                bit_lshift( target_uint8_2, 24 ),
+                bit_lshift( target_uint8_1, 16 ),
+                bit_lshift( unit_uint8_2, 8 ),
+                unit_uint8_1
+            ) ]
+
+            if transform_fn == nil then
+                error( "unknown transformation from '" .. unit .. "' to '" .. target .. "'", ( error_level or 1 ) + 1 )
+            end
+
+            timestamp = transform_fn( timestamp )
+        end
+
+        if as_float then
             return timestamp
-        elseif unit == "m" then
-            return math_floor( timestamp / 60 )
-        elseif unit == "h" then
-            return math_floor( timestamp / 3600 )
-        elseif unit == "d" then
-            return math_floor( timestamp / 86400 )
-        elseif unit == "w" then
-            return math_floor( timestamp / 604800 )
-        elseif unit == "mo" then
-            return math_floor( timestamp / 2592000 )
-        elseif unit == "y" then
-            return math_floor( timestamp / 31536000 )
-        end
-
-        timestamp = ( timestamp + time_now() % 1 ) * 1000
-
-        if unit == "ms" then
+        else
             return math_floor( timestamp )
-        elseif unit == "us" then
-            return math_floor( timestamp * 1000 )
-        elseif unit == "ns" then
-            return math_floor( timestamp * 1000000 )
         end
-
-        error( "unknown unit '" .. unit .. "'", 2 )
     end
 
+end
+
+--- [SHARED AND MENU]
+---
+--- Transforms a timestamp to a different unit.
+---
+---@param timestamp integer The timestamp to transform.
+---@param unit? gpm.std.time.Unit The unit to transform the timestamp from, seconds by default.
+---@param target? gpm.std.time.Unit The unit to transform the timestamp to, seconds by default.
+---@param as_float? boolean Whether to return the timestamp as a float.
+---@return integer
+function time.transform( timestamp, unit, target, as_float )
+    return transform( timestamp, unit, target, as_float, 2 )
+end
+
+local seconds_elapsed = _G.SysTime or os_clock
+
+--- [SHARED AND MENU]
+---
+--- Returns the time elapsed since lua was started.
+---
+---@param unit? gpm.std.time.Unit The unit to return the elapsed time in, seconds by default.
+---@param as_float? boolean Whether to return the elapsed time as a float.
+---@return number timestamp The elapsed time in the specified unit.
+function time.elapsed( unit, as_float )
+    if unit == "ns" then
+        local float = seconds_elapsed() * 1e9
+        if as_float then
+            return float
+        else
+            return math_floor( float )
+        end
+    elseif unit == "us" then
+        local float = seconds_elapsed() * 1e6
+        if as_float then
+            return float
+        else
+            return math_floor( float )
+        end
+    elseif unit == "ms" then
+        local float = os_clock() * 1e3
+        if as_float then
+            return float
+        else
+            return math_floor( float )
+        end
+    elseif unit == "s" or unit == nil then
+        local float = os_clock()
+        if as_float then
+            return float
+        else
+            return math_floor( float )
+        end
+    else
+        return transform( os_clock(), "s", unit, as_float, 2 )
+    end
+end
+
+--- [SHARED AND MENU]
+---
+--- Returns the current time in the specified unit.
+---
+---@param unit? gpm.std.time.Unit The unit to return the current time in, seconds by default.
+---@param as_float? boolean Whether to return the timestamp as a float.
+---@return integer timestamp The current timestamp in the specified unit.
+function time.now( unit, as_float )
+    local timestamp = os_time()
+
+    if unit == nil or unit == "s" then
+        return timestamp
+    elseif unit == "ms" or unit == "us" or unit == "ns" then
+        timestamp = timestamp + seconds_elapsed() % 1
+    end
+
+    return transform( timestamp, nil, unit, as_float, 2 )
 end
 
 do
 
     local string_gmatch = string.gmatch
 
-    --- [SHARED AND MENU]
-    ---
-    --- Converts a duration string to seconds, milliseconds, microseconds and nanoseconds.
-    ---
-    ---@param duration_str gpm.std.time.Duration
-    ---@param error_level? integer
-    ---@return number seconds
-    ---@return number milliseconds
-    ---@return number microseconds
-    ---@return number nanoseconds
-    local function duration( duration_str, error_level )
+    ---@param duration_str gpm.std.time.Duration The duration string to convert.
+    ---@param unit? gpm.std.time.Unit The unit to convert the duration to, seconds by default.
+    ---@param as_float? boolean Whether to return the duration as a float.
+    ---@param error_level? integer The error level to use, 2 by default.
+    ---@return integer timestamp The duration in the specified unit.
+    local function duration( duration_str, unit, as_float, error_level )
         local seconds, milliseconds, microseconds, nanoseconds = 0, 0, 0, 0
 
         for number_str, unit_str in string_gmatch( duration_str, "(%-?%d+%.?%d*)(%l*)" ) do
             local integer = raw_tonumber( number_str, 10 )
 
-            if unit_str == "y" then
-                seconds = seconds + ( integer * 31536000 )
-            elseif unit_str == "mo" then
-                seconds = seconds + ( integer * 2592000 )
-            elseif unit_str == "w" then
-                seconds = seconds + ( integer * 604800 )
-            elseif unit_str == "d" then
-                seconds = seconds + ( integer * 86400 )
-            elseif unit_str == "h" then
-                seconds = seconds + ( integer * 3600 )
-            elseif unit_str == "m" then
-                seconds = seconds + ( integer * 60 )
-            elseif unit_str == "s" then
+            if unit_str == "s" then
                 seconds = seconds + integer
             elseif unit_str == "ms" then
                 milliseconds = milliseconds + integer
@@ -140,11 +364,37 @@ do
             elseif unit_str == "ns" then
                 nanoseconds = nanoseconds + integer
             else
-                error( "unknown unit '" .. unit_str .. "' in '" .. duration_str .. "'", ( error_level or 1 ) + 1 )
+                seconds = seconds + transform( integer, unit_str, "s", as_float, ( error_level or 1 ) + 1 )
             end
         end
 
-        return seconds, milliseconds, microseconds, nanoseconds
+        if unit == "ms" then
+            local timestamp = seconds * 1e3 + milliseconds + microseconds * 1e-3 + nanoseconds * 1e-6
+
+            if as_float then
+                return timestamp
+            else
+                return math_floor( timestamp )
+            end
+        elseif unit == "us" then
+            local timestamp = seconds * 1e6 + milliseconds * 1e3 + microseconds + nanoseconds * 1e-3
+
+            if as_float then
+                return timestamp
+            else
+                return math_floor( timestamp )
+            end
+        elseif unit == "ns" then
+            local timestamp = seconds * 1e9 + milliseconds * 1e6 + microseconds * 1e3 + nanoseconds
+
+            if as_float then
+                return timestamp
+            else
+                return math_floor( timestamp )
+            end
+        end
+
+        return transform( seconds + nanoseconds * 1e-9 + microseconds * 1e-6 + milliseconds * 1e-3, nil, unit, as_float, 2 )
     end
 
     --- [SHARED AND MENU]
@@ -167,38 +417,11 @@ do
     --- | `y`      | Year         | 365 days                    |
     ---
     ---@param duration_str gpm.std.time.Duration The duration string to convert.
-    ---@param unit? gpm.std.time.Unit The unit to convert the duration to, seconds by default.
+    ---@param unit gpm.std.time.Unit The unit to convert the duration to.
+    ---@param as_float? boolean Whether to return the duration as a float.
     ---@return integer timestamp The duration in the specified unit.
-    function time.duration( duration_str, unit )
-        local seconds, milliseconds, microseconds, nanoseconds = duration( duration_str, 2 )
-
-        if unit == "ms" then
-            return math_floor( seconds * 1e3 + milliseconds + microseconds * 1e-3 + nanoseconds * 1e-6 )
-        elseif unit == "us" then
-            return math_floor( seconds * 1e6 + milliseconds * 1e3 + microseconds + nanoseconds * 1e-3 )
-        elseif unit == "ns" then
-            return math_floor( seconds * 1e9 + milliseconds * 1e6 + microseconds * 1e3 + nanoseconds )
-        end
-
-        seconds = seconds + nanoseconds * 1e-9 + microseconds * 1e-6 + milliseconds * 1e-3
-
-        if unit == "s" or unit == nil then
-            return math_floor( seconds )
-        elseif unit == "m" then
-            return math_floor( seconds / 60 )
-        elseif unit == "h" then
-            return math_floor( seconds / 3600 )
-        elseif unit == "d" then
-            return math_floor( seconds / 86400 )
-        elseif unit == "w" then
-            return math_floor( seconds / 604800 )
-        elseif unit == "mo" then
-            return math_floor( seconds / 2592000 )
-        elseif unit == "y" then
-            return math_floor( seconds / 31536000 )
-        end
-
-        error( "unknown unit '" .. unit .. "'", 2 )
+    function time.duration( duration_str, unit, as_float )
+        return duration( duration_str, unit, as_float, 2 )
     end
 
     --- [SHARED AND MENU]
@@ -223,37 +446,10 @@ do
     ---@param timestamp integer The timestamp to add the duration to.
     ---@param unit? gpm.std.time.Unit The unit to add the duration to, seconds by default.
     ---@param duration_str gpm.std.time.Duration The duration string to add.
+    ---@param as_float? boolean Whether to return the timestamp as a float.
     ---@return integer
-    function time.add( timestamp, unit, duration_str )
-        local seconds, milliseconds, microseconds, nanoseconds = duration( duration_str, 2 )
-
-        if unit == "ns" then
-            return math_floor( timestamp + ( seconds * 1e9 + milliseconds * 1e6 + microseconds * 1e3 + nanoseconds ) )
-        elseif unit == "us" then
-            return math_floor( timestamp + ( seconds * 1e6 + milliseconds * 1e3 + microseconds + nanoseconds * 1e-3 ) )
-        elseif unit == "ms" then
-            return math_floor( timestamp + ( seconds * 1e3 + milliseconds + microseconds * 1e-3 + nanoseconds * 1e-6 ) )
-        end
-
-        timestamp = timestamp + ( seconds + milliseconds * 1e-3 + microseconds * 1e-6 + nanoseconds * 1e-9 )
-
-        if unit == "m" then
-            seconds = seconds / 60
-        elseif unit == "h" then
-            seconds = seconds / 3600
-        elseif unit == "d" then
-            seconds = seconds / 86400
-        elseif unit == "w" then
-            seconds = seconds / 604800
-        elseif unit == "mo" then
-            seconds = seconds / 2592000
-        elseif unit == "y" then
-            seconds = seconds / 31536000
-        elseif not ( unit == "s" or unit == nil ) then
-            error( "unknown unit '" .. unit .. "'", 2 )
-        end
-
-        return math_floor( timestamp )
+    function time.add( timestamp, unit, duration_str, as_float )
+        return timestamp + duration( duration_str, unit, as_float, 2 )
     end
 
     --- [SHARED AND MENU]
@@ -278,134 +474,10 @@ do
     ---@param timestamp integer The timestamp to subtract the duration from.
     ---@param unit? gpm.std.time.Unit The unit to subtract the duration from, seconds by default.
     ---@param duration_str gpm.std.time.Duration The duration string to subtract.
+    ---@param as_float? boolean Whether to return the timestamp as a float.
     ---@return integer
-    function time.sub( timestamp, unit, duration_str )
-        local seconds, milliseconds, microseconds, nanoseconds = duration( duration_str, 2 )
-
-        if unit == "ns" then
-            return timestamp - math_floor( seconds * 1e9 + milliseconds * 1e6 + microseconds * 1e3 + nanoseconds )
-        elseif unit == "us" then
-            return timestamp - math_floor( seconds * 1e6 + milliseconds * 1e3 + microseconds + nanoseconds * 1e-3 )
-        elseif unit == "ms" then
-            return timestamp - math_floor( seconds * 1e3 + milliseconds + microseconds * 1e-3 + nanoseconds * 1e-6 )
-        end
-
-        seconds = seconds + ( milliseconds * 1e-3 + microseconds * 1e-6 + nanoseconds * 1e-9 )
-
-        if unit == "m" then
-            seconds = seconds / 60
-        elseif unit == "h" then
-            seconds = seconds / 3600
-        elseif unit == "d" then
-            seconds = seconds / 86400
-        elseif unit == "w" then
-            seconds = seconds / 604800
-        elseif unit == "mo" then
-            seconds = seconds / 2592000
-        elseif unit == "y" then
-            seconds = seconds / 31536000
-        elseif not ( unit == "s" or unit == nil ) then
-            error( "unknown unit '" .. unit .. "'", 2 )
-        end
-
-        return timestamp - math_floor( seconds )
-    end
-
-end
-
-do
-
-    --- [SHARED AND MENU]
-    ---
-    --- Transforms a timestamp from one unit to another.
-    ---
-    ---@param timestamp integer The timestamp to transform.
-    ---@param unit? gpm.std.time.Unit The unit to transform the timestamp from, seconds by default.
-    ---@param target? gpm.std.time.Unit The unit to transform the timestamp to, seconds by default.
-    ---@return number timestamp The transformed timestamp.
-    local function transform( timestamp, unit, target, error_level, as_float )
-        if error_level == nil then
-            error_level = 2
-        else
-            error_level = error_level + 1
-        end
-
-        if unit == "ns" then
-            timestamp = timestamp / 1e9
-        elseif unit == "us" then
-            timestamp = timestamp / 1e6
-        elseif unit == "ms" then
-            timestamp = timestamp / 1e3
-        elseif unit == "m" then
-            timestamp = timestamp * 60
-        elseif unit == "h" then
-            timestamp = timestamp * 3600
-        elseif unit == "d" then
-            timestamp = timestamp * 86400
-        elseif unit == "w" then
-            timestamp = timestamp * 604800
-        elseif unit == "mo" then
-            timestamp = timestamp * 2592000
-        elseif unit == "y" then
-            timestamp = timestamp * 31536000
-        elseif not ( unit == "s" or unit == nil ) then
-            error( "unknown unit '" .. unit .. "'", error_level )
-        end
-
-        if target == "ns" then
-            timestamp = timestamp * 1e9
-        elseif target == "us" then
-            timestamp = timestamp * 1e6
-        elseif target == "ms" then
-            timestamp = timestamp * 1e3
-        elseif target == "m" then
-            timestamp = timestamp / 60
-        elseif target == "h" then
-            timestamp = timestamp / 3600
-        elseif target == "d" then
-            timestamp = timestamp / 86400
-        elseif target == "w" then
-            timestamp = timestamp / 604800
-        elseif target == "mo" then
-            timestamp = timestamp / 2592000
-        elseif target == "y" then
-            timestamp = timestamp / 31536000
-        elseif not ( target == "s" or target == nil ) then
-            error( "unknown target unit '" .. target .. "'", error_level )
-        end
-
-        if as_float then
-            return timestamp
-        else
-            return math_floor( timestamp )
-        end
-    end
-
-    --- [SHARED AND MENU]
-    ---
-    --- Transforms a timestamp to a different unit.
-    ---
-    ---@param timestamp integer The timestamp to transform.
-    ---@param unit? gpm.std.time.Unit The unit to transform the timestamp from, seconds by default.
-    ---@param target? gpm.std.time.Unit The unit to transform the timestamp to, seconds by default.
-    ---@return integer
-    function time.transform( timestamp, unit, target )
-        return transform( timestamp, unit, target, 2, false )
-    end
-
-    --- [SHARED AND MENU]
-    ---
-    --- Returns the time elapsed since lua was started.
-    ---
-    ---@param as_float? boolean Return the elapsed time as a float instead of an integer.
-    ---@param unit? gpm.std.time.Unit The unit to return the elapsed time in, seconds by default.
-    ---@return number timestamp
-    function time.elapsed( as_float, unit )
-        if as_float and unit == nil then
-            return os_clock()
-        else
-            return transform( os_clock() * 1e3, "ms", unit, 2, as_float )
-        end
+    function time.sub( timestamp, unit, duration_str, as_float )
+        return timestamp - duration( duration_str, unit, as_float, 2 )
     end
 
 end
@@ -418,45 +490,24 @@ do
     ---
     ---@param timestamp integer
     ---@param unit? gpm.std.time.Unit
+    ---@param error_level? integer
     ---@return integer seconds
     ---@return integer milliseconds
     ---@return integer microseconds
     ---@return integer nanoseconds
     local function split( timestamp, unit, error_level )
-        local milliseconds, microseconds, nanoseconds = 0, 0, 0
-        local seconds
+        error_level = ( error_level or 1 ) + 1
 
-        if unit == "s" or unit == nil then
-            seconds = math_floor( timestamp )
-        elseif unit == "ns" then
-            seconds = math_floor( timestamp / 1e9 )
-            milliseconds = math_floor( ( timestamp - ( seconds * 1e9 ) ) / 1e6 )
-            microseconds = math_floor( ( timestamp - ( ( seconds * 1e9 ) + ( milliseconds * 1e6 ) ) ) / 1e3 )
-            nanoseconds = math_floor( timestamp - ( ( seconds * 1e9 ) + ( milliseconds * 1e6 ) + ( microseconds * 1e3 ) ) )
-        elseif unit == "us" then
-            seconds = math_floor( timestamp / 1e6 )
-            milliseconds = math_floor( ( timestamp - ( seconds * 1e6 ) ) / 1e3 )
-            microseconds = math_floor( timestamp - ( ( seconds * 1e6 ) + ( milliseconds * 1e3 ) ) )
-        elseif unit == "ms" then
-            seconds = math_floor( timestamp / 1e3 )
-            milliseconds = math_floor( timestamp - ( seconds * 1e3 ) )
-        elseif unit == "m" then
-            seconds = math_floor( timestamp * 60 )
-        elseif unit == "h" then
-            seconds = math_floor( timestamp * 3600 )
-        elseif unit == "d" then
-            seconds = math_floor( timestamp * 86400 - 14400 )
-        elseif unit == "w" then
-            seconds = math_floor( timestamp * 604800 + 331200 )
-        elseif unit == "mo" then
-            seconds = math_floor( timestamp * 3888000 )
-        elseif unit == "y" then
-            seconds = math_floor( timestamp * 31536000 + 2592000 )
-        else
-            error( "unknown unit '" .. unit .. "'", ( error_level or 1 ) + 1 )
-        end
+        local seconds = transform( timestamp, unit, "s", false, error_level )
+        timestamp = timestamp - transform( seconds, "s", unit, true, error_level )
 
-        return seconds, milliseconds, microseconds, nanoseconds
+        local milliseconds = transform( timestamp, unit, "ms", false, error_level )
+        timestamp = timestamp - transform( milliseconds, "ms", unit, true, error_level )
+
+        local microseconds = transform( timestamp, unit, "us", false, error_level )
+        timestamp = timestamp - transform( microseconds, "us", unit, true, error_level )
+
+        return seconds, milliseconds, microseconds, transform( timestamp, unit, "ns", false, error_level )
     end
 
     --- [SHARED AND MENU]
@@ -567,9 +618,8 @@ do
     ---@param unit? gpm.std.time.Unit The unit to convert the timestamp to, seconds by default.
     ---@return string duration_str The duration string.
     function time.string( timestamp, unit )
-        local segments, segment_count = {}, 0
-
         local seconds, milliseconds, microseconds, nanoseconds = split( timestamp, unit, 2 )
+        local segments, segment_count = {}, 0
 
         if seconds ~= 0 then
 
