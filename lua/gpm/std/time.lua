@@ -328,17 +328,19 @@ end
 ---@param unit? gpm.std.time.Unit The unit to return the current time in, seconds by default.
 ---@param as_float? boolean Whether to return the timestamp as a float.
 ---@return integer timestamp The current timestamp in the specified unit.
-function time.now( unit, as_float )
+local function now( unit, as_float )
     local timestamp = os_time()
 
     if unit == nil or unit == "s" then
         return timestamp
     elseif unit == "ms" or unit == "us" or unit == "ns" then
-        timestamp = timestamp + seconds_elapsed() % 1
+        timestamp = timestamp + ( seconds_elapsed() % 1 )
     end
 
     return transform( timestamp, nil, unit, as_float, 2 )
 end
+
+time.now = now
 
 do
 
@@ -369,28 +371,28 @@ do
         end
 
         if unit == "ms" then
-            local timestamp = seconds * 1e3 + milliseconds + microseconds * 1e-3 + nanoseconds * 1e-6
+            local float = seconds * 1e3 + milliseconds + microseconds * 1e-3 + nanoseconds * 1e-6
 
             if as_float then
-                return timestamp
+                return float
             else
-                return math_floor( timestamp )
+                return math_floor( float )
             end
         elseif unit == "us" then
-            local timestamp = seconds * 1e6 + milliseconds * 1e3 + microseconds + nanoseconds * 1e-3
+            local float = seconds * 1e6 + milliseconds * 1e3 + microseconds + nanoseconds * 1e-3
 
             if as_float then
-                return timestamp
+                return float
             else
-                return math_floor( timestamp )
+                return math_floor( float )
             end
         elseif unit == "ns" then
-            local timestamp = seconds * 1e9 + milliseconds * 1e6 + microseconds * 1e3 + nanoseconds
+            local float = seconds * 1e9 + milliseconds * 1e6 + microseconds * 1e3 + nanoseconds
 
             if as_float then
-                return timestamp
+                return float
             else
-                return math_floor( timestamp )
+                return math_floor( float )
             end
         end
 
@@ -756,11 +758,7 @@ do
     ---@param unit? gpm.std.time.Unit The timestamp unit, seconds by default.
     ---@return string str The formatted string.
     function time.format( fmt, timestamp, unit )
-        if timestamp == nil then
-            timestamp = time.now( unit )
-        end
-
-        local seconds, milliseconds, microseconds, nanoseconds = split( timestamp, unit, 2 )
+        local seconds, milliseconds, microseconds, nanoseconds = split( timestamp or now( unit, true ), unit, 2 )
 
         ---@type string[]
         local segments = {}
