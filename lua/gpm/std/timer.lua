@@ -35,7 +35,7 @@ local timer_Adjust = timer.Adjust
 ---@field __class gpm.std.TimerClass
 ---@field name string The internal name of the timer. **Read-only.**
 ---@field state gpm.std.Timer.state The current state of the timer. **Read-only.**
----@field delay number The delay between repetitions of the timer in seconds.
+---@field interval number The delay between repetitions of the timer in seconds.
 ---@field repetition_index integer The current repetition index of the timer. **Read-only.**
 ---@field repetitions_total integer The total amount of repetitions of the timer.
 ---@field repetitions_remaining integer The remaining amount of repetitions of the timer. **Read-only.**
@@ -52,7 +52,7 @@ local Timer = std.class.base( "Timer", true )
 ---
 ---@class gpm.std.TimerClass : gpm.std.Timer
 ---@field __base gpm.std.Timer
----@overload fun( delay: number?, repetitions_total: integer?, name: string? ): gpm.std.Timer
+---@overload fun( interval: number?, repetitions_total: integer?, name: string? ): gpm.std.Timer
 local TimerClass = std.class.create( Timer )
 std.Timer = TimerClass
 
@@ -149,9 +149,9 @@ local queues = {}
 gc_setTableRules( queues, true, false )
 
 ---@type table<gpm.std.Timer, number>
-local delays = {}
+local intervals = {}
 
-gc_setTableRules( delays, true, false )
+gc_setTableRules( intervals, true, false )
 
 ---@type table<gpm.std.Timer, integer>
 local repetitions_total = {}
@@ -167,9 +167,6 @@ gc_setTableRules( repetition_indexes, true, false )
 local start_times = {}
 
 gc_setTableRules( start_times, true, false )
-
----@type table<gpm.std.Timer, boolean | nil>
-local running_timers = {}
 
 do
 
@@ -192,8 +189,8 @@ do
             else
                 return states[ self ] or 0
             end
-        elseif key == "delay" then
-            return delays[ self ] or 0
+        elseif key == "interval" then
+            return intervals[ self ] or 0
         elseif key == "start_time" then
             return start_times[ self ] or 0
         elseif key == "repetition_index" then
@@ -225,21 +222,21 @@ do
             if repetitions == 0 then
                 return math_huge
             else
-                return self.delay * repetitions
+                return self.interval * repetitions
             end
         elseif key == "time_left" then
             if self.state == 0 then
-                return self.delay
+                return self.interval
             end
 
             local name = names[ self ]
             if name == nil or not timer_Exists( name ) then
-                return self.delay
+                return self.interval
             end
 
             local time_left = timer_TimeLeft( name )
             if time_left == nil then
-                return self.delay
+                return self.interval
             end
 
             return math_abs( time_left )
@@ -252,8 +249,8 @@ do
                 return self.time_total - self.time_elapsed
             end
         elseif key == "time_elapsed" then
-            local delay = self.delay
-            return ( self.repetition_index * delay ) - ( self.time_left - delay )
+            local interval = self.interval
+            return ( self.repetition_index * interval ) - ( self.time_left - interval )
         elseif string_sub( key, 1, 2 ) == "__" then
             error( "unknown key '" .. key .. "'", 2 )
         else
@@ -270,26 +267,22 @@ do
 
     ---@protected
     function Timer:__newindex( key, value )
-        if key == "delay" then
-            local delay = math_max( 0, tonumber( value, 10 ) or 0 )
-            delays[ self ] = delay
+        if key == "interval" then
+            local interval = math_max( 0, tonumber( value, 10 ) or 0 )
+            intervals[ self ] = interval
 
             local name = names[ self ]
             if name ~= nil and timer_Exists( name ) then
-                timer_Adjust( name, delay )
+                timer_Adjust( name, interval )
             end
         elseif key == "repetitions_total" then
             local repetitions = math_max( 0, tonumber( value, 10 ) or 1 )
             repetitions_total[ self ] = repetitions
 
-            if repetitions == 0 then
-                running_timers[ self ] = nil
-            end
-
             if self.state == 0 then
                 local name = names[ self ]
                 if name ~= nil and timer_Exists( name ) then
-                    timer_Adjust( name, self.delay, repetitions )
+                    timer_Adjust( name, self.interval, repetitions )
                 end
             end
         else
@@ -311,10 +304,10 @@ do
             repetition_indexes[ self ] = repetition_index
 
             if start_times[ self ] == nil and repetition_index == 1 then
-                start_times[ self ] = time_elapsed() - self.delay
+                start_times[ self ] = time_elapsed( nil, true ) - self.interval
             end
         elseif start_times[ self ] == nil and self.repetition_index == 1 then
-            start_times[ self ] = time_elapsed() - self.delay
+            start_times[ self ] = time_elapsed( nil, true ) - self.interval
         end
 
         in_call[ self ] = true
@@ -363,17 +356,17 @@ end
 
 do
 
-    local crypto_UUIDv7 = std.crypto.UUIDv7
+    local uuid_v7 = std.uuid.v7
 
     ---@protected
-    function Timer:__init( delay, repetition_count, name )
+    function Timer:__init( interval, repetition_count, name )
         if name == nil then
-            names[ self ] = crypto_UUIDv7()
+            names[ self ] = uuid_v7()
         else
             names[ self ] = name
         end
 
-        delays[ self ] = delay or 0
+        intervals[ self ] = interval or 0
         repetitions_total[ self ] = repetition_count or 1
 
         states[ self ] = 0
@@ -493,19 +486,13 @@ do
         local name = names[ self ]
         if name ~= nil then
             if timer_Exists( name ) then
-                timer_Adjust( name, self.delay, repetitions )
+                timer_Adjust( name, self.interval, repetitions )
                 timer_Start( name )
             else
-                timer_Create( name, self.delay, repetitions, function()
+                timer_Create( name, self.interval, repetitions, function()
                     return timer_call( self )
                 end )
             end
-        end
-
-        if repetitions > 0 then
-            running_timers[ self ] = true
-        else
-            running_timers[ self ] = nil
         end
 
         states[ self ] = 2
@@ -523,7 +510,6 @@ do
     ---
     function Timer:stop()
         repetition_indexes[ self ] = nil
-        running_timers[ self ] = nil
         start_times[ self ] = nil
 
         local name = names[ self ]
@@ -563,7 +549,7 @@ do
             return
         end
 
-        pause_times[ self ] = time_elapsed()
+        pause_times[ self ] = time_elapsed( nil, true )
         timer_Pause( name )
         states[ self ] = 1
     end
