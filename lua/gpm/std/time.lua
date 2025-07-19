@@ -12,7 +12,6 @@ local os_date = os.date
 local os_clock = os.clock
 
 -- TODO: add utc argument for funcs that use os_date
--- TODO: https://github.com/Nak2/NikNaks/blob/main/lua/niknaks/modules/sh_datetime.lua
 
 local math = std.math
 local math_min = math.min
@@ -35,6 +34,7 @@ local raw_tonumber = std.raw.tonumber
 local time = std.time or {}
 std.time = time
 
+-- based on https://github.com/Nak2/NikNaks/blob/c0686a65a3bd4b30e0c683b07a9822a11fd54d83/lua/niknaks/modules/sh_datetime.lua#L9-L21
 do
 
     local dst_timezone = raw_tonumber( os_date( "%z" ) )
@@ -302,8 +302,10 @@ local function is_leap_year( year )
 	return year % 4 == 0 and ( year % 100 ~= 0 or year % 400 == 0 )
 end
 
+-- based on https://github.com/Nak2/NikNaks/blob/c0686a65a3bd4b30e0c683b07a9822a11fd54d83/lua/niknaks/modules/sh_datetime.lua#L23-L25
 timer.isLeapYear = is_leap_year
 
+-- based on https://github.com/Nak2/NikNaks/blob/c0686a65a3bd4b30e0c683b07a9822a11fd54d83/lua/niknaks/modules/sh_datetime.lua#L41-L48
 do
 
     local months = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 }
