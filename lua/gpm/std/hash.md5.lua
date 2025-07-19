@@ -2,8 +2,9 @@
 
 local gpm = _G.gpm
 local std = gpm.std
----@class gpm.std.crypto
-local crypto = std.crypto
+
+---@class gpm.std.hash
+local hash = std.hash
 
 local bit = std.bit
 local math = std.math
@@ -20,7 +21,7 @@ local string_char, string_byte = string.char, string.byte
 
 local math_floor = math.floor
 
-local bytepack = std.binary.bytepack
+local bytepack = std.pack.bytes
 local bytepack_readUInt32 = bytepack.readUInt32
 local bytepack_writeUInt32 = bytepack.writeUInt32
 
@@ -28,11 +29,11 @@ local bytepack_writeUInt32 = bytepack.writeUInt32
 ---
 --- MD5 object.
 ---
----@class gpm.std.crypto.MD5 : gpm.std.Object
----@field __class gpm.std.crypto.MD5Class
+---@class gpm.std.hash.MD5 : gpm.std.Object
+---@field __class gpm.std.hash.MD5Class
 local MD5 = std.class.base( "MD5" )
 
----@alias MD5 gpm.std.crypto.MD5
+---@alias MD5 gpm.std.hash.MD5
 
 --- [SHARED AND MENU]
 ---
@@ -51,13 +52,13 @@ local MD5 = std.class.base( "MD5" )
 --- This violates one of the basic principles
 --- of a secure hash function - collision resistance.
 ---
----@class gpm.std.crypto.MD5Class : gpm.std.crypto.MD5
----@field __base gpm.std.crypto.MD5
+---@class gpm.std.hash.MD5Class : gpm.std.hash.MD5
+---@field __base gpm.std.hash.MD5
 ---@field digest_size integer
 ---@field block_size integer
----@overload fun(): gpm.std.crypto.MD5
+---@overload fun(): gpm.std.hash.MD5
 local MD5Class = std.class.create( MD5 )
-crypto.MD5 = MD5Class
+hash.MD5 = MD5Class
 
 MD5Class.digest_size = 16
 MD5Class.block_size = 64
@@ -216,7 +217,7 @@ end
 ---
 --- It returns the MD5 object for method chaining.
 ---
----@return gpm.std.crypto.MD5 obj The reset MD5 object.
+---@return gpm.std.hash.MD5 obj The reset MD5 object.
 function MD5:reset()
     self.a, self.b, self.c, self.d = 0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476
 
@@ -238,7 +239,7 @@ local bucket64 = math.bucketize( 64 )
 --- It returns the MD5 object for method chaining.
 ---
 ---@param str string The string to update the MD5 object with.
----@return gpm.std.crypto.MD5 obj The updated MD5 object.
+---@return gpm.std.hash.MD5 obj The updated MD5 object.
 function MD5:update( str )
     local str_length = string_len( str )
 

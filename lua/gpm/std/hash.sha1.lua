@@ -1,16 +1,17 @@
 local std = _G.gpm.std
----@class gpm.std.crypto
-local crypto = std.crypto
+
+---@class gpm.std.hash
+local hash = std.hash
 
 --- [SHARED AND MENU]
 ---
 --- SHA1 object.
 ---
----@class gpm.std.crypto.SHA1 : gpm.std.Object
----@field __class gpm.std.crypto.SHA1Class
+---@class gpm.std.hash.SHA1 : gpm.std.Object
+---@field __class gpm.std.hash.SHA1Class
 local SHA1 = std.class.base( "SHA1" )
 
----@alias SHA1 gpm.std.crypto.SHA1
+---@alias SHA1 gpm.std.hash.SHA1
 
 --- [SHARED AND MENU]
 ---
@@ -29,13 +30,13 @@ local SHA1 = std.class.base( "SHA1" )
 --- This violates one of the basic principles
 --- of a secure hash function - collision resistance.
 ---
----@class gpm.std.crypto.SHA1Class : gpm.std.crypto.SHA1
----@field __base gpm.std.crypto.SHA1
+---@class gpm.std.hash.SHA1Class : gpm.std.hash.SHA1
+---@field __base gpm.std.hash.SHA1
 ---@field digest_size integer
 ---@field block_size integer
----@overload fun(): gpm.std.crypto.SHA1
+---@overload fun(): gpm.std.hash.SHA1
 local SHA1Class = std.class.create( SHA1 )
-crypto.SHA1 = SHA1Class
+hash.SHA1 = SHA1Class
 
 SHA1Class.digest_size = 20
 SHA1Class.block_size = 64

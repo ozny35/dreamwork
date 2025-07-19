@@ -878,18 +878,25 @@ dofile( "std/compress.lzw.lua" )
 
 --- [SHARED AND MENU]
 ---
+--- The hash libraries.
+---
+---@class gpm.std.hash
+std.hash = std.hash or {}
+
+dofile( "std/hash.fnv.lua" )
+dofile( "std/hash.md5.lua" )
+dofile( "std/hash.sha1.lua" )
+dofile( "std/hash.sha256.lua" )
+
+--- [SHARED AND MENU]
+---
 --- The crypto libraries.
 ---
 ---@class gpm.std.crypto
 std.crypto = std.crypto or {}
 
+-- TODO: rewrite/remove
 ---@alias gpm.std.crypto.HashFunction fun( message: string, as_hex?: boolean ): string
-
-dofile( "std/crypto.md5.lua" )
-dofile( "std/crypto.sha1.lua" )
-dofile( "std/crypto.sha256.lua" )
-
--- TODO: crypto.registerHash
 
 dofile( "std/crypto.chacha20.lua" )
 dofile( "std/crypto.hmac.lua" )

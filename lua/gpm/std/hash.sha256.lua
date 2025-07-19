@@ -1,16 +1,17 @@
 local std = _G.gpm.std
----@class gpm.std.crypto
-local crypto = std.crypto
+
+---@class gpm.std.hash
+local hash = std.hash
 
 --- [SHARED AND MENU]
 ---
 --- SHA256 object.
 ---
----@class gpm.std.crypto.SHA256 : gpm.std.Object
----@field __class gpm.std.crypto.SHA256Class
+---@class gpm.std.hash.SHA256 : gpm.std.Object
+---@field __class gpm.std.hash.SHA256Class
 local SHA256 = std.class.base( "SHA256" )
 
----@alias SHA256 gpm.std.crypto.SHA256
+---@alias SHA256 gpm.std.hash.SHA256
 
 --- [SHARED AND MENU]
 ---
@@ -24,13 +25,13 @@ local SHA256 = std.class.base( "SHA256" )
 --- and produces a digest ( string ) — a
 --- fixed-size output string that represents that data.
 ---
----@class gpm.std.crypto.SHA256Class : gpm.std.crypto.SHA256
----@field __base gpm.std.crypto.SHA256
+---@class gpm.std.hash.SHA256Class : gpm.std.hash.SHA256
+---@field __base gpm.std.hash.SHA256
 ---@field digest_size integer
 ---@field block_size integer
----@overload fun(): gpm.std.crypto.SHA256
+---@overload fun(): gpm.std.hash.SHA256
 local SHA256Class = std.class.create( SHA256 )
-crypto.SHA256 = SHA256Class
+hash.SHA256 = SHA256Class
 
 SHA256Class.digest_size = 32
 SHA256Class.block_size = 64
