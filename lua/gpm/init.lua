@@ -432,7 +432,7 @@ do
         NIL.__typeid = 0
 
         ---@private
-        function NIL.__tobool()
+        function NIL.__toboolean()
             return false
         end
 
@@ -460,7 +460,7 @@ do
         BOOLEAN.__typeid = 1
 
         ---@private
-        function BOOLEAN.__tobool( value )
+        function BOOLEAN.__toboolean( value )
             return value
         end
 
@@ -500,7 +500,7 @@ do
         NUMBER.__typeid = 3
 
         ---@private
-        function NUMBER.__tobool( value )
+        function NUMBER.__toboolean( value )
             return value ~= 0
         end
 
@@ -535,7 +535,7 @@ do
         STRING.__typeid = 4
 
         ---@private
-        function STRING.__tobool( value )
+        function STRING.__toboolean( value )
             return value ~= "" and value ~= "0" and value ~= "false"
         end
 
