@@ -76,7 +76,7 @@ local function request( method, pathname, headers, body, do_cache )
 
     local href = "https://api.github.com" .. pathname
 
-    local current_time = time_now()
+    local current_time = time_now( "s", true )
     if ratelimit_reset_time > current_time then
         local diff = ratelimit_reset_time - current_time
         if diff < 30 then
@@ -88,12 +88,12 @@ local function request( method, pathname, headers, body, do_cache )
 
     -- Rate limit mutative requests
     if method > 1 and method < 6 then
-        local diff = next_mutation_time - time_elapsed()
+        local diff = next_mutation_time - time_elapsed( "s", true )
         if diff > 0 then
             next_mutation_time = next_mutation_time + 1000
             futures_sleep( diff )
         else
-            next_mutation_time = time_elapsed() + 1000
+            next_mutation_time = time_elapsed( "s", true ) + 1000
         end
     end
 

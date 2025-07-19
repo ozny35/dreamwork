@@ -915,9 +915,6 @@ dofile( "std/hash.sha256.lua" )
 ---@class gpm.std.crypto
 std.crypto = std.crypto or {}
 
--- TODO: rewrite/remove
----@alias gpm.std.crypto.HashFunction fun( message: string, as_hex?: boolean ): string
-
 dofile( "std/crypto.chacha20.lua" )
 dofile( "std/crypto.hmac.lua" )
 dofile( "std/crypto.pbkdf2.lua" )
@@ -1048,7 +1045,8 @@ if std_metatable == nil then
 
     end
 
-    do
+    local time_elapsed = std.time.elapsed
+
 
         local getTickTime = std.game.getTickTime
 
@@ -1073,11 +1071,10 @@ if std_metatable == nil then
             return frame_time
         end
 
-        local time_elapsed = std.time.elapsed
         local last_pre_render = 0
 
         gpm.engine.hookCatch( "PreRender", function()
-            local elapsed_time = time_elapsed( true )
+            local elapsed_time = time_elapsed( nil, true )
 
             if last_pre_render ~= 0 then
                 frame_time = elapsed_time - last_pre_render
@@ -1207,7 +1204,7 @@ do
 end
 
 if math.randomseed == 0 then
-    math.randomseed = std.time.now( "ms" )
+    math.randomseed = std.time.now( "ms", false )
     logger:info( "Random seed was re-synchronized with milliseconds since the Unix epoch." )
 end
 

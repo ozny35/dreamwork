@@ -150,7 +150,7 @@ do
     ---@return string uuid_str A UUID v7 string.
     function uuid.v7( timestamp )
         if timestamp == nil then
-            timestamp = BigInt_fromNumber( time_now( "ms" ) )
+            timestamp = BigInt_fromNumber( time_now( "ms", false ) )
         end
 
         return string_format( "0%s%s%s%s-%s%s-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
