@@ -1757,9 +1757,9 @@ do
     ---@type integer | nil
     options.length = 16
 
-    --- The hash algorithm class to use in HMAC.
+    --- The hash algorithm name to use for the key derivation.
     ---
-    ---@type gpm.std.hash.MD5Class | gpm.std.hash.SHA1Class | gpm.std.hash.SHA256Class
+    ---@type string
     options.hash = nil
 
 end
