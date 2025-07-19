@@ -740,6 +740,16 @@ end
 
 --- [SHARED AND MENU]
 ---
+--- Converts a number to a float32.
+---
+---@param number number The number to convert.
+---@return number float The float32 number.
+function math.toFloat32( number )
+    return math_floor( ( number * 1e+06 ) + 0.5 ) * 1e-06
+end
+
+--- [SHARED AND MENU]
+---
 --- Returns a function that bucketizes a number.
 ---
 ---@generic T : number | integer The type of the number to bucketize.

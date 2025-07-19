@@ -90,14 +90,6 @@ if std.MENU then
 
 end
 
-do
-
-    local fnName, fn = debug.getupvalue( _G.Material, 1 )
-    if fnName ~= "C_Material" then fn = nil end
-    game.Material = fn
-
-end
-
 if std.CLIENT_MENU then
     do
 

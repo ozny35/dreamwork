@@ -28,6 +28,9 @@ local select = std.select
 local utf8 = encoding.utf8 or {}
 encoding.utf8 = utf8
 
+---@alias gpm.std.encoding.utf8.Codepoint integer
+---@alias gpm.std.encoding.utf8.Sequence gpm.std.encoding.utf8.Codepoint[]
+
 utf8.charpattern = "[%z\x01-\x7F\xC2-\xF4][\x80-\xBF]*"
 utf8.MAX = 0x7FFFFFFF
 
@@ -64,7 +67,7 @@ do
 	---@param str_length integer
 	---@param strict boolean
 	---@param error_level integer
-	---@return integer | nil
+	---@return gpm.std.encoding.utf8.Codepoint | nil
 	---@return integer | nil
 	function decode( utf8_string, index, str_length, strict, error_level )
 		error_level = ( error_level or 1 ) + 1
@@ -205,7 +208,7 @@ do
 
 	local cache = {}
 
-	---@param utf8_codepoint integer
+	---@param utf8_codepoint gpm.std.encoding.utf8.Codepoint
 	---@param strict boolean
 	---@param error_level? integer
 	function encode( utf8_codepoint, strict, error_level )
@@ -395,7 +398,7 @@ utf8.len = len
 ---@param start_position? integer The position to start from in bytes.
 ---@param end_position? integer The position to end at in bytes.
 ---@param lax? boolean Whether to lax the UTF-8 validity check.
----@return integer[] utf8_codepoints A table of UTF-8 code points.
+---@return gpm.std.encoding.utf8.Sequence utf8_codepoints A table of UTF-8 code points.
 ---@return integer utf8_codepoint_count The length of the string in UTF-8 code units.
 local function unpack( utf8_string, start_position, end_position, lax )
 	---@type integer
@@ -417,7 +420,7 @@ local function unpack( utf8_string, start_position, end_position, lax )
 	local index = start_position
 	lax = lax ~= true
 
-	---@type integer[]
+	---@type gpm.std.encoding.utf8.Sequence
 	local utf8_codepoints = {}
 
 	repeat
@@ -509,7 +512,7 @@ end
 ---@param start_position? integer The position to start from in bytes.
 ---@param end_position? integer The position to end at in bytes.
 ---@param lax? boolean If `true`, lax decoding is used.
----@return integer ... The code points of the UTF-8 string.
+---@return gpm.std.encoding.utf8.Codepoint ... The code points of the UTF-8 string.
 function utf8.codepoint( utf8_string, start_position, end_position, lax )
 	local utf8_codepoints, utf8_codepoint_count = unpack( utf8_string, start_position, end_position, lax )
 	return table_unpack( utf8_codepoints, 1, utf8_codepoint_count )
@@ -521,7 +524,7 @@ do
 	---@param index integer
 	---@param strict boolean
 	---@return integer | nil
-	---@return integer | nil
+	---@return gpm.std.encoding.utf8.Codepoint | nil
 	local function utf8_iterator( utf8_string, index, strict )
 		---@type integer
 		local str_length = string_len( utf8_string )
@@ -550,7 +553,7 @@ do
 	---
 	---@param utf8_string string The UTF-8 string to iterate over.
 	---@param lax? boolean If `true`, lax decoding is used.
-	---@return ( fun( utf8_string: string, index: integer, lax: boolean? ): integer | nil, integer | nil ), string, integer, boolean
+	---@return ( fun( utf8_string: string, index: integer, lax: boolean? ): integer | nil, gpm.std.encoding.utf8.Codepoint | nil ), string, integer, boolean
 	function utf8.codes( utf8_string, lax )
 		return utf8_iterator, utf8_string, 1, lax ~= true
 	end
@@ -561,7 +564,7 @@ end
 ---
 --- Encodes a sequence of code points into a UTF-8 string.
 ---
----@param utf8_codepoints integer[] The code points to encode.
+---@param utf8_codepoints gpm.std.encoding.utf8.Sequence The code points to encode.
 ---@param utf8_codepoint_count? integer The number of code points to encode.
 ---@param lax? boolean `true` if lax mode should be used.
 ---@return string utf8_string The UTF-8 string.
@@ -593,7 +596,7 @@ utf8.pack = pack
 ---
 --- This functions similarly to `string.char`
 ---
----@param ... integer The code points to encode.
+---@param ... gpm.std.encoding.utf8.Codepoint The code points to encode.
 ---@return string utf8_string The UTF-8 string.
 function utf8.char( a, b, ... )
 	if b == nil then
@@ -705,7 +708,7 @@ do
 
 end
 
----@type table<integer, string>
+---@type table<gpm.std.encoding.utf8.Codepoint, string>
 local lower2upper = {
 	[ 0x61 ] = "A",
 	[ 0x62 ] = "B",
@@ -1640,7 +1643,7 @@ local lower2upper = {
 	[ 0x1044F ] = "𐐧"
 }
 
----@type table<integer, string>
+---@type table<gpm.std.encoding.utf8.Codepoint, string>
 local upper2lower = {
 	[ 0x41 ] = "a",
 	[ 0x42 ] = "b",

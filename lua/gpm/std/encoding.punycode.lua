@@ -39,7 +39,7 @@ encoding.punycode = punycode
 ---
 --- Encodes a UTF-8 string into Punycode.
 ---
----@param codepoints integer[] The code points to encode.
+---@param codepoints gpm.std.encoding.utf8.Sequence The code points to encode.
 ---@param codepoint_count? integer The number of code points to encode.
 ---@param ignore_prefix? boolean If `true`, the prefix `"xn--"` will be ignored.
 ---@param lax? boolean `true` if lax mode should be used in UTF-8 encoding/decoding.
@@ -199,7 +199,7 @@ do
     ---@param punycode_str string The Punycode string to unpack.
     ---@param ignore_prefix? boolean If `true`, the prefix `"xn--"` will be ignored.
     ---@param lax? boolean `true` if lax mode should be used in UTF-8 encoding/decoding.
-    ---@return integer[] | nil codepoints The codepoints of the unpacked string, `nil` if an error occurred.
+    ---@return gpm.std.encoding.utf8.Sequence | nil codepoints The codepoints of the unpacked string, `nil` if an error occurred.
     ---@return integer | nil codepoint_count The number of codepoints in the string, `nil` if an error occurred.
     ---@return nil | string err_msg The error message, `nil` if no error occurred.
     function unpack( punycode_str, ignore_prefix, lax )

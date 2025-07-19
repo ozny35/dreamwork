@@ -1105,6 +1105,8 @@ do
     local setTimeout = std.setTimeout
     local futures = std.futures
 
+    --- [SHARED AND MENU]
+    ---
     --- Puts current thread to sleep for given amount of seconds.
     ---
     ---@see gpm.std.futures.pending
