@@ -670,6 +670,25 @@ end
 
 std.SYSTEM_ENDIANNESS = std.SYSTEM_ENDIANNESS or string.byte( string.dump( std.debug.fempty ), 7 ) == 0x00
 
+--- [SHARED AND MENU]
+---
+--- Converts the value to a hashable string.
+---
+--- The function uses the `__tohash` metafield to convert the value to a string.
+---
+--- If the value does not have a `__tohash` metafield, then the object address is used.
+---
+---@param e any The value to convert.
+---@return string str The hashable string.
+function std.tohash( e )
+    local fn = debug_getmetavalue( e, "__tohash" )
+    if fn == nil then
+        return string_format( "%p", e )
+    else
+        return fn( e )
+    end
+end
+
 -- TODO: remove me later or rewrite
 do
 
