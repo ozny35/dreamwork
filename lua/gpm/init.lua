@@ -22,6 +22,8 @@ end
 --- gpm standard environment
 ---
 ---@class gpm.std
+---@field LUA_VERSION string The version of the Lua interpreter.
+---@field GAME_VERSION integer The version of the game. (Garry's Mod)
 ---@field SYSTEM_ENDIANNESS `true` if the operating system is big endianness, `false` if not.
 ---@field SYSTEM_COUNTRY string The country code of the operating system. (ISO 3166-1 alpha-2)
 ---@field HAS_BATTERY boolean `true` if the operating system has a battery, `false` if not.
@@ -40,6 +42,10 @@ if std == nil then
     std = {}
     gpm.std = std
 end
+
+std.LUA_VERSION = _G._VERSION or "unknown"
+---@diagnostic disable-next-line: assign-type-mismatch
+std.GAME_VERSION = _G.VERSION or 0
 
 ---@diagnostic disable-next-line: undefined-field
 local dofile = gpm.dofile
