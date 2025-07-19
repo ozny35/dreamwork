@@ -1718,37 +1718,6 @@ do
 
     --- [SHARED AND MENU]
     ---
-    --- A hashing method.
-    ---
-    ---@class gpm.std.crypto.hashlib
-    local hashlib = {}
-
-    --- The block size in bytes.
-    ---
-    --- @type integer
-    hashlib.block = nil
-
-    --- The digest ( fingerprint ) size in bytes.
-    ---
-    --- @type integer
-    hashlib.digest = nil
-
-    --- The digest ( fingerprint ) size in hex.
-    ---
-    --- @type integer
-    hashlib.hex = nil
-
-    --- The hash function.
-    ---
-    --- @type fun( data: string ): string
-    hashlib.hash = nil
-
-end
-
-do
-
-    --- [SHARED AND MENU]
-    ---
     --- The options for the pbkdf2 function.
     ---
     ---@class gpm.std.crypto.pbkdf2.Options
@@ -1790,7 +1759,7 @@ do
 
     --- The hash algorithm class to use in HMAC.
     ---
-    ---@type gpm.std.crypto.MD5Class | gpm.std.crypto.SHA1Class | gpm.std.crypto.SHA256Class
+    ---@type gpm.std.hash.MD5Class | gpm.std.hash.SHA1Class | gpm.std.hash.SHA256Class
     options.hash = nil
 
 end
