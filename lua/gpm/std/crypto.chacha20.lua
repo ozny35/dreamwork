@@ -18,7 +18,7 @@ local string_len = string.len
 ---@class gpm.std.crypto
 local crypto = std.crypto
 
-local pack = std.binary.pack
+local pack = std.pack
 local pack_readUInt32 = pack.readUInt32
 local pack_writeUInt32 = pack.writeUInt32
 

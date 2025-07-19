@@ -4,7 +4,7 @@ local encoding = std.encoding
 
 local table_concat = std.table.concat
 
-local bytepack = std.binary.bytepack
+local bytepack = std.pack.bytes
 local bytepack_readHex8 = bytepack.readHex8
 local bytepack_writeHex8 = bytepack.writeHex8
 

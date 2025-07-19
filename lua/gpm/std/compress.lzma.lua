@@ -3,7 +3,7 @@ local std = _G.gpm.std
 ---@class gpm.std.compress
 local compress = std.compress
 
-local pack_readUInt32 = std.binary.pack.readUInt32
+local pack_readUInt32 = std.pack.readUInt32
 local glua_util = _G.util
 
 --- [SHARED AND MENU]

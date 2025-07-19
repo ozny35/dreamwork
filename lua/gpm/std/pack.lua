@@ -9,12 +9,12 @@ local string_len = string.len
 local math = std.math
 local math_ceil = math.ceil
 
----@class gpm.std.binary
-local binary = std.binary
+---@class gpm.std.pack
+local pack = std.pack
 
 -- TODO: ffi support?
 
-local bytepack = binary.bytepack
+local bytepack = pack.bytes
 
 local bytepack_readUInt16, bytepack_writeUInt16 = bytepack.readUInt16, bytepack.writeUInt16
 local bytepack_readUInt24, bytepack_writeUInt24 = bytepack.readUInt24, bytepack.writeUInt24
@@ -35,26 +35,18 @@ local bytepack_readInt64, bytepack_writeInt64 = bytepack.readInt64, bytepack.wri
 
 --- [SHARED AND MENU]
 ---
---- The binary pack/unpack library.
----
----@class gpm.std.binary.pack
-local pack = binary.pack or {}
-binary.pack = pack
-
---- [SHARED AND MENU]
----
 --- The binary reader object.
 ---
----@class gpm.std.binary.pack.Reader : gpm.std.Object
----@field __class gpm.std.binary.pack.ReaderClass
+---@class gpm.std.pack.Reader : gpm.std.Object
+---@field __class gpm.std.pack.ReaderClass
 ---@field protected position integer The current position of the reader in bytes. **READ-ONLY**
 ---@field protected data_length integer The size of the reader in bytes. **READ-ONLY**
 ---@field protected data string The content of the reader. **READ-ONLY**
-local Reader = std.class.base( "binary.pack.Reader" )
+local Reader = std.class.base( "pack.Reader" )
 
 ---@protected
 function Reader:__tostring()
-	return string.format( "binary.pack.Reader: %p [%d/%d bytes]", self, self.position, self.data_length )
+	return string.format( "pack.Reader: %p [%d/%d bytes]", self, self.position, self.data_length )
 end
 
 ---@protected
@@ -170,9 +162,9 @@ end
 ---
 --- The binary reader class.
 ---
----@class gpm.std.binary.pack.ReaderClass : gpm.std.binary.pack.Reader
----@field __base gpm.std.binary.pack.Reader
----@overload fun(): gpm.std.binary.pack.Reader
+---@class gpm.std.pack.ReaderClass : gpm.std.pack.Reader
+---@field __base gpm.std.pack.Reader
+---@overload fun(): gpm.std.pack.Reader
 local ReaderClass = std.class.create( Reader )
 pack.Reader = ReaderClass
 
@@ -180,17 +172,17 @@ pack.Reader = ReaderClass
 ---
 --- The binary writer object.
 ---
----@class gpm.std.binary.pack.Writer : gpm.std.Object
----@field __class gpm.std.binary.pack.WriterClass
+---@class gpm.std.pack.Writer : gpm.std.Object
+---@field __class gpm.std.pack.WriterClass
 ---@field protected position integer The current position of the reader in bytes. **READ-ONLY**
 ---@field protected data_length integer The size of the reader in bytes. **READ-ONLY**
 ---@field protected data string The content of the reader. **READ-ONLY**
-local Writer = std.class.base( "binary.pack.Writer" )
+local Writer = std.class.base( "pack.Writer" )
 
 ---@protected
 ---@return string
 function Writer:__tostring()
-	return string.format( "binary.pack.Writer: %p [%d/%d bytes]", self, self.position, self:size() )
+	return string.format( "pack.Writer: %p [%d/%d bytes]", self, self.position, self:size() )
 end
 
 ---@protected
@@ -378,9 +370,9 @@ end
 ---
 --- The binary writer class.
 ---
----@class gpm.std.binary.pack.WriterClass : gpm.std.binary.pack.Writer
----@field __base gpm.std.binary.pack.Writer
----@overload fun(): gpm.std.binary.pack.Writer
+---@class gpm.std.pack.WriterClass : gpm.std.pack.Writer
+---@field __base gpm.std.pack.Writer
+---@overload fun(): gpm.std.pack.Writer
 local WriterClass = std.class.create( Writer )
 pack.Writer = WriterClass
 

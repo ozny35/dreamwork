@@ -830,6 +830,17 @@ do
 
 end
 
+--- [SHARED AND MENU]
+---
+--- The pack library that packs/unpacks types as binary.
+---
+---@class gpm.std.pack
+std.pack = std.pack or {}
+
+dofile( "std/pack.bytes.lua" )
+dofile( "std/pack.bits.lua" )
+dofile( "std/pack.lua" )
+
 dofile( "std/math.classes.lua" )
 
 dofile( "std/structures.lua" )
@@ -843,16 +854,6 @@ dofile( "engine.lua" )
 
 dofile( "std/game.lua" )
 
---- [SHARED AND MENU]
----
---- The binary manipulation library.
----
----@class gpm.std.binary
-std.binary = std.binary or {}
-
-dofile( "std/binary.bitpack.lua" )
-dofile( "std/binary.bytepack.lua" )
-dofile( "std/binary.pack.lua" )
 
 --- [SHARED AND MENU]
 ---

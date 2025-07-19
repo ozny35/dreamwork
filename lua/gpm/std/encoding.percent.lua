@@ -2,7 +2,7 @@ local std = _G.gpm.std
 ---@class gpm.std.encoding
 local encoding = std.encoding
 
-local bytepack = std.binary.bytepack
+local bytepack = std.pack.bytes
 
 local string = std.string
 local string_len = string.len

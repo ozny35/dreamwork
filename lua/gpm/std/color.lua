@@ -597,7 +597,7 @@ end
 
 do
 
-    local bytepack_readHex8 = std.binary.bytepack.readHex8
+    local bytepack_readHex8 = std.pack.bytes.readHex8
 
     --- [SHARED AND MENU]
     ---

@@ -26,8 +26,8 @@ std.class = class
 ---@field __parent? gpm.std.Object The parent of the object. **READ ONLY**
 ---@field protected __new? gpm.std.Object.__new A function that will be called when a new class is created and allows you to replace the result.
 ---@field private __init? gpm.std.Object.__init A function that will be called when creating a new object and should be used as the constructor.
----@field protected __serialize? fun( obj: gpm.std.Object, writer: gpm.std.binary.pack.Writer ) A function that will be called when the object is serialized.
----@field protected __deserialize? fun( obj: gpm.std.Object, reader: gpm.std.binary.pack.Reader ) A function that will be called when the object is deserialized.
+---@field protected __serialize? fun( obj: gpm.std.Object, writer: gpm.std.pack.Writer ) A function that will be called when the object is serialized.
+---@field protected __deserialize? fun( obj: gpm.std.Object, reader: gpm.std.pack.Reader ) A function that will be called when the object is deserialized.
 
 ---@alias Object gpm.std.Object
 

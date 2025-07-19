@@ -481,7 +481,7 @@ do
             --- Sets a big integer object from an byte array and a sign.
             ---
             ---@param object gpm.std.BigInt The big integer object to set.
-            ---@param bytes integer[] The byte array.
+            ---@param bytes gpm.std.pack.bytes.Sequence The byte array.
             ---@param byte_count integer The number of bytes.
             ---@param signed boolean If `true`, the big integer object will be signed.
             ---@param big_endian boolean If `true`, the big integer object will be in bit endian.
@@ -515,7 +515,7 @@ do
             ---
             --- Creates a new big integer object from an byte array and a sign.
             ---
-            ---@param bytes integer[] The byte array.
+            ---@param bytes gpm.std.pack.bytes.Sequence The byte array.
             ---@param byte_count? integer The number of bytes.
             ---@param signed? boolean If `true`, the big integer object will be signed.
             ---@param big_endian? boolean If `true`, the big integer object will be in bit endian.
@@ -528,7 +528,7 @@ do
             ---
             --- Creates a new big integer object from an byte array and a sign.
             ---
-            ---@param bytes integer[] The byte array.
+            ---@param bytes gpm.std.pack.bytes.Sequence The byte array.
             ---@param byte_count? integer The number of bytes.
             ---@param signed? boolean If `true`, the big integer object will be signed.
             ---@param big_endian? boolean If `true`, the big integer object will be in bit endian.
@@ -619,7 +619,7 @@ do
                 end
             end
 
-            ---@param writer gpm.std.binary.pack.Writer
+            ---@param writer gpm.std.pack.Writer
             ---@protected
             function BigInt:__serialize( writer )
                 writer:writeCountedString( string_char( self[ 0 ], table_unpack( self, 1, #self ) ), 16, false )
@@ -629,7 +629,7 @@ do
 
     end
 
-    ---@param reader gpm.std.binary.pack.Reader
+    ---@param reader gpm.std.pack.Reader
     function BigInt:__deserialize( reader )
         local binary_str, binary_length, err_msg = reader:readCountedString( 16, false )
 

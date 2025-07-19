@@ -92,7 +92,7 @@ function table.set( tbl, str, value )
     tbl[ string_sub( str, pointer ) ] = value
 end
 
-local bytepack = std.binary.bytepack
+local bytepack = std.pack.bytes
 
 do
 

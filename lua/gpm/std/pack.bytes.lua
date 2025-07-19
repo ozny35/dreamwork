@@ -8,18 +8,18 @@ local math_floor = math.floor
 local bit_lshift, bit_rshift = bit.lshift, bit.rshift
 local bit_band, bit_bor = bit.band, bit.bor
 
----@class gpm.std.binary
-local binary = std.binary
+---@class gpm.std.pack
+local pack = std.pack
 
 -- TODO: ffi support?
 
 --- [SHARED AND MENU]
 ---
---- The bytepack library that packs/unpacks types as bytes.
+--- Library that packs/unpacks types as bytes.
 ---
----@class gpm.std.binary.bytepack
+---@class gpm.std.pack.bytes
 local bytepack = {}
-binary.bytepack = bytepack
+pack.bytes = bytepack
 
 --- [SHARED AND MENU]
 ---
@@ -750,8 +750,6 @@ end
 
 bytepack.writeInt56 = writeInt56
 
--- print( bytepack.readInt56( bytepack.writeInt56( 2 ^ 48 ) ) )
-
 --- [SHARED AND MENU]
 ---
 --- Reads signed 8-byte (64 bit) integer from little endian bytes.
@@ -1122,10 +1120,11 @@ do
 
 	do
 
+		local raw_pairs = std.raw.pairs
 		local uint8_cache = {}
 
-		for i in std.raw.pairs( decode_map ) do
-			for j in std.raw.pairs( decode_map ) do
+		for i in raw_pairs( decode_map ) do
+			for j in raw_pairs( decode_map ) do
 				uint8_cache[ bit_lshift( i, 8 ) + j ] = bit_lshift( decode_map[ i ], 4 ) + decode_map[ j ]
 			end
 		end
