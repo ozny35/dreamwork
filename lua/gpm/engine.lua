@@ -975,5 +975,45 @@ if glua_util ~= nil then
     engine.SHA256 = glua_util.SHA256
 end
 
+if engine.loadMaterial == nil then
+
+    ---@alias gpm.engine.ImageParameters
+    ---| `1` Makes the created material a `VertexLitGeneric`, so it can be applied to models. Default shader is `UnlitGeneric`.
+    ---| `2` Sets the `$nocull` to `1` in the created material.
+    ---| `4` Sets the `$alphatest` to `1` in the created material instead of `$vertexalpha` being set to `1`.
+    ---| `8` Generates Mipmaps for the imported texture, or sets **No Level Of Detail** and **No Mipmaps** if unset. This adjusts the material's dimensions to a power of 2.
+    ---| `16` Makes the image able to tile when used with non standard UV maps. Sets the `CLAMPS` and `CLAMPT` flags if unset.
+    ---| `32` If set does nothing, if unset - enables **Point Sampling (Texture Filtering)** on the material as well as adds the **No Level Of Detail** flag to it.
+    ---| `64` If set, the material will be given `$ignorez` flag, which is necessary for some rendering operations, such as render targets and 3d2d rendering.
+    ---| `128` Unused.
+    ---| integer
+
+    local material_fn = _G.Material
+    local upvalues = debug.getupvalues( material_fn )
+
+    if upvalues.C_Material == nil then
+
+        local bitpack = std.pack.bits
+        local bitpack_toString = bitpack.toString
+        local bitpack_writeUInt = bitpack.writeUInt
+
+        --- [SHARED AND MENU]
+        ---
+        --- Loads a material from the file.
+        ---
+        ---@param file_path string The path to the file to read.
+        ---@param parameters gpm.engine.ImageParameters The parameters.
+        ---@return IMaterial material The material.
+        ---@return number time_taken The time taken to load the material.
+        function engine.loadMaterial( file_path, parameters )
+            return material_fn( file_path, bitpack_toString( bitpack_writeUInt( parameters, 8 ), 8, false ) )
+        end
+
+    else
+        engine.loadMaterial = upvalues.C_Material
+    end
+
+end
+
 -- TODO: matproxy
 -- TODO: effects | particles?
