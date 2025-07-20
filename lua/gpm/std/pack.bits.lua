@@ -1,10 +1,15 @@
 local std = _G.gpm.std
-local len = std.len
+
+local string = std.string
+local string_len = string.len
+local string_rep = string.rep
+local string_byte, string_char = string.byte, string.char
 
 local math = std.math
+local math_ceil = math.ceil
 local math_floor = math.floor
 
-local table_unpack = std.table.unpack
+local len = std.len
 
 ---@class gpm.std.pack
 local pack = std.pack
@@ -60,9 +65,9 @@ bitpack.readUInt = bitpack_readUInt
 ---
 --- Writes unsigned integer as table of bits (booleans).
 ---
----@param value integer
----@param bit_sequence_size? integer
----@return gpm.std.pack.bits.Sequence bit_sequence
+---@param value integer	The unsigned integer.
+---@param bit_sequence_size? integer The size of the bit sequence.
+---@return gpm.std.pack.bits.Sequence bit_sequence The sequence of bits.
 local function bitpack_writeUInt( value, bit_sequence_size )
 	if bit_sequence_size == nil then
 		bit_sequence_size = 8
@@ -76,11 +81,11 @@ local function bitpack_writeUInt( value, bit_sequence_size )
 
 	local bit_sequence = {}
 
-	for j = bit_sequence_size, 1, -1 do
+	for i = bit_sequence_size, 1, -1 do
 		if value == 0 then
-			bit_sequence[ j ] = false
+			bit_sequence[ i ] = false
 		else
-			bit_sequence[ j ] = value % 2 == 1
+			bit_sequence[ i ] = value % 2 == 1
 			value = math_floor( value * 0.5 )
 		end
 	end
@@ -94,10 +99,10 @@ bitpack.writeUInt = bitpack_writeUInt
 ---
 --- Reads signed integer from table of bits (booleans).
 ---
----@param bit_sequence gpm.std.pack.bits.Sequence
----@param bit_sequence_size integer
----@param start_position integer
----@return integer value
+---@param bit_sequence gpm.std.pack.bits.Sequence The sequence of bits.
+---@param bit_sequence_size integer The size of the bit sequence.
+---@param start_position integer The start position in the bit sequence.
+---@return integer value The signed integer.
 function bitpack.readInt( bit_sequence, bit_sequence_size, start_position )
 	return bitpack_readUInt( bit_sequence, bit_sequence_size, start_position ) - ( 2 ^ ( bit_sequence_size - 1 ) )
 end
@@ -117,10 +122,11 @@ end
 ---
 --- Writes table of bits (booleans) as bytecodes.
 ---
----@param bit_sequence gpm.std.pack.bits.Sequence
----@param bit_sequence_size? integer
+---@param bit_sequence gpm.std.pack.bits.Sequence The table of bits (booleans).
+---@param bit_sequence_size? integer The size of the bit sequence.
 ---@param big_endian? boolean `true` for big endian, `false` for little endian.
----@return integer ... The bytecodes (bytes as integers<0-255>).
+---@return gpm.std.pack.bytes.Sequence bytes The sequence of bytes.
+---@return integer byte_count The number of bytes.
 function bitpack.pack( bit_sequence, bit_sequence_size, big_endian )
 	if bit_sequence_size == nil then
 		bit_sequence_size = len( bit_sequence )
@@ -143,7 +149,7 @@ function bitpack.pack( bit_sequence, bit_sequence_size, big_endian )
 		end
 	end
 
-	return table_unpack( bytes, 1, byte_count )
+	return bytes, byte_count
 end
 
 --- [SHARED AND MENU]
@@ -182,33 +188,74 @@ end
 
 do
 
-	local string_char = std.string.char
+	local table_concat = std.table.concat
 
-	function bitpack.asString( bit_sequence, bit_sequence_size, full_bytes )
+	--- [SHARED AND MENU]
+	---
+	--- Converts table of bits (booleans) to string of 0s and 1s.
+	---
+	---@param bit_sequence gpm.std.pack.bits.Sequence The table of bits (booleans).
+	---@param bit_sequence_size? integer The size of the bit table.
+	---@param full_bytes? boolean `true` for full bytes, `false` for bit count.
+	---@return string bit_str The string of 0s and 1s.
+	function bitpack.toString( bit_sequence, bit_sequence_size, full_bytes )
 		if bit_sequence_size == nil then
 			bit_sequence_size = len( bit_sequence )
 		end
 
-		if bit_sequence_size > 8000 then
-			error( "bit count cannot be greater than 8000", 1 )
-		end
-
 		local bytes = {}
 
-		for i = 1, bit_sequence_size, 8 do
-			bytes[ i ] = bit_sequence[ i ] and 0x31 or 0x30
+		for index = 1, bit_sequence_size, 1 do
+			bytes[ index ] = bit_sequence[ index ] and "1" or "0"
 		end
 
-		print( bit_sequence_size % 8 )
+		local bit_str = table_concat( bytes, "", 1, bit_sequence_size )
 
-		-- if full_bytes then
-		-- 	for i = bit_sequence_size % 8 + 1, do
-		-- end
-
-		return string_char( table_unpack( bytes, 1, bit_sequence_size ) )
+		if full_bytes then
+			return string_rep( "0", ( math_ceil( bit_sequence_size * 0.125 ) * 8 ) - bit_sequence_size ) .. bit_str
+		else
+			return bit_str
+		end
 	end
 
-	-- print( bitpack.asString( bitpack. ) )
+end
+
+do
+
+	local string_find = string.find
+
+	--- [SHARED AND MENU]
+	---
+	--- Reads bit sequence from string of 0s and 1s.
+	---
+	---@param bit_str string The string of 0s and 1s.
+	---@param bit_str_length? integer The length of the string.
+	---@return gpm.std.pack.bits.Sequence bit_sequence The table of bits (booleans).
+	---@return integer bit_sequence_size The size of the bit table.
+	function bitpack.fromString( bit_str, bit_str_length )
+		if bit_str_length == nil then
+			bit_str_length = string_len( bit_str )
+		end
+
+		local bit_sequence = {}
+
+		local first_true = string_find( bit_str, "1", 1, true )
+		if first_true == nil then
+			for index = 1, bit_str_length, 1 do
+				bit_sequence[ index ] = false
+			end
+		else
+
+			first_true = first_true - 1
+
+			for index = first_true + 1, bit_str_length, 1 do
+				bit_sequence[ index - first_true ] = string_byte( bit_str, index, index ) == 0x31
+			end
+
+		end
+
+		return bit_sequence, bit_str_length
+	end
 
 end
 
