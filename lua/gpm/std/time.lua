@@ -1,17 +1,15 @@
 local _G = _G
 
 ---@class gpm.std
----@field TZ integer The timezone offset.
----@field DST_TZ integer The DST timezone offset.
----@field DST boolean `true` if the current date is in DST, `false` if not.
+---@field TZ integer Time zone shift. WARNING: Changing this GLOBAL will affect the operation of all `time` library functions.
+---@field DST_TZ integer The DST timezone offset. **READ ONLY**
+---@field DST boolean `true` if the current date is in DST, `false` if not. **READ ONLY**
 local std = _G.gpm.std
 
 local os = _G.os
 local os_time = os.time
 local os_date = os.date
 local os_clock = os.clock
-
--- TODO: add utc argument for funcs that use os_date
 
 local math = std.math
 local math_min = math.min
@@ -53,6 +51,8 @@ do
     std.DST = ( dst_timezone - timezone ) ~= 0
 
 end
+
+local basic_timezone = std.TZ
 
 ---@alias gpm.std.time.Unit
 ---| "ns" Nanoseconds
@@ -290,55 +290,6 @@ end
 
 --- [SHARED AND MENU]
 ---
---- Checks if a year is a leap year.
----
----@param year? integer The year to check, the current year by default.
----@return boolean is_leap_year Returns `true` if the year is a leap year, otherwise `false`.
-local function is_leap_year( year )
-    if year == nil then
-        year = os_time() / 31536000
-    end
-
-	return year % 4 == 0 and ( year % 100 ~= 0 or year % 400 == 0 )
-end
-
--- based on https://github.com/Nak2/NikNaks/blob/c0686a65a3bd4b30e0c683b07a9822a11fd54d83/lua/niknaks/modules/sh_datetime.lua#L23-L25
-timer.isLeapYear = is_leap_year
-
--- based on https://github.com/Nak2/NikNaks/blob/c0686a65a3bd4b30e0c683b07a9822a11fd54d83/lua/niknaks/modules/sh_datetime.lua#L41-L48
-do
-
-    local months = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 }
-
-    --- [SHARED AND MENU]
-    ---
-    --- Returns the number of days in a month.
-    ---
-    ---@param month? integer The month to get the number of days in, the current month by default.
-    ---@param year? integer The year to get the number of days in, the current year by default.
-    ---@return integer days_in_month The number of days in the month.
-    function time.daysInMonth( month, year )
-        if month == nil then
-            month = math_floor( os_time() / 86400 )
-        end
-
-        month = ( month - 1 ) % 12 + 1
-
-        if year == nil then
-            year = 1970 + math_floor( os_time() / 31536000 )
-        end
-
-        if month == 2 and is_leap_year( year ) then
-            return 29
-        else
-            return months[ month ]
-        end
-    end
-
-end
-
---- [SHARED AND MENU]
----
 --- Transforms a timestamp to a different unit.
 ---
 ---@param timestamp integer The timestamp to transform.
@@ -403,7 +354,16 @@ end
 local function now( unit, as_float )
     local timestamp = os_time()
 
+    local current_timezone = std.TZ
+    if current_timezone ~= basic_timezone then
+        timestamp = timestamp + ( current_timezone - basic_timezone ) * 3600
+    end
+
     if unit == nil or unit == "s" then
+        if as_float then
+            timestamp = timestamp + ( os_clock() % 1 )
+        end
+
         return timestamp
     elseif unit == "ms" or unit == "us" or unit == "ns" then
         timestamp = timestamp + ( seconds_elapsed() % 1 )
@@ -413,6 +373,59 @@ local function now( unit, as_float )
 end
 
 time.now = now
+
+do
+
+    --- [SHARED AND MENU]
+    ---
+    --- Checks if a year is a leap year.
+    ---
+    ---@param year? integer The year to check, the current year by default.
+    ---@return boolean is_leap_year Returns `true` if the year is a leap year, otherwise `false`.
+    local function is_leap_year( year )
+        if year == nil then
+            year = now() / 31536000
+        end
+
+        return year % 4 == 0 and ( year % 100 ~= 0 or year % 400 == 0 )
+    end
+
+    -- based on https://github.com/Nak2/NikNaks/blob/c0686a65a3bd4b30e0c683b07a9822a11fd54d83/lua/niknaks/modules/sh_datetime.lua#L23-L25
+    timer.isLeapYear = is_leap_year
+
+    -- based on https://github.com/Nak2/NikNaks/blob/c0686a65a3bd4b30e0c683b07a9822a11fd54d83/lua/niknaks/modules/sh_datetime.lua#L41-L48
+    do
+
+        local months = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 }
+
+        --- [SHARED AND MENU]
+        ---
+        --- Returns the number of days in a month.
+        ---
+        ---@param month? integer The month to get the number of days in, the current month by default.
+        ---@param year? integer The year to get the number of days in, the current year by default.
+        ---@return integer days_in_month The number of days in the month.
+        function time.daysInMonth( month, year )
+            if month == nil then
+                month = math_floor( now() / 86400 )
+            end
+
+            month = ( month - 1 ) % 12 + 1
+
+            if year == nil then
+                year = 1970 + math_floor( now() / 31536000 )
+            end
+
+            if month == 2 and is_leap_year( year ) then
+                return 29
+            else
+                return months[ month ]
+            end
+        end
+
+    end
+
+end
 
 do
 
@@ -606,59 +619,68 @@ do
     ---@field year_week integer The week number of the year.
     ---@field timezone integer The timezone offset.
 
-    --- [SHARED AND MENU]
-    ---
-    --- Returns a table with the date and time components.
-    ---
-    ---@param timestamp? integer The timestamp to parse.
-    ---@param unit? gpm.std.time.Unit The unit to parse the timestamp from, seconds by default.
-    ---@return gpm.std.time.Date date_tbl The date and time components.
-    function time.parse( timestamp, unit )
-        local seconds, milliseconds, microseconds, nanoseconds = split( timestamp or now( unit, true ), unit, 2 )
+    do
 
-        local tbl = os_date( "*t", seconds )
-        ---@cast tbl table
+        local string_byteSplit = string.byteSplit
 
-        tbl.is_dst = tbl.isdst
-        tbl.isdst = nil
+        --- [SHARED AND MENU]
+        ---
+        --- Returns a table with the date and time components.
+        ---
+        ---@param timestamp? integer The timestamp to parse.
+        ---@param unit? gpm.std.time.Unit The unit to parse the timestamp from, seconds by default.
+        ---@param in_utc? boolean Whether the timestamp is in UTC, `false` by default.
+        ---@return gpm.std.time.Date date_tbl The date and time components.
+        function time.parse( timestamp, unit, in_utc )
+            local seconds, milliseconds, microseconds, nanoseconds = split( timestamp or now( unit, true ), unit, 2 )
+            in_utc = in_utc == true
 
-        tbl.week_day = ( tbl.wday + 5 ) % 7 + 1
-        tbl.wday = nil
+            local tbl = os_date( in_utc and "!*t" or "*t", seconds )
+            ---@cast tbl table
 
-        tbl.year_day = tbl.yday
-        tbl.yday = nil
+            tbl.is_dst = tbl.isdst
+            tbl.isdst = nil
 
-        tbl.milliseconds = milliseconds or 0
-        tbl.microseconds = microseconds or 0
-        tbl.nanoseconds = nanoseconds or 0
+            tbl.week_day = ( tbl.wday + 5 ) % 7 + 1
+            tbl.wday = nil
 
-        tbl.hours = tbl.hour
-        tbl.hour = nil
+            tbl.year_day = tbl.yday
+            tbl.yday = nil
 
-        tbl.minutes = tbl.min
-        tbl.min = nil
+            tbl.milliseconds = milliseconds or 0
+            tbl.microseconds = microseconds or 0
+            tbl.nanoseconds = nanoseconds or 0
 
-        tbl.seconds = tbl.sec
-        tbl.sec = nil
+            tbl.hours = tbl.hour
+            tbl.hour = nil
 
-        ---@diagnostic disable-next-line: param-type-mismatch
-        local values = string.byteSplit( os_date( "%I;%p;%W;%z", seconds ), 0x3B )
+            tbl.minutes = tbl.min
+            tbl.min = nil
 
-        tbl.hours12 = tonumber( values[ 1 ], 10 ) or 0
-        tbl.period = values[ 2 ] or "AM"
+            tbl.seconds = tbl.sec
+            tbl.sec = nil
 
-        tbl.year_week = ( tonumber( values[ 3 ], 10 ) or 0 ) + 1
+            ---@diagnostic disable-next-line: param-type-mismatch
+            local values = string_byteSplit( os_date( in_utc and "!%I;%p;%W;%z" or "%I;%p;%W;%z", seconds ), 0x3B --[[ ";" ]] )
 
-        local timezone = tonumber( values[ 4 ], 10 ) or 0
+            tbl.hours12 = tonumber( values[ 1 ], 10 ) or 0
+            tbl.period = values[ 2 ] or "AM"
 
-        if timezone ~= 0 then
-            timezone = timezone * 0.01
+            tbl.year_week = ( tonumber( values[ 3 ], 10 ) or 0 ) + 1
+
+            local timezone = tonumber( values[ 4 ], 10 ) or 0
+
+            if timezone ~= 0 then
+                timezone = timezone * 0.01
+            end
+
+            tbl.timezone = timezone
+
+            return tbl
         end
 
-        tbl.timezone = timezone
-
-        return tbl
     end
+
 
     local duration_units = {
         { 31536000, "y" },
@@ -830,8 +852,9 @@ do
     ---@param fmt string The format string.
     ---@param timestamp? integer The timestamp to format.
     ---@param unit? gpm.std.time.Unit The timestamp unit, seconds by default.
+    ---@param in_utc? boolean Whether the timestamp is in UTC, `false` by default.
     ---@return string str The formatted string.
-    function time.format( fmt, timestamp, unit )
+    function time.format( fmt, timestamp, unit, in_utc )
         local seconds, milliseconds, microseconds, nanoseconds = split( timestamp or now( unit, true ), unit, 2 )
 
         ---@type string[]
@@ -890,8 +913,14 @@ do
                     end
 
                     segment_count = segment_count + 1
-                    ---@diagnostic disable-next-line: assign-type-mismatch
-                    segments[ segment_count ] = os_date( pattern_str, seconds )
+
+                    if in_utc then
+                        ---@diagnostic disable-next-line: assign-type-mismatch
+                        segments[ segment_count ] = os_date( "!" .. pattern_str, seconds )
+                    else
+                        ---@diagnostic disable-next-line: assign-type-mismatch
+                        segments[ segment_count ] = os_date( pattern_str, seconds )
+                    end
 
                 end
 
