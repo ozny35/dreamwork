@@ -1010,19 +1010,43 @@ local std_metatable = getmetatable( std )
 
 if std_metatable == nil then
 
-    local keys = {}
+    ---@type table<string, fun( self: table ): any>
+    local indexes = {}
 
-    std_metatable = {
-        __keys = keys,
-        __index = function( _, key )
-            local fn = keys[ key ]
-            if fn ~= nil then
-                return fn()
+    ---@type table<string, fun( self: table, value: any )>
+    local newindexes = {}
+
+    do
+
+        local raw_set = raw.set
+
+        std_metatable = {
+            __indexes = indexes,
+            __index = function( self, key )
+                local fn = indexes[ key ]
+                if fn ~= nil then
+                    return fn( self )
+                end
+            end,
+            __newindex = function( self, key, value )
+                local fn = newindexes[ key ]
+
+                if fn == nil then
+                    raw_set( self, key, value )
+                    return
+                end
+
+                value = fn( self, value )
+
+                if value ~= nil then
+                    raw_set( self, key, value )
+                end
             end
-        end
-    }
+        }
 
-    std.setmetatable( std, std_metatable )
+        std.setmetatable( std, std_metatable )
+
+    end
 
     do
 
@@ -1039,10 +1063,20 @@ if std_metatable == nil then
             developer_mode = math.floor( developer.value )
         end
 
-        function keys.DEVELOPER()
+        ---@private
+        function indexes.DEVELOPER()
             return developer_mode
         end
 
+    end
+
+    ---@private
+    function indexes:DST_TZ()
+        if self.DST then
+            return self.TZ + 1
+        else
+            return self.TZ
+        end
     end
 
     local time_elapsed = std.time.elapsed
@@ -1063,11 +1097,13 @@ if std_metatable == nil then
         local frame_time = 0
         local fps = 0
 
-        function keys.FPS()
+        ---@private
+        function indexes.FPS()
             return fps
         end
 
-        function keys.FRAME_TIME()
+        ---@private
+        function indexes.FRAME_TIME()
             return frame_time
         end
 
@@ -1217,7 +1253,7 @@ do
     local require = _G.require or debug.fempty
     local file_exists = std.file.exists
 
-    local isEdge = std.JIT_VERSION ~= 20004
+    local isEdge = std.JIT_VERSION_INT ~= 20004
     local is32 = std.JIT_ARCH == "x86"
 
     local head = "/garrysmod/lua/bin/gm" .. ( ( CLIENT and not MENU ) and "cl" or "sv" ) .. "_"
@@ -1475,7 +1511,7 @@ if _G.system ~= nil then
 
     local glua_system = _G.system
 
-    std_metatable.__keys.SYSTEM_COUNTRY = glua_system.GetCountry or function() return "gb" end
+    std_metatable.__indexes.SYSTEM_COUNTRY = glua_system.GetCountry or function() return "gb" end
 
     if glua_system.BatteryPower ~= nil then
 

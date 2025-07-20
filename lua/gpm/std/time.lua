@@ -1,7 +1,7 @@
 local _G = _G
 
 ---@class gpm.std
----@field TZ integer Time zone shift. WARNING: Changing this GLOBAL will affect the operation of all `time` library functions.
+---@field TZ integer Time zone offset in hours. WARNING: Changing this GLOBAL will affect the operation of all `time` library functions.
 ---@field DST_TZ integer The DST timezone offset. **READ ONLY**
 ---@field DST boolean `true` if the current date is in DST, `false` if not. **READ ONLY**
 local std = _G.gpm.std
@@ -35,20 +35,13 @@ std.time = time
 -- based on https://github.com/Nak2/NikNaks/blob/c0686a65a3bd4b30e0c683b07a9822a11fd54d83/lua/niknaks/modules/sh_datetime.lua#L9-L21
 do
 
-    local dst_timezone = raw_tonumber( os_date( "%z" ) )
-
-    if dst_timezone ~= 0 then
-        dst_timezone = dst_timezone * 0.01
-    end
-
     local timezone = raw_tonumber( os_date( "%H", 0 ) ) - raw_tonumber( os_date( "!%H", 0 ) )
     if ( os_date( "%d", 0 ) - os_date( "!%d", 0 ) ) == 30 then
         timezone = timezone - 24
     end
 
+    std.DST = ( ( raw_tonumber( os_date( "%z" ) ) * 0.01 ) - timezone ) ~= 0
     std.TZ = timezone
-    std.DST_TZ = dst_timezone
-    std.DST = ( dst_timezone - timezone ) ~= 0
 
 end
 
@@ -617,7 +610,6 @@ do
     ---@field year integer The year.
     ---@field year_day integer The day of the year.
     ---@field year_week integer The week number of the year.
-    ---@field timezone integer The timezone offset.
 
     do
 
@@ -661,20 +653,12 @@ do
             tbl.sec = nil
 
             ---@diagnostic disable-next-line: param-type-mismatch
-            local values = string_byteSplit( os_date( in_utc and "!%I;%p;%W;%z" or "%I;%p;%W;%z", seconds ), 0x3B --[[ ";" ]] )
+            local values = string_byteSplit( os_date( in_utc and "!%I;%p;%W" or "%I;%p;%W", seconds ), 0x3B --[[ ";" ]] )
 
             tbl.hours12 = tonumber( values[ 1 ], 10 ) or 0
             tbl.period = values[ 2 ] or "AM"
 
             tbl.year_week = ( tonumber( values[ 3 ], 10 ) or 0 ) + 1
-
-            local timezone = tonumber( values[ 4 ], 10 ) or 0
-
-            if timezone ~= 0 then
-                timezone = timezone * 0.01
-            end
-
-            tbl.timezone = timezone
 
             return tbl
         end
@@ -905,6 +889,15 @@ do
                 elseif key == "milliseconds" then
                     segment_count = segment_count + 1
                     segments[ segment_count ] = string_format( "%03d", milliseconds )
+                elseif key == "timezone" then
+                    segment_count = segment_count + 1
+
+                    local timezone = std.TZ * 0x64
+                    if timezone < 0 then
+                        segments[ segment_count ] = string_format( "-%04d", -timezone )
+                    else
+                        segments[ segment_count ] = string_format( "+%04d", timezone )
+                    end
                 else
 
                     local pattern_str = keys[ key ]

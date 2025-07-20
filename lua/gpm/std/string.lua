@@ -470,7 +470,7 @@ do
     local jit_version = ( {
         [ "200" ] = 0x01,
         [ "201" ] = 0x02
-    } )[ string_sub( std.tostring( std.JIT_VERSION ), 1, 3 ) ]
+    } )[ string_sub( std.tostring( std.JIT_VERSION_INT ), 1, 3 ) ]
 
     --- [SHARED AND MENU]
     ---

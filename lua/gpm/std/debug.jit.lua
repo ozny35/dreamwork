@@ -4,8 +4,8 @@ local glua_jit = _G.jit
 ---@class gpm.std
 ---@field JIT_OS "Windows" | "Linux" | "OSX" | "BSD" | "POSIX" | "Other"
 ---@field JIT_ARCH "x86" | "x64" | "arm" | "arm64" | "arm64be" | "ppc" | "ppc64" | "ppc64le" | "mips" | "mipsel" | "mips64" | "mips64el" | string
----@field JIT_VERSION integer The version of the JIT compiler.
----@field JIT_VERSION_NAME string The full name of the JIT compiler version.
+---@field JIT_VERSION string The full name of the JIT compiler version.
+---@field JIT_VERSION_INT integer The version of the JIT compiler.
 local std = _G.gpm.std
 
 ---@class gpm.std.debug
@@ -23,22 +23,22 @@ local debug = std.debug
 local jit = debug.jit or {}
 debug.jit = jit
 
-std.JIT_OS = std.JIT_OS or glua_jit.os or "unknown"
-std.JIT_ARCH = std.JIT_ARCH or glua_jit.arch or "unknown"
-std.JIT_VERSION = std.JIT_VERSION or glua_jit.version_num or 0
-std.JIT_VERSION_NAME = std.JIT_VERSION_NAME or glua_jit.version or "unknown"
+std.JIT_OS = glua_jit.os or "unknown"
+std.JIT_ARCH = glua_jit.arch or "unknown"
+std.JIT_VERSION = glua_jit.version or "unknown"
+std.JIT_VERSION_INT = glua_jit.version_num or 0
 
-jit.on = jit.on or glua_jit.on or debug.fempty
-jit.off = jit.off or glua_jit.off or debug.fempty
-jit.status = jit.status or glua_jit.status or function() return false end
+jit.on = glua_jit.on or debug.fempty
+jit.off = glua_jit.off or debug.fempty
+jit.status = glua_jit.status or function() return false end
 
-jit.attach = jit.attach or glua_jit.attach or debug.fempty
-jit.flush = jit.flush or glua_jit.flush or debug.fempty
+jit.attach = glua_jit.attach or debug.fempty
+jit.flush = glua_jit.flush or debug.fempty
 
 if glua_jit.opt == nil then
-    jit.options = jit.options or debug.fempty
+    jit.options = debug.fempty
 else
-    jit.options = jit.options or glua_jit.opt.start or debug.fempty
+    jit.options = glua_jit.opt.start or debug.fempty
 end
 
 local debug_getfmain = debug.getfmain
