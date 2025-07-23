@@ -4,6 +4,7 @@ local _G = _G
 local std = _G.gpm.std
 
 local select = std.select
+local len = std.len
 
 local raw = std.raw
 local raw_pairs = raw.pairs
@@ -193,40 +194,53 @@ end
 
 --- [SHARED AND MENU]
 ---
---- Remove all occurrences of the given value.
+--- Removes a value from the given table.
+---
+--- The original table is modified.
 ---
 ---@param tbl table The table to remove from.
 ---@param value any The value to remove.
----@param no_copy? boolean Don't copy the table.
 ---@param length? integer The length of the table.
----@return table tbl Table without the given value/'s.
----@return integer length New length of the table.
-function table.removeByValue( tbl, value, no_copy, length )
-    if no_copy then
-        if length == nil then length = #tbl end
-
-        for index = length, 1, -1 do
-            if tbl[ index ] == value then
-                table_remove( tbl, index )
-                length = length - 1
-            end
-        end
-
-        return tbl, length
+---@return table result The modified table.
+---@return integer length The length of the modified table.
+function table.removeValue( tbl, value, length )
+    if length == nil then
+        length = len( tbl )
     end
 
-    local copy = {}
-    length = 0
+    for index = length, 1, -1 do
+        if tbl[ index ] == value then
+            table_remove( tbl, index )
+            length = length - 1
+        end
+    end
 
-    for i = 1, #tbl, 1 do
-        local table_value = tbl[ i ]
+    return tbl, length
+end
+
+--- [SHARED AND MENU]
+---
+--- Returns a copy of the given table without the given value.
+---
+--- The original table is not modified.
+---
+---@param tbl table The table to remove from.
+---@param value any The value to remove.
+---@param length? integer The length of the table.
+---@return table copy The copy of the table without the value.
+---@return integer copy_length The length of the copy.
+function table.withoutValue( tbl, value, length )
+    local copy, copy_length = {}, 0
+
+    for index = 1, ( length or len( tbl ) ), 1 do
+        local table_value = tbl[ index ]
         if table_value ~= value then
-            length = length + 1
-            copy[ length ] = table_value
+            copy_length = copy_length + 1
+            copy[ copy_length ] = table_value
         end
     end
 
-    return copy, length
+    return copy, copy_length
 end
 
 --- [SHARED AND MENU]
