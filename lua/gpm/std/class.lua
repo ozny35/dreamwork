@@ -52,8 +52,8 @@ do
 
     local debug_getmetavalue = debug.getmetavalue
     local debug_getmetatable = debug.getmetatable
+    local string_byte = string.byte
     local raw_pairs = std.raw.pairs
-    local string_sub = string.sub
 
     ---@param obj gpm.std.Object The object to convert to a string.
     ---@return string str The string representation of the object.
@@ -115,7 +115,8 @@ do
 
             -- copy metamethods from parent
             for key, value in raw_pairs( parent_base ) do
-                if string_sub( key, 1, 2 ) == "__" and not ( key == "__index" and value == parent_base ) and not meta_blacklist[ key ] then
+                local uint8_1, uint8_2 = string_byte( key, 1, 2 )
+                if ( uint8_1 == 0x5F --[[ "_" ]] and uint8_2 == 0x5F --[[ "_" ]] ) and not ( key == "__index" and value == parent_base ) and not meta_blacklist[ key ] then
                     base[ key ] = value
                 end
             end

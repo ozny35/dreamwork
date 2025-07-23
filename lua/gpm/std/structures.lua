@@ -4,6 +4,10 @@ local gpm = _G.gpm
 ---@class gpm.std
 local std = gpm.std
 
+local class = std.class
+local table_remove = std.table.remove
+local string_format = std.string.format
+
 do
 
     --- [SHARED AND MENU]
@@ -12,7 +16,7 @@ do
     ---
     ---@class gpm.std.Stack : gpm.std.Object
     ---@field __class gpm.std.StackClass
-    local Stack = std.class.base( "Stack" )
+    local Stack = class.base( "Stack" )
 
     ---@protected
     function Stack:__init()
@@ -96,7 +100,7 @@ do
     ---@class gpm.std.StackClass : gpm.std.Stack
     ---@field __base gpm.std.Stack
     ---@overload fun(): gpm.std.Stack
-    local StackClass = std.class.create( Stack )
+    local StackClass = class.create( Stack )
     std.Stack = StackClass
 
     ---@diagnostic disable-next-line: duplicate-doc-alias
@@ -112,7 +116,7 @@ do
     ---
     ---@class gpm.std.Queue : gpm.std.Object
     ---@field __class gpm.std.QueueClass
-    local Queue = std.class.base( "Queue" )
+    local Queue = class.base( "Queue" )
 
     ---@protected
     function Queue:__init()
@@ -237,21 +241,152 @@ do
     ---@class gpm.std.QueueClass : gpm.std.Queue
     ---@field __base gpm.std.Queue
     ---@overload fun(): gpm.std.Queue
-    local QueueClass = std.class.create( Queue )
+    local QueueClass = class.create( Queue )
     std.Queue = QueueClass
 
     ---@alias Queue gpm.std.Queue
 
 end
 
--- symbol class
+do
+
+    --- [SHARED AND MENU]
+    ---
+    --- A node.
+    ---
+    ---@class gpm.std.Node : gpm.std.Object
+    ---@field __class gpm.std.NodeClass
+    ---@field value any The value of the node.
+    ---@field parent gpm.std.Node The parent node of the node.
+    ---@field depth number The depth of the node in the tree.
+    ---@field width number The width of the node in the tree.
+    local Node = class.base( "Node" )
+
+    ---@protected
+    ---@return string
+    function Node:__tostring()
+        return string_format( "Node: %p [%s][%d]", self, self.value, self.depth )
+    end
+
+    ---@protected
+    function Node:__init( value, parent )
+        self.depth, self.width = 0, 0
+        self.value = value
+
+        if parent ~= nil then
+            self:link( parent )
+        end
+    end
+
+    --- [SHARED AND MENU]
+    ---
+    --- Unlinks the node from its parent.
+    ---
+    function Node:unlink()
+        local parent = self.parent
+        self.parent = nil
+
+        if parent ~= nil then
+
+            local width = parent.width
+
+            for index = width, 1, -1 do
+                if parent[ index ] == self then
+                    table_remove( parent, index )
+                    width = width - 1
+                end
+            end
+
+            parent.width = width
+
+        end
+
+        self.depth = 0
+
+        for index = 1, self.width, 1 do
+            self[ index ]:changeParent( self )
+        end
+    end
+
+    --- [SHARED AND MENU]
+    ---
+    --- Links the node to a parent node.
+    ---
+    ---@param parent gpm.std.Node The parent node to link to.
+    function Node:link( parent )
+        self.depth = parent.depth + 1
+        self.parent = parent
+
+        local width = parent.width
+
+        for index = 1, width, 1 do
+            local child = parent[ index ]
+            if child == self then
+                return
+            end
+        end
+
+        local sub_parent = parent
+
+        while sub_parent ~= nil do
+            if sub_parent == self then
+                error( "child cannot be parent", 2 )
+            end
+
+            sub_parent = sub_parent.parent
+        end
+
+
+        width = width + 1
+        parent[ width ] = self
+        parent.width = width
+    end
+
+    --- [SHARED AND MENU]
+    ---
+    --- Traverses the node tree.
+    ---
+    ---@param callback fun( node: gpm.std.Node ) The callback function.
+    function Node:traverse( callback )
+        callback( self )
+
+        for index = 1, self.width, 1 do
+            self[ index ]:traverse( callback )
+        end
+    end
+
+    --- [SHARED AND MENU]
+    ---
+    --- Returns the size of the node tree.
+    ---
+    ---@return integer size The size of the node tree.
+    function Node:size()
+        local size = 1
+
+        for index = 1, self.width, 1 do
+            size = size + self[ index ]:size()
+        end
+
+        return size
+    end
+
+    --- [SHARED AND MENU]
+    ---
+    --- A node class.
+    ---
+    ---@class gpm.std.NodeClass : gpm.std.Node
+    ---@field __base gpm.std.Node
+    ---@overload fun( value: any, parent: gpm.std.Node? ): gpm.std.Node
+    local NodeClass = class.create( Node )
+    std.Node = NodeClass
+
+end
+
 do
 
     local debug = std.debug
-
-    local debug_getmetatable = debug.getmetatable
-    local string_format = std.string.format
     local debug_newproxy = debug.newproxy
+    local debug_getmetatable = debug.getmetatable
 
     --- [SHARED AND MENU]
     ---
@@ -306,5 +441,3 @@ do
     end
 
 end
-
--- TODO: https://github.com/Nak2/NikNaks/blob/main/lua/niknaks/modules/sh_linq_module.lua

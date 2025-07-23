@@ -55,8 +55,20 @@ if dofile == nil then
 end
 
 ---@diagnostic disable-next-line: undefined-field
-local getUptime = _G.SysTime or ( _G.os or {} ).clock or ( _G.os or {} ).time or function() return 0 end
-gpm.StartTime = getUptime()
+local os_clock = _G.SysTime
+
+if os_clock == nil then
+    local os = _G.os
+    if os ~= nil then
+        os_clock = os.clock or os.time
+    end
+
+    if os_clock == nil then
+        error( "failed to get `os.clock`, critical environment corruption detected, startup failed!" )
+    end
+end
+
+gpm.StartTime = os_clock()
 
 gpm.VERSION = version
 gpm.PREFIX = "gpm@" .. version
@@ -77,7 +89,10 @@ raw.ipairs = raw.ipairs or _G.ipairs
 raw.pairs = raw.pairs or _G.pairs
 
 raw.equal = raw.equal or _G.rawequal
-raw.get = raw.get or _G.rawget
+
+local raw_get = raw.get or _G.rawget
+raw.get = raw_get
+
 raw.set = raw.set or _G.rawset
 raw.len = raw.len or _G.rawlen
 
@@ -138,7 +153,6 @@ local debug_getmetatable = debug.getmetatable
 local debug_getmetavalue = debug.getmetavalue
 
 local setmetatable = std.setmetatable
-local raw_get = raw.get
 
 local JIT_OS = std.JIT_OS
 
@@ -357,7 +371,7 @@ do
 
     local glua_coroutine = _G.coroutine
     if glua_coroutine == nil then
-       error( "coroutine library not found, so I guess it's over." )
+        error( "coroutine library not found, critical environment corruption detected, startup failed!" )
     end
 
     coroutine.create = coroutine.create or glua_coroutine.create
@@ -668,6 +682,33 @@ do
 
 end
 
+do
+
+    local string_byte = string.byte
+
+    --- [SHARED AND MENU]
+    ---
+    --- Returns the value of the key in a table.
+    ---
+    ---@param tbl table The table.
+    ---@param key any The key.
+    ---@return any
+    function raw.index( tbl, key )
+        if isstring( key ) then
+            ---@cast key string
+
+            local uint8_1, uint8_2 = string_byte( key, 1, 2 )
+            if uint8_1 == 0x5F --[[ "_" ]] and uint8_2 == 0x5F --[[ "_" ]] then
+                return nil
+            end
+
+        end
+
+        return raw_get( tbl, key )
+    end
+
+end
+
 std.SYSTEM_ENDIANNESS = std.SYSTEM_ENDIANNESS or string.byte( string.dump( std.debug.fempty ), 7 ) == 0x00
 
 --- [SHARED AND MENU]
@@ -702,12 +743,12 @@ do
 
         debug.gc.stop()
 
-        local st = getUptime()
+        local st = os_clock()
         for _ = 1, iter do
             fn()
         end
 
-        st = getUptime() - st
+        st = os_clock() - st
         debug.gc.restart()
         std.printf( "%d iterations of %s, took %f sec.", iter, name, st )
         return st
@@ -853,7 +894,6 @@ dofile( "std/bigint.lua" )
 dofile( "engine.lua" )
 
 dofile( "std/game.lua" )
-
 
 --- [SHARED AND MENU]
 ---
@@ -1606,19 +1646,19 @@ if CLIENT or SERVER then
     dofile( "transport.lua" )
 end
 
-logger:info( "Start-up time: %.2f ms.", ( getUptime() - gpm.StartTime ) * 1000 )
+logger:info( "Start-up time: %.2f ms.", ( os_clock() - gpm.StartTime ) * 1000 )
 
 do
 
     logger:info( "Preparing the database to begin migration..." )
-    local start_time = getUptime()
+    local start_time = os_clock()
 
     local db = gpm.db
     db.optimize()
     db.prepare()
     db.migrate( "initial file table" )
 
-    logger:info( "Migration completed, time spent: %.2f ms.", ( getUptime() - start_time ) * 1000 )
+    logger:info( "Migration completed, time spent: %.2f ms.", ( os_clock() - start_time ) * 1000 )
 
 end
 
@@ -1626,12 +1666,14 @@ if CLIENT or SERVER then
     gpm.transport.startup()
 end
 
+logger:info( "Preparation of the factory, loading of packages will start soon." )
+
 -- TODO: package manager start-up ( aka package loading )
 
 do
-    local start_time = getUptime()
+    local start_time = os_clock()
     debug.gc.collect()
-    logger:info( "Clean-up time: %.2f ms.", ( getUptime() - start_time ) * 1000 )
+    logger:info( "Clean-up time: %.2f ms.", ( os_clock() - start_time ) * 1000 )
 end
 
 -- TODO: put https://wiki.facepunch.com/gmod/Global.DynamicLight somewhere

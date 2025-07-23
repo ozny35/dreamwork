@@ -177,8 +177,10 @@ local gc_setTableRules = debug.gc.setTableRules
 local futures_Future = std.futures.Future
 local setmetatable = std.setmetatable
 local table_eject = std.table.eject
-local raw_get = std.raw.get
 local pcall = std.pcall
+
+local raw = std.raw
+local raw_index = raw.index
 
 do
 
@@ -225,10 +227,8 @@ do
             return flags[ self ] or 0
         elseif flag2integer[ str_key ] ~= nil then
             return bit_band( flags[ self ], flag2integer[ str_key ] ) ~= 0
-        elseif string_sub( str_key, 1, 2 ) == "__" then
-            error( "unknown key '" .. str_key .. "'", 2 )
         else
-            return raw_get( Command, str_key )
+            return raw_index( Command, str_key )
         end
     end
 
@@ -641,7 +641,7 @@ do
     local getFloat = CONVAR.GetFloat
     local getBool = CONVAR.GetBool
 
-    local raw_type = std.raw.type
+    local raw_type = raw.type
 
     ---@type table<gpm.std.console.Variable, ConVar>
     local variable2convar = {}
@@ -669,17 +669,23 @@ do
 
     end
 
-    setmetatable( variable2convar, {
-        __index = function( _,  self )
-            local name = raw_get( names, self )
-            if name ~= nil then
-                local cvar = engine_consoleVariableGet( name )
-                variable2convar[ self ] = cvar
-                return cvar
-            end
-        end,
-        __mode = "k"
-    } )
+    do
+
+        local raw_get = raw.get
+
+        setmetatable( variable2convar, {
+            __index = function( _,  self )
+                local name = raw_get( names, self )
+                if name ~= nil then
+                    local cvar = engine_consoleVariableGet( name )
+                    variable2convar[ self ] = cvar
+                    return cvar
+                end
+            end,
+            __mode = "k"
+        } )
+
+    end
 
     ---@type table<gpm.std.console.Variable, string>
     local descriptions = {}
@@ -709,7 +715,7 @@ do
 
     do
 
-        local raw_set = std.raw.set
+        local raw_set = raw.set
 
         ---@type table<gpm.std.console.Variable.type, boolean>
         local supported_types = {
@@ -890,10 +896,8 @@ do
             return values[ self ]
         elseif flag2integer[ str_key ] ~= nil then
             return bit_band( flags[ self ], flag2integer[ str_key ] ) ~= 0
-        elseif string_sub( str_key, 1, 2 ) == "__" then
-            error( "unknown key '" .. str_key .. "'", 2 )
         else
-            return raw_get( Variable, str_key )
+            return raw_index( Variable, str_key )
         end
     end
 
