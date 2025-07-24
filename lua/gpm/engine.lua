@@ -7,6 +7,7 @@ local std = gpm.std
 local debug = std.debug
 
 local MENU = std.MENU
+local raw_pairs = std.raw.pairs
 local math_clamp = std.math.clamp
 local debug_fempty = debug.fempty
 local setmetatable = std.setmetatable
@@ -739,7 +740,9 @@ do
         engine.games, engine.game_count = games, game_count
         engine.addons, engine.addon_count = addons, addon_count
 
-        std.table.empty( name2game )
+        for key in raw_pairs( name2game ) do
+            name2game[ key ] = nil
+        end
 
         for i = 1, game_count, 1 do
             local data = games[ i ]
@@ -748,8 +751,13 @@ do
             end
         end
 
-        std.table.empty( title2addon )
-        std.table.empty( wsid2addon )
+        for key in raw_pairs( title2addon ) do
+            title2addon[ key ] = nil
+        end
+
+        for key in raw_pairs( wsid2addon ) do
+            wsid2addon[ key ] = nil
+        end
 
         for i = 1, addon_count, 1 do
             local data = addons[ i ]
@@ -915,7 +923,7 @@ if std.SHARED and engine.networkRegister == nil then
     function engine.getNetworks()
         local lst = {}
 
-        for name in std.raw.pairs( id2name ) do
+        for name in raw_pairs( id2name ) do
             lst[ #lst + 1 ] = name
         end
 

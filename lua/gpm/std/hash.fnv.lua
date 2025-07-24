@@ -8,7 +8,6 @@ local string_len = string.len
 local string_byte = string.byte
 
 local bit = std.bit
-local bit_bor = bit.bor
 local bit_bxor = bit.bxor
 local bit_lshift = bit.lshift
 
@@ -30,8 +29,6 @@ function hash.fnv0( str )
 
     return hash_int % 0xFFFFFFFF
 end
-
--- print( )
 
 --- [SHARED AND MENU]
 ---

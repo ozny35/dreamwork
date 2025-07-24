@@ -731,10 +731,36 @@ end
 ---@param bit_count integer The bit count of the unsigned integer.
 ---@return integer signed The integer with a sign.
 function math.toInt( unsigned, bit_count )
-    if unsigned >= ( 2 ^ ( bit_count - 1 ) ) then
-        return unsigned - 2 ^ bit_count
+    if unsigned < ( 2 ^ ( bit_count - 1 ) ) then
+        return unsigned - ( 2 ^ bit_count )
     else
         return unsigned
+    end
+end
+
+--- [SHARED AND MENU]
+---
+--- Converts a number to a 32-bit unsigned integer.
+---
+---@param x number The number to convert.
+---@return number unsigned The 32-bit unsigned integer.
+function math.toUInt32( x )
+    return x % 0x100000000
+end
+
+--- [SHARED AND MENU]
+---
+--- Converts a number to a 32-bit signed integer.
+---
+---@param x number The number to convert.
+---@return number signed The 32-bit signed integer.
+function math.toInt32( x )
+    x = x % 0x100000000
+
+    if x < 0x80000000 then
+        return x
+    else
+        return x - 0x100000000
     end
 end
 

@@ -279,7 +279,7 @@ function MD5:digest( as_hex )
     local position = self.position
     local message_length = self.message_length
     local remaining = message_length - position
-    local padding = 64 - ( remaining + 1 + 8 )
+    local padding = 64 - ( remaining + 9 )
 
     local bit_count = message_length * 8
 
@@ -330,7 +330,7 @@ if engine_MD5 == nil then
     ---@return string str_result The MD5 string of the message.
     function MD5Class.digest( message, as_hex )
         local message_length = string_len( message )
-        local padding = 64 - ( message_length % 64 + 1 + 8 )
+        local padding = 64 - ( message_length % 64 + 9 )
 
         local bit_count = message_length * 8
 
