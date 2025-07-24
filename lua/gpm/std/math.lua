@@ -732,9 +732,9 @@ end
 ---@return integer signed The integer with a sign.
 function math.toInt( unsigned, bit_count )
     if unsigned < ( 2 ^ ( bit_count - 1 ) ) then
-        return unsigned - ( 2 ^ bit_count )
-    else
         return unsigned
+    else
+        return unsigned - ( 2 ^ bit_count )
     end
 end
 
