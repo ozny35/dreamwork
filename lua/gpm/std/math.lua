@@ -704,9 +704,10 @@ end
 ---
 --- Returns x with the same sign as y.
 ---
----@param x number The number to copy the sign of.
+---@generic T : number | integer
+---@param x T The number to copy the sign of.
 ---@param y number The number to get the sign from.
----@return number number The number with the sign of y.
+---@return T number The number with the sign of y.
 function math.copySign( x, y )
     -- return ( ( x > 0 and y > 0 ) or ( x < 0 and y < 0 ) ) and x or -x -- x2 faster but miss -0 cases
     return ( ( 1 / x ) > 0 ) == ( ( 1 / y ) > 0 ) and x or -x
@@ -716,25 +717,30 @@ end
 ---
 --- Converts an integer with a sign to an unsigned integer.
 ---
----@param signed integer The integer with a sign.
+---@generic T : number | integer
+---@param x T The number to convert.
 ---@param bit_count integer The bit count of the unsigned integer.
----@return integer unsigned The unsigned integer.
-function math.toUInt( signed, bit_count )
-    return signed % ( 2 ^ bit_count )
+---@return T unsigned The unsigned integer.
+function math.toUInt( x, bit_count )
+    return x % ( 2 ^ bit_count )
 end
 
 --- [SHARED AND MENU]
 ---
---- Converts an unsigned integer with a sign to an integer.
+--- Converts an signed integer with a sign to an integer.
 ---
----@param unsigned integer The unsigned integer.
----@param bit_count integer The bit count of the unsigned integer.
----@return integer signed The integer with a sign.
-function math.toInt( unsigned, bit_count )
-    if unsigned < ( 2 ^ ( bit_count - 1 ) ) then
-        return unsigned
+---@generic T : number | integer
+---@param x T The number to convert.
+---@param bit_count integer The bit count of the signed integer.
+---@return T signed The integer with a sign.
+function math.toInt( x, bit_count )
+    local uint_limit = 2 ^ bit_count
+    x = x % uint_limit
+
+    if x < ( 2 ^ ( bit_count - 1 ) ) then
+        return x
     else
-        return unsigned - ( 2 ^ bit_count )
+        return x - uint_limit
     end
 end
 
@@ -742,8 +748,9 @@ end
 ---
 --- Converts a number to a 32-bit unsigned integer.
 ---
----@param x number The number to convert.
----@return number unsigned The 32-bit unsigned integer.
+---@generic T : number | integer
+---@param x T The number to convert.
+---@return T unsigned The 32-bit unsigned integer.
 function math.toUInt32( x )
     return x % 0x100000000
 end
@@ -752,8 +759,9 @@ end
 ---
 --- Converts a number to a 32-bit signed integer.
 ---
----@param x number The number to convert.
----@return number signed The 32-bit signed integer.
+---@generic T : number | integer
+---@param x T The number to convert.
+---@return T signed The 32-bit signed integer.
 function math.toInt32( x )
     x = x % 0x100000000
 
@@ -778,7 +786,7 @@ end
 ---
 --- Returns a function that bucketizes a number.
 ---
----@generic T : number | integer The type of the number to bucketize.
+---@generic T : number | integer
 ---@param y T The bucket size.
 ---@return fun( x: number ): T bucketizer The bucketizer function.
 function math.bucketize( y )

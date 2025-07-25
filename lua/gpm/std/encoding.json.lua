@@ -8,7 +8,11 @@ local glua_util = _G.util
 
 --- [SHARED AND MENU]
 ---
+--- The JSON format is a lightweight data interchange format.
 ---
+--- JSON is a subset of JavaScript, and can be used to share data between different programming languages.
+---
+--- See https://en.wikipedia.org/wiki/JSON
 ---
 ---@class gpm.std.encoding.json
 local json = encoding.json or {}
