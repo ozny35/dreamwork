@@ -6,6 +6,10 @@ local string = std.string
 local string_len, string_sub = string.len, string.sub
 local string_char, string_byte = string.char, string.byte
 
+local math = std.math
+local math_min = math.min
+local math_clamp = math.clamp
+
 local bit = std.bit
 local bit_band, bit_bor = bit.band, bit.bor
 local bit_lshift, bit_rshift = bit.lshift, bit.rshift
@@ -377,13 +381,14 @@ local function len( utf8_string, start_position, end_position, lax )
 
 	repeat
 		local sequence_length, error_position = seqlen( utf8_string, index, end_position, lax )
+
 		if sequence_length == 0 then
 			return nil, error_position
-		else
-			utf8_codepoint_count = utf8_codepoint_count + 1
-			index = index + sequence_length
 		end
-	until index > end_position
+
+		utf8_codepoint_count = utf8_codepoint_count + 1
+		index = math_min( index + sequence_length, end_position )
+	until index == end_position
 
 	return utf8_codepoint_count, nil
 end
@@ -408,12 +413,16 @@ local function unpack( utf8_string, start_position, end_position, lax )
 		start_position = 1
 	elseif start_position < 0 then
 		start_position = ( start_position % ( str_length + 1 ) )
+	else
+		start_position = math_clamp( start_position, 0, str_length )
 	end
 
 	if end_position == nil then
 		end_position = str_length
 	elseif end_position < 0 then
 		end_position = ( end_position % ( str_length + 1 ) )
+	else
+		end_position = math_clamp( end_position, 0, str_length )
 	end
 
 	local utf8_codepoint_count = 0
@@ -425,11 +434,11 @@ local function unpack( utf8_string, start_position, end_position, lax )
 
 	repeat
 		local utf8_codepoint, utf8_sequence_length = decode( utf8_string, index, end_position, lax, 2 )
-		index = index + ( utf8_sequence_length or 1 )
+		index = math_min( index + ( utf8_sequence_length or 1 ), end_position )
 
 		utf8_codepoint_count = utf8_codepoint_count + 1
 		utf8_codepoints[ utf8_codepoint_count ] = utf8_codepoint or 0xFFFD
-	until index > end_position or index > str_length
+	until index == end_position
 
 	return utf8_codepoints, utf8_codepoint_count
 end
@@ -496,8 +505,8 @@ function utf8.sub( utf8_string, start_position, end_position, lax )
 			return string_sub( utf8_string, utf8_start, index + ( utf8_sequence_length - 1 ) )
 		end
 
-		index = index + utf8_sequence_length
-	until index > str_length
+		index = math_min( index + utf8_sequence_length, str_length )
+	until index == str_length
 
 	return string_sub( utf8_string, utf8_start, str_length - 1 )
 end
@@ -636,8 +645,10 @@ function utf8.offset( utf8_string, index, start_position )
 			return start_position
 		end
 
-		start_position = start_position + ( uint8_to_length[ string_byte( utf8_string, start_position, start_position ) ] or 1 )
-	until start_position > str_length
+		start_position = math_min( start_position + ( uint8_to_length[ string_byte( utf8_string, start_position, start_position ) ] or 1 ), str_length )
+	until start_position == str_length
+
+	return nil
 end
 
 do
@@ -692,7 +703,7 @@ do
 
 		repeat
 			local utf8_codepoint, utf8_sequence_length = decode( utf8_string, index, str_length, false, 2 )
-			index = index + ( utf8_sequence_length or 1 )
+			index = math_min( index + ( utf8_sequence_length or 1 ), str_length )
 
 			utf8_sequence_count = utf8_sequence_count + 1
 
@@ -701,7 +712,7 @@ do
 			else
 				utf8_sequences[ utf8_sequence_count ] = encode( utf8_codepoint, false, 2 )
 			end
-		until index > str_length
+		until index == str_length
 
 		return table_concat( utf8_sequences, "", 1, utf8_sequence_count )
 	end
@@ -2592,8 +2603,8 @@ function utf8.lower( utf8_string, lax )
 
 		utf8_sequence_count = utf8_sequence_count + 1
 		utf8_sequences[ utf8_sequence_count ] = upper2lower[ utf8_codepoint or 0xFFFD ] or string_sub( utf8_string, index, index + ( utf8_sequence_length - 1 ) )
-		index = index + utf8_sequence_length
-	until index > str_length
+		index = math_min( index + utf8_sequence_length, str_length )
+	until index == str_length
 
 	return table_concat( utf8_sequences, "", 1, utf8_sequence_count )
 end
@@ -2630,8 +2641,9 @@ function utf8.upper( utf8_string, lax )
 
 		utf8_sequence_count = utf8_sequence_count + 1
 		utf8_sequences[ utf8_sequence_count ] = lower2upper[ utf8_codepoint or 0xFFFD ] or string_sub( utf8_string, index, index + ( utf8_sequence_length - 1 ) )
-		index = index + utf8_sequence_length
-	until index > str_length
+
+		index = math_min( index + utf8_sequence_length, str_length )
+	until index == str_length
 
 	return table_concat( utf8_sequences, "", 1, utf8_sequence_count )
 end
