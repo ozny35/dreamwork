@@ -1,6 +1,5 @@
 local _G = _G
 local std = _G.gpm.std
-
 local collectgarbage = _G.collectgarbage
 
 if collectgarbage == nil then

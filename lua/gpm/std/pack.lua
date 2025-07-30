@@ -3497,7 +3497,7 @@ do
 	---
 	---@param hex8_str string The hex string.
 	---@param start_position? integer The start position in hex string, default is `1`.
-	---@return integer uint8 The unsigned 1-byte integer.
+	---@return integer | nil uint8 The unsigned 1-byte integer or `nil` if bytes do not match the allowed ones.
 	function pack.readHex8( hex8_str, start_position )
 		if start_position == nil then
 			start_position = 1

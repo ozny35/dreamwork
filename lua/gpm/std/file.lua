@@ -136,6 +136,8 @@ do
 
 end
 
+-- TODO: path.unpack and path.pack for garrysmod filesystem
+
 local file_Exists, file_IsDir = glua_file.Exists, glua_file.IsDir
 
 --- [SHARED AND MENU]

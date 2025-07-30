@@ -34,3 +34,7 @@
     https://wiki.facepunch.com/gmod/CNewParticleEffect
 
 ]]
+
+-- TODO: https://github.com/thegrb93/StarfallEx/blob/master/lua/starfall/libs_cl/particle.lua
+-- TODO: https://github.com/thegrb93/StarfallEx/blob/master/lua/starfall/libs_cl/particle_effect.lua
+

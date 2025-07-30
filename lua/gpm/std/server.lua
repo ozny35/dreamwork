@@ -17,21 +17,17 @@ local engine_hookCatch = engine.hookCatch
 ---@class gpm.std.server
 ---@field singleplayer boolean `true` if server is running in singleplayer mode, `false` otherwise. **READ-ONLY**
 ---@field dedicated boolean `true` if server is running as a dedicated server, `false` otherwise. **READ-ONLY**
+---@field tickrate number The tickrate of the server in seconds. **READ-ONLY**
 local server = std.server or {}
 std.server = server
 
-do
+server.tickrate = 1 / ( _G.FrameTime or std.debug.fempty )()
 
-    local glua_game = _G.game
-    if glua_game == nil then
-        server.singleplayer = false
-        server.dedicated = false
-    else
-        server.singleplayer = ( game.SinglePlayer or std.debug.fempty )() == true
-        server.dedicated = ( game.IsDedicated or std.debug.fempty )() == true
-    end
+local glua_engine = _G.engine or {}
+local glua_game = _G.game or {}
 
-end
+server.singleplayer = ( glua_game.SinglePlayer or std.debug.fempty )() == true
+server.dedicated = ( glua_game.IsDedicated or std.debug.fempty )() == true
 
 if server.getGamemodeName == nil then
 
@@ -42,14 +38,7 @@ if server.getGamemodeName == nil then
         type = "string"
     } )
 
-    local gamemode_name
-
-    local glua_engine = _G.engine
-    if glua_engine == nil then
-        gamemode_name = "base"
-    else
-        gamemode_name = ( glua_engine.ActiveGamemode or std.debug.fempty )() or "base"
-    end
+    local gamemode_name = ( glua_engine.ActiveGamemode or std.debug.fempty )() or "base"
 
     --- [SHARED AND MENU]
     ---
@@ -182,14 +171,14 @@ end
 
 if std.CLIENT_MENU then
 
-    server.getFrameTime = server.getFrameTime or ( _G.engine or {} ).ServerFrameTime or function() return 0, 0 end
+    server.getFrameTime = glua_engine.ServerFrameTime or function() return 0, 0 end
 
     local glua_permissions = _G.permissions or {}
 
-    server.grantPermission = server.grantPermission and glua_permissions.Grant or std.debug.fempty
-    server.revokePermission = server.revokePermission and glua_permissions.Revoke or std.debug.fempty
-    server.hasPermission = server.hasPermission and glua_permissions.IsGranted or function() return false end
-    server.getAllPermissions = server.getAllPermissions and glua_permissions.GetAll or function() return {} end
+    server.grantPermission = glua_permissions.Grant or std.debug.fempty
+    server.revokePermission = glua_permissions.Revoke or std.debug.fempty
+    server.hasPermission = glua_permissions.IsGranted or function() return false end
+    server.getAllPermissions = glua_permissions.GetAll or function() return {} end
 
 end
 
@@ -207,16 +196,9 @@ end
 
 do
 
-    local game_GetIPAddress = _G.game.GetIPAddress -- missing in menu
     local string_match = std.string.match
 
-    -- fallback
-    if game_GetIPAddress == nil then
-        function game_GetIPAddress()
-            return "127.0.0.1:27015"
-        end
-    end
-
+    local game_GetIPAddress = glua_engine.GetIPAddress or function() return "127.0.0.1:27015" end
     server.getAddress = game_GetIPAddress
 
     --- [SHARED AND MENU]
@@ -293,7 +275,7 @@ end
 
 if std.SHARED then
 
-    server.getTimeScale = server.getTimeScale or ( _G.game or {} ).GetTimeScale or function() return 1 end
+    server.getTimeScale = glua_game.GetTimeScale or function() return 1 end
 
     --- [SHARED]
     ---
@@ -328,8 +310,8 @@ end
 
 if std.SERVER then
 
-    game.setTimeScale = game.setTimeScale or ( _G.game or {} ).SetTimeScale or std.debug.fempty
-    game.close = game.close or ( _G.engine or {} ).CloseServer
+    game.setTimeScale = glua_game.SetTimeScale or std.debug.fempty
+    game.close = glua_engine.CloseServer
 
     if server.message == nil then
 

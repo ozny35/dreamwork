@@ -1068,6 +1068,7 @@ if std_metatable == nil then
                     return fn( self )
                 end
             end,
+            __newindexes = newindexes,
             __newindex = function( self, key, value )
                 local fn = newindexes[ key ]
 
@@ -1119,20 +1120,9 @@ if std_metatable == nil then
         end
     end
 
-    local time_elapsed = std.time.elapsed
-
-
-        local getTickTime = std.game.getTickTime
-
-        keys.TICK_TIME = getTickTime
-
-        function keys.TPS()
-            return 1 / getTickTime()
-        end
-
-    end
-
     if CLIENT then
+
+        local time_elapsed = std.time.elapsed
 
         local frame_time = 0
         local fps = 0
@@ -1676,12 +1666,9 @@ do
     logger:info( "Clean-up time: %.2f ms.", ( os_clock() - start_time ) * 1000 )
 end
 
--- TODO: put https://wiki.facepunch.com/gmod/Global.DynamicLight somewhere
--- TODO: put https://wiki.facepunch.com/gmod/Global.ProjectedTexture somewhere
 -- TODO: put https://wiki.facepunch.com/gmod/Global.IsFirstTimePredicted somewhere
 -- TODO: put https://wiki.facepunch.com/gmod/Global.RecipientFilter somewhere
 -- TODO: put https://wiki.facepunch.com/gmod/Global.ClientsideScene somewhere
--- TODO: put https://wiki.facepunch.com/gmod/Global.Localize somewher
 -- TODO: put https://wiki.facepunch.com/gmod/Global.Path somewhere
 -- TODO: put https://wiki.facepunch.com/gmod/util.ScreenShake somewhere
 -- TODO: put https://wiki.facepunch.com/gmod/Global.AddonMaterial somewhere

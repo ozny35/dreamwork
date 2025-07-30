@@ -619,40 +619,40 @@ do
         local length = string_len( hex )
         if length == 1 then
             local uint8_1 = string_byte( hex, index, index )
-            self.r = bytepack_readHex8( uint8_1, uint8_1 )
+            self.r = bytepack_readHex8( uint8_1, uint8_1 ) or 0
             self.g = 0
             self.b = 0
             self.a = 255
         elseif length == 2 then
             local uint8_1, uint8_2 = string_byte( hex, index, index + 1 )
-            self.r = bytepack_readHex8( uint8_1, uint8_1 )
-            self.g = bytepack_readHex8( uint8_2, uint8_2 )
+            self.r = bytepack_readHex8( uint8_1, uint8_1 ) or 0
+            self.g = bytepack_readHex8( uint8_2, uint8_2 ) or 0
             self.b = 0
             self.a = 255
         elseif length == 3 then
             local uint8_1, uint8_2, uint8_3 = string_byte( hex, index, index + 2 )
-            self.r = bytepack_readHex8( uint8_1, uint8_1 )
-            self.g = bytepack_readHex8( uint8_2, uint8_2 )
-            self.b = bytepack_readHex8( uint8_3, uint8_3 )
+            self.r = bytepack_readHex8( uint8_1, uint8_1 ) or 0
+            self.g = bytepack_readHex8( uint8_2, uint8_2 ) or 0
+            self.b = bytepack_readHex8( uint8_3, uint8_3 ) or 0
             self.a = 255
         elseif length == 4 then
             local uint8_1, uint8_2, uint8_3, uint8_4 = string_byte( hex, index, index + 3 )
-            self.r = bytepack_readHex8( uint8_1, uint8_1 )
-            self.g = bytepack_readHex8( uint8_2, uint8_2 )
-            self.b = bytepack_readHex8( uint8_3, uint8_3 )
-            self.a = bytepack_readHex8( uint8_4, uint8_4 )
+            self.r = bytepack_readHex8( uint8_1, uint8_1 ) or 0
+            self.g = bytepack_readHex8( uint8_2, uint8_2 ) or 0
+            self.b = bytepack_readHex8( uint8_3, uint8_3 ) or 0
+            self.a = bytepack_readHex8( uint8_4, uint8_4 ) or 0
         elseif length == 6 then
             local uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6 = string_byte( hex, index, index + 5 )
-            self.r = bytepack_readHex8( uint8_1, uint8_2 )
-            self.g = bytepack_readHex8( uint8_3, uint8_4 )
-            self.b = bytepack_readHex8( uint8_5, uint8_6 )
+            self.r = bytepack_readHex8( uint8_1, uint8_2 ) or 0
+            self.g = bytepack_readHex8( uint8_3, uint8_4 ) or 0
+            self.b = bytepack_readHex8( uint8_5, uint8_6 ) or 0
             self.a = 255
         elseif length == 8 then
             local uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8 = string_byte( hex, index, index + 7 )
-            self.r = bytepack_readHex8( uint8_1, uint8_2 )
-            self.g = bytepack_readHex8( uint8_3, uint8_4 )
-            self.b = bytepack_readHex8( uint8_5, uint8_6 )
-            self.a = bytepack_readHex8( uint8_7, uint8_8 )
+            self.r = bytepack_readHex8( uint8_1, uint8_2 ) or 0
+            self.g = bytepack_readHex8( uint8_3, uint8_4 ) or 0
+            self.b = bytepack_readHex8( uint8_5, uint8_6 ) or 0
+            self.a = bytepack_readHex8( uint8_7, uint8_8 ) or 0
         end
 
         if alpha_first then

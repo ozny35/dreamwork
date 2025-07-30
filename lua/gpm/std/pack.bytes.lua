@@ -1135,9 +1135,9 @@ do
 		---
 		---@param uint8_1 integer The first byte.
 		---@param uint8_2 integer The second byte.
-		---@return integer value The unsigned 1-byte integer.
+		---@return integer | nil value The unsigned 1-byte integer or `nil` if bytes do not match the allowed ones.
 		function bytepack.readHex8( uint8_1, uint8_2 )
-			return uint8_cache[ bit_lshift( uint8_1, 8 ) + uint8_2 ] or 0x0
+			return uint8_cache[ bit_lshift( uint8_1, 8 ) + uint8_2 ]
 		end
 
 	end

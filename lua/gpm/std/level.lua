@@ -205,3 +205,8 @@ if std.MENU then
     -- TODO: https://wiki.facepunch.com/gmod/engine.WriteSave
 
 end
+
+-- TODO: level.lighting.
+-- TODO: https://github.com/thegrb93/StarfallEx/blob/master/lua/starfall/libs_cl/light.lua
+-- TODO: https://wiki.facepunch.com/gmod/Global.DynamicLight
+-- TODO: https://wiki.facepunch.com/gmod/Global.ProjectedTexture
