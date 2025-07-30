@@ -17,6 +17,6 @@
 
     https://wiki.facepunch.com/gmod/surface.PlaySound
 
-]]
+    TODO: make sound class
 
--- TODO: bass
+]]

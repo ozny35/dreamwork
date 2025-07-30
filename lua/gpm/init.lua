@@ -1159,7 +1159,7 @@ dofile( "std/file.lua" )
 
 -- dofile( "std/error.lua" ) -- TODO: deprecated
 
-dofile( "std/audio.lua" )
+dofile( "std/audio_stream.lua" )
 
 dofile( "package/init.lua" )
 
