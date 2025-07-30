@@ -170,6 +170,41 @@ local string_gmatch = std.string.gmatch
 local raw_tonumber = std.raw.tonumber
 local time_elapsed = std.time.elapsed
 
+do
+
+    -- TODO: make cookies
+
+    ---@class gpm.std.Cookies : gpm.std.Object
+    ---@field __class gpm.std.CookiesClass
+    local Cookies = std.class.base( "http.Cookies" )
+
+    -- TODO: https://github.com/nmap/nmap/blob/master/nselib/http.lua#L1010
+    -- TODO: https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Cookie
+    -- TODO: https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Set-Cookie
+
+    function Cookies:get( name, url )
+        local cookie = self[ name ]
+
+
+        return cookie
+    end
+
+    function Cookies:set( name, value, options )
+        local cookie = {
+            value = value
+        }
+
+        self[ name ] = cookie
+    end
+
+    ---@class gpm.std.CookiesClass : gpm.std.Cookies
+    ---@field __base gpm.std.Cookies
+    ---@overload fun(): gpm.std.Cookies
+    local CookiesClass = std.class.create( Cookies )
+    http.Cookies = CookiesClass
+
+end
+
 ---@class gpm.std.http.Request.session_cache
 ---@field future gpm.std.futures.Future
 ---@field start number
