@@ -56,36 +56,35 @@ std.Truck = TruckClass
 ## Class Template
 ```lua
 
----@class gpm.std.Car : gpm.std.Object
----@field __class gpm.std.CarClass
-local Car = std.class.base( "Car" )
+---@class gpm.std.Template : gpm.std.Object
+---@field __class gpm.std.TemplateClass
+local Template = std.class.base( "Template" )
 
----@alias Car gpm.std.Car
+---@alias Template gpm.std.Template
 
 ---@protected
-function Car:__init()
-    self.speed = 0
-    self.color = Color( 255, 255, 255 )
+function Template:__init()
+
 end
 
----@class gpm.std.CarClass : gpm.std.Car
----@field __base gpm.std.Car
----@overload fun(): gpm.std.Car
-local CarClass = std.class.create( Car )
-std.Car = CarClass
+---@class gpm.std.TemplateClass : gpm.std.Template
+---@field __base gpm.std.Template
+---@overload fun(): gpm.std.Template
+local TemplateClass = std.class.create( Template )
+std.Template = TemplateClass
 
----@class gpm.std.Truck : gpm.std.Car
----@field __class gpm.std.TruckClass
----@field __parent gpm.std.Car
-local Truck = std.class.base( "Truck", false, std.Car )
+---@class gpm.std.TemplateChild : gpm.std.Template
+---@field __class gpm.std.TemplateChildClass
+---@field __parent gpm.std.Template
+local TemplateChild = std.class.base( "TemplateChild", false, std.Template )
 
----@alias Truck gpm.std.Truck
+---@alias TemplateChild gpm.std.TemplateChild
 
----@class gpm.std.TruckClass : gpm.std.Truck
----@field __base gpm.std.Truck
----@field __parent gpm.std.CarClass
----@overload fun(): Truck
-local TruckClass = std.class.create( Truck )
-std.Truck = TruckClass
+---@class gpm.std.TemplateChildClass : gpm.std.TemplateChild
+---@field __base gpm.std.TemplateChild
+---@field __parent gpm.std.TemplateClass
+---@overload fun(): TemplateChild
+local TemplateChildClass = std.class.create( TemplateChild )
+std.TemplateChild = TemplateChildClass
 
 ```

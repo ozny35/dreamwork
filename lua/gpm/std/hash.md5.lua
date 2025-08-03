@@ -380,11 +380,11 @@ else
     ---@param as_hex? boolean If true, the result will be a hex string.
     ---@return string str_result The MD5 string of the message.
     function MD5Class.digest( message, as_hex )
-        local hex = engine_MD5( message )
+        local hex_str = engine_MD5( message )
         if as_hex then
-            return hex
+            return hex_str
         else
-            return base16_decode( hex )
+            return base16_decode( hex_str )
         end
     end
 

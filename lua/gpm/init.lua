@@ -210,13 +210,8 @@ end
 ---@param value any The value to get the length of.
 ---@return integer length The length of the given value.
 function std.len( value )
-    local metatable = debug_getmetatable( value )
-    if metatable == nil then
-        return #value
-    end
-
-    ---@type function?
-    local fn = raw_get( metatable, "__len" )
+    ---@type nil | fun( value: any ): integer
+    local fn = debug_getmetavalue( value, "__len" )
     if fn == nil then
         return #value
     else
@@ -404,8 +399,6 @@ do
     end
 
 end
-
--- TODO: thread manager?
 
 ---@diagnostic disable-next-line : undefined-field
 local istable = _G.istable
@@ -1622,6 +1615,8 @@ if CLIENT or SERVER then
     -- dofile( "std/network.lua" )
 end
 
+-- TODO: NetTable class
+
 dofile( "std/input.lua" )
 
 if _G.TYPE_COUNT ~= 44 then
@@ -1675,8 +1670,6 @@ end
 
 -- TODO: https://github.com/toxidroma/class-war
 
--- TODO: NetTable class
-
 -- TODO: Write "VideoRecorder" class ( https://wiki.facepunch.com/gmod/video.Record )
 
 --[[
@@ -1688,8 +1681,6 @@ end
 
 ]]
 
--- TODO: put https://wiki.facepunch.com/gmod/Global.SuppressHostEvents somewhere
--- TODO: https://github.com/Nak2/NikNaks/blob/main/lua/niknaks/modules/sh_model_extended.lua
 -- TODO: https://github.com/Nak2/NikNaks/blob/main/lua/niknaks/modules/sh_enums.lua
 
 -- TODO: plugins support

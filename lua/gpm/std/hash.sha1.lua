@@ -64,11 +64,11 @@ else
     ---@param as_hex? boolean If true, the result will be a hex string.
     ---@return string str_result The SHA1 string of the message.
     function SHA1Class.digest( message, as_hex )
-        local hex = engine_SHA1( message )
+        local hex_str = engine_SHA1( message )
         if as_hex then
-            return hex
+            return hex_str
         else
-            return base16_decode( hex )
+            return base16_decode( hex_str )
         end
     end
 

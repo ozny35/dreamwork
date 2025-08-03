@@ -704,3 +704,5 @@ if std.MENU then
     end
 
 end
+
+-- TODO: put https://wiki.facepunch.com/gmod/Global.SuppressHostEvents somewhere

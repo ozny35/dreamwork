@@ -2,7 +2,7 @@
 
 --[[
 
-    TODO
+    TODO:
 
     player functions:
         https://wiki.facepunch.com/gmod/Player:GetVoiceVolumeScale
