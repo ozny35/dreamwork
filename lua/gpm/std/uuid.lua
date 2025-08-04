@@ -38,11 +38,13 @@ do
         ---@return string uuid_str A UUID v3 string.
         function uuid.v3( namespace, name )
             local uuid_str = string_gsub( namespace, "-", "" )
-            if string_len( uuid_str ) ~= 32 then
+
+            local uuid_str_length = string_len( uuid_str )
+            if uuid_str_length ~= 32 then
                 error( "invalid namespace UUID format", 2 )
             end
 
-            local uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8, uint8_9, uint8_10, uint8_11, uint8_12, uint8_13, uint8_14, uint8_15, uint8_16 = string_byte( MD5_digest( base16_decode( uuid_str ) .. name, false ), 1, 16 )
+            local uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8, uint8_9, uint8_10, uint8_11, uint8_12, uint8_13, uint8_14, uint8_15, uint8_16 = string_byte( MD5_digest( base16_decode( uuid_str, 1, uuid_str_length ) .. name, false ), 1, 16 )
 
             return string_format( "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
                 uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, bit_bor( bit_band( uint8_7, 0x0F ), 0x30 ),
@@ -68,11 +70,13 @@ do
         ---@return string uuid_str A UUID v5 string.
         function uuid.v5( namespace, name )
             local uuid_str = string_gsub( namespace, "-", "" )
-            if string_len( uuid_str ) ~= 32 then
+
+            local uuid_str_length = string_len( uuid_str )
+            if uuid_str_length ~= 32 then
                 error( "invalid namespace UUID format", 2 )
             end
 
-            local uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8, uint8_9, uint8_10, uint8_11, uint8_12, uint8_13, uint8_14, uint8_15, uint8_16 = string_byte( SHA1_digest( base16_decode( uuid_str ) .. name, false ), 1, 16 )
+            local uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, uint8_7, uint8_8, uint8_9, uint8_10, uint8_11, uint8_12, uint8_13, uint8_14, uint8_15, uint8_16 = string_byte( SHA1_digest( base16_decode( uuid_str, 1, uuid_str_length ) .. name, false ), 1, 16 )
 
             return string_format( "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
                 uint8_1, uint8_2, uint8_3, uint8_4, uint8_5, uint8_6, bit_bor( bit_band( uint8_7, 0x0F ), 0x50 ),

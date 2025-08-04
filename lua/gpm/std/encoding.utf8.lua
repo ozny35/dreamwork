@@ -8,7 +8,7 @@ local string_char, string_byte = string.char, string.byte
 
 local math = std.math
 local math_min = math.min
-local math_clamp = math.clamp
+local math_relative = math.relative
 
 local bit = std.bit
 local bit_band, bit_bor = bit.band, bit.bor
@@ -360,35 +360,37 @@ end
 ---@return nil | integer error_position The position of the error in bytes.
 local function len( utf8_string, start_position, end_position, lax )
 	---@type integer
-	local str_length
+	local str_length = string_len( utf8_string )
+
+	if str_length == 0 then
+		return 0
+	end
 
 	if start_position == nil then
 		start_position = 1
-	elseif start_position < 0 then
-		str_length = string_len( utf8_string )
-		start_position = ( start_position % ( str_length + 1 ) )
+	else
+		start_position = math_relative( start_position, str_length )
 	end
 
 	if end_position == nil then
-		end_position = str_length or string_len( utf8_string )
-	elseif end_position < 0 then
-		end_position = ( end_position % ( ( str_length or string_len( utf8_string ) ) + 1 ) )
+		end_position = str_length
+	else
+		end_position = math_relative( end_position, str_length )
 	end
 
 	local utf8_codepoint_count = 0
-	local index = start_position
 	lax = lax ~= true
 
 	repeat
-		local sequence_length, error_position = seqlen( utf8_string, index, end_position, lax )
+		local sequence_length, error_position = seqlen( utf8_string, start_position, end_position, lax )
 
 		if sequence_length == 0 then
 			return nil, error_position
 		end
 
 		utf8_codepoint_count = utf8_codepoint_count + 1
-		index = math_min( index + sequence_length, end_position )
-	until index == end_position
+		start_position = math_min( start_position + sequence_length, end_position )
+	until start_position == end_position
 
 	return utf8_codepoint_count, nil
 end
@@ -409,36 +411,35 @@ local function unpack( utf8_string, start_position, end_position, lax )
 	---@type integer
 	local str_length = string_len( utf8_string )
 
+	if str_length == 0 then
+		return {}, 0
+	end
+
 	if start_position == nil then
 		start_position = 1
-	elseif start_position < 0 then
-		start_position = ( start_position % ( str_length + 1 ) )
 	else
-		start_position = math_clamp( start_position, 0, str_length )
+		start_position = math_relative( start_position, str_length )
 	end
 
 	if end_position == nil then
 		end_position = str_length
-	elseif end_position < 0 then
-		end_position = ( end_position % ( str_length + 1 ) )
 	else
-		end_position = math_clamp( end_position, 0, str_length )
+		end_position = math_relative( end_position, str_length )
 	end
 
 	local utf8_codepoint_count = 0
-	local index = start_position
 	lax = lax ~= true
 
 	---@type gpm.std.encoding.utf8.Sequence
 	local utf8_codepoints = {}
 
 	repeat
-		local utf8_codepoint, utf8_sequence_length = decode( utf8_string, index, end_position, lax, 2 )
-		index = math_min( index + ( utf8_sequence_length or 1 ), end_position )
+		local utf8_codepoint, utf8_sequence_length = decode( utf8_string, start_position, end_position, lax, 2 )
+		start_position = math_min( start_position + ( utf8_sequence_length or 1 ), end_position )
 
 		utf8_codepoint_count = utf8_codepoint_count + 1
 		utf8_codepoints[ utf8_codepoint_count ] = utf8_codepoint or 0xFFFD
-	until index == end_position
+	until start_position == end_position
 
 	return utf8_codepoints, utf8_codepoint_count
 end
@@ -458,20 +459,45 @@ function utf8.sub( utf8_string, start_position, end_position, lax )
 	---@type integer
 	local str_length = string_len( utf8_string )
 
-	---@type integer
+	if str_length == 0 then
+		return utf8_string
+	end
+
+	---@type integer | nil
 	local sequence_length
 
 	if start_position == nil then
 		start_position = 1
 	elseif start_position < 0 then
-		sequence_length = len( utf8_string, 1, str_length, false ) or 1
-		start_position = ( start_position % ( sequence_length + 1 ) )
+		local error_position
+		sequence_length, error_position = len( utf8_string, 1, str_length, lax )
+
+		if sequence_length == nil then
+			error( string.format( "invalid UTF-8 sequence byte '0x%02X' at position %d", string_byte( utf8_string, error_position, error_position ), error_position ), 2 )
+		end
+
+        if ( 0 - start_position ) > sequence_length then
+            return ""
+        else
+            start_position = sequence_length + start_position + 1
+        end
 	end
 
-	if end_position == nil then
-		end_position = sequence_length or len( utf8_string, 1, str_length, false ) or 1
-	elseif end_position < 0 then
-		end_position = end_position % ( ( sequence_length or len( utf8_string, 1, str_length, false ) or 1 ) + 1 )
+	if end_position ~= nil and end_position < 0 then
+		if sequence_length == nil then
+			local error_position
+			sequence_length, error_position = len( utf8_string, 1, str_length, lax )
+
+			if sequence_length == nil then
+				error( string.format( "invalid UTF-8 sequence byte '0x%02X' at position %d", string_byte( utf8_string, error_position, error_position ), error_position ), 2 )
+			end
+		end
+
+		if ( 0 - end_position ) > sequence_length then
+			return ""
+		else
+            end_position = sequence_length + end_position + 1
+        end
 	end
 
 	local utf8_start = 0
@@ -508,7 +534,7 @@ function utf8.sub( utf8_string, start_position, end_position, lax )
 		index = math_min( index + utf8_sequence_length, str_length )
 	until index == str_length
 
-	return string_sub( utf8_string, utf8_start, str_length - 1 )
+	return string_sub( utf8_string, utf8_start, str_length )
 end
 
 --- [SHARED AND MENU]
@@ -520,7 +546,7 @@ end
 ---@param utf8_string string The UTF-8 string to decode.
 ---@param start_position? integer The position to start from in bytes.
 ---@param end_position? integer The position to end at in bytes.
----@param lax? boolean If `true`, lax decoding is used.
+---@param lax? boolean Whether to lax the UTF-8 validity check.
 ---@return gpm.std.encoding.utf8.Codepoint ... The code points of the UTF-8 string.
 function utf8.codepoint( utf8_string, start_position, end_position, lax )
 	local utf8_codepoints, utf8_codepoint_count = unpack( utf8_string, start_position, end_position, lax )
@@ -561,7 +587,7 @@ do
 	--- Returns an iterator function that iterates over the code points of a UTF-8 string.
 	---
 	---@param utf8_string string The UTF-8 string to iterate over.
-	---@param lax? boolean If `true`, lax decoding is used.
+	---@param lax? boolean Whether to lax the UTF-8 validity check.
 	---@return ( fun( utf8_string: string, index: integer, lax: boolean? ): integer | nil, gpm.std.encoding.utf8.Codepoint | nil ), string, integer, boolean
 	function utf8.codes( utf8_string, lax )
 		return utf8_iterator, utf8_string, 1, lax ~= true
@@ -575,7 +601,7 @@ end
 ---
 ---@param utf8_codepoints gpm.std.encoding.utf8.Sequence The code points to encode.
 ---@param utf8_codepoint_count? integer The number of code points to encode.
----@param lax? boolean `true` if lax mode should be used.
+---@param lax? boolean Whether to lax the UTF-8 validity check.
 ---@return string utf8_string The UTF-8 string.
 local function pack( utf8_codepoints, utf8_codepoint_count, lax )
 	if utf8_codepoint_count == nil then
@@ -622,19 +648,34 @@ end
 ---@param utf8_string string The UTF-8 string to search in.
 ---@param index integer The code point to search for in the UTF-8 units.
 ---@param start_position? integer The position to start from in bytes.
+---@param lax? boolean Whether to lax the UTF-8 validity check.
 ---@return integer | nil index The position of the code point in bytes or `nil` if not found.
-function utf8.offset( utf8_string, index, start_position )
+function utf8.offset( utf8_string, index, start_position, lax )
 	---@type integer
 	local str_length = string_len( utf8_string )
 
+	if str_length == 0 then
+		return nil
+	end
+
 	if start_position == nil then
 		start_position = 1
-	elseif start_position < 0 then
-		start_position = ( start_position % ( str_length + 1 ) )
+	else
+		start_position = math_relative( start_position, str_length )
 	end
 
 	if index < 0 then
-		index = ( index % ( len( utf8_string, start_position, str_length, true ) + 1 ) )
+		local sequence_length, error_position = len( utf8_string, start_position, str_length, lax )
+
+		if sequence_length == nil then
+			error( string.format( "invalid UTF-8 sequence byte '0x%02X' at position %d", string_byte( utf8_string, error_position, error_position ), error_position ), 2 )
+		end
+
+		if ( 0 - index ) > sequence_length then
+            return nil
+        else
+			index = sequence_length + index + 1
+        end
 	end
 
 	local utf8_codepoint_count = 0
@@ -662,9 +703,12 @@ do
 	--- This functions similarly to `string.reverse`
 	---
 	---@param utf8_string string The UTF-8 string to reverse.
+	---@param start_position? integer The position to start from in bytes.
+	---@param end_position? integer The position to end at in bytes.
+	---@param lax? boolean Whether to lax the UTF-8 validity check.
 	---@return string utf8_reversed The reversed UTF-8 string.
-	function utf8.reverse( utf8_string, lax )
-		local utf8_codepoints, utf8_codepoint_count = unpack( utf8_string, 1, nil, lax )
+	function utf8.reverse( utf8_string, start_position, end_position, lax )
+		local utf8_codepoints, utf8_codepoint_count = unpack( utf8_string, start_position, end_position, lax )
 		return pack( table_reversed( utf8_codepoints, utf8_codepoint_count ), utf8_codepoint_count, lax )
 	end
 
@@ -682,10 +726,27 @@ do
 	---
 	---@param utf8_string string The UTF-8 string to normalize.
 	---@param replacement_str? string The string to replace invalid UTF-8 code points with, by default `0xFFFD`.
+	---@param start_position? integer The position to start from in bytes.
+	---@param end_position? integer The position to end at in bytes.
 	---@return string utf8_normalized The normalized UTF-8 string.
-	function utf8.normalize( utf8_string, replacement_str )
-		if string_byte( utf8_string, 1, 1 ) == nil then
+	function utf8.normalize( utf8_string, replacement_str, start_position, end_position )
+		---@type integer
+		local str_length = string_len( utf8_string )
+
+		if str_length == 0 then
 			return utf8_string
+		end
+
+		if start_position == nil then
+			start_position = 1
+		else
+			start_position = math_relative( start_position, str_length )
+		end
+
+		if end_position == nil then
+			end_position = str_length
+		else
+			end_position = math_relative( end_position, str_length )
 		end
 
 		if replacement_str == nil then
@@ -693,17 +754,14 @@ do
 		end
 
 		---@type integer
-		local str_length = string_len( utf8_string )
-
 		local utf8_sequence_count = 0
-		local index = 1
 
 		---@type string[]
 		local utf8_sequences = {}
 
 		repeat
-			local utf8_codepoint, utf8_sequence_length = decode( utf8_string, index, str_length, false, 2 )
-			index = math_min( index + ( utf8_sequence_length or 1 ), str_length )
+			local utf8_codepoint, utf8_sequence_length = decode( utf8_string, start_position, end_position, false, 2 )
+			start_position = math_min( start_position + ( utf8_sequence_length or 1 ), end_position )
 
 			utf8_sequence_count = utf8_sequence_count + 1
 
@@ -712,7 +770,7 @@ do
 			else
 				utf8_sequences[ utf8_sequence_count ] = encode( utf8_codepoint, false, 2 )
 			end
-		until index == str_length
+		until start_position == end_position
 
 		return table_concat( utf8_sequences, "", 1, utf8_sequence_count )
 	end
@@ -2576,9 +2634,11 @@ local upper2lower = {
 --- Converts a UTF-8 string characters to lowercase.
 ---
 ---@param utf8_string string The UTF-8 string to convert.
----@param lax? boolean If `true`, lax decoding is used.
+---@param start_position? integer The position to start from in bytes.
+---@param end_position? integer The position to end at in bytes.
+---@param lax? boolean Whether to lax the UTF-8 validity check.
 ---@return string lowercase_utf8_str The lowercase UTF-8 string.
-function utf8.lower( utf8_string, lax )
+function utf8.lower( utf8_string, start_position, end_position, lax )
 	---@type integer
 	local str_length = string_len( utf8_string )
 
@@ -2586,25 +2646,47 @@ function utf8.lower( utf8_string, lax )
 		return utf8_string
 	end
 
-	local utf8_sequence_count = 0
-	local index = 1
+	if start_position == nil then
+		start_position = 1
+	else
+		start_position = math_relative( start_position, str_length )
+	end
 
+	if end_position == nil then
+		end_position = str_length
+	else
+		end_position = math_relative( end_position, str_length )
+	end
+
+	local utf8_sequence_count = 0
 	lax = lax ~= true
 
 	---@type string[]
 	local utf8_sequences = {}
 
 	repeat
-		local utf8_codepoint, utf8_sequence_length = decode( utf8_string, index, str_length, lax, 2 )
+		local utf8_codepoint, utf8_sequence_length = decode( utf8_string, start_position, end_position, lax, 2 )
 
 		if utf8_sequence_length == nil then
 			utf8_sequence_length = 1
 		end
 
+		---@type string | nil
+		local sequence_str
+
+		if utf8_codepoint ~= nil then
+			sequence_str = upper2lower[ utf8_codepoint ]
+		end
+
+		if sequence_str == nil then
+			sequence_str = string_sub( utf8_string, start_position, start_position + ( utf8_sequence_length - 1 ) )
+		end
+
 		utf8_sequence_count = utf8_sequence_count + 1
-		utf8_sequences[ utf8_sequence_count ] = upper2lower[ utf8_codepoint or 0xFFFD ] or string_sub( utf8_string, index, index + ( utf8_sequence_length - 1 ) )
-		index = math_min( index + utf8_sequence_length, str_length )
-	until index == str_length
+		utf8_sequences[ utf8_sequence_count ] = sequence_str
+
+		start_position = math_min( start_position + utf8_sequence_length, end_position )
+	until start_position == end_position
 
 	return table_concat( utf8_sequences, "", 1, utf8_sequence_count )
 end
@@ -2614,9 +2696,11 @@ end
 --- Converts a UTF-8 string characters to uppercase.
 ---
 ---@param utf8_string string The UTF-8 string to convert.
----@param lax? boolean If `true`, lax decoding is used.
+---@param start_position? integer The position to start from in bytes.
+---@param end_position? integer The position to end at in bytes.
+---@param lax? boolean Whether to lax the UTF-8 validity check.
 ---@return string uppercase_utf8_str The uppercase UTF-8 string.
-function utf8.upper( utf8_string, lax )
+function utf8.upper( utf8_string, start_position, end_position, lax )
 	---@type integer
 	local str_length = string_len( utf8_string )
 
@@ -2624,8 +2708,19 @@ function utf8.upper( utf8_string, lax )
 		return utf8_string
 	end
 
+	if start_position == nil then
+		start_position = 1
+	else
+		start_position = math_relative( start_position, str_length )
+	end
+
+	if end_position == nil then
+		end_position = str_length
+	else
+		end_position = math_relative( end_position, str_length )
+	end
+
 	local utf8_sequence_count = 0
-	local index = 1
 
 	lax = lax ~= true
 
@@ -2633,17 +2728,28 @@ function utf8.upper( utf8_string, lax )
 	local utf8_sequences = {}
 
 	repeat
-		local utf8_codepoint, utf8_sequence_length = decode( utf8_string, index, str_length, lax, 2 )
+		local utf8_codepoint, utf8_sequence_length = decode( utf8_string, start_position, end_position, lax, 2 )
 
 		if utf8_sequence_length == nil then
 			utf8_sequence_length = 1
 		end
 
-		utf8_sequence_count = utf8_sequence_count + 1
-		utf8_sequences[ utf8_sequence_count ] = lower2upper[ utf8_codepoint or 0xFFFD ] or string_sub( utf8_string, index, index + ( utf8_sequence_length - 1 ) )
+		---@type string | nil
+		local sequence_str
 
-		index = math_min( index + utf8_sequence_length, str_length )
-	until index == str_length
+		if utf8_codepoint ~= nil then
+			sequence_str = lower2upper[ utf8_codepoint ]
+		end
+
+		if sequence_str == nil then
+			sequence_str = string_sub( utf8_string, start_position, start_position + ( utf8_sequence_length - 1 ) )
+		end
+
+		utf8_sequence_count = utf8_sequence_count + 1
+		utf8_sequences[ utf8_sequence_count ] = sequence_str
+
+		start_position = math_min( start_position + utf8_sequence_length, end_position )
+	until start_position == end_position
 
 	return table_concat( utf8_sequences, "", 1, utf8_sequence_count )
 end

@@ -7,7 +7,6 @@
 
 local std = _G.gpm.std
 local assert = std.assert
-local raw_pairs = std.raw.pairs
 
 local table = std.table
 local table_sort = table.sort
@@ -21,6 +20,8 @@ local string_gsub, string_sub = string.gsub, string.sub
 local string_byte, string_char = string.byte, string.char
 
 local crypto_adler32 = std.checksum.adler32
+local raw_pairs = std.raw.pairs
+local math_max = std.math.max
 
 ---@class gpm.std.compress
 local compress = std.compress
@@ -895,8 +896,10 @@ local function getHuffmanBitlenAndCode( symbol_counts, max_bitlen, max_symbol )
                 -- move one overflow item as its brother
                 bitlen_counts[ bitlen + 1 ] = ( bitlen_counts[ bitlen + 1 ] or 0 ) + 2
                 bitlen_counts[ max_bitlen ] = bitlen_counts[ max_bitlen ] - 1
-                number_bitlen_overflow = number_bitlen_overflow - 2
-            until number_bitlen_overflow <= 0
+
+                -- TODO: check that math_max is necessary here
+                number_bitlen_overflow = math_max( number_bitlen_overflow - 2, 0 )
+            until number_bitlen_overflow == 0
 
             index = 1
             for bitlen = max_bitlen, 1, -1 do
@@ -3180,3 +3183,7 @@ function deflate.decodeForPrint( str )
 
     return table_concat( buffer )
 end
+
+-- TODO: https://github.com/SafeteeWoW/LibDeflate/issues/9
+
+-- TODO: make it async as chacha20

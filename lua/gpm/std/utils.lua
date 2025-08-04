@@ -9,6 +9,8 @@ local string_sub, string_find, string_len = string.sub, string.find, string.len
 local table = std.table
 local table_concat = table.concat
 
+local math_relative = std.math.relative
+
 local raw = std.raw
 local raw_get, raw_set = raw.get, raw.set
 
@@ -122,14 +124,23 @@ do
     ---@param encode_spaces? boolean Whether to encode spaces.
     ---@return string escaped_str The escaped string.
     function string.escape( str, start_position, end_position, encode_spaces )
+        ---@type integer
+        local str_length = string_len( str )
+
+        if str_length == 0 then
+            return str
+        end
+
         if start_position == nil then
             start_position = 1
+        else
+            start_position = math_relative( start_position, str_length )
         end
 
         if end_position == nil then
-            end_position = string_len( str )
-        elseif end_position < 0 then
-            end_position = ( end_position % ( string_len( str ) + 1 ) )
+            end_position = str_length
+        else
+            end_position = math_relative( end_position, str_length )
         end
 
         local sequence_position = start_position
@@ -186,50 +197,88 @@ do
     ---@param end_position? integer The end index.
     ---@return string str The unescaped string.
     function string.unescape( escaped_str, start_position, end_position )
+        ---@type integer
+        local str_length = string_len( escaped_str )
+
+        if str_length == 0 then
+            return escaped_str
+        end
+
         if start_position == nil then
             start_position = 1
+        else
+            start_position = math_relative( start_position, str_length )
         end
 
         if end_position == nil then
-            end_position = string_len( escaped_str )
-        elseif end_position < 0 then
-            end_position = ( end_position % ( string_len( escaped_str ) + 1 ) )
+            end_position = str_length
+        else
+            end_position = math_relative( end_position, str_length )
         end
 
         local segments, segment_count = {}, 0
-        local index = start_position
 
-        repeat
-            local uint8_1 = string_byte( escaped_str, index, index )
+        while true do
+            local uint8_1 = string_byte( escaped_str, start_position, start_position )
+            if uint8_1 == nil then
+                break
+            end
 
-            if uint8_1 == 0x5C then --[[ \ ]]
-                index = index + 1
+            segment_count = segment_count + 1
 
-                local uint8_2 = string_byte( escaped_str, index, index )
-                if uint8_2 == 0x78 then --[[ x ]]
-                    index = index + 1
-                    segment_count = segment_count + 1
-                    segments[ segment_count ] = string_char( bytepack_readHex8( string_byte( escaped_str, index, index + 1 ) ) )
-                    index = index + 1
+            if uint8_1 == 0x5C --[[ "\" ]] then
+                start_position = start_position + 1
+
+                local uint8_2 = string_byte( escaped_str, start_position, start_position )
+                if uint8_2 == nil then
+                    segments[ segment_count ] = string_char( uint8_1 )
+                    break
+                elseif uint8_2 == 0x78 --[[ "x" ]] then
+                    start_position = start_position + 1
+
+                    local uint8_3, uint8_4 = string_byte( escaped_str, start_position, start_position + 1 )
+                    if uint8_3 == nil then
+                        segments[ segment_count ] = string_char( uint8_1, uint8_2 )
+                        break
+                    elseif uint8_4 == nil then
+                        segments[ segment_count ] = string_char( uint8_1, uint8_2, uint8_3 )
+                        break
+                    end
+
+                    start_position = start_position + 1
+
+                    local decoded_uint8 = bytepack_readHex8( uint8_3, uint8_4 )
+                    if decoded_uint8 == nil then
+                        segments[ segment_count ] = string_char( uint8_1, uint8_2, uint8_3, uint8_4 )
+                    else
+                        segments[ segment_count ] = string_char( decoded_uint8 )
+                    end
                 else
                     local unescape_sequence = unescape_sequences[ uint8_2 ]
                     if unescape_sequence == nil then
-                        segment_count = segment_count + 1
                         segments[ segment_count ] = string_char( uint8_1, uint8_2 )
                     else
-                        segment_count = segment_count + 1
                         segments[ segment_count ] = unescape_sequence
                     end
                 end
             else
-                segment_count = segment_count + 1
                 segments[ segment_count ] = string_char( uint8_1 )
             end
 
-            index = index + 1
-        until index > end_position
+            if start_position == end_position then
+                break
+            else
+                start_position = start_position + 1
+            end
+        end
 
-        return table_concat( segments, "", 1, segment_count )
+        if segment_count == 0 then
+            return ""
+        elseif segment_count == 1 then
+            return segments[ 1 ]
+        else
+            return table_concat( segments, "", 1, segment_count )
+        end
     end
 
 end

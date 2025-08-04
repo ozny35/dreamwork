@@ -66,13 +66,16 @@ do
     ---
     ---@param raw_str string The string to encode.
     ---@param whitelist? table The character whitelist, optional.
+    ---@param ignore_spaces? boolean Ignore spaces, optional.
     ---@return string percent_str The encoded string.
-    function percent.encode( raw_str, whitelist )
+    function percent.encode( raw_str, whitelist, ignore_spaces )
         local segments, segment_count = {}, 0
 
         if whitelist == nil then
             whitelist = default_whitelist
         end
+
+        ignore_spaces = ignore_spaces ~= true
 
         local uint8_last
 
@@ -85,7 +88,7 @@ do
             elseif uint8 == 0x0A --[[ "\n" ]] and uint8_last ~= 0x0D --[[ "\r" ]] then
                 segment_count = segment_count + 1
                 segments[ segment_count ] = "%0D%0A"
-            elseif uint8 == 0x20 --[[ " " ]] then
+            elseif ignore_spaces and uint8 == 0x20 --[[ " " ]] then
                 segment_count = segment_count + 1
                 segments[ segment_count ] = "+"
             else
@@ -105,28 +108,28 @@ do
 
         ---@type table<integer, boolean>
         local hex_bytes = {
-            [ 0x30 ] = true,
-            [ 0x31 ] = true,
-            [ 0x32 ] = true,
-            [ 0x33 ] = true,
-            [ 0x34 ] = true,
-            [ 0x35 ] = true,
-            [ 0x36 ] = true,
-            [ 0x37 ] = true,
-            [ 0x38 ] = true,
-            [ 0x39 ] = true,
-            [ 0x41 ] = true,
-            [ 0x42 ] = true,
-            [ 0x43 ] = true,
-            [ 0x44 ] = true,
-            [ 0x45 ] = true,
-            [ 0x46 ] = true,
-            [ 0x61 ] = true,
-            [ 0x62 ] = true,
-            [ 0x63 ] = true,
-            [ 0x64 ] = true,
-            [ 0x65 ] = true,
-            [ 0x66 ] = true
+            [ 0x30 --[[ "0" ]] ] = true,
+            [ 0x31 --[[ "1" ]] ] = true,
+            [ 0x32 --[[ "2" ]] ] = true,
+            [ 0x33 --[[ "3" ]] ] = true,
+            [ 0x34 --[[ "4" ]] ] = true,
+            [ 0x35 --[[ "5" ]] ] = true,
+            [ 0x36 --[[ "6" ]] ] = true,
+            [ 0x37 --[[ "7" ]] ] = true,
+            [ 0x38 --[[ "8" ]] ] = true,
+            [ 0x39 --[[ "9" ]] ] = true,
+            [ 0x41 --[[ "A" ]] ] = true,
+            [ 0x42 --[[ "B" ]] ] = true,
+            [ 0x43 --[[ "C" ]] ] = true,
+            [ 0x44 --[[ "D" ]] ] = true,
+            [ 0x45 --[[ "E" ]] ] = true,
+            [ 0x46 --[[ "F" ]] ] = true,
+            [ 0x61 --[[ "a" ]] ] = true,
+            [ 0x62 --[[ "b" ]] ] = true,
+            [ 0x63 --[[ "c" ]] ] = true,
+            [ 0x64 --[[ "d" ]] ] = true,
+            [ 0x65 --[[ "e" ]] ] = true,
+            [ 0x66 --[[ "f" ]] ] = true
         }
 
         --- [SHARED AND MENU]
@@ -135,15 +138,18 @@ do
         ---
         ---@param percent_str string The percent string to validate.
         ---@param whitelist? table The character whitelist, optional.
+        ---@param ignore_spaces? boolean Ignore spaces, optional.
         ---@return boolean is_valid `true` if the percent string is valid, otherwise `false`.
         ---@return nil | string err_msg The error message.
-        function percent.validate( percent_str, whitelist )
+        function percent.validate( percent_str, whitelist, ignore_spaces )
             local percent_str_length = string_len( percent_str ) + 1
             local position = 1
 
             if whitelist == nil then
                 whitelist = default_whitelist
             end
+
+            ignore_spaces = ignore_spaces ~= true
 
             while position ~= percent_str_length do
                 local uint8_0 = string_byte( percent_str, position, position )
@@ -154,7 +160,7 @@ do
                     end
 
                     position = math_min( position + 3, percent_str_length )
-                elseif uint8_0 == 0x2B --[[ "+" ]] or whitelist[ uint8_0 ] ~= nil then
+                elseif ( ignore_spaces and uint8_0 == 0x2B --[[ "+" ]] ) or whitelist[ uint8_0 ] ~= nil then
                     position = position + 1
                 else
                     return false, "string contains invalid characters"
@@ -185,18 +191,27 @@ do
         local segments, segment_count = {}, 0
 
         while position ~= str_length do
-            local uint8 = string_byte( percent_str, position, position )
-            if uint8 == 0x25 --[[ "%" ]] then
+            local uint8_1 = string_byte( percent_str, position, position )
+            if uint8_1 == 0x25 --[[ "%" ]] then
                 segment_count = segment_count + 1
-                segments[ segment_count ] = string_char( bytepack_readHex8( string_byte( percent_str, position + 1, position + 2 ) ) )
+
+                local uint8_2, uint8_3 = string_byte( percent_str, position + 1, position + 2 )
+
+                local decoded_uint8 = bytepack_readHex8( uint8_2, uint8_3 )
+                if decoded_uint8 == nil then
+                    segments[ segment_count ] = string_char( uint8_1, uint8_2, uint8_3 )
+                else
+                    segments[ segment_count ] = string_char( decoded_uint8 )
+                end
+
                 position = math_min( position + 3, str_length )
-            elseif uint8 == 0x2B --[[ "+" ]] and not ignore_spaces then
+            elseif uint8_1 == 0x2B --[[ "+" ]] and not ignore_spaces then
                 segment_count = segment_count + 1
                 segments[ segment_count ] = "\32"
                 position = position + 1
             else
                 segment_count = segment_count + 1
-                segments[ segment_count ] = string_char( uint8 )
+                segments[ segment_count ] = string_char( uint8_1 )
                 position = position + 1
             end
         end

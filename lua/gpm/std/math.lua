@@ -795,3 +795,22 @@ function math.bucketize( y )
         return math_floor( x * div ) * y
     end
 end
+
+--- [SHARED AND MENU]
+---
+--- Translate a relative position, negative means back from end.
+---
+---@param position integer The position to check.
+---@param length integer The length to check.
+---@return integer relative The relative position.
+function math.relative( position, length )
+    if position < 0 then
+        if ( 0 - position ) > length then
+            return 0
+        else
+            return length + position + 1
+        end
+    else
+        return position
+    end
+end
