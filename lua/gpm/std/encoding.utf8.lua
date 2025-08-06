@@ -368,14 +368,18 @@ local function len( utf8_string, start_position, end_position, lax )
 
 	if start_position == nil then
 		start_position = 1
-	else
+	elseif start_position < 0 then
 		start_position = math_relative( start_position, str_length )
+	else
+		start_position = math_min( start_position, str_length )
 	end
 
 	if end_position == nil then
 		end_position = str_length
-	else
+	elseif end_position < 0 then
 		end_position = math_relative( end_position, str_length )
+	else
+		end_position = math_min( end_position, str_length )
 	end
 
 	local utf8_codepoint_count = 0
@@ -417,14 +421,18 @@ local function unpack( utf8_string, start_position, end_position, lax )
 
 	if start_position == nil then
 		start_position = 1
-	else
+	elseif start_position < 0 then
 		start_position = math_relative( start_position, str_length )
+	else
+		start_position = math_min( start_position, str_length )
 	end
 
 	if end_position == nil then
 		end_position = str_length
-	else
+	elseif end_position < 0 then
 		end_position = math_relative( end_position, str_length )
+	else
+		end_position = math_min( end_position, str_length )
 	end
 
 	local utf8_codepoint_count = 0
@@ -647,10 +655,10 @@ end
 ---
 ---@param utf8_string string The UTF-8 string to search in.
 ---@param index integer The code point to search for in the UTF-8 units.
----@param start_position? integer The position to start from in bytes.
+---@param offset? integer The position to start from in bytes.
 ---@param lax? boolean Whether to lax the UTF-8 validity check.
 ---@return integer | nil index The position of the code point in bytes or `nil` if not found.
-function utf8.offset( utf8_string, index, start_position, lax )
+function utf8.offset( utf8_string, index, offset, lax )
 	---@type integer
 	local str_length = string_len( utf8_string )
 
@@ -658,21 +666,23 @@ function utf8.offset( utf8_string, index, start_position, lax )
 		return nil
 	end
 
-	if start_position == nil then
-		start_position = 1
+	if offset == nil then
+		offset = 1
+	elseif offset < 0 then
+		offset = math_relative( offset, str_length )
 	else
-		start_position = math_relative( start_position, str_length )
+		offset = math_min( offset, str_length )
 	end
 
 	if index < 0 then
-		local sequence_length, error_position = len( utf8_string, start_position, str_length, lax )
+		local sequence_length, error_position = len( utf8_string, offset, str_length, lax )
 
 		if sequence_length == nil then
 			error( string.format( "invalid UTF-8 sequence byte '0x%02X' at position %d", string_byte( utf8_string, error_position, error_position ), error_position ), 2 )
 		end
 
 		if ( 0 - index ) > sequence_length then
-            return nil
+			index = 1
         else
 			index = sequence_length + index + 1
         end
@@ -682,12 +692,13 @@ function utf8.offset( utf8_string, index, start_position, lax )
 
 	repeat
 		utf8_codepoint_count = utf8_codepoint_count + 1
+
 		if utf8_codepoint_count == index then
-			return start_position
+			return offset
 		end
 
-		start_position = math_min( start_position + ( uint8_to_length[ string_byte( utf8_string, start_position, start_position ) ] or 1 ), str_length )
-	until start_position == str_length
+		offset = math_min( offset + ( uint8_to_length[ string_byte( utf8_string, offset, offset ) ] or 1 ), str_length )
+	until offset == str_length
 
 	return nil
 end
@@ -739,14 +750,18 @@ do
 
 		if start_position == nil then
 			start_position = 1
-		else
+		elseif start_position < 0 then
 			start_position = math_relative( start_position, str_length )
+		else
+			start_position = math_min( start_position, str_length )
 		end
 
 		if end_position == nil then
 			end_position = str_length
-		else
+		elseif end_position < 0 then
 			end_position = math_relative( end_position, str_length )
+		else
+			end_position = math_min( end_position, str_length )
 		end
 
 		if replacement_str == nil then
@@ -2648,14 +2663,18 @@ function utf8.lower( utf8_string, start_position, end_position, lax )
 
 	if start_position == nil then
 		start_position = 1
-	else
+	elseif start_position < 0 then
 		start_position = math_relative( start_position, str_length )
+	else
+		start_position = math_min( start_position, str_length )
 	end
 
 	if end_position == nil then
 		end_position = str_length
-	else
+	elseif end_position < 0 then
 		end_position = math_relative( end_position, str_length )
+	else
+		end_position = math_min( end_position, str_length )
 	end
 
 	local utf8_sequence_count = 0
@@ -2710,14 +2729,18 @@ function utf8.upper( utf8_string, start_position, end_position, lax )
 
 	if start_position == nil then
 		start_position = 1
-	else
+	elseif start_position < 0 then
 		start_position = math_relative( start_position, str_length )
+	else
+		start_position = math_min( start_position, str_length )
 	end
 
 	if end_position == nil then
 		end_position = str_length
-	else
+	elseif end_position < 0 then
 		end_position = math_relative( end_position, str_length )
+	else
+		end_position = math_min( end_position, str_length )
 	end
 
 	local utf8_sequence_count = 0

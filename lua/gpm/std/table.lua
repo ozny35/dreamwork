@@ -3,12 +3,15 @@ local _G = _G
 ---@class gpm.std
 local std = _G.gpm.std
 
-local select = std.select
 local len = std.len
+local next = std.next
+local select = std.select
 
-local raw = std.raw
-local raw_pairs = raw.pairs
-local raw_get, raw_set = raw.get, raw.set
+local math = std.math
+local math_min = math.min
+local math_floor = math.floor
+local math_random = math.random
+local math_relative = math.relative
 
 --- [SHARED AND MENU]
 ---
@@ -51,66 +54,99 @@ do
     end
 
     if table.move == nil then
+
+        --- [SHARED AND MENU]
+        ---
+        --- Moves elements from one table to another.
+        ---
+        ---@param source table The source table.
+        ---@param start_position? integer The start position of the source table, defaults to 1.
+        ---@param end_position? integer The end position of the source table, defaults to the length of the source table.
+        ---@param offset? integer The start position of the destination table, defaults to 1.
+        ---@param destination? table The destination table.
+        ---@param source_length? integer The length of the source table. Optionally, it should be used to speed up calculations.
+        ---@return table destination The destination table.
         ---@diagnostic disable-next-line: duplicate-set-field
-        function table.move( source, first, last, offset, destination )
+        function table.move( source, start_position, end_position, offset, destination, source_length )
             if destination == nil then
                 destination = source
             end
 
-            for index = 0, last - first, 1 do
-                raw_set( destination, offset + index, raw_get( source, first + index ) )
+            if source_length == nil then
+                source_length = len( source )
+            end
+
+            if start_position == nil then
+                start_position = 1
+            elseif start_position < 0 then
+                start_position = math_relative( start_position, source_length )
+            else
+                start_position = math_min( start_position, source_length )
+            end
+
+            if end_position == nil then
+                end_position = source_length
+            elseif end_position < 0 then
+                end_position = math_relative( end_position, source_length )
+            else
+                end_position = math_min( end_position, source_length )
+            end
+
+            if offset == nil then
+                offset = 1
+            end
+
+            for index = 0, end_position - start_position, 1 do
+                destination[ offset + index ] = source[ start_position + index ]
             end
 
             return destination
         end
+
     end
 
 end
-
-local table_remove = table.remove
 
 --- [SHARED AND MENU]
 ---
 --- Returns a slice of the given table.
 ---
 ---@param tbl table The table to slice.
----@param to? integer The start position.
----@param from? integer The end position.
+---@param start_position? integer The start position of the slice.
+---@param end_position? integer The end position of the slice.
 ---@param step? integer The step.
+---@param tbl_length? integer The length of the table. Optionally, it should be used to speed up calculations.
 ---@return table slice The sliced table.
 ---@return integer length The length of the sliced table.
-function table.sub( tbl, from, to, step )
-    local length = #tbl
-
-    if from == nil then
-        from = 1
+function table.sub( tbl, start_position, end_position, step, tbl_length )
+    if tbl_length == nil then
+        tbl_length = len( tbl )
     end
 
-    if to == nil then
-        to = length
+    if start_position == nil then
+        start_position = 1
+    elseif start_position < 0 then
+        start_position = math_relative( start_position, tbl_length )
+    else
+        start_position = math_min( start_position, tbl_length )
     end
 
-    if from > to then
-        return {}, 0
+    if end_position == nil then
+        end_position = tbl_length
+    elseif end_position < 0 then
+        end_position = math_relative( end_position, tbl_length )
+    else
+        end_position = math_min( end_position, tbl_length )
     end
 
-    if from < 0 then
-        from = length + from + 1
+    local slice, slice_size = {}, 0
+
+    for index = start_position, end_position, step or 1 do
+        slice_size = slice_size + 1
+        slice[ slice_size ] = tbl[ index ]
     end
 
-    if to < 0 then
-        to = length + to + 1
-    end
-
-    local slice = {}
-    length = 0
-
-    for index = from, to, step or 1 do
-        length = length + 1
-        slice[ length ] = tbl[ index ]
-    end
-
-    return slice, length
+    return slice, slice_size
 end
 
 --- [SHARED AND MENU]
@@ -122,9 +158,10 @@ end
 --- The truncated table is a shallow copy of the original table.
 ---
 ---@param tbl table The table to truncate.
----@param length integer The length of the truncated table.
-function table.truncate( tbl, length )
-    for index = length + 1, #tbl, 1 do
+---@param new_length? integer The length of the truncated table.
+---@param tbl_length? integer The length of the original table. Optionally, it should be used to speed up calculations.
+function table.truncate( tbl, new_length, tbl_length )
+    for index = ( new_length or 0 ) + 1, tbl_length or len( tbl ), 1 do
         tbl[ index ] = nil
     end
 end
@@ -138,16 +175,16 @@ end
 --- The returned table is a shallow copy of the original table.
 ---
 ---@param tbl table The table to truncate.
----@param length integer The length of the truncated table.
+---@param tbl_length? integer The length of the truncated table. Optionally, it should be used to speed up calculations.
 ---@return table result The truncated table.
-function table.truncated( tbl, length )
-    local result = {}
+function table.truncated( tbl, tbl_length )
+    local copy = {}
 
-    for index = 1, length, 1 do
-        result[ index ] = tbl[ index ]
+    for index = 1, tbl_length or len( tbl ), 1 do
+        copy[ index ] = tbl[ index ]
     end
 
-    return result
+    return copy
 end
 
 --- [SHARED AND MENU]
@@ -156,91 +193,63 @@ end
 ---
 ---@param destination table The destination table.
 ---@param source table The source table.
----@param position? integer The position to inject.
----@param from? integer The start position.
----@param to? integer The end position.
-function table.inject( destination, source, position, from, to )
-    if position == nil then
-        -- if position, from and to are nil then just append to the end ( aka table.append )
-        if from == nil and to == nil then
-            local length = #destination
+---@param offset? integer The position to inject.
+---@param start_position? integer The start position.
+---@param end_position? integer The end position.
+---@param destination_length? integer The length of the destination table. Optionally, it should be used to speed up calculations.
+---@param source_length? integer The length of the source table.
+function table.inject( destination, source, offset, start_position, end_position, destination_length, source_length )
+    if destination_length == nil then
+        destination_length = len( destination )
+    end
 
-            for index = 1, #source, 1 do
-                destination[ length + index ] = source[ index ]
+    if offset == nil then
+        if start_position == nil and end_position == nil then
+            for index = 1, len( source ), 1 do
+                destination[ destination_length + index ] = source[ index ]
             end
 
             return
         end
 
-        position = #destination + 1
-    elseif position < 0 then
-        position = position + ( #destination + 2 )
-    end
-
-    if from == nil then from = 1 end
-    if to == nil then to = #source end
-
-    if from <= to then
-        local steps = to - from
-        for i = #destination, position, -1 do
-            destination[ steps + i + 1 ] = destination[ i ]
-        end
-
-        for i = 0, steps, 1 do
-            destination[ position + i ] = source[ from + i ]
-        end
-    end
-end
-
---- [SHARED AND MENU]
----
---- Removes a value from the given table.
----
---- The original table is modified.
----
----@param tbl table The table to remove from.
----@param value any The value to remove.
----@param length? integer The length of the table.
----@return table result The modified table.
----@return integer length The length of the modified table.
-function table.removeValue( tbl, value, length )
-    if length == nil then
-        length = len( tbl )
-    end
-
-    for index = length, 1, -1 do
-        if tbl[ index ] == value then
-            table_remove( tbl, index )
-            length = length - 1
+        offset = destination_length + 1
+    elseif offset < 0 then
+        if ( 0 - offset ) > destination_length then
+            offset = 1
+        else
+            offset = destination_length + offset + 2
         end
     end
 
-    return tbl, length
-end
-
---- [SHARED AND MENU]
----
---- Returns a copy of the given table without the given value.
----
---- The original table is not modified.
----
----@param tbl table The table to remove from.
----@param value any The value to remove.
----@param length? integer The length of the table.
----@return table copy The copy of the table without the value.
----@return integer copy_length The length of the copy.
-function table.withoutValue( tbl, value, length )
-    local copy, copy_length = {}, 0
-
-    for index = 1, ( length or len( tbl ) ), 1 do
-        local table_value = tbl[ index ]
-        if table_value ~= value then
-            copy_length = copy_length + 1
-            copy[ copy_length ] = table_value
-        end
+    if source_length == nil then
+        source_length = len( source )
     end
 
-    return copy, copy_length
+    if start_position == nil then
+        start_position = 1
+    elseif start_position < 0 then
+        start_position = math_relative( start_position, source_length )
+    else
+        start_position = math_min( start_position, source_length )
+    end
+
+    if end_position == nil then
+        end_position = source_length
+    elseif end_position < 0 then
+        end_position = math_relative( end_position, source_length )
+    else
+        end_position = math_min( end_position, source_length )
+    end
+
+    local steps = end_position - start_position
+
+    for i = destination_length, offset, -1 do
+        destination[ steps + i + 1 ] = destination[ i ]
+    end
+
+    for i = 0, steps, 1 do
+        destination[ offset + i ] = source[ start_position + i ]
+    end
 end
 
 --- [SHARED AND MENU]
@@ -248,100 +257,145 @@ end
 --- Removes a range of values from the given table.
 ---
 ---@param tbl table The table to remove from.
----@param from? integer The start position.
----@param to? integer The end position.
-function table.eject( tbl, from, to )
-    local length = #tbl
-
-    if from == nil then
-        if to == nil then return end
-        from = 1
-    elseif to == nil then
-        to = length
+---@param start_position? integer The start position.
+---@param end_position? integer The end position.
+---@param tbl_length? integer The length of the table. Optionally, it should be used to speed up calculations.
+function table.eject( tbl, start_position, end_position, tbl_length )
+    if tbl_length == nil then
+        tbl_length = len( tbl )
     end
 
-    if from > to then return end
+    if start_position == nil then
+        start_position = 1
+    else
+        start_position = math_relative( start_position, tbl_length )
+    end
 
-    for index = from, to, 1 do
+    if end_position == nil then
+        end_position = tbl_length
+    else
+        end_position = math_relative( end_position, tbl_length )
+    end
+
+    for index = start_position, end_position, 1 do
         tbl[ index ] = nil
     end
 
-    local distance = to - from + 1
-    for index = to + 1, length, 1 do
+    local distance = ( end_position - start_position ) + 1
+
+    for index = end_position + 1, tbl_length, 1 do
         tbl[ index - distance ], tbl[ index ] = tbl[ index ], nil
     end
 end
 
 --- [SHARED AND MENU]
 ---
---- Returns true if the given table contains the given value.
+--- Returns the index of the value in the given table.
 ---
----@param tbl table The table to check.
----@param value any The value to check.
----@param is_sequential? boolean If the table is sequential.
----@return boolean result `true` if the table contains the value, `false` otherwise.
-function table.contains( tbl, value, is_sequential )
-    if is_sequential then
-        for index = #tbl, 1, -1 do
-            if tbl[ index ] == value then
-                return true
-            end
-        end
-    else
-        for _, v in raw_pairs( tbl ) do
-            if v == value then
-                return true
-            end
+--- Returns `nil` if the value is not found in the table.
+---
+---@param tbl table The table to search.
+---@param searchable any The value to search for.
+---@param tbl_length? integer The length of the table. Optionally, it should be used to speed up calculations.
+---@return integer | nil index The index of the value.
+function table.getIndex( tbl, searchable, tbl_length )
+    for index = 1, tbl_length or len( tbl ), 1 do
+        if tbl[ index ] == searchable then
+            return index
         end
     end
 
-    return false
+    return nil
+end
+
+--- [SHARED AND MENU]
+---
+--- Returns true if the given table is empty.
+---
+---@param tbl table The table to check.
+---@return boolean result `true` if the table is empty, `false` otherwise.
+function table.isEmpty( tbl )
+    return next( tbl ) == nil
+end
+
+--- [SHARED AND MENU]
+---
+--- Returns the key of the value in the given table.
+---
+--- Returns `nil` if the value is not found in the table.
+---
+---@param tbl table The table to search.
+---@param searchable any The value to search for.
+---@return any | nil key The key of the value.
+function table.getKey( tbl, searchable )
+    local key, value = next( tbl, nil )
+
+    while key ~= nil do
+        if value == searchable then
+            return key
+        end
+
+        key, value = next( tbl, key )
+    end
+
+    return nil
 end
 
 --- [SHARED AND MENU]
 ---
 --- Returns list (table) of keys and length of this list.
+---
 ---@param tbl table The table.
 ---@return any[] key_lst The list of keys.
 ---@return integer key_count The length of the list.
 function table.keys( tbl )
-    local keys, length = {}, 0
-    for key in raw_pairs( tbl ) do
-        length = length + 1
-        keys[ length ] = key
+    local key = next( tbl, nil )
+    local keys, key_count = {}, 0
+
+    while key ~= nil do
+        key_count = key_count + 1
+        keys[ key_count ] = key
+        key = next( tbl, key )
     end
 
-    return keys, length
+    return keys, key_count
 end
 
 --- [SHARED AND MENU]
 ---
 --- Returns list (table) of values and length of this list.
+---
 ---@param tbl table The table.
 ---@return any[] value_lst The list of values.
 ---@return integer value_count The length of the list.
 function table.values( tbl )
-    local values, length = {}, 0
-    for _, value in raw_pairs( tbl ) do
-        length = length + 1
-        values[ length ] = value
+    local key, value = next( tbl, nil )
+    local values, value_count = {}, 0
+
+    while key ~= nil do
+        value_count = value_count + 1
+        values[ value_count ] = value
+        key, value = next( tbl, key )
     end
 
-    return values, length
+    return values, value_count
 end
 
 --- [SHARED AND MENU]
 ---
 --- Returns the count of keys in the given table.
+---
 ---@param tbl table The table.
 ---@return integer key_count The count of keys.
-function table.size( tbl )
-    local count = 0
-    for _ in raw_pairs( tbl ) do
-        count = count + 1
+function table.count( tbl )
+    local key, key_count = next( tbl, nil ), 0
+
+    while key ~= nil do
+        key_count = key_count + 1
+        key = next( tbl, key )
     end
 
-    return count
+    return key_count
 end
 
 --- [SHARED AND MENU]
@@ -356,16 +410,10 @@ end
 ---
 ---@param tbl table The table to flip.
 function table.flip( tbl )
-    local keys, length = {}, 0
-    for key in raw_pairs( tbl ) do
-        length = length + 1
-        keys[ length ] = key
-    end
-
-    for i = 1, length, 1 do
-        local key = keys[ i ]
-        tbl[ tbl[ key ] ] = key
-        tbl[ key ] = nil
+    local key, value = next( tbl, nil )
+    while key ~= nil do
+        tbl[ key ], tbl[ value ] = nil, key
+        key, value = next( tbl, key )
     end
 end
 
@@ -382,9 +430,12 @@ end
 ---@param tbl table The table to flip.
 ---@return table result The flipped table.
 function table.flipped( tbl )
+    local key, value = next( tbl, nil )
     local result = {}
-    for key, value in raw_pairs( tbl ) do
+
+    while key ~= nil do
         result[ value ] = key
+        key, value = next( tbl, key )
     end
 
     return result
@@ -396,211 +447,185 @@ end
 ---
 ---@param tbl table The table.
 ---@return table result The list of key/value pairs ( sequential table ).
----@return integer length The length of the list.
+---@return integer result_length The length of the list.
 function table.pairs( tbl )
-    local result, length = {}, 0
-    for key, value in raw_pairs( tbl ) do
-        length = length + 1
-        result[ length ] = { key, value }
+    local result, result_length = {}, 0
+    local key, value = next( tbl, nil )
+
+    while key ~= nil do
+        result_length = result_length + 1
+        result[ result_length ] = { key, value }
+        key, value = next( tbl, key )
     end
 
-    return result, length
+    return result, result_length
 end
 
 --- [SHARED AND MENU]
 ---
 --- Returns true if the given table is sequential.
+---
 ---@param tbl table The table to check.
----@return boolean result `true` if the table is sequential, `false` otherwise.
+---@return boolean is_sequential `true` if the table is sequential, `false` otherwise.
 function table.isSequential( tbl )
-    local index = 1
-    for _ in raw_pairs( tbl ) do
+    local key, index = next( tbl, nil ), 1
+
+    while key ~= nil do
         if tbl[ index ] == nil then
             return false
         else
             index = index + 1
         end
+
+        key = next( tbl, key )
     end
 
     return true
 end
 
-do
-
-    local next = std.next
-
-    --- [SHARED AND MENU]
-    ---
-    --- Returns true if the given table is empty.
-    ---@param tbl table The table to check.
-    ---@return boolean result `true` if the table is empty, `false` otherwise.
-    function table.isEmpty( tbl )
-        return next( tbl ) == nil
-    end
-
-end
-
 --- [SHARED AND MENU]
 ---
---- Empties the given table.
+--- Empties the indexes of the given table.
 ---
 ---@param tbl table The table to empty.
----@param is_sequential? boolean If the table is sequential.
----@return table tbl The empty table.
-function table.empty( tbl, is_sequential )
-    if is_sequential then
-        for index = 1, #tbl, 1 do
-            tbl[ index ] = nil
-        end
-    else
-        for key in raw_pairs( tbl ) do
-            tbl[ key ] = nil
-        end
+---@param tbl_length? integer The length of the table. Optionally, it should be used to speed up calculations.
+function table.clearIndexes( tbl, tbl_length )
+    for index = 1, tbl_length or len( tbl ), 1 do
+        tbl[ index ] = nil
     end
-
-    return tbl
 end
 
 --- [SHARED AND MENU]
 ---
---- Fills the given table with the given value.
+--- Empties the keys of the given table.
 ---
----@param tbl table The table to fill.
----@param value any The value to fill the table with.
----@param from? integer The start position.
----@param to? integer The end position.
-function table.fill( tbl, value, from, to )
-    if from or to then
-        from = from or 1
+---@param tbl table The table to empty.
+function table.clearKeys( tbl )
+    local key = next( tbl, nil )
+    while key ~= nil do
+        tbl[ key ] = nil
+        key = next( tbl, key )
+    end
+end
 
-        if to then
-            if to < 0 then
-                to = #tbl + to + 1
-            end
-        else
-            to = #tbl
-        end
+--- [SHARED AND MENU]
+---
+--- Shuffles the given table.
+---
+---@param tbl table The table.
+---@param tbl_length? integer The length of the table. Optionally, it should be used to speed up calculations.
+function table.shuffle( tbl, tbl_length )
+    if tbl_length == nil then
+        tbl_length = len( tbl )
+    end
 
-        for index = from, to, 1 do
-            tbl[ index ] = value
-        end
+    local j = 0
+
+    for i = tbl_length, 1, -1 do
+        j = math_random( 1, tbl_length )
+        tbl[ i ], tbl[ j ] = tbl[ j ], tbl[ i ]
+    end
+end
+
+--- [SHARED AND MENU]
+---
+--- Returns a random index and its value from the given sequential table.
+---
+---@param tbl table The sequential table.
+---@param tbl_length? integer The length of the table. Optionally, it should be used to speed up calculations.
+---@return integer | nil index The index of the value.
+---@return any value The random value.
+function table.randomIV( tbl, tbl_length )
+    if tbl_length == nil then
+        tbl_length = len( tbl )
+    end
+
+    if tbl_length == 0 then
+        return nil, nil
+    elseif tbl_length == 1 then
+        return 1, tbl[ 1 ]
     else
-        for key in raw_pairs( tbl ) do
-            tbl[ key ] = value
-        end
+        local index = math_random( 1, tbl_length )
+        return index, tbl[ index ]
     end
 end
 
-do
-
-    local math_random = std.math.random
-
-    --- [SHARED AND MENU]
-    ---
-    --- Shuffles the given table.
-    ---
-    ---@param tbl table The table.
-    function table.shuffle( tbl )
-        local j, length = 0, #tbl
-        for i = length, 1, -1 do
-            j = math_random( 1, length )
-            tbl[ i ], tbl[ j ] = tbl[ j ], tbl[ i ]
-        end
+--- [SHARED AND MENU]
+---
+--- Returns a random key and its value from the given table.
+---
+---@param tbl table The key-value table.
+---@return any key The key of the value.
+---@return any value The random value.
+function table.randomKV( tbl )
+    local key, key_count = next( tbl, nil ), 0
+    while key ~= nil do
+        key_count = key_count + 1
+        key = next( tbl, key )
     end
 
-    --- [SHARED AND MENU]
-    ---
-    --- Returns a random value and index from the given sequential table.
-    ---
-    ---@param tbl table The sequential table.
-    ---@return any value The random value.
-    ---@return integer index The index of the value.
-    function table.randomVI( tbl )
-        local length = #tbl
-        if length == 0 then
-            return nil, -1
-        elseif length == 1 then
-            return tbl[ 1 ], 1
-        else
-            local index = math_random( 1, length )
-            return tbl[ index ], index
-        end
-    end
+    local i = math_random( 1, key_count )
 
-    --- [SHARED AND MENU]
-    ---
-    --- Returns a random value and key from the given table.
-    ---
-    ---@param tbl table The key-value table.
-    ---@return any value The random value.
-    ---@return any key The key of the value.
-    function table.randomVK( tbl )
-        local count = 0
-        for _ in pairs( tbl ) do
-            count = count + 1
-        end
+    local value
+    key, value = next( tbl, nil )
 
-        local i = math_random( 1, count )
+    repeat
+        i = i - 1
+        key, value = next( tbl, key )
+    until i == 0
 
-        for key, value in pairs( tbl ) do
-            if i == 1 then
-                return value, key
-            else
-                i = i - 1
-            end
-        end
-    end
-
+    return key, value
 end
 
-do
-
-    local math_floor = std.math.floor
-
-    --- [SHARED AND MENU]
-    ---
-    --- Reverses the given table.
-    ---
-    --- The original table is modified.
-    ---
-    ---@param tbl table The table to reverse.
-    ---@param length? integer The length of the table.
-    ---@return table tbl The reversed table.
-    ---@return integer length The length of the reversed table.
-    function table.reverse( tbl, length )
-        if length == nil then length = #tbl end
-        length = length + 1
-
-        for i = 1, math_floor( ( length - 1 ) * 0.5 ), 1 do
-            local j = length - i
-            tbl[ i ], tbl[ j ] = tbl[ j ], tbl[ i ]
-        end
-
-        return tbl, length - 1
+--- [SHARED AND MENU]
+---
+--- Reverses the given table.
+---
+--- The original table is modified.
+---
+---@param tbl table The table to reverse.
+---@param tbl_length? integer The length of the table. Optionally, it should be used to speed up calculations.
+---@return table tbl The reversed table.
+---@return integer length The length of the reversed table.
+function table.reverse( tbl, tbl_length )
+    if tbl_length == nil then
+        tbl_length = len( tbl )
     end
 
-    --- [SHARED AND MENU]
-    ---
-    --- Creates a reversed version of the given table.
-    ---
-    --- The original table is not modified.
-    ---
-    ---@param tbl table The table to reverse.
-    ---@param length? integer The length of the table.
-    ---@return table tbl The reversed table.
-    ---@return integer length The length of the reversed table.
-    function table.reversed( tbl, length )
-        if length == nil then length = #tbl end
-        length = length + 1
+    tbl_length = tbl_length + 1
 
-        local reversed = {}
-        for index = length - 1, 1, -1 do
-            reversed[ length - index ] = tbl[ index ]
-        end
-
-        return reversed, length - 1
+    for i = 1, math_floor( ( tbl_length - 1 ) * 0.5 ), 1 do
+        local j = tbl_length - i
+        tbl[ i ], tbl[ j ] = tbl[ j ], tbl[ i ]
     end
 
+    return tbl, tbl_length - 1
+end
+
+--- [SHARED AND MENU]
+---
+--- Creates a reversed version of the given table.
+---
+--- The original table is not modified.
+---
+---@param tbl table The table to reverse.
+---@param tbl_length? integer The length of the table. Optionally, it should be used to speed up calculations.
+---@return table tbl The reversed table.
+---@return integer length The length of the reversed table.
+function table.reversed( tbl, tbl_length )
+    if tbl_length == nil then
+        tbl_length = len( tbl )
+    end
+
+    tbl_length = tbl_length + 1
+
+    local reversed = {}
+
+    for index = tbl_length - 1, 1, -1 do
+        reversed[ tbl_length - index ] = tbl[ index ]
+    end
+
+    return reversed, tbl_length - 1
 end
 
 do
@@ -634,91 +659,39 @@ end
 --- Extracts selected range of values from the table.
 ---
 ---@param tbl table The table.
----@param from? integer The start position.
----@param to? integer The end position.
+---@param start_position? integer The start position.
+---@param end_position? integer The end position.
+---@param step_size? integer The step size.
+---@param tbl_length? integer The length of the table. Optionally, it should be used to speed up calculations.
 ---@return table values The extracted values.
 ---@return integer length The length of the extracted values.
-function table.extract( tbl, from, to )
+function table.extract( tbl, start_position, end_position, step_size, tbl_length )
+    if tbl_length == nil then
+        tbl_length = len( tbl )
+    end
+
+    if start_position == nil then
+        start_position = 1
+    elseif start_position < 0 then
+        start_position = math_relative( start_position, tbl_length )
+    else
+        start_position = math_min( start_position, tbl_length )
+    end
+
+    if end_position == nil then
+        end_position = tbl_length
+    elseif end_position < 0 then
+        end_position = math_relative( end_position, tbl_length )
+    else
+        end_position = math_min( end_position, tbl_length )
+    end
+
     local extracted, extracted_length = {}, 0
-    local length = #tbl
 
-    if from == nil then
-        if to == nil then
-            return extracted, extracted_length
-        end
-
-        from = 1
-    elseif to == nil then
-        to = length
-    end
-
-    if from > to then
-        return extracted, extracted_length
-    end
-
-    for index = from, to, 1 do
+    for index = start_position, end_position, step_size or 1 do
         extracted_length = extracted_length + 1
         extracted[ extracted_length ] = tbl[ index ]
     end
 
     return extracted, extracted_length
-end
-
---- [SHARED AND MENU]
----
---- Removes values from the table.
----
----@param tbl table The table.
----@param start integer? The start position.
----@param delete_count integer? The number of values to remove.
----@param ... any The values to remove.
----@return table removed The table with removed values.
----@return integer removed_length The length of the removed table.
-function table.splice( tbl, start, delete_count, ... )
-    if start == nil then
-        return {}, 0
-    end
-
-    local tbl_length = #tbl
-
-    if start < 0 then
-        start = tbl_length + start + 1
-    end
-
-    if delete_count == nil then
-        delete_count = tbl_length - start + 1
-    end
-
-    local keys
-    local arg_count = select( "#", ... )
-    if arg_count ~= 0 then
-        keys = {}
-
-        local args = { ... }
-        for i = 1, arg_count, 1 do
-            keys[ args[ i ] ] = true
-        end
-    end
-
-    local removed, removed_length = {}, 0
-    ::back::
-
-    for index = start, tbl_length, 1 do
-        if keys == nil or keys[ raw_get( tbl, index ) ] then
-            removed_length = removed_length + 1
-            removed[ removed_length ] = raw_get( tbl, index )
-
-            delete_count = delete_count - 1
-            table_remove( tbl, index )
-
-            if delete_count == 0 then
-                break
-            else
-                start, tbl_length = index, #tbl
-                goto back
-            end
-        end
-    end
-
-    return removed, removed_length
 end

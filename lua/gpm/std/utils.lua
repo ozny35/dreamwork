@@ -9,7 +9,9 @@ local string_sub, string_find, string_len = string.sub, string.find, string.len
 local table = std.table
 local table_concat = table.concat
 
-local math_relative = std.math.relative
+local math = std.math
+local math_min = math.min
+local math_relative = math.relative
 
 local raw = std.raw
 local raw_get, raw_set = raw.get, raw.set
@@ -133,14 +135,18 @@ do
 
         if start_position == nil then
             start_position = 1
-        else
+        elseif start_position < 0 then
             start_position = math_relative( start_position, str_length )
+        else
+            start_position = math_min( start_position, str_length )
         end
 
         if end_position == nil then
             end_position = str_length
-        else
+        elseif end_position < 0 then
             end_position = math_relative( end_position, str_length )
+        else
+            end_position = math_min( end_position, str_length )
         end
 
         local sequence_position = start_position
@@ -206,14 +212,18 @@ do
 
         if start_position == nil then
             start_position = 1
-        else
+        elseif start_position < 0 then
             start_position = math_relative( start_position, str_length )
+        else
+            start_position = math_min( start_position, str_length )
         end
 
         if end_position == nil then
             end_position = str_length
-        else
+        elseif end_position < 0 then
             end_position = math_relative( end_position, str_length )
+        else
+            end_position = math_min( end_position, str_length )
         end
 
         local segments, segment_count = {}, 0

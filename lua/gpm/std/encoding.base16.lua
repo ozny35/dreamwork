@@ -10,7 +10,10 @@ local string = std.string
 local string_len = string.len
 local string_byte, string_char = string.byte, string.char
 
-local math_relative = std.math.relative
+local math = std.math
+local math_min = math.min
+local math_relative = math.relative
+
 local table_concat = std.table.concat
 
 --- [SHARED AND MENU]
@@ -41,14 +44,18 @@ function base16.encode( raw_str, start_position, end_position )
 
     if start_position == nil then
         start_position = 1
-    else
+    elseif start_position < 0 then
         start_position = math_relative( start_position, str_length )
+    else
+        start_position = math_min( start_position, str_length )
     end
 
     if end_position == nil then
         end_position = str_length
-    else
+    elseif end_position < 0 then
         end_position = math_relative( end_position, str_length )
+    else
+        end_position = math_min( end_position, str_length )
     end
 
     local segments, segment_count = {}, 0
@@ -79,14 +86,18 @@ function base16.decode( base16_str, start_position, end_position )
 
     if start_position == nil then
         start_position = 1
-    else
+    elseif start_position < 0 then
         start_position = math_relative( start_position, str_length )
+    else
+        start_position = math_min( start_position, str_length )
     end
 
     if end_position == nil then
         end_position = str_length
-    else
+    elseif end_position < 0 then
         end_position = math_relative( end_position, str_length )
+    else
+        end_position = math_min( end_position, str_length )
     end
 
     local segments, segment_count = {}, 0
@@ -126,14 +137,18 @@ function base16.validate( base16_str, start_position, end_position )
 
     if start_position == nil then
         start_position = 1
-    else
+    elseif start_position < 0 then
         start_position = math_relative( start_position, str_length )
+    else
+        start_position = math_min( start_position, str_length )
     end
 
     if end_position == nil then
         end_position = str_length
-    else
+    elseif end_position < 0 then
         end_position = math_relative( end_position, str_length )
+    else
+        end_position = math_min( end_position, str_length )
     end
 
     if ( end_position - ( start_position - 1 ) ) % 2 ~= 0 then
@@ -173,14 +188,18 @@ do
 
         if start_position == nil then
             start_position = 1
-        else
+        elseif start_position < 0 then
             start_position = math_relative( start_position, str_length )
+        else
+            start_position = math_min( start_position, str_length )
         end
 
         if end_position == nil then
             end_position = str_length
-        else
+        elseif end_position < 0 then
             end_position = math_relative( end_position, str_length )
+        else
+            end_position = math_min( end_position, str_length )
         end
 
         local segments, segment_count = {}, 0
@@ -219,14 +238,18 @@ do
 
         if start_position == nil then
             start_position = 1
-        else
+        elseif start_position < 0 then
             start_position = math_relative( start_position, str_length )
+        else
+            start_position = math_min( start_position, str_length )
         end
 
         if end_position == nil then
             end_position = str_length
-        else
+        elseif end_position < 0 then
             end_position = math_relative( end_position, str_length )
+        else
+            end_position = math_min( end_position, str_length )
         end
 
         local segments, segment_count = {}, 0
