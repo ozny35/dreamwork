@@ -44,6 +44,8 @@ function path.isRelative( file_path )
     return string_byte( file_path, 1 ) ~= 0x2F --[[ / ]]
 end
 
+local equals
+
 if std.WINDOWS or std.OSX then
 
     local string_lower = string.lower
@@ -55,7 +57,7 @@ if std.WINDOWS or std.OSX then
     ---@param file_path1 string The first file path.
     ---@param file_path2 string The second file path.
     ---@return boolean is_equal `true` if the paths are equal, `false` otherwise.
-    function path.equals( file_path1, file_path2 )
+    function equals( file_path1, file_path2 )
         return string_lower( file_path1 ) == string_lower( file_path2 )
     end
 
@@ -68,11 +70,13 @@ else
     ---@param file_path1 string The first file path.
     ---@param file_path2 string The second file path.
     ---@return boolean is_equal `true` if the paths are equal, `false` otherwise.
-    function path.equals( file_path1, file_path2 )
+    function equals( file_path1, file_path2 )
         return file_path1 == file_path2
     end
 
 end
+
+path.equals = equals
 
 --- [SHARED AND MENU]
 ---
@@ -123,7 +127,7 @@ end
 ---@param file_path string The file path.
 ---@param keep_trailing_slash? boolean `true` to keep the trailing slash, `false` otherwise.
 ---@return string | nil directory The directory of the file, or `nil` if the file path is invalid.
-local function path_getDirectory( file_path, keep_trailing_slash )
+local function getDirectory( file_path, keep_trailing_slash )
     for index = string_len( file_path ), 1, -1 do
         if string_byte( file_path, index ) == 0x2F --[[ / ]] then
             if not keep_trailing_slash then
@@ -135,7 +139,7 @@ local function path_getDirectory( file_path, keep_trailing_slash )
     end
 end
 
-path.getDirectory = path_getDirectory
+path.getDirectory = getDirectory
 
 --- [SHARED AND MENU]
 ---
@@ -169,7 +173,7 @@ end
 ---@param keep_trailing_slash? boolean `true` to keep the trailing slash, `false` otherwise.
 ---@return string directory The directory from the file path.
 ---@return string file_name The file from the file path.
-local function path_split( file_path, keep_trailing_slash )
+local function split( file_path, keep_trailing_slash )
     for index = string_len( file_path ), 1, -1 do
         if string_byte( file_path, index ) == 0x2F --[[ / ]] then
             return string_sub( file_path, 1, keep_trailing_slash and index or ( index - 1 ) ), string_sub( file_path, index + 1 )
@@ -179,7 +183,7 @@ local function path_split( file_path, keep_trailing_slash )
     return "", file_path
 end
 
-path.split = path_split
+path.split = split
 
 --- [SHARED AND MENU]
 ---
@@ -189,7 +193,7 @@ path.split = path_split
 ---@param keep_dot? boolean `true` to keep the extension dot, `false` otherwise.
 ---@return string file_name The file name from the file path.
 ---@return string extension The extension from the file path.
-local function path_splitExtension( file_path, keep_dot )
+local function splitExtension( file_path, keep_dot )
     for index = string_len( file_path ), 1, -1 do
         local byte = string_byte( file_path, index )
         if byte == 0x2F --[[ / ]] then
@@ -202,7 +206,7 @@ local function path_splitExtension( file_path, keep_dot )
     return file_path, ""
 end
 
-path.splitExtension = path_splitExtension
+path.splitExtension = splitExtension
 
 --- [SHARED AND MENU]
 ---
@@ -212,7 +216,7 @@ path.splitExtension = path_splitExtension
 ---@param file_name string The new file name.
 ---@return string new_file_path The new file path.
 function path.replaceName( file_path, file_name )
-    return path_split( file_path, true ) .. file_name
+    return split( file_path, true ) .. file_name
 end
 
 --- [SHARED AND MENU]
@@ -227,7 +231,7 @@ function path.replaceDirectory( file_path, dir_name )
         dir_name = dir_name .. "/"
     end
 
-    local _, file_name = path_split( file_path, false )
+    local _, file_name = split( file_path, false )
     return dir_name .. file_name
 end
 
@@ -239,7 +243,7 @@ end
 ---@param ext_name string The new extension.
 ---@return string new_file_path The new file path.
 function path.replaceExtension( file_path, ext_name )
-    return path_splitExtension( file_path, false ) .. "." .. ext_name
+    return splitExtension( file_path, false ) .. "." .. ext_name
 end
 
 --- [SHARED AND MENU]
@@ -319,13 +323,13 @@ end
 ---@return gpm.std.file.path.Data data The parsed file path data.
 function path.parse( file_path )
     local is_abs = string_byte( file_path, 1 ) == 0x2F --[[ / ]]
-    local directory, base = path_split( file_path, true )
-    local name, ext = path_splitExtension( base, true )
+    local directory, base = split( file_path, true )
+    local name, ext = splitExtension( base, true )
 
     return { root = is_abs and "/" or "", dir = directory, base = base, ext = ext, name = name, abs = is_abs }
 end
 
-local path_getCurrentDirectory
+local getCurrentDirectory
 do
 
     local debug = std.debug
@@ -362,7 +366,7 @@ do
     ---@param keep_trailing_slash? boolean `true` to keep the trailing slash, `false` otherwise.
     ---@param level? integer The stack level to get the file path from.
     ---@return string directory_path
-    function path_getCurrentDirectory( keep_trailing_slash, level )
+    function getCurrentDirectory( keep_trailing_slash, level )
         local fn = debug_getfmain( ( level or 1 ) + 1 )
         if fn == nil then
             return "/"
@@ -384,11 +388,11 @@ do
         if file_path == nil then
             return "/"
         else
-            return path_getDirectory( file_path, keep_trailing_slash ) or "/"
+            return getDirectory( file_path, keep_trailing_slash ) or "/"
         end
     end
 
-    path.getCurrentDirectory = path_getCurrentDirectory
+    path.getCurrentDirectory = getCurrentDirectory
 
 end
 
@@ -404,7 +408,7 @@ local string_byteSplit = string.byteSplit
 ---
 ---@param file_path string The file path.
 ---@return string new_file_path The normalized file path.
-local function path_normalize( file_path )
+local function normalize( file_path )
     local path_length = string_len( file_path )
 
     if path_length == 0 then
@@ -478,7 +482,7 @@ local function path_normalize( file_path )
     end
 end
 
-path.normalize = path_normalize
+path.normalize = normalize
 
 --- [SHARED AND MENU]
 ---
@@ -486,17 +490,14 @@ path.normalize = path_normalize
 ---
 ---@param file_path string The file path.
 ---@return string file_path The resolved file path.
-local function path_resolve( file_path )
+function path.resolve( file_path )
     if string_byte( file_path, 1, 1 ) == 0x2F --[[ / ]] then
-        return path_normalize( file_path )
+        return normalize( file_path )
     else
-        return path_normalize( path_getCurrentDirectory( true ) .. file_path )
+        return normalize( getCurrentDirectory( true ) .. file_path )
     end
 end
 
-path.resolve = path_resolve
-
-local path_join
 do
 
     local string_byteTrim = string.byteTrim
@@ -507,7 +508,7 @@ do
     ---
     ---@param ... string The file paths.
     ---@return string file_path The joined file path.
-    function path_join( ... )
+    function path.join( ... )
         local arg_count = select( "#", ... )
         local args = { ... }
 
@@ -533,16 +534,13 @@ do
             args[ index ] = value
         end
 
-        return path_normalize( table_concat( args, "/", 1, arg_count ) )
+        return normalize( table_concat( args, "/", 1, arg_count ) )
     end
-
-    path.join = path_join
 
 end
 
 do
 
-    local path_equals = path.equals
     local math_min = std.math.min
 
     --- [SHARED AND MENU]
@@ -553,9 +551,9 @@ do
     ---@param to string The to file path.
     ---@return string relative_path The relative path.
     function path.relative( from, to )
-        local from_path, to_path = path_normalize( from ), path_normalize( to )
+        local from_path, to_path = normalize( from ), normalize( to )
 
-        if path_equals( from_path, to_path ) then
+        if equals( from_path, to_path ) then
             return "."
         end
 
@@ -564,7 +562,7 @@ do
         local equal_count = 0
 
         for index = 1, math_min( from_part_count, to_part_count ), 1 do
-            if path_equals( from_parts[ index ], to_parts[ index ] ) then
+            if equals( from_parts[ index ], to_parts[ index ] ) then
                 equal_count = equal_count + 1
             else
                 break

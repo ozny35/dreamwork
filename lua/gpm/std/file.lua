@@ -21,12 +21,11 @@ std.file = file
 local path = file.path
 local path_resolve = path.resolve
 
-local debug = std.debug
 local string = std.string
 
 local engine = gpm.engine
 
--- TODO: move into path library
+
 local path_unpack
 do
 
