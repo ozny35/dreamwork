@@ -210,3 +210,4 @@ end
 -- TODO: https://github.com/thegrb93/StarfallEx/blob/master/lua/starfall/libs_cl/light.lua
 -- TODO: https://wiki.facepunch.com/gmod/Global.DynamicLight
 -- TODO: https://wiki.facepunch.com/gmod/Global.ProjectedTexture
+-- TODO: https://github.com/Nak2/NikNaks/blob/main/lua/niknaks/modules/sh_enums.lua

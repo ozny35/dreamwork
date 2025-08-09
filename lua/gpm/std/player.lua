@@ -100,3 +100,5 @@ player.team = team
 -- ---@class gpm.std.player
 -- player = std.class( "player", PLAYER, player )
 -- return player
+
+-- TODO: https://wiki.facepunch.com/gmod/Global.Path aka player bot path

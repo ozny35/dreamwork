@@ -1,8 +1,7 @@
----
 
 --[[
 
-    TODO
+    TODO:
 
     ui functions:
         https://wiki.facepunch.com/gmod/chat.Open
@@ -33,4 +32,4 @@
         https://wiki.facepunch.com/gmod/GM:ChatTextChanged
         https://wiki.facepunch.com/gmod/GM:OnChatTab
 
-]]
+--]]

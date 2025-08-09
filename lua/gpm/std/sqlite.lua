@@ -46,7 +46,11 @@ do
             str = string_sub( str, 1, null_chr - 1 )
         end
 
-        return no_quotes and str or ( "'" .. str .. "'" )
+        if no_quotes then
+            return str
+        else
+            return "'" .. str .. "'"
+        end
     end
 
 end

@@ -316,3 +316,5 @@ std.TypeError = ErrorClass.make( "TypeError" )
 ---| number # error with level
 ---| `-1` # ErrorNoHalt
 ---| `-2` # ErrorNoHaltWithStack
+
+-- TODO: deprecated, yes the whole file is deprecated :>

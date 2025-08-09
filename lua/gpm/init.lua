@@ -83,14 +83,14 @@ dofile( "std/constants.lua" )
 local raw = std.raw or {}
 std.raw = raw
 
-raw.tonumber = raw.tonumber or _G.tonumber
+raw.tonumber = _G.tonumber
 
-raw.ipairs = raw.ipairs or _G.ipairs
-raw.pairs = raw.pairs or _G.pairs
+raw.ipairs = _G.ipairs
+raw.pairs = _G.pairs
 
-raw.equal = raw.equal or _G.rawequal
+raw.equal = _G.rawequal
 
-local raw_get = raw.get or _G.rawget
+local raw_get = _G.rawget
 raw.get = raw_get
 
 raw.set = raw.set or _G.rawset
@@ -174,12 +174,16 @@ if transducers == nil then
     setmetatable( transducers, {
         __index = function( self, value )
             local metatable = debug_getmetatable( value )
-            if metatable == nil then return value end
+            if metatable == nil then
+                return value
+            end
 
             local fn = raw_get( self, metatable )
-            if fn == nil then return value end
-
-            return fn( value )
+            if fn == nil then
+                return value
+            else
+                return fn( value )
+            end
         end
     } )
 
@@ -300,9 +304,9 @@ end
 ---
 --- [View documents](command:extension.lua.doc?["en-us/51/manual.html/pdf-tonumber"])
 ---
----@param e any
----@param base? number
----@return number?
+---@param e any The value to convert to a number.
+---@param base? integer The number base, default is `10`.
+---@return number | nil x The number value of `e`, or `nil` if `e` cannot be converted to a number.
 function std.tonumber( e, base )
     local fn = debug_getmetavalue( e, "__tonumber" )
     if fn == nil then
@@ -789,8 +793,6 @@ do
 
     end
 
-    -- TODO: think about throw
-
     --- [SHARED AND MENU]
     ---
     --- Throws a Lua error.
@@ -1149,8 +1151,6 @@ end
 
 dofile( "std/file.path.lua" )
 dofile( "std/file.lua" )
-
--- dofile( "std/error.lua" ) -- TODO: deprecated
 
 dofile( "std/audio_stream.lua" )
 
@@ -1664,11 +1664,8 @@ end
 -- TODO: put https://wiki.facepunch.com/gmod/Global.IsFirstTimePredicted somewhere
 -- TODO: put https://wiki.facepunch.com/gmod/Global.RecipientFilter somewhere
 -- TODO: put https://wiki.facepunch.com/gmod/Global.ClientsideScene somewhere
--- TODO: put https://wiki.facepunch.com/gmod/Global.Path somewhere
 -- TODO: put https://wiki.facepunch.com/gmod/util.ScreenShake somewhere
 -- TODO: put https://wiki.facepunch.com/gmod/Global.AddonMaterial somewhere
-
--- TODO: https://github.com/toxidroma/class-war
 
 -- TODO: Write "VideoRecorder" class ( https://wiki.facepunch.com/gmod/video.Record )
 
@@ -1680,8 +1677,6 @@ end
     -- require - broken in glua
 
 ]]
-
--- TODO: https://github.com/Nak2/NikNaks/blob/main/lua/niknaks/modules/sh_enums.lua
 
 -- TODO: plugins support
 
