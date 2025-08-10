@@ -7,8 +7,6 @@
 ## Description
 Garry's Mod Lua project aimed at expanding the game's functionality and improving performance.
 
-The package manager will allow asynchronous loading of Lua packages, introduces support for many really cool third-party APIs and significantly expands functionality for the developer.
-
 After many years of hard work I can finally say that we have created a trully powerful runtime for developers ;>
 
 ## Implemented

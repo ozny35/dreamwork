@@ -1,1 +1,0 @@
--- TODO: gpm.repositories library ( apk/apt like list of trusted code sources ), must by stored in local sqlite

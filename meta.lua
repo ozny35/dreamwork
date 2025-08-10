@@ -1,6 +1,6 @@
 ---@meta
 
----@class gpm.std
+---@class dreamwork.std
 std = {}
 
 ---@alias bool boolean
@@ -9,7 +9,7 @@ std = {}
 ---
 --- HTTP request method.
 ---
----@alias gpm.std.http.Request.method
+---@alias dreamwork.std.http.Request.method
 ---| "HEAD" # Same as `GET`, but only retrieves headers (no body).
 ---| "GET" # Retrieve data from a server.
 ---| "POST" # Send data to the server to create a resource.
@@ -22,9 +22,9 @@ std = {}
 ---
 --- HTTP request URL.
 ---
----@alias gpm.std.http.Request.url
+---@alias dreamwork.std.http.Request.url
 ---| string # Absolute URL as a string.
----| gpm.std.URL # Absolute URL object.
+---| dreamwork.std.URL # Absolute URL object.
 ---| "http://" # Default protocol.
 ---| "https://" # Default secure protocol.
 
@@ -32,7 +32,7 @@ std = {}
 ---
 --- HTTP request content type.
 ---
----@alias gpm.std.http.Request.content_type
+---@alias dreamwork.std.http.Request.content_type
 ---| string
 ---| "text/plain; charset=utf-8"
 ---| "text/html; charset=utf-8"
@@ -62,13 +62,13 @@ std = {}
 ---
 --- HTTP request headers.
 ---
----@alias gpm.std.http.Request.headers table<string, string>
+---@alias dreamwork.std.http.Request.headers table<string, string>
 
 --- [SHARED AND MENU]
 ---
 --- HTTP request parameters.
 ---
----@alias gpm.std.http.Request.parameters gpm.std.URL.SearchParams | table | nil
+---@alias dreamwork.std.http.Request.parameters dreamwork.std.URL.SearchParams | table | nil
 
 do
 
@@ -76,24 +76,24 @@ do
     ---
     --- Options table for `http.request` function.
     ---
-    ---@class gpm.std.http.Request
+    ---@class dreamwork.std.http.Request
     local request = {}
 
     --- Request method.
     ---
-    ---@type gpm.std.http.Request.method
+    ---@type dreamwork.std.http.Request.method
     request.method = nil
 
     --- Request URL.
     ---
-    ---@type gpm.std.http.Request.url
+    ---@type dreamwork.std.http.Request.url
     request.url = nil
 
     --- KeyValue table for parameters.
     ---
     --- This is only applicable to the following request methods: **HEAD**, **GET**, **POST**
     ---
-    ---@type gpm.std.http.Request.parameters
+    ---@type dreamwork.std.http.Request.parameters
     request.parameters = nil
 
     --- Body string for POST data.
@@ -105,12 +105,12 @@ do
 
     --- Content type for body.
     ---
-    ---@type gpm.std.http.Request.content_type?
+    ---@type dreamwork.std.http.Request.content_type?
     request.content_type = "text/plain; charset=utf-8"
 
     --- KeyValue table for headers.
     ---
-    ---@type gpm.std.http.Request.headers?
+    ---@type dreamwork.std.http.Request.headers?
     request.headers = nil
 
     --- The timeout for the connection in seconds.
@@ -145,7 +145,7 @@ do
     ---
     --- The success callback.
     ---
-    ---@class gpm.std.http.Response
+    ---@class dreamwork.std.http.Response
     local response = {}
 
     --- The response status code.
@@ -160,7 +160,7 @@ do
 
     --- The response headers.
     ---
-    ---@type gpm.std.http.Request.headers
+    ---@type dreamwork.std.http.Request.headers
     response.headers = nil
 
 end
@@ -170,7 +170,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- The server information table.
-    ---@class gpm.std.server.Info
+    ---@class dreamwork.std.server.Info
     local server_info = {}
 
     --- The server ping in milliseconds.
@@ -245,13 +245,13 @@ do
 
     --- The [gamemode folder](https://wiki.facepunch.com/gmod/Gamemode_Creation#gamemodefolder) name and the [`GM.Folder`](https://wiki.facepunch.com/gmod/Gamemode_Creation#gamemodefoldername) value.
     ---
-    --- This applies to Garry's gamemodes, they are different from the gamemodes in gpm...
+    --- This applies to Garry's gamemodes, they are different from the gamemodes in dreamwork...
     ---@type string
     server_info.gamemode_name = "sandbox"
 
     --- The [`GM.Name`](https://wiki.facepunch.com/gmod/Gamemode_Creation#sharedlua) value.
     ---
-    --- This applies to Garry's gamemodes, they are different from the gamemodes in gpm...
+    --- This applies to Garry's gamemodes, they are different from the gamemodes in dreamwork...
     ---@type string
     server_info.gamemode_title = "Sandbox"
 
@@ -270,7 +270,7 @@ do
     --- [MENU]
     ---
     --- Queries the servers for it's information.
-    ---@class gpm.std.server.QueryData
+    ---@class dreamwork.std.server.QueryData
     local query_data = {}
 
     --- The game directory to get the servers for
@@ -322,7 +322,7 @@ end
 
 do
 
-    ---@class gpm.std.console.Command : gpm.std.Object
+    ---@class dreamwork.std.console.Command : dreamwork.std.Object
     local command = {}
 
     --- **READ-ONLY**
@@ -589,7 +589,7 @@ do
     ---
     --- Table used by `console.Command` class constructor.
     ---
-    ---@class gpm.std.console.Command.Options
+    ---@class dreamwork.std.console.Command.Options
     local options = {}
 
     --- The name of the console command/variable.
@@ -786,8 +786,8 @@ do
 
 end
 
----@alias gpm.std.console.Variable.type "boolean" | "number" | "string"
----@alias gpm.std.console.Variable.value boolean | number | string
+---@alias dreamwork.std.console.Variable.type "boolean" | "number" | "string"
+---@alias dreamwork.std.console.Variable.value boolean | number | string
 
 do
 
@@ -795,17 +795,17 @@ do
     ---
     --- Table used by `console.Variable` class constructor.
     ---
-    ---@class gpm.std.console.Variable.Options : gpm.std.console.Command.Options
+    ---@class dreamwork.std.console.Variable.Options : dreamwork.std.console.Command.Options
     local options = {}
 
     --- The type of the console variable.
     ---
-    ---@type gpm.std.console.Variable.type?
+    ---@type dreamwork.std.console.Variable.type?
     options.type = nil
 
     --- The default value of the console variable.
     ---
-    ---@type gpm.std.console.Variable.value?
+    ---@type dreamwork.std.console.Variable.value?
     options.default = nil
 
     --- The minimal value of the console variable.
@@ -822,26 +822,26 @@ end
 
 do
 
-    ---@class gpm.std.console.Variable : gpm.std.console.Command
+    ---@class dreamwork.std.console.Variable : dreamwork.std.console.Command
     local variable = {}
 
     --- The type of the console variable.
     ---
-    ---@type gpm.std.console.Variable.type
+    ---@type dreamwork.std.console.Variable.type
     variable.type = nil
 
     --- **READ-ONLY**
     ---
     --- The default value of the console variable.
     ---
-    ---@type gpm.std.console.Variable.value
+    ---@type dreamwork.std.console.Variable.value
     variable.default = nil
 
     --- [SHARED AND MENU]
     ---
     --- The value of the console variable.
     ---
-    ---@type gpm.std.console.Variable.value
+    ---@type dreamwork.std.console.Variable.value
     variable.value = nil
 
     --- **READ-ONLY**
@@ -866,7 +866,7 @@ do
     ---
     --- Table used by `console.Logger` constructor.
     ---
-    ---@class gpm.std.console.Logger.Options
+    ---@class dreamwork.std.console.Logger.Options
     local options = {}
 
     --- The title of the logger.
@@ -874,11 +874,11 @@ do
     options.title = nil
 
     --- The color of the title.
-    ---@type gpm.std.Color | nil
+    ---@type dreamwork.std.Color | nil
     options.color = nil
 
     --- The color of the text.
-    ---@type gpm.std.Color | nil
+    ---@type dreamwork.std.Color | nil
     options.text_color = nil
 
     --- Whether to interpolate the message.
@@ -895,7 +895,7 @@ do
 
     --- [SHARED AND MENU]
     ---
-    --- The result table of executing `file.path.parse`.
+    --- The result table of executing `path.parse`.
     ---
     ---    ┌─────────────────────┬────────────┐
     ---    │          dir        │    base    │
@@ -905,7 +905,7 @@ do
     ---    └──────┴──────────────┴──────┴─────┘
     --- (All spaces in the "" line should be ignored. They are purely for formatting.)
     ---
-    ---@class gpm.std.file.path.Data
+    ---@class dreamwork.std.path.Data
     local path_data = {}
 
     --- The root of the file path.
@@ -945,7 +945,7 @@ do
     --- [SHARED AND MENU]
     ---
     --- The URL state object.
-    ---@class gpm.std.URL.State
+    ---@class dreamwork.std.URL.State
     ---@field scheme string?
     ---@field username string?
     ---@field password string?
@@ -953,7 +953,7 @@ do
     ---@field port number?
     ---@field path string | table | nil
     ---@field fragment string?
-    ---@field query string | gpm.std.URL.SearchParams
+    ---@field query string | dreamwork.std.URL.SearchParams
     local URLState = {}
 
 end
@@ -966,7 +966,7 @@ do
     ---
     --- The hierarchy between files in a Git repository.
     ---
-    ---@class gpm.std.http.github.Tree
+    ---@class dreamwork.std.http.github.Tree
     local tree = {}
 
     --- The SHA1 of the tree.
@@ -997,14 +997,14 @@ do
     ---
     --- A list of files and directories in the tree.
     ---
-    ---@class gpm.std.http.github.Tree.Item[]
+    ---@class dreamwork.std.http.github.Tree.Item[]
     tree.tree = nil
 
     --- [SHARED AND MENU]
     ---
     --- A single file or directory in a tree.
     ---
-    ---@class gpm.std.http.github.Tree.Item
+    ---@class dreamwork.std.http.github.Tree.Item
     local item = {}
 
     --- The path to the file or directory.
@@ -1055,7 +1055,7 @@ do
     ---
     --- A GitHub user.
     ---
-    ---@class gpm.std.http.github.User
+    ---@class dreamwork.std.http.github.User
     local user = {}
 
     --- Unique numeric ID of the user on GitHub.
@@ -1155,7 +1155,7 @@ do
     ---
     --- A GitHub user who has contributed to a repository.
     ---
-    ---@class gpm.std.http.github.Contributor : gpm.std.http.github.User
+    ---@class dreamwork.std.http.github.Contributor : dreamwork.std.http.github.User
     local contributor = {}
 
     --- API endpoint to retrieve the public events
@@ -1180,7 +1180,7 @@ do
     ---
     --- A GitHub repository tag commit.
     ---
-    ---@class gpm.std.http.github.Repository.Tag.Commit
+    ---@class dreamwork.std.http.github.Repository.Tag.Commit
     local commit = {}
 
     --- The SHA-1 hash of the commit that this tag points to.
@@ -1197,7 +1197,7 @@ do
     ---
     --- A GitHub repository tag.
     ---
-    ---@class gpm.std.http.github.Repository.Tag
+    ---@class dreamwork.std.http.github.Repository.Tag
     local tag = {}
 
     --- Name of the tag.
@@ -1207,7 +1207,7 @@ do
 
     --- Commit associated with the tag.
     ---
-    ---@type gpm.std.http.github.Repository.Tag.Commit
+    ---@type dreamwork.std.http.github.Repository.Tag.Commit
     tag.commit = nil
 
     --- URL to download the source code at this tag as a ZIP archive.
@@ -1233,7 +1233,7 @@ do
     ---
     --- The GitHub license.
     ---
-    ---@class gpm.std.http.github.License
+    ---@class dreamwork.std.http.github.License
     local license = {}
 
     --- Full human-readable name of the license (e.g., "MIT License").
@@ -1269,7 +1269,7 @@ do
     ---
     --- The GitHub repository.
     ---
-    ---@class gpm.std.http.github.Repository
+    ---@class dreamwork.std.http.github.Repository
     local repository = {}
 
     --- Unique numeric ID of the repository.
@@ -1289,7 +1289,7 @@ do
 
     --- Information about the repository owner.
     ---
-    ---@type gpm.std.http.github.User
+    ---@type dreamwork.std.http.github.User
     repository.owner = nil
 
     --- Repository visibility level (public, private, internal).
@@ -1297,7 +1297,7 @@ do
     ---@type string
     repository.visibility = nil
 
-    --- The full name of the repository, e.g. "Pika-Software/glua-package-manager".
+    --- The full name of the repository, e.g. "Pika-Software/dreamwork".
     ---
     ---@type string
     repository.full_name = nil
@@ -1449,12 +1449,12 @@ do
 
     --- Information about the software license attached to the repository.
     ---
-    ---@type gpm.std.http.github.License
+    ---@type dreamwork.std.http.github.License
     repository.license = nil
 
     --- Information about the repository owner.
     ---
-    ---@type gpm.std.http.github.User
+    ---@type dreamwork.std.http.github.User
     repository.owner = nil
 
     --- Whether commits made via the web interface require sign-off (DCO compliance).
@@ -1675,7 +1675,7 @@ do
     ---
     --- A GitHub blob object.
     ---
-    ---@class gpm.std.http.github.Blob
+    ---@class dreamwork.std.http.github.Blob
     local blob = {}
 
     --- The base64-encoded content of the file.
@@ -1720,7 +1720,7 @@ do
     ---
     --- The options for the pbkdf2 function.
     ---
-    ---@class gpm.std.crypto.pbkdf2.Options
+    ---@class dreamwork.std.crypto.pbkdf2.Options
     local options = {}
 
     --- The input password or passphrase to derive a key from.
@@ -1770,7 +1770,7 @@ do
     ---
     --- Source game item.
     ---
-    ---@class gpm.std.game.Item
+    ---@class dreamwork.std.game.Item
     local game = {}
 
     --- The name of the game.
@@ -1809,52 +1809,52 @@ end
 ---
 --- The Steam Workshop publication content type.
 ---
----@alias gpm.std.steam.workshop.Item.ContentType "addon" | "save" | "dupe" | "demo"
+---@alias dreamwork.std.steam.workshop.Item.ContentType "addon" | "save" | "dupe" | "demo"
 
 --- [SHARED AND MENU]
 ---
 --- The Steam Workshop publication type.
 ---
----@alias gpm.std.steam.workshop.Item.Type "gamemode" | "map" | "weapon" | "vehicle" | "npc" | "entity" | "tool" | "effects" | "model" | "servercontent"
+---@alias dreamwork.std.steam.workshop.Item.Type "gamemode" | "map" | "weapon" | "vehicle" | "npc" | "entity" | "tool" | "effects" | "model" | "servercontent"
 
 --- [SHARED AND MENU]
 ---
 --- The Steam Workshop addon tag.
 ---
----@alias gpm.std.steam.workshop.Item.AddonTag "fun" | "roleplay" | "scenic" | "movie" | "realism" | "cartoon" | "water" | "comic" | "build"
+---@alias dreamwork.std.steam.workshop.Item.AddonTag "fun" | "roleplay" | "scenic" | "movie" | "realism" | "cartoon" | "water" | "comic" | "build"
 
 --- [SHARED AND MENU]
 ---
 --- The Steam Workshop dupe tag.
 ---
----@alias gpm.std.steam.workshop.Item.DupeTag "buildings" | "machines" | "posed" | "scenes" | "vehicles" | "other"
+---@alias dreamwork.std.steam.workshop.Item.DupeTag "buildings" | "machines" | "posed" | "scenes" | "vehicles" | "other"
 
 --- [SHARED AND MENU]
 ---
 --- The Steam Workshop save tag.
 ---
----@alias gpm.std.steam.workshop.Item.SaveTag "buildings" | "courses" | "machines" | "scenes" | "other"
+---@alias dreamwork.std.steam.workshop.Item.SaveTag "buildings" | "courses" | "machines" | "scenes" | "other"
 
 --- [SHARED AND MENU]
 ---
 --- The Steam Workshop tag.
 ---
----@alias gpm.std.steam.workshop.Item.Tag gpm.std.steam.workshop.Item.ContentType | gpm.std.steam.workshop.Item.Type | gpm.std.steam.workshop.Item.AddonTag | gpm.std.steam.workshop.Item.DupeTag | gpm.std.steam.workshop.Item.SaveTag
+---@alias dreamwork.std.steam.workshop.Item.Tag dreamwork.std.steam.workshop.Item.ContentType | dreamwork.std.steam.workshop.Item.Type | dreamwork.std.steam.workshop.Item.AddonTag | dreamwork.std.steam.workshop.Item.DupeTag | dreamwork.std.steam.workshop.Item.SaveTag
 
 --- [SHARED AND MENU]
 ---
 --- The Steam Workshop search type.
 ---
----@alias gpm.std.steam.workshop.Item.SearchType "friendfavorite" | "subscribed" | "friends" | "favorite" | "trending" | "popular" | "latest" | "mine"
+---@alias dreamwork.std.steam.workshop.Item.SearchType "friendfavorite" | "subscribed" | "friends" | "favorite" | "trending" | "popular" | "latest" | "mine"
 
 do
 
     --- The params table that was used in `Addon` search functions.
-    ---@class gpm.std.steam.workshop.Item.SearchParams
+    ---@class dreamwork.std.steam.workshop.Item.SearchParams
     local search_params = {}
 
     --- The type of items to retrieve.
-    ---@type gpm.std.steam.workshop.Item.SearchType?
+    ---@type dreamwork.std.steam.workshop.Item.SearchType?
     search_params.type = nil
 
     --- A table of tags to match.
@@ -1891,13 +1891,13 @@ end
 ---
 --- The Steam Workshop content descriptor.
 ---
----@alias gpm.std.steam.workshop.Warning "general_mature" | "gore" | "suggestive" | "nudity" | "adult_only"
+---@alias dreamwork.std.steam.workshop.Warning "general_mature" | "gore" | "suggestive" | "nudity" | "adult_only"
 
 --- [SHARED AND MENU]
 ---
 --- Visibility of a Steam Workshop item.
 ---
----@alias gpm.std.steam.workshop.Visibility "public" | "friends-only" | "private" | "unlisted" | "developer-only" | "unknown"
+---@alias dreamwork.std.steam.workshop.Visibility "public" | "friends-only" | "private" | "unlisted" | "developer-only" | "unknown"
 
 do
 
@@ -1905,7 +1905,7 @@ do
     ---
     --- The Steam Workshop item details.
     ---
-    ---@class gpm.std.steam.workshop.ItemInfo
+    ---@class dreamwork.std.steam.workshop.ItemInfo
     local item_info = {}
 
     --- The ID of the item.
@@ -1925,17 +1925,17 @@ do
 
     --- The visibility of the item.
     ---
-    ---@type gpm.std.steam.workshop.Visibility
+    ---@type dreamwork.std.steam.workshop.Visibility
     item_info.visibility = nil
 
     --- The list of content descriptors for this item.
     ---
-    ---@type gpm.std.steam.workshop.Warning[] | nil
+    ---@type dreamwork.std.steam.workshop.Warning[] | nil
     item_info.warnings = nil
 
     --- The tags of the item.
     ---
-    ---@type gpm.std.steam.workshop.Item.Tag[]
+    ---@type dreamwork.std.steam.workshop.Item.Tag[]
     item_info.tags = nil
 
     --- If the addon is subscribed, this value represents whether it is installed on the client and its files are accessible, `false` otherwise.
@@ -1955,7 +1955,7 @@ do
 
     --- The `steam.Identifier of the original uploader of the addon.
     ---
-    ---@type gpm.std.steam.Identifier
+    ---@type dreamwork.std.steam.Identifier
     item_info.owner_id = nil
 
     --- The internal file ID of the item.
@@ -2034,7 +2034,7 @@ do
     ---
     --- A Steam API response.
     ---
-    ---@class gpm.std.steam.workshop.Response
+    ---@class dreamwork.std.steam.workshop.Response
     local response = {}
 
     --- The reason why the request failed.
@@ -2052,7 +2052,7 @@ do
     ---
     --- Details of a Steam Workshop item.
     ---
-    ---@class gpm.std.steam.workshop.Item.Details : gpm.std.steam.workshop.Response
+    ---@class dreamwork.std.steam.workshop.Item.Details : dreamwork.std.steam.workshop.Response
     local details = {}
 
     --- The ID of the item in the Steam Workshop.
@@ -2077,12 +2077,12 @@ do
 
     --- The visibility of the item.
     ---
-    ---@type gpm.std.steam.workshop.Visibility
+    ---@type dreamwork.std.steam.workshop.Visibility
     details.visibility = nil
 
     --- The tags of the item.
     ---
-    ---@type gpm.std.steam.workshop.Item.Tag[]
+    ---@type dreamwork.std.steam.workshop.Item.Tag[]
     details.tags = nil
 
     --- Whether the item is banned or not.
@@ -2114,7 +2114,7 @@ do
 
     --- The `steam.Identifier of the original uploader of the addon.
     ---
-    ---@type gpm.std.steam.Identifier
+    ---@type dreamwork.std.steam.Identifier
     details.owner_id = nil
 
     --- The time, in unix format, when the item was created.
@@ -2171,7 +2171,7 @@ end
 --- The type of a Steam Workshop item.
 ---
 --- Ref: https://partner.steamgames.com/doc/api/ISteamRemoteStorage#EWorkshopFileType
----@alias gpm.std.steam.EWorkshopFileType "item" | "microtransaction" | "collection" | "artwork" | "video" | "screenshot" | "game" | "software" | "concept" | "web_guide" | "integrated_guide" | "merch" | "controller_binding" | "steamworks_access_invite" | "steam_video" | "game_managed_item"
+---@alias dreamwork.std.steam.EWorkshopFileType "item" | "microtransaction" | "collection" | "artwork" | "video" | "screenshot" | "game" | "software" | "concept" | "web_guide" | "integrated_guide" | "merch" | "controller_binding" | "steamworks_access_invite" | "steam_video" | "game_managed_item"
 
 do
 
@@ -2179,7 +2179,7 @@ do
     ---
     --- Details of a Steam Workshop collection item.
     ---
-    ---@class gpm.std.steam.workshop.Collection.Details.Item
+    ---@class dreamwork.std.steam.workshop.Collection.Details.Item
     local item = {}
 
     --- The ID of the item in the Steam Workshop.
@@ -2189,7 +2189,7 @@ do
 
     --- The type of the item.
     ---
-    ---@type gpm.std.steam.EWorkshopFileType
+    ---@type dreamwork.std.steam.EWorkshopFileType
     item.type = nil
 
     --- The order of the item in the collection.
@@ -2205,7 +2205,7 @@ do
     ---
     --- Details of a Steam Workshop collection.
     ---
-    ---@class gpm.std.steam.workshop.Collection.Details : gpm.std.steam.workshop.Response
+    ---@class dreamwork.std.steam.workshop.Collection.Details : dreamwork.std.steam.workshop.Response
     local details = {}
 
     --- The ID of the collection in the Steam Workshop.
@@ -2217,7 +2217,7 @@ do
     ---
     --- The items are sorted in the order they are in the collection.
     ---
-    ---@type gpm.std.steam.workshop.Collection.Details.Item[] | nil
+    ---@type dreamwork.std.steam.workshop.Collection.Details.Item[] | nil
     details.items = nil
 
 end

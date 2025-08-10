@@ -18,7 +18,7 @@
         "/**/",
         "continue"
     ],
-    "diagnostics.globals": ["gpm"],
+    "diagnostics.globals": ["dreamwork"],
     "diagnostics.groupFileStatus": {
         "await": "Any"
     },
