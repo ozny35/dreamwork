@@ -15,7 +15,7 @@ if std.loadbinary( "reqwest" ) then
     ---@diagnostic disable-next-line: undefined-field
     local reqwest = _G.reqwest
 
-    local user_agent = "gLua Package Manager/" .. dreamwork.VERSION .. " - Garry's Mod/" .. _G.VERSIONSTR
+    local user_agent = "DreamWork/" .. dreamwork.VERSION .. " - Garry's Mod/" .. _G.VERSIONSTR
     local default_headers = { ["User-Agent"] = user_agent }
 
     function http_client( parameters )
