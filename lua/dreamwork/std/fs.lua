@@ -105,17 +105,17 @@ end
 ---@overload fun( parent: dreamwork.std.Directory?, name: string, game_directory: string?, path: string? ): dreamwork.std.Directory
 local DirectoryClass = std.class.create( Directory )
 
-local root = DirectoryClass( nil, "", "BASE_PATH" )
+-- local root = DirectoryClass( nil, "", "BASE_PATH" )
 
-local garrysmod = DirectoryClass( root, "garrysmod", "GAME" )
+-- local garrysmod = DirectoryClass( root, "garrysmod", "GAME" )
 
-local lua = DirectoryClass( garrysmod, "lua",
-    ( std.SERVER and "lsv" or
-    ( std.CLIENT and "lcl" or
-    ( std.MENU and "LuaMenu" or
-    "LUA" ) ) ) )
+-- local lua = DirectoryClass( garrysmod, "lua",
+--     ( std.SERVER and "lsv" or
+--     ( std.CLIENT and "lcl" or
+--     ( std.MENU and "LuaMenu" or
+--     "LUA" ) ) ) )
 
-print( root )
+-- print( root )
 
 
 local CLIENT, SERVER, MENU = std.CLIENT, std.SERVER, std.MENU
