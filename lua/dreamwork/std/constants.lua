@@ -39,9 +39,6 @@ local CLIENT_SERVER = CLIENT or SERVER
 --- Garry's Mod default environment
 std.gmod = _G
 
---- A global variable (not a function) that holds a string containing the running Lua version.
-std._VERSION = std._VERSION or _G._VERSION
-
 --- A variable containing a string indicating which (Beta) Branch of the game you are using.
 std.BRANCH = std.BRANCH or _G.BRANCH or "unknown"
 

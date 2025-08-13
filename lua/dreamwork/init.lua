@@ -44,6 +44,7 @@ if std == nil then
 end
 
 std.LUA_VERSION = _G._VERSION or "unknown"
+
 ---@diagnostic disable-next-line: assign-type-mismatch
 std.GAME_VERSION = _G.VERSION or 0
 
@@ -212,10 +213,14 @@ if transducers == nil then
 end
 
 if CLIENT or SERVER then
+
+    ---@diagnostic disable-next-line: undefined-field
     local glua_util = _G.util
     if glua_util ~= nil then
+
         local fn = glua_util.GetActivityIDByName
         if fn ~= nil then
+
             setmetatable( std.ACT, {
                 __index = function( tbl, key )
                     local value = fn( "ACT_" .. key )
@@ -223,8 +228,11 @@ if CLIENT or SERVER then
                     return value
                 end
             } )
+
         end
+
     end
+
 end
 
 --- [SHARED AND MENU]
@@ -374,19 +382,19 @@ function std.isvalid( value )
     end
 end
 
-do
+--- [SHARED AND MENU]
+---
+--- coroutine library
+---
+--- Coroutines are similar to threads, however they do not run simultaneously.
+---
+--- They offer a way to split up tasks and dynamically pause & resume functions.
+---
+---@class dreamwork.std.coroutine
+local coroutine = std.coroutine or {}
+std.coroutine = coroutine
 
-    --- [SHARED AND MENU]
-    ---
-    --- coroutine library
-    ---
-    --- Coroutines are similar to threads, however they do not run simultaneously.
-    ---
-    --- They offer a way to split up tasks and dynamically pause & resume functions.
-    ---
-    ---@class dreamwork.std.coroutine
-    local coroutine = std.coroutine or {}
-    std.coroutine = coroutine
+do
 
     local glua_coroutine = _G.coroutine
     if glua_coroutine == nil then
@@ -399,9 +407,11 @@ do
     coroutine.status = coroutine.status or glua_coroutine.status
     coroutine.wrap = coroutine.wrap or glua_coroutine.wrap
     coroutine.yield = coroutine.yield or glua_coroutine.yield
+
+    ---@diagnostic disable-next-line: deprecated
     coroutine.isyieldable = coroutine.isyieldable or glua_coroutine.isyieldable
 
-    if glua_coroutine.isyieldable == nil then
+    if coroutine.isyieldable == nil then
 
         local coroutine_running = coroutine.running
         local coroutine_status = coroutine.status
@@ -623,7 +633,7 @@ do
     -- thread ( 8 )
     do
 
-        local object = std.coroutine.create( debug_fempty )
+        local object = coroutine.create( debug_fempty )
 
         local THREAD = debug_getmetatable( object )
         if THREAD == nil then
@@ -778,7 +788,7 @@ local table_concat = std.table.concat
 
 do
 
-    local coroutine_running = std.coroutine.running
+    local coroutine_running = coroutine.running
     local debug_getinfo = debug.getinfo
     local string_rep = string.rep
     local tostring = std.tostring
@@ -1362,10 +1372,13 @@ end
 
 do
 
-    local getfenv, setfenv = std.getfenv, std.setfenv
     ---@diagnostic disable-next-line: undefined-field
     local gmbc_load_bytecode = _G.gmbc_load_bytecode
+
+    ---@diagnostic disable-next-line: undefined-field
     local CompileString = _G.CompileString
+
+    local getfenv, setfenv = std.getfenv, std.setfenv
     local file_read = std.fs.read
     local pcall = std.pcall
 
@@ -1549,9 +1562,10 @@ if std.CLIENT_MENU then
     dofile( "std/render.lua" )
 end
 
-if _G.system ~= nil then
+---@diagnostic disable-next-line: undefined-field
+local glua_system = _G.system
 
-    local glua_system = _G.system
+if glua_system ~= nil then
 
     std_metatable.__indexes.SYSTEM_COUNTRY = glua_system.GetCountry or function() return "gb" end
 
@@ -1611,9 +1625,6 @@ dofile( "std/level.lua" )
 if coroutine.wait == nil then
 
     local server_getUptime = std.server.getUptime
-
-    ---@class dreamwork.std.coroutine
-    local coroutine = std.coroutine
     local coroutine_yield = coroutine.yield
 
     ---@async
@@ -1638,12 +1649,8 @@ end
 
 dofile( "std/input.lua" )
 
-if _G.TYPE_COUNT ~= 44 then
-    logger:warn( "Global TYPE_COUNT mismatch, data corruption suspected. (" .. std.tostring( _G.TYPE_COUNT or "missing" ) .. " ~= 44)"  )
-end
-
-if _G._VERSION ~= "Lua 5.1" then
-    logger:warn( "Lua version changed, possible unpredictable behavior. (" .. std.tostring( _G._VERSION or "unknown" ) .. ")" )
+if std.LUA_VERSION ~= "Lua 5.1" then
+    logger:warn( "Lua version changed, possible unpredictable behavior. (" .. std.LUA_VERSION .. ")" )
 end
 
 if CLIENT or SERVER then
