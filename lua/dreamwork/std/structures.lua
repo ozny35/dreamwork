@@ -284,22 +284,23 @@ do
     ---
     function Node:unlink()
         local parent = self.parent
+        if parent == nil then
+            return
+        end
+
         self.parent = nil
 
-        if parent ~= nil then
+        local width = parent.width
 
-            local width = parent.width
-
-            for index = width, 1, -1 do
-                if parent[ index ] == self then
-                    table_remove( parent, index )
-                    width = width - 1
-                end
+        for index = width, 1, -1 do
+            if parent[ index ] == self then
+                table_remove( parent, index )
+                width = width - 1
+                break
             end
-
-            parent.width = width
-
         end
+
+        parent.width = width
 
         self.depth = 0
 
@@ -316,8 +317,7 @@ do
     function Node:link( parent )
         local width = parent.width
         for index = 1, width, 1 do
-            local child = parent[ index ]
-            if child == self then
+            if parent[ index ] == self then
                 self.depth = parent.depth + 1
                 return
             end
@@ -338,6 +338,10 @@ do
         width = width + 1
         parent[ width ] = self
         parent.width = width
+
+        for index = 1, self.width, 1 do
+            self[ index ]:link( self )
+        end
     end
 
     --- [SHARED AND MENU]
@@ -439,3 +443,5 @@ do
     end
 
 end
+
+-- TODO: LinQ

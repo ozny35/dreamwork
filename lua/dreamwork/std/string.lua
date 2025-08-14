@@ -29,7 +29,7 @@ do
     string.dump = string.dump or glua_string.dump
     string.find = string.find or glua_string.find
     string.format = string.format or glua_string.format
-    ---@diagnostic disable-next-line: deprecated
+    ---@diagnostic disable-next-line: deprecated, undefined-field
     string.gmatch = string.gmatch or glua_string.gmatch or glua_string.gfind
     string.gsub = string.gsub or glua_string.gsub
     string.len = string.len or glua_string.len
@@ -527,8 +527,10 @@ do
     ---@return boolean is_number `true` if the string is a number, otherwise `false`.
     function string.isNumber( str, base, start_position, end_position )
         if start_position == nil and end_position == nil then
+            ---@diagnostic disable-next-line: param-type-mismatch
             return raw_tonumber( str, base ) ~= nil
         else
+            ---@diagnostic disable-next-line: param-type-mismatch
             return raw_tonumber( string_sub( str, start_position or 1, end_position ), base ) ~= nil
         end
     end

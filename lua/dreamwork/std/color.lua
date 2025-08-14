@@ -921,6 +921,7 @@ if std.CLIENT then
 
     local render_ReadPixel
 
+    ---@diagnostic disable-next-line: undefined-field
     local glua_render = _G.render
     if glua_render ~= nil then
         render_ReadPixel = glua_render.ReadPixel
@@ -996,6 +997,7 @@ do
     function metatable:__index( name )
         local color
         if isstring( name ) then
+            ---@diagnostic disable-next-line: redundant-parameter
             color = NamedColor( name )
             if color == nil then
                 color = from_rgba( 255, 255, 255, 255 )

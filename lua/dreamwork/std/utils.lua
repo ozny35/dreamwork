@@ -2,8 +2,8 @@ local std = _G.dreamwork.std
 
 ---@class dreamwork.std.string
 local string = std.string
+local string_sub, string_len = string.sub, string.len
 local string_char, string_byte = string.char, string.byte
-local string_sub, string_find, string_len = string.sub, string.find, string.len
 
 ---@class dreamwork.std.table
 local table = std.table
@@ -12,9 +12,6 @@ local table_concat = table.concat
 local math = std.math
 local math_min = math.min
 local math_relative = math.relative
-
-local raw = std.raw
-local raw_get, raw_set = raw.get, raw.set
 
 --- [SHARED AND MENU]
 ---
@@ -30,70 +27,119 @@ local raw_get, raw_set = raw.get, raw.set
 --- ```
 ---@param tbl table The table to get the value from.
 ---@param str string The key path to get.
+---@param separator? integer The separator of the key path, default is `0x2E`.
+---@param str_length? integer The length of the key path, default is `string.len( str )`.
 ---@return any value The value of the key path.
-function table.get( tbl, str )
-    local pointer = 1
+function table.get( tbl, str, separator, str_length )
+    if separator == nil then
+        separator = 0x2E --[[ "." ]]
+    end
 
-    for _ = 1, string_len( str ), 1 do
-        local startPos = string_find( str, ".", pointer, true )
-        if startPos == nil then
+    if str_length == nil then
+        str_length = string_len( str )
+    end
+
+    local split_position = 0
+    local position = 1
+
+    while true do
+        local uint8 = string_byte( str, position, position )
+        if uint8 == separator then
+            if split_position ~= position then
+                tbl = tbl[ string_sub( str, split_position + 1, position - 1 ) ]
+                if tbl == nil then
+                    return nil
+                end
+            end
+
+            split_position = position
+        end
+
+        if position == str_length then
             break
         else
-            tbl = tbl[ string_sub( str, pointer, startPos - 1 ) ]
-            if tbl == nil then
-                return nil
-            else
-                pointer = startPos + 1
-            end
+            position = position + 1
         end
     end
 
-    return tbl[ string_sub( str, pointer ) ]
+    if split_position ~= position then
+        tbl = tbl[ string_sub( str, split_position + 1, position ) ]
+    end
+
+    return tbl
 end
 
--- local istable = std.istable
+do
 
---- [SHARED AND MENU]
----
---- Sets the value of the given key path.
----
---- Tables are created if they do not exist.
----
---- Example:
----
---- ```lua
----     local t = {}
----     table.set( t, "a.b.c.d.e", "e value!" )
----     print( t.a.b.c.d.e ) -- e value!
---- ```
----
----@param tbl table The table to set the value in.
----@param str string The key path.
----@param value any The value to set.
-function table.set( tbl, str, value )
-    local pointer = 1
+    local istable = std.istable
 
-    for _ = 1, string_len( str ), 1 do
-        local startPos = string_find( str, ".", pointer, true )
-        if startPos == nil then
-            break
-        else
-            local key = string_sub( str, pointer, startPos - 1 )
-            pointer = startPos + 1
+    --- [SHARED AND MENU]
+    ---
+    --- Sets the value of the given key path.
+    ---
+    --- Tables are created if they do not exist.
+    ---
+    --- Example:
+    ---
+    --- ```lua
+    ---     local t = {}
+    ---     table.set( t, "a.b.c.d.e", "e value!" )
+    ---     print( t.a.b.c.d.e ) -- e value!
+    --- ```
+    ---
+    ---@param tbl table The table to set the value in.
+    ---@param str string The key path.
+    ---@param value any The value to set.
+    ---@param separator? integer The separator of the key path, default is `0x2E`.
+    ---@param str_length? integer The length of the key path, default is `string.len( str )`.
+    function table.set( tbl, str, value, separator, str_length )
+        if separator == nil then
+            separator = 0x2E --[[ "." ]]
+        end
 
+        if str_length == nil then
+            str_length = string_len( str )
+        end
 
-            local tbl_value = raw_get( tbl, key )
-            if tbl_value and istable( tbl_value ) then
-                tbl = tbl_value
-            else
-                local new_tbl = {}
-                raw_set( tbl, key, new_tbl )
-                tbl = new_tbl
+        local split_position = 0
+        local position = 1
+
+        while true do
+            local uint8 = string_byte( str, position, position )
+            if uint8 == separator then
+                if split_position ~= position then
+                    local key = string_sub( str, split_position + 1, position - 1 )
+
+                    if position == str_length then
+                        tbl[ key ] = value
+                        return
+                    end
+
+                    local tbl_value = tbl[ key ]
+                    if tbl_value ~= nil and istable( tbl_value ) then
+                        tbl = tbl_value
+                    else
+                        local new_tbl = {}
+                        tbl[ key ] = new_tbl
+                        tbl = new_tbl
+                    end
+                end
+
+                split_position = position
             end
+
+            if position == str_length then
+                break
+            else
+                position = position + 1
+            end
+        end
+
+        if split_position ~= position then
+            tbl[ string_sub( str, split_position + 1, position ) ] = value
         end
     end
 
-    tbl[ string_sub( str, pointer ) ] = value
 end
 
 local bytepack = std.pack.bytes
