@@ -500,6 +500,46 @@ string.byteSplit = byteSplit
 
 --- [SHARED AND MENU]
 ---
+--- Checks if the string contains the specified byte.
+---
+---@param str string The string to check.
+---@param byte integer The byte to check for.
+---@param start_position? integer The start position to check from.
+---@param end_position? integer The end position to check to.
+---@param str_length? integer The length of the string. Optionally, it should be used to speed up calculations.
+---@return boolean has_byte `true` if the string contains the byte, `false` otherwise.
+function string.hasByte( str, byte, start_position, end_position, str_length )
+    if str_length == nil then
+        str_length = string_len( str )
+    end
+
+    if start_position == nil then
+        start_position = 1
+    elseif start_position < 0 then
+        start_position = math_relative( start_position, str_length )
+    else
+        start_position = math_min( start_position, str_length )
+    end
+
+    if end_position == nil then
+        end_position = str_length
+    elseif end_position < 0 then
+        end_position = math_relative( end_position, str_length )
+    else
+        end_position = math_min( end_position, str_length )
+    end
+
+    for index = start_position, end_position, 1 do
+        if string_byte( str, index, index ) == byte then
+            return true
+        end
+    end
+
+    return false
+end
+
+--- [SHARED AND MENU]
+---
 --- Removes all instances of a byte from a string.
 ---
 ---@param str string The string to purge.
