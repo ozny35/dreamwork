@@ -48,8 +48,6 @@ local raw = std.raw
 local fs = std.fs or {}
 std.fs = fs
 
-local update_path
-
 ---@class dreamwork.std.File : dreamwork.std.Object
 ---@field __class dreamwork.std.FileClass
 ---@field name string The name of the file. **READ-ONLY**
@@ -148,7 +146,7 @@ local DirectoryClass = class.create( Directory )
 
 ---@param value dreamwork.std.File | dreamwork.std.Directory
 ---@param parent dreamwork.std.Directory | nil
-function update_path( value, parent )
+local function update_path( value, parent )
     local name = value.name
 
     if parent == nil then
@@ -182,10 +180,6 @@ function Directory:__tostring()
     return string.format( "Directory: %p [%s][%d files][%d directories]", self, self.path, self:contains() )
 end
 
-local function directory_index( self, key )
-    -- TODO: make parser from real fs
-end
-
 ---@param name string
 ---@param mount_point string | nil
 ---@param mount_path string | nil
@@ -200,13 +194,7 @@ function Directory:__init( name, mount_point, mount_path )
     self.mount_path = mount_path
     self.mount_point = mount_point or "GAME"
 
-    local content = {}
-    self.content = content
-
-    setmetatable( content, {
-        __index = directory_index,
-        __directory = self
-    } )
+    self.content = {}
 
     update_path( self, nil )
 end
@@ -273,21 +261,11 @@ function Directory:delete( name )
     update_path( value, nil )
 end
 
-function Directory:has( name )
-    return self.content[ name ] ~= nil
-end
-
-function Directory:isFile( name )
-    return debug_getmetatable( self.content[ name ] ) == File
-end
-
-function Directory:isDirectory( name )
-    return debug_getmetatable( self.content[ name ] ) == Directory
-end
-
 ---@return dreamwork.std.File[], integer, dreamwork.std.Directory[], integer
 function Directory:contents()
     local mount_point = self.mount_point
+    local content = self.content
+
     local fs_files, fs_directories
 
     local mount_path = self.mount_path
@@ -299,8 +277,6 @@ function Directory:contents()
 
     local files, file_count = {}, 0
     local directories, directory_count = {}, 0
-
-    local content = self.content
 
     for index = 1, #content, 1 do
         ---@type dreamwork.std.File | dreamwork.std.Directory
@@ -359,6 +335,8 @@ end
 ---@return integer, integer
 function Directory:contains()
     local mount_point = self.mount_point
+    local content = self.content
+
     local fs_files, fs_directories
 
     local mount_path = self.mount_path
@@ -368,7 +346,6 @@ function Directory:contains()
         fs_files, fs_directories = file_Find( mount_path .. "/*", mount_point )
     end
 
-    local content = self.content
     local file_count, directory_count = 0, 0
 
     for index = 1, #content, 1 do
