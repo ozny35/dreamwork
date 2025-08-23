@@ -16,11 +16,12 @@ do
     ---
     ---@class dreamwork.std.Stack : dreamwork.std.Object
     ---@field __class dreamwork.std.StackClass
+    ---@field size integer The size of the stack. **Read-only**
     local Stack = class.base( "Stack" )
 
     ---@protected
     function Stack:__init()
-        self[ 0 ] = 0
+        self.size = 0
     end
 
     --- [SHARED AND MENU]
@@ -29,7 +30,7 @@ do
     ---
     ---@return boolean
     function Stack:isEmpty()
-        return self[ 0 ] == 0
+        return self.size == 0
     end
 
     --- [SHARED AND MENU]
@@ -39,8 +40,8 @@ do
     ---@param value any The value to push onto the stack.
     ---@return integer position The position of the value in the stack.
     function Stack:push( value )
-        local position = self[ 0 ] + 1
-        self[ 0 ], self[ position ] = position, value
+        local position = self.size + 1
+        self.size, self[ position ] = position, value
         return position
     end
 
@@ -50,12 +51,12 @@ do
     ---
     ---@return any value The value that was removed from the stack.
     function Stack:pop()
-        local position = self[ 0 ]
+        local position = self.size
         if position == 0 then
             return nil
         end
 
-        self[ 0 ] = position - 1
+        self.size = position - 1
 
         local value = self[ position ]
         self[ position ] = nil
@@ -68,7 +69,7 @@ do
     ---
     ---@return any value The value at the top of the stack.
     function Stack:peek()
-        return self[ self[ 0 ] ]
+        return self[ self.size ]
     end
 
     --- [SHARED AND MENU]
@@ -76,11 +77,11 @@ do
     --- Empties the stack.
     ---
     function Stack:empty()
-        for i = 1, self[ 0 ], 1 do
+        for i = 1, self.size, 1 do
             self[ i ] = nil
         end
 
-        self[ 0 ] = 0
+        self.size = 0
     end
 
     --- [SHARED AND MENU]
