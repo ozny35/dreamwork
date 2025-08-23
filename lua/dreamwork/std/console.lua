@@ -901,7 +901,6 @@ do
         end
     end
 
-
     ---@protected
     function Variable:__newindex( str_key, value )
         if str_key == "value" then

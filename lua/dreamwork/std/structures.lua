@@ -198,19 +198,19 @@ do
 
         if fromBack then
 
-            value = self[ front ]
-            self[ front ] = nil -- unreference the value
-
-            front = front - 1
-            self.front = front
-
-        else
-
             back = back + 1
             self.back = back
 
             value = self[ back ]
             self[ back ] = nil -- unreference the value
+
+        else
+
+            value = self[ front ]
+            self[ front ] = nil -- unreference the value
+
+            front = front - 1
+            self.front = front
 
         end
 
@@ -228,7 +228,7 @@ do
     --- Returns an iterator for the queue.
     ---
     ---@param fromBack? boolean If `true`, returns an iterator for the back of the queue.
-    ---@return function iterator The iterator function.
+    ---@return fun( queue: dreamwork.std.Queue, fromBack: boolean ): any iterator The iterator function.
     ---@return dreamwork.std.Queue queue The queue being iterated over.
     ---@return boolean fromBack `true` if the iterator is for the back of the queue.
     function Queue:iterator( fromBack )
