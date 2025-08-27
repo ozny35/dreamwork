@@ -24,6 +24,29 @@ do
         self.size = 0
     end
 
+    ---@param writer dreamwork.std.pack.Writer
+    ---@protected
+    function Stack:__serialize( writer )
+        local size = self.size
+        writer:writeInt32( size )
+
+        for i = 1, size, 1 do
+            writer:serialize( self[ i ] )
+        end
+    end
+
+    ---@param reader dreamwork.std.pack.Reader
+    ---@param fallback dreamwork.std.Object | nil
+    ---@protected
+    function Stack:__deserialize( reader, fallback )
+        local size = reader:readInt32() or 0
+        self.size = size
+
+        for i = 1, size, 1 do
+            self[ i ] = reader:deserialize( self[ i ] or fallback or Stack, fallback )
+        end
+    end
+
     --- [SHARED AND MENU]
     ---
     --- Checks if the stack is empty.
@@ -117,12 +140,37 @@ do
     ---
     ---@class dreamwork.std.Queue : dreamwork.std.Object
     ---@field __class dreamwork.std.QueueClass
+    ---@field front integer The front of the queue. **Read-only**
+    ---@field back integer The back of the queue. **Read-only**
     local Queue = class.base( "Queue" )
 
     ---@protected
     function Queue:__init()
         self.front = 0
         self.back = 0
+    end
+
+    ---@param writer dreamwork.std.pack.Writer
+    ---@protected
+    function Queue:__serialize( writer )
+        writer:writeInt32( self.front )
+        writer:writeInt32( self.back )
+
+        for i = self.back + 1, self.front, 1 do
+            writer:serialize( self[ i ] )
+        end
+    end
+
+    ---@param reader dreamwork.std.pack.Reader
+    ---@param fallback dreamwork.std.Object | nil
+    ---@protected
+    function Queue:__deserialize( reader, fallback )
+        local front, back = reader:readInt32() or 0, reader:readInt32() or 0
+        self.front, self.back = front, back
+
+        for i = back + 1, front, 1 do
+            self[ i ] = reader:deserialize( self[ i ] or fallback or Queue, fallback )
+        end
     end
 
     --- [SHARED AND MENU]
@@ -279,6 +327,33 @@ do
         end
     end
 
+    ---@param writer dreamwork.std.pack.Writer
+    ---@protected
+    function Node:__serialize( writer )
+        writer:writeInt32( self.depth )
+
+        local width = self.width
+        writer:writeInt32( width )
+
+        for index = 1, width, 1 do
+            writer:serialize( self[ index ] )
+        end
+    end
+
+    ---@param reader dreamwork.std.pack.Reader
+    ---@param fallback dreamwork.std.Object | nil
+    ---@protected
+    function Node:__deserialize( reader, fallback )
+        self.depth = reader:readInt32() or 0
+
+        local width = reader:readInt32() or 0
+        self.width = width
+
+        for index = 1, width, 1 do
+            self[ index ] = reader:deserialize( self[ index ] or fallback or Node, fallback )
+        end
+    end
+
     --- [SHARED AND MENU]
     ---
     --- Unlinks the node from its parent.
@@ -399,26 +474,23 @@ do
 
     ---@alias Symbol dreamwork.std.Symbol
 
-    local base = dreamwork.__symbol or debug_newproxy( true )
-    dreamwork.__symbol = base
-
-    local metatable = debug_getmetatable( base )
-    if metatable == nil then
-        error( "userdata metatable is missing, lol wtf" )
-    end
-
-    metatable.__type = "Symbol"
-
     ---@type table<dreamwork.std.Symbol, string>
-    local names = metatable.__names
-    if names == nil then
-        names = {}
-        metatable.__names = names
-        debug.gc.setTableRules( names, true, false )
-    end
+    local names = {}
+    debug.gc.setTableRules( names, true, false )
 
+    ---@type table<string, dreamwork.std.Symbol>
+    local symbols = {}
+
+    debug.gc.setTableRules( symbols, false, true )
+
+    local proxy_template = debug_newproxy( true )
+
+    local Symbol = debug_getmetatable( proxy_template )
+    Symbol.__type = "Symbol"
+
+    ---@return string
     ---@private
-    function metatable:__tostring()
+    function Symbol:__tostring()
         return names[ self ]
     end
 
@@ -429,9 +501,14 @@ do
     ---@param name string The name of the symbol.
     ---@return dreamwork.std.Symbol obj The new symbol.
     function std.Symbol( name )
-        local obj = debug_newproxy( base )
-        names[ obj ] = string_format( "%s Symbol: %p", name, obj )
-        return obj
+        local symbol = symbols[ name ]
+        if symbol == nil then
+            symbol = debug_newproxy( proxy_template )
+            names[ symbol ] = string_format( "%s Symbol: %p", name, symbol )
+            symbols[ name ] = symbol
+        end
+
+        return symbol
     end
 
     --- [SHARED AND MENU]
@@ -440,9 +517,10 @@ do
     ---
     ---@param value any The value to check.
     function std.issymbol( value )
-        return debug_getmetatable( value ) == metatable
+        return debug_getmetatable( value ) == Symbol
     end
 
 end
 
 -- TODO: LinQ
+-- https://github.com/Nak2/NikNaks/blob/main/lua/niknaks/modules/sh_linq_module.lua
