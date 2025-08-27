@@ -26,8 +26,8 @@ std.class = class
 ---@field __class dreamwork.std.Class The class of the object. **READ ONLY**
 ---@field __parent? dreamwork.std.Object The parent of the object. **READ ONLY**
 ---@field protected __new? dreamwork.std.Object.__new A function that will be called when a new class is created and allows you to replace the result.
----@field protected __serialize? fun( obj: dreamwork.std.Object, writer: dreamwork.std.pack.Writer )
----@field protected __deserialize? fun( obj: dreamwork.std.Object, reader: dreamwork.std.pack.Reader )
+---@field protected __serialize? fun( obj: dreamwork.std.Object, writer: dreamwork.std.pack.Writer, data: any? )
+---@field protected __deserialize? fun( obj: dreamwork.std.Object, reader: dreamwork.std.pack.Reader, data: any? )
 ---@field protected __tohash? fun( obj: dreamwork.std.Object ): string
 ---@field protected __tostring? fun( obj: dreamwork.std.Object ): string
 ---@field protected __tonumber? fun( obj: dreamwork.std.Object ): number

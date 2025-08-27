@@ -9,6 +9,8 @@ local string_len = string.len
 local math = std.math
 local math_ceil = math.ceil
 
+local class = std.class
+
 ---@class dreamwork.std.pack
 local pack = std.pack
 
@@ -42,17 +44,11 @@ local bytepack_readInt64, bytepack_writeInt64 = bytepack.readInt64, bytepack.wri
 ---@field protected position integer The current position of the reader in bytes. **READ-ONLY**
 ---@field protected data_length integer The size of the reader in bytes. **READ-ONLY**
 ---@field protected data string The content of the reader. **READ-ONLY**
-local Reader = std.class.base( "pack.Reader" )
+local Reader = class.base( "pack.Reader" )
 
 ---@protected
 function Reader:__tostring()
 	return string.format( "pack.Reader: %p [%d/%d bytes]", self, self.position, self.data_length )
-end
-
----@protected
-function Reader:__init()
-	self.data_length = 0
-	self.position = 0
 end
 
 --- [SHARED AND MENU]
@@ -77,6 +73,8 @@ function Reader:close()
 	self.position = 0
 	self.data = nil
 end
+
+Reader.__init = Reader.close
 
 --- [SHARED AND MENU]
 ---
@@ -165,7 +163,7 @@ end
 ---@class dreamwork.std.pack.ReaderClass : dreamwork.std.pack.Reader
 ---@field __base dreamwork.std.pack.Reader
 ---@overload fun(): dreamwork.std.pack.Reader
-local ReaderClass = std.class.create( Reader )
+local ReaderClass = class.create( Reader )
 pack.Reader = ReaderClass
 
 --- [SHARED AND MENU]
@@ -177,17 +175,12 @@ pack.Reader = ReaderClass
 ---@field protected position integer The current position of the reader in bytes. **READ-ONLY**
 ---@field protected data_length integer The size of the reader in bytes. **READ-ONLY**
 ---@field protected data string The content of the reader. **READ-ONLY**
-local Writer = std.class.base( "pack.Writer" )
+local Writer = class.base( "pack.Writer" )
 
 ---@protected
 ---@return string
 function Writer:__tostring()
 	return string.format( "pack.Writer: %p [%d/%d bytes]", self, self.position, self:size() )
-end
-
----@protected
-function Writer:__init()
-	self.position = 0
 end
 
 --- [SHARED AND MENU]
@@ -206,12 +199,12 @@ function Writer:open( data )
 		data_length = string_len( data )
 	end
 
-	self.position = data_length
-	self.sub_data = data
 	self.data = data
+	self.sub_data = data
+	self.position = data_length
 
-	self.buffer_size = 0
 	self.buffer = {}
+	self.buffer_size = 0
 
 	return true
 end
@@ -227,6 +220,8 @@ function Writer:close()
 	self.data = nil
 	self.sub_data = nil
 end
+
+Writer.__init = Writer.close
 
 --- [SHARED AND MENU]
 ---
@@ -373,7 +368,7 @@ end
 ---@class dreamwork.std.pack.WriterClass : dreamwork.std.pack.Writer
 ---@field __base dreamwork.std.pack.Writer
 ---@overload fun(): dreamwork.std.pack.Writer
-local WriterClass = std.class.create( Writer )
+local WriterClass = class.create( Writer )
 pack.Writer = WriterClass
 
 --- [SHARED AND MENU]
@@ -3399,57 +3394,68 @@ end
 do
 
 	local debug_getmetatable = std.debug.getmetatable
+	local class_new = class.new
 	local raw_get = std.raw.get
 
 	--- [SHARED AND MENU]
 	---
 	--- Serializes the specified object.
 	---
-	---@param obj dreamwork.std.Object
-	function Writer:serialize( obj )
+	---@param obj dreamwork.std.Object The object to serialize.
+	---@param data? any The additional data to pass to the serialization method.
+	function Writer:serialize( obj, data )
 		---@type dreamwork.std.Object | nil
 		local base = debug_getmetatable( obj )
 		if base == nil then
 			error( "base not found", 2 )
 		end
 
-		local fn = base.__serialize
-		if fn == nil then
+		local serialize = base.__serialize
+		if serialize == nil then
 			error( "base method __serialize is missing", 2 )
 		end
 
-		fn( obj, self )
+		serialize( obj, self, data )
 	end
 
-	--- [SHARED AND MENU]
-	---
-	--- Serializes the specified object.
-	---
-	---@param obj dreamwork.std.Object
-	---@return string
-	function pack.serialize( obj )
+	do
+
 		local writer = WriterClass()
-		writer:open()
 
-		writer:serialize( obj )
+		--- [SHARED AND MENU]
+		---
+		--- Serializes the specified object.
+		---
+		---@param obj dreamwork.std.Object The object to serialize.
+		---@param data? any The additional data to pass to the serialization method.
+		---@return string str The serialized data.
+		function pack.serialize( obj, data )
+			writer:open()
 
-		local data = writer:flush()
-		writer:close()
-		return data
+			writer:serialize( obj, data )
+
+			local str = writer:flush()
+			writer:close()
+
+			return str
+		end
+
 	end
 
 	--- [SHARED AND MENU]
 	---
 	--- Deserializes the data into the specified object or if it is a class, into a new empty object.
 	---
-	---@param value dreamwork.std.Object | dreamwork.std.Class
-	function Reader:deserialize( value )
+	---@param value dreamwork.std.Object | dreamwork.std.Class The object to deserialize into or a class to create a new object.
+	---@param data? any The additional data to pass to the deserialization method.
+	---@return dreamwork.std.Object obj The deserialized object.
+	function Reader:deserialize( value, data )
 		---@type dreamwork.std.Object | nil
 		local base = raw_get( value, "__base" )
 		if base == nil then
 			base = debug_getmetatable( value )
 		else
-			value = std.class.new( base )
+			value = class_new( base )
 		end
 
 		---@cast value dreamwork.std.Object
@@ -3458,31 +3464,37 @@ do
 			error( "metatable not found", 2 )
 		end
 
-		local fn = base.__deserialize
-		if fn == nil then
+		local deserialize = base.__deserialize
+		if deserialize == nil then
 			error( "metatable method __deserialize is missing", 2 )
 		end
 
-		fn( value, self )
+		deserialize( value, self, data )
 
 		return value
 	end
 
-	--- [SHARED AND MENU]
-	---
-	--- Deserializes the data into the specified object or if it is a class, into a new empty object.
-	---
-	---@param data string
-	---@param value dreamwork.std.Object | dreamwork.std.Class
-	---@return dreamwork.std.Object
-	function pack.deserialize( data, value )
+	do
+
 		local reader = ReaderClass()
-		reader:open( data )
 
-		local object = reader:deserialize( value )
+		--- [SHARED AND MENU]
+		---
+		--- Deserializes the data into the specified object or if it is a class, into a new empty object.
+		---
+		---@param str string The serialized data.
+		---@param value dreamwork.std.Object | dreamwork.std.Class The object to deserialize into or a class to create a new object.
+		---@param data? any The additional data to pass to the deserialization method.
+		---@return dreamwork.std.Object obj The deserialized object.
+		function pack.deserialize( str, value, data )
+			reader:open( str )
 
-		reader:close()
-		return object
+			local object = reader:deserialize( value, data )
+
+			reader:close()
+			return object
+		end
+
 	end
 
 end
