@@ -1,6 +1,11 @@
 local std = _G.dreamwork.std
-local tonumber = std.tonumber
+
+local string = std.string
+local bit = std.bit
+
 local setmetatable = std.setmetatable
+local math_floor = std.math.floor
+local tonumber = std.raw.tonumber
 
 ---@class dreamwork.std.steam
 local steam = std.steam or {}
@@ -103,7 +108,7 @@ local Identifier = std.class.base( "Identifier" )
 ---
 ---@class dreamwork.std.steam.IdentifierClass : dreamwork.std.steam.Identifier
 ---@field __base dreamwork.std.steam.Identifier
----@overload fun( universe?: dreamwork.std.steam.Identifier.universe, type?: dreamwork.std.steam.Identifier.type, id?: integer, instance?: boolean ): dreamwork.std.steam.Identifier
+---@overload fun( universe?: dreamwork.std.steam.Identifier.universe, type?: dreamwork.std.steam.Identifier.type, id?: integer, instance?: integer ): dreamwork.std.steam.Identifier
 local IdentifierClass = std.class.create( Identifier )
 steam.Identifier = IdentifierClass
 
@@ -128,7 +133,7 @@ function Identifier:__sub( int32 )
 end
 
 ---@protected
-function Identifier:__new( id, universe, type, instance )
+function Identifier:__new( universe, type, id, instance )
     return setmetatable( {
         universe = universe or "Public",
         type = type or "Individual",
@@ -139,7 +144,7 @@ end
 
 do
 
-    local string_format = std.string.format
+    local string_format = string.format
 
     --- [SHARED AND MENU]
     ---
@@ -172,7 +177,7 @@ do
     ---
     --- Converts a SteamID object to a Steam3 identifier.
     ---
-    ---@return string
+    ---@return string steam3_str Steam3 identifier.
     function Identifier:toSteam3()
         return string_format( "[%s:%d:%d]", type2letter[ self.type ] or "I", universe2int[ self.universe ] or 0, self.id )
     end
@@ -186,91 +191,139 @@ end
 
 do
 
-    local BigInt = std.BigInt
+    local string_reverse = string.reverse
+    local table_concat = table.concat
+    local bit_lshift = bit.lshift
+    local bit_bor = bit.bor
+
+    --- [SHARED AND MENU]
+    ---
+    --- Converts a SteamID object to a 64-bit integer.
+    ---
+    ---@param object dreamwork.std.steam.Identifier
+    ---@return string uint64_str SteamID as a 64-bit integer
+    local function to64( object )
+        local high = bit_bor(
+            bit_lshift( universe2int[ object.universe ] or 0, 24 ),
+            bit_lshift( type2int[ object.type ] or 0, 20 ),
+            object.instance
+        )
+
+        local low = object.id
+
+        local segments, segment_count = {}, 0
+
+        while high ~= 0 or low ~= 0 do
+            local temp = ( ( high % 10 ) * 0x100000000 ) + low
+
+            low = math_floor( temp / 10 )
+            high = math_floor( high / 10 )
+
+            segment_count = segment_count + 1
+            segments[ segment_count ] = temp % 10
+        end
+
+        if segment_count == 0 then
+            return "0"
+        else
+            return string_reverse( table_concat( segments, "", 1, segment_count ) )
+        end
+    end
+
+    Identifier.to64 = to64
 
     do
 
-        local x64_zero = BigInt.fromBytes( { 0, 0, 0, 0, 0, 0, 0, 0 }, 8, false, false )
-        local BigInt_bor, BigInt_lshift = BigInt.bor, BigInt.lshift
-        local BigInt_fromNumber = BigInt.fromNumber
+        local int2path = {
+            [ 1 ] = "profiles",
+            [ 7 ] = "groups"
+        }
 
         --- [SHARED AND MENU]
         ---
-        --- Converts a SteamID object to a 64-bit integer.
+        --- Gets the URL for a SteamID object.
         ---
-        ---@param object dreamwork.std.steam.Identifier
-        ---@return string
-        local function to64( object )
-            return BigInt_bor(
-                x64_zero,
-                BigInt_lshift( BigInt_fromNumber( universe2int[ object.universe ] or 0 ), 56 ),
-                BigInt_lshift( BigInt_fromNumber( type2int[ object.type ] or 0 ), 52 ),
-                BigInt_lshift( BigInt_fromNumber( object.instance ), 32 ),
-                BigInt_fromNumber( object.id )
-            ):toString( 10, true )
-        end
-
-        Identifier.to64 = to64
-
-        do
-
-            local int2path = {
-                [ 1 ] = "profiles",
-                [ 7 ] = "groups"
-            }
-
-            --- [SHARED AND MENU]
-            ---
-            --- Gets the URL for a SteamID object.
-            ---
-            ---@param http? boolean
-            ---@return string?
-            function Identifier:getURL( http )
-                local path = int2path[ self.type ]
-                if path == nil then
-                    return nil
-                else
-                    return ( http and "http" or "https" ) .. "://steamcommunity.com/" .. path .. "/" .. to64( self )
-                end
+        ---@param http? boolean If `true`, returns the HTTP URL, otherwise returns the HTTPS URL.
+        ---@return string | nil url_str The URL for the SteamID object.
+        function Identifier:getURL( http )
+            local path = int2path[ self.type ]
+            if path == nil then
+                return nil
+            else
+                return ( http and "http" or "https" ) .. "://steamcommunity.com/" .. path .. "/" .. to64( self )
             end
-
         end
 
     end
 
-    do
+end
 
-        local BigInt_band, BigInt_rshift = BigInt.band, BigInt.rshift
-        local BigInt_fromString = BigInt.fromString
-        local BitInt_toInteger = BigInt.toInteger
+do
 
-        --- [SHARED AND MENU]
-        ---
-        --- Checks if a string is a valid 64-bit identifier.
-        ---
-        ---@param str string
-        ---@return boolean
-        function IdentifierClass.isValid64( str )
-            return #BigInt_fromString( str, 10 ) == 8
+    local string_byte = string.byte
+    local string_len = string.len
+
+    local bit_rshift = bit.rshift
+    local bit_band = bit.band
+
+    local byte2int = {
+        [ 0x30 ] = 0,
+        [ 0x31 ] = 1,
+        [ 0x32 ] = 2,
+        [ 0x33 ] = 3,
+        [ 0x34 ] = 4,
+        [ 0x35 ] = 5,
+        [ 0x36 ] = 6,
+        [ 0x37 ] = 7,
+        [ 0x38 ] = 8,
+        [ 0x39 ] = 9
+    }
+
+    --- [SHARED AND MENU]
+    ---
+    --- Checks if a string is a valid 64-bit identifier.
+    ---
+    ---@param uint64_str string The 64-bit identifier to check.
+    ---@return boolean is_valid `true` if the string is a valid 64-bit identifier, `false` otherwise
+    ---@return nil | string error_message The error message if the string is not a valid 64-bit identifier.
+    function IdentifierClass.isValid64( uint64_str )
+        local uint64_str_length = string_len( uint64_str )
+
+        if uint64_str_length == 0 or uint64_str_length > 20 then
+            return false, "invalid length"
         end
 
-        --- [SHARED AND MENU]
-        ---
-        --- Creates a new SteamID object from a 64-bit number string.
-        ---
-        ---@param str string
-        ---@return dreamwork.std.steam.Identifier
-        function IdentifierClass.from64( str )
-            local number = BigInt_fromString( str, 10 )
-
-            return setmetatable( {
-                universe = int2universe[ BitInt_toInteger( BigInt_band( BigInt_rshift( number, 56 ), 0xFF ) ) ] or "Invalid",
-                type = int2type[ BitInt_toInteger( BigInt_band( BigInt_rshift( number, 52 ), 0xF ) ) ] or "Invalid",
-                instance = BitInt_toInteger( BigInt_band( BigInt_rshift( number, 32 ), 0xFFFFF ) ),
-                id = BitInt_toInteger( BigInt_band( number, 0xFFFFFFFF ) )
-            }, Identifier )
+        for i = 1, uint64_str_length, 1 do
+            if byte2int[ string_byte( uint64_str, i, i ) ] == nil then
+                return false, "invalid character at position " .. i
+            end
         end
 
+        return true
+    end
+
+    --- [SHARED AND MENU]
+    ---
+    --- Creates a new SteamID object from a 64-bit number string.
+    ---
+    ---@param uint64_str string The 64-bit number string.
+    ---@return dreamwork.std.steam.Identifier
+    function IdentifierClass.from64( uint64_str )
+        -- original variant was replaced with a more efficient implementation from Be1zebub: https://github.com/Be1zebub/Small-GLua-Things/blob/master/libs/steamid64-parse.lua
+        local high, low = 0, 0
+
+        for i = 1, string_len( uint64_str ), 1 do
+            local temp = ( low * 10 ) + byte2int[ string_byte( uint64_str, i, i ) ]
+            high = ( high * 10 ) + math_floor( temp / 0x100000000 )
+            low = temp % 0x100000000
+        end
+
+        return setmetatable( {
+            universe = int2universe[ bit_band( bit_rshift( high, 24 ), 0xFF ) ] or "Invalid",
+            type = int2type[ bit_band( bit_rshift( high, 20 ), 0xF ) ] or "Invalid",
+            instance = bit_band( high, 0xFFFFF ),
+            id = low
+        }, Identifier )
     end
 
 end
@@ -283,10 +336,10 @@ do
     ---
     --- Checks if a string is a valid Steam2 identifier.
     ---
-    ---@param str string
-    ---@return boolean
-    function IdentifierClass.isValidSteam2( str )
-        local x, y, z = string_match( str, "^STEAM_(%d+):(%d+):(%d+)$" )
+    ---@param steam2_str string The Steam2 identifier to check.
+    ---@return boolean is_valid `true` if the string is a valid Steam2 identifier, `false` otherwise
+    function IdentifierClass.isValidSteam2( steam2_str )
+        local x, y, z = string_match( steam2_str, "^STEAM_(%d+):(%d+):(%d+)$" )
         if not ( x and y and z ) then
             return false
         end
@@ -312,10 +365,10 @@ do
     ---
     --- Checks if a string is a valid Steam3 identifier.
     ---
-    ---@param str string
-    ---@return boolean
-    function IdentifierClass.isValidSteam3( str )
-        local letter, universe_str, id_str = string_match( str, "^%[(%a):(%d+):(%d+)%]$" )
+    ---@param steam3_str string The Steam3 identifier to check.
+    ---@return boolean is_valid `true` if the string is a valid Steam3 identifier, `false` otherwise
+    function IdentifierClass.isValidSteam3( steam3_str )
+        local letter, universe_str, id_str = string_match( steam3_str, "^%[(%a):(%d+):(%d+)%]$" )
         if not ( letter and universe_str and id_str ) or letter2int[ letter ] == nil then
             return false
         end
@@ -337,10 +390,11 @@ do
     ---
     --- Creates a new SteamID object from a steam2 string.
     ---
-    ---@param str string
-    ---@return dreamwork.std.steam.Identifier
-    function IdentifierClass.fromSteam2( str, allow_zero_universe )
-        local x, y, z = string_match( str, "^STEAM_([12]?%d?%d):([01]):(%d+)$" )
+    ---@param steam2_str string The steam2 string to parse.
+    ---@param allow_zero_universe? boolean Whether to allow the universe to be zero.
+    ---@return dreamwork.std.steam.Identifier object The SteamID object.
+    function IdentifierClass.fromSteam2( steam2_str, allow_zero_universe )
+        local x, y, z = string_match( steam2_str, "^STEAM_([12]?%d?%d):([01]):(%d+)$" )
         if x == nil or y == nil or z == nil then
             error( "steam identifier steam2 is invalid", 2 )
         end
@@ -362,10 +416,10 @@ do
     ---
     --- Creates a new SteamID object from a steam3 string.
     ---
-    ---@param str string
-    ---@return dreamwork.std.steam.Identifier
-    function IdentifierClass.fromSteam3( str )
-        local letter, universe, id = string_match( str, "^%[?(%a):(%d+):(%d+)%]?$" )
+    ---@param steam3_str string The steam3 string to parse.
+    ---@return dreamwork.std.steam.Identifier object The SteamID object.
+    function IdentifierClass.fromSteam3( steam3_str )
+        local letter, universe, id = string_match( steam3_str, "^%[?(%a):(%d+):(%d+)%]?$" )
         if letter == nil or universe == nil or id == nil then
             error( "steam identifier steam3 is invalid", 2 )
         end
