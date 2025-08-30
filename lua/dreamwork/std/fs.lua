@@ -3,6 +3,8 @@ local _G = _G
 ---@class dreamwork.std
 local std = _G.dreamwork.std
 
+local CLIENT, SERVER, MENU = std.CLIENT, std.SERVER, std.MENU
+
 -- TODO: https://wiki.facepunch.com/gmod/resource
 -- TODO: https://wiki.facepunch.com/gmod/Global.AddCSLuaFile
 
@@ -134,9 +136,10 @@ end
 ---@field name string The name of the directory.
 ---@field path string The full path of the directory.
 ---@field parent dreamwork.std.Directory | nil The parent directory.
----@field mount_point string The name of the intenal game directory.
+---@field mount_point string | nil The name of the intenal game directory.
 ---@field mount_path string | nil The local path in intenal game directory.
 ---@field content table<string | integer, dreamwork.std.File | dreamwork.std.Directory> The content of the directory.
+---@field writeable boolean If `true`, the directory is directly writeable.
 local Directory = class.base( "Directory", false )
 
 ---@class dreamwork.std.DirectoryClass : dreamwork.std.Directory
@@ -192,8 +195,9 @@ function Directory:__init( name, mount_point, mount_path )
     self.name = name
 
     self.mount_path = mount_path
-    self.mount_point = mount_point or "GAME"
+    self.mount_point = mount_point
 
+    self.writeable = false
     self.content = {}
 
     update_path( self, nil )
@@ -263,17 +267,7 @@ end
 
 ---@return dreamwork.std.File[], integer, dreamwork.std.Directory[], integer
 function Directory:contents()
-    local mount_point = self.mount_point
     local content = self.content
-
-    local fs_files, fs_directories
-
-    local mount_path = self.mount_path
-    if mount_path == nil then
-        fs_files, fs_directories = file_Find( "*", mount_point )
-    else
-        fs_files, fs_directories = file_Find( mount_path .. "/*", mount_point )
-    end
 
     local files, file_count = {}, 0
     local directories, directory_count = {}, 0
@@ -290,6 +284,22 @@ function Directory:contents()
             directory_count = directory_count + 1
             directories[ directory_count ] = object
         end
+    end
+
+    local mount_point = self.mount_point
+
+    if mount_point == nil then
+        return files, file_count,
+            directories, directory_count
+    end
+
+    local fs_files, fs_directories
+
+    local mount_path = self.mount_path
+    if mount_path == nil then
+        fs_files, fs_directories = file_Find( "*", mount_point )
+    else
+        fs_files, fs_directories = file_Find( mount_path .. "/*", mount_point )
     end
 
     for index = 1, #fs_files, 1 do
@@ -334,17 +344,7 @@ end
 
 ---@return integer, integer
 function Directory:contains()
-    local mount_point = self.mount_point
     local content = self.content
-
-    local fs_files, fs_directories
-
-    local mount_path = self.mount_path
-    if mount_path == nil then
-        fs_files, fs_directories = file_Find( "*", mount_point )
-    else
-        fs_files, fs_directories = file_Find( mount_path .. "/*", mount_point )
-    end
 
     local file_count, directory_count = 0, 0
 
@@ -355,6 +355,21 @@ function Directory:contains()
         elseif metatable == Directory then
             directory_count = directory_count + 1
         end
+    end
+
+    local mount_point = self.mount_point
+
+    if mount_point == nil then
+        return file_count, directory_count
+    end
+
+    local fs_files, fs_directories
+
+    local mount_path = self.mount_path
+    if mount_path == nil then
+        fs_files, fs_directories = file_Find( "*", mount_point )
+    else
+        fs_files, fs_directories = file_Find( mount_path .. "/*", mount_point )
     end
 
     for index = 1, #fs_files, 1 do
@@ -423,8 +438,8 @@ do
     function Directory:getFile( path_to_file )
         local segments, segment_count = string_byteSplit( path_to_file, 0x2F --[[ '/' ]] )
 
-        for index = 1, segment_count, 1 do
-            local name = segments[ index ]
+        for i = 1, segment_count, 1 do
+            local name = segments[ i ]
 
             local content_value = self.content[ name ]
 
@@ -432,6 +447,11 @@ do
                 ---@cast self dreamwork.std.Directory
 
                 local mount_point = self.mount_point
+
+                if mount_point == nil then
+                    return nil
+                end
+
                 local fs_files, fs_directories
 
                 local mount_path = self.mount_path
@@ -441,8 +461,8 @@ do
                     fs_files, fs_directories = file_Find( mount_path .. "/*", mount_point )
                 end
 
-                for index = 1, #fs_files, 1 do
-                    local file_name = fs_files[ index ]
+                for j = 1, #fs_files, 1 do
+                    local file_name = fs_files[ j ]
                     if file_name == name then
                         local file_object
 
@@ -457,12 +477,12 @@ do
                     end
                 end
 
-                if index == segment_count then
+                if i == segment_count then
                     return nil
                 end
 
-                for index = 1, #fs_directories, 1 do
-                    local directory_name = fs_directories[ index ]
+                for j = 1, #fs_directories, 1 do
+                    local directory_name = fs_directories[ j ]
                     if directory_name == name then
                         local directory_object
 
@@ -477,7 +497,7 @@ do
                     end
                 end
             elseif debug_getmetatable( content_value ) == File then
-                if index == segment_count then
+                if i == segment_count then
                     ---@diagnostic disable-next-line: cast-type-mismatch
                     ---@cast content_value dreamwork.std.File
                     return content_value
@@ -501,12 +521,19 @@ do
     function Directory:getDirectory( path_to_directory )
         local segments, segment_count = string_byteSplit( path_to_directory, 0x2F --[[ '/' ]] )
 
-        for index = 1, segment_count, 1 do
-            local name = segments[ index ]
+        for i = 1, segment_count, 1 do
+            local name = segments[ i ]
 
             local content_value = self.content[ name ]
             if content_value == nil then
+                ---@cast self dreamwork.std.Directory
+
                 local mount_point = self.mount_point
+
+                if mount_point == nil then
+                    return nil
+                end
+
                 local _, fs_directories
 
                 local mount_path = self.mount_path
@@ -516,8 +543,8 @@ do
                     _, fs_directories = file_Find( mount_path .. "/*", mount_point )
                 end
 
-                for index = 1, #fs_directories, 1 do
-                    local directory_name = fs_directories[ index ]
+                for j = 1, #fs_directories, 1 do
+                    local directory_name = fs_directories[ j ]
                     if directory_name == name then
                         local directory_object
 
@@ -577,55 +604,38 @@ end
 
 local root = DirectoryClass( "", "BASE_PATH" )
 
-local garrysmod = DirectoryClass( "garrysmod", "GAME" )
-root:add( garrysmod )
+do
 
-local lua = DirectoryClass( "lua", ( std.SERVER and "lsv" or ( std.CLIENT and "lcl" or ( std.MENU and "LuaMenu" or "LUA" ) ) ) )
-garrysmod:add( lua )
+    local garrysmod = DirectoryClass( "garrysmod", "MOD" )
+    garrysmod.writeable = MENU
+    root:add( garrysmod )
 
-local download = DirectoryClass( "download", "DOWNLOAD" )
-garrysmod:add( download )
+    local download = DirectoryClass( "download", "DOWNLOAD" )
+    garrysmod:add( download )
 
+    local data = DirectoryClass( "data", "DATA" )
+    data.writeable = true
+    garrysmod:add( data )
 
+end
 
---     { "/download", "DOWNLOAD" },
---     { "/maps", "GAME", "maps" },
---     { "/fonts", "GAME", "resource/fonts" },
---     { "/localization", "GAME", "resource/localization" },
---     { "/data", "DATA", nil, true },
---     {
---         "/addons",
---         function( file_path )
---             local addon_name, local_path = string.match( file_path, "([^/]+)/?(.*)" )
+do
 
---             if addon_name == nil then
---                 error( "Wrong path '/addons/" .. file_path .. "'.", 3 )
---             end
+    local workspace = DirectoryClass( "workspace", "GAME" )
+    root:add( workspace )
 
---             if title2addon[ addon_name ] then
---                 return local_path or "", addon_name
---             end
+    local lua = DirectoryClass( "lua", ( SERVER and "lsv" or ( CLIENT and "lcl" or ( MENU and "LuaMenu" or "LUA" ) ) ) )
+    workspace:add( lua )
 
---             error( "Addon '" .. addon_name .. "' is not mounted, path '/addons/" .. file_path .. "' is not available.", 3 )
---         end
---     },
---     { "/garrysmod", "MOD", nil, not MENU },
---     -- { "/mounted", "WORKSHOP" },
---     -- { "/game", "GAME" },
---     {
---         "/bspzip",
---         function( file_path )
---             return file_path, "BSP"
---         end
---     }
+end
 
--- if SERVER then
---     local start = time.elapsed( "s", true )
---     root:foreach( std.debug.fempty )
---     std.printf( "%f", time.elapsed( "s", true ) - start )
--- end
+do
 
-local CLIENT, SERVER, MENU = std.CLIENT, std.SERVER, std.MENU
+    -- TODO: add mounted content detector that creates directories here
+    local mnt = DirectoryClass( "mnt" )
+    root:add( mnt )
+
+end
 
 local path = std.path
 local path_resolve = path.resolve
