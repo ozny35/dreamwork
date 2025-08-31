@@ -94,14 +94,25 @@ raw.equal = _G.rawequal
 local raw_get = _G.rawget
 raw.get = raw_get
 
-raw.set = raw.set or _G.rawset
-raw.len = raw.len or _G.rawlen
+raw.set = _G.rawset
+raw.len = _G.rawlen
 
 if raw.len == nil then
 
     function raw.len( value )
         return #value
     end
+
+end
+
+do
+
+    local dummy_table = {}
+
+    raw.inext = raw.ipairs( dummy_table )
+    raw.next = _G.next or raw.pairs( dummy_table )
+
+    dummy_table = nil
 
 end
 
@@ -116,9 +127,6 @@ std.setmetatable = std.setmetatable or _G.setmetatable
 
 std.getfenv = std.getfenv or _G.getfenv -- removed in Lua 5.2
 std.setfenv = std.setfenv or _G.setfenv -- removed in Lua 5.2
-
-std.inext = std.inext or raw.ipairs( std )
-std.next = std.next or _G.next
 
 std.xpcall = std.xpcall or _G.xpcall
 std.pcall = std.pcall or _G.pcall
@@ -253,6 +261,36 @@ end
 
 do
 
+    local raw_next = raw.next
+
+    --- [SHARED AND MENU]
+    ---
+    --- If `t` has a metamethod `__pairs`, calls it with t as argument and returns the first three results from the call.
+    ---
+    --- Otherwise, returns three values: the [next](command:extension.lua.doc?["en-us/54/manual.html/pdf-next"]) function, the table `t`, and `nil`, so that the construction
+    --- ```lua
+    ---     for k,v in pairs(t) do body end
+    --- ```
+    --- will iterate over all key–value pairs of table `t`.
+    ---
+    --- See function [next](command:extension.lua.doc?["en-us/54/manual.html/pdf-next"]) for the caveats of modifying the table during its traversal.
+    ---
+    ---@param tbl table
+    ---@param key any
+    ---@return any, any
+    function std.next( tbl, key )
+        local next_fn = debug_getmetavalue( tbl, "__pairs" )
+        if next_fn == nil then
+            return raw_next( tbl, key )
+        else
+            return next_fn( tbl, key )
+        end
+    end
+
+end
+
+do
+
     local raw_pairs = raw.pairs
 
     --- [SHARED AND MENU]
@@ -275,11 +313,11 @@ do
     ---@return fun( table: table<K, V>, index?: K ):K, V
     ---@return T
     function std.pairs( t )
-        local fn = debug_getmetavalue( t, "__pairs" )
-        if fn == nil then
+        local next_fn = debug_getmetavalue( t, "__pairs" )
+        if next_fn == nil then
             return raw_pairs( t )
         else
-            return fn( t )
+            return next_fn( t, nil )
         end
     end
 
@@ -287,7 +325,27 @@ end
 
 do
 
-    local inext = std.inext
+    --- [SHARED AND MENU]
+    ---
+    --- Returns the next value in the table `t`, with the given `index`.
+    ---
+    ---@param tbl table
+    ---@param index integer
+    ---@return integer | nil, any
+    local function inext( tbl, index )
+        index = index + 1
+
+        local value = tbl[ index ]
+        if value == nil then
+            return nil, nil
+        else
+            return index, value
+        end
+    end
+
+    std.inext = inext
+
+    local raw_ipairs = raw.ipairs
 
     --- [SHARED AND MENU]
     ---
@@ -307,15 +365,9 @@ do
     ---@return integer i
     function std.ipairs( t )
         if debug_getmetavalue( t, "__index" ) == nil then
-            return inext, t, 0
+            return raw_ipairs( t )
         else
-            local index = 0
-            return function()
-                index = index + 1
-                local value = t[ index ]
-                if value == nil then return end
-                return index, value
-            end, t, index
+            return inext, t, 0
         end
     end
 
