@@ -145,7 +145,7 @@ do
         description = "The default timeout for http requests.",
         replicated = not std.MENU,
         archive = std.SERVER_MENU,
-        type = "number",
+        type = "float",
         default = 10,
         min = 0,
         max = 300

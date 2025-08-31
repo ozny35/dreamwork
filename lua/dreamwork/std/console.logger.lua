@@ -40,8 +40,21 @@ local Logger = std.class.base( "console.Logger" )
 local LoggerClass = std.class.create( Logger )
 console.Logger = LoggerClass
 
-local function default_debug_fn()
-    return std.DEVELOPER > 0
+local developer_cvar = console.Variable.get( "developer", "number" )
+local default_debug_fn
+
+if developer_cvar == nil then
+
+    function default_debug_fn()
+        return true
+    end
+
+else
+
+    function default_debug_fn()
+        return developer_cvar.value > 0
+    end
+
 end
 
 local white_color = scheme.white
