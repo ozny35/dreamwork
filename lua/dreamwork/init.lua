@@ -279,12 +279,7 @@ do
     ---@param key any
     ---@return any, any
     function std.next( tbl, key )
-        local next_fn = debug_getmetavalue( tbl, "__pairs" )
-        if next_fn == nil then
-            return raw_next( tbl, key )
-        else
-            return next_fn( tbl, key )
-        end
+        return ( debug_getmetavalue( tbl, "__pairs" ) or raw_next )( tbl, key )
     end
 
 end
@@ -317,7 +312,7 @@ do
         if next_fn == nil then
             return raw_pairs( t )
         else
-            return next_fn( t, nil )
+            return next_fn( t, nil ), t
         end
     end
 
