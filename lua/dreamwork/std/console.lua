@@ -981,9 +981,10 @@ do
                     end
                 end
 
-                local ok, err = arg( str_default, "default", cvar_type )
+                local ok, error_msg = arg( str_default, "default", number_types[ cvar_type ] and "number" or cvar_type )
+
                 if not ok then
-                    error( err, 3 )
+                    error( error_msg, 3 )
                 end
 
                 if cvar_type == "boolean" then
