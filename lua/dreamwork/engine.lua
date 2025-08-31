@@ -28,6 +28,13 @@ end
 --- Source engine library.
 ---
 ---@class dreamwork.engine
+---@field SupportedGames table<integer, dreamwork.engine.GameInfo> The list of games that are currently supported by the engine.
+---@field GameList dreamwork.engine.GameInfo[] The list of currently mounted games.
+---@field GameCount integer The length of the `GameList` array (`#GameList`).
+---@field GameHash table<integer, dreamwork.engine.GameInfo> The hash of currently mounted games.
+---@field AddonList dreamwork.engine.AddonInfo[] The list of currently mounted addons.
+---@field AddonCount integer The length of the `AddonList` array (`#AddonList`).
+---@field AddonHash table<string, dreamwork.engine.AddonInfo> The hash of currently mounted addons.
 local engine = dreamwork.engine or {}
 dreamwork.engine = engine
 
@@ -711,65 +718,169 @@ end
 
 do
 
-    local engine_GetGames, engine_GetAddons
+    local getGames, getAddons
 
-    if _G.engine == nil then
-        engine_GetGames, engine_GetAddons = _G.engine.GetGames, _G.engine.GetAddons
-    else
-        engine_GetGames, engine_GetAddons = debug_fempty, debug_fempty
+    local glua_engine = _G.engine
+    if glua_engine ~= nil then
+        getGames = glua_engine.GetGames
+        getAddons = glua_engine.GetAddons
     end
 
-    local title2addon = {}
-    engine.title2addon = title2addon
+    if getGames == nil then
+        getGames = debug_fempty
+    end
 
-    local wsid2addon = {}
-    engine.wsid2addon = wsid2addon
+    if getAddons == nil then
+        getAddons = debug_fempty
+    end
 
-    local name2game = {}
-    engine.name2game = name2game
+    ---@class dreamwork.engine.GameInfo
+    ---@field depot integer The game's Steam Depot ID.
+    ---@field folder string The game's mount folder name.
+    ---@field title string The game's title.
+    ---@field owned boolean Whether the game is owned or not.
+    ---@field mounted boolean Whether the game is mounted or not.
+    ---@field installed boolean Whether the game is installed or not.
 
-    -- TODO: make somewhere Addon is mounted function by addon titile
+    ---@class dreamwork.engine.AddonInfo
+    ---@field downloaded boolean Whether the addon is downloaded or not.
+    ---@field size integer The addon's size in bytes.
+    ---@field file string The absolute path to the addon's `.gma` file.
+    ---@field mounted boolean Whether the addon is mounted or not.
+    ---@field updated integer The addon's last update time in Unix timestamp.
+    ---@field models integer The addon's model count.
+    ---@field title string The addon's title.
+    ---@field tags string The addon's tags.
+    ---@field wsid string The addon's Steam Workshop ID.
+    ---@field timeadded integer The addon's time added, in Unix timestamp.
 
-    local addons, addon_count
-    local games, game_count
+    ---@type table<integer, dreamwork.engine.GameInfo>
+    local supported_games = {}
+    engine.SupportedGames = supported_games
 
-    local function update_mounted()
-        games, addons = engine_GetGames() or {}, engine_GetAddons() or {}
-        game_count, addon_count = #games, #addons
+    ---@type dreamwork.engine.GameInfo[], integer, table<integer, dreamwork.engine.GameInfo>
+    local actual_game_list, actual_game_count, actual_game_hash = {}, 0, {}
 
-        engine.games, engine.game_count = games, game_count
-        engine.addons, engine.addon_count = addons, addon_count
+    ---@type dreamwork.engine.AddonInfo[], integer, table<string, dreamwork.engine.AddonInfo>
+    local actual_addon_list, actual_addon_count, actual_addon_hash = {}, 0, {}
 
-        for key in raw_pairs( name2game ) do
-            name2game[ key ] = nil
+    engine.GameList, engine.GameCount, engine.GameHash = actual_game_list, actual_game_count, actual_game_hash
+    engine.AddonList, engine.AddonCount, engine.AddonHash = actual_addon_list, actual_addon_count, actual_addon_hash
+
+    --- [SHARED AND MENU]
+    ---
+    --- Updates the game and addon lists and returns actual.
+    ---
+    ---@return integer game_changes The number of game content changes.
+    ---@return integer addon_changes The number of addon content changes.
+    function engine.SyncContent()
+        ---@type dreamwork.engine.GameInfo[], dreamwork.engine.AddonInfo[]
+        local game_list, addon_list = getGames() or {}, getAddons() or {}
+        local game_count, addon_count = #game_list, #addon_list
+
+        local game_hash, addon_hash = {}, {}
+
+        -- Supported Games - Cleanup
+        for app_id in raw_pairs( supported_games ) do
+            supported_games[ app_id ] = nil
         end
+
+        local game_changes = 0
+
+        -- Mounted & Supported Games - Sync
+        for i = 1, game_count, 1 do
+            local game_info = game_list[ i ]
+
+            local app_id = game_info.depot
+            supported_games[ app_id ] = game_info
+
+            if game_info.installed and game_info.mounted then
+                if actual_game_hash[ app_id ] == nil then
+                    engine_hookCall( "GameMounted", game_info )
+                    game_changes = game_changes + 1
+                end
+
+                game_hash[ app_id ] = game_info
+            end
+        end
+
+        for i = 1, actual_game_count, 1 do
+            local game_info = actual_game_list[ i ]
+            if actual_addon_hash[ game_info.depot ] ~= nil and game_hash[ game_info.depot ] == nil then
+                engine_hookCall( "GameUnmounted", game_info )
+                game_changes = game_changes + 1
+            end
+        end
+
+        -- Game List - Cleanup
+        for i = 1, actual_game_count, 1 do
+            actual_game_list[ i ] = nil
+        end
+
+        --- Game List - Sync
+        actual_game_count = game_count
 
         for i = 1, game_count, 1 do
-            local data = games[ i ]
-            if data.mounted then
-                name2game[ data.folder ] = true
+            actual_game_list[ i ] = game_list[ i ]
+        end
+
+        -- Game Hash - Cleanup
+        for app_id in raw_pairs( actual_game_hash ) do
+            actual_game_hash[ app_id ] = nil
+        end
+
+        -- Game Hash - Sync
+        for app_id, game_info in raw_pairs( game_hash ) do
+            actual_game_hash[ app_id ] = game_info
+        end
+
+        local addon_changes = 0
+
+        -- Mounted Addons - Sync
+        for i = 1, addon_count, 1 do
+            local addon_info = addon_list[ i ]
+
+            local addon_title = addon_info.title
+            addon_hash[ addon_title ] = addon_info
+
+            if addon_info.mounted and actual_addon_hash[ addon_title ] == nil then
+                engine_hookCall( "AddonMounted", addon_info )
+                addon_changes = addon_changes + 1
             end
         end
 
-        for key in raw_pairs( title2addon ) do
-            title2addon[ key ] = nil
+        for i = 1, actual_addon_count, 1 do
+            local addon_info = actual_addon_list[ i ]
+            if actual_game_hash[ addon_info.title ] ~= nil and addon_hash[ addon_info.title ] == nil then
+                engine_hookCall( "AddonUnmounted", addon_info )
+                addon_changes = addon_changes + 1
+            end
         end
 
-        for key in raw_pairs( wsid2addon ) do
-            wsid2addon[ key ] = nil
+        -- Addon List - Cleanup
+        for i = 1, actual_addon_count, 1 do
+            actual_addon_list[ i ] = nil
         end
+
+        -- Addon List - Sync
+        actual_addon_count = addon_count
 
         for i = 1, addon_count, 1 do
-            local data = addons[ i ]
-            if data.mounted then
-                title2addon[ data.title ] = true
-                wsid2addon[ data.wsid ] = true
-            end
+            actual_addon_list[ i ] = addon_list[ i ]
         end
-    end
 
-    engine.hookCatch( "GameContentChanged", update_mounted )
-    update_mounted()
+        -- Addon Hash - Cleanup
+        for addon_title in raw_pairs( actual_addon_hash ) do
+            actual_addon_hash[ addon_title ] = nil
+        end
+
+        -- Addon Hash - Sync
+        for addon_title, addon_info in raw_pairs( addon_hash ) do
+            actual_addon_hash[ addon_title ] = addon_info
+        end
+
+        return game_changes, addon_changes
+    end
 
 end
 

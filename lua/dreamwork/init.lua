@@ -961,10 +961,15 @@ dofile( "std/structures.lua" )
 dofile( "std/futures.lua" )
 dofile( "std/time.lua" )
 
+local time = std.time
+local time_elapsed = time.elapsed
+
 dofile( "std/version.lua" )
 dofile( "std/bigint.lua" )
 
 dofile( "engine.lua" )
+
+local engine = dreamwork.engine
 
 dofile( "std/game.lua" )
 
@@ -1203,8 +1208,6 @@ if std_metatable == nil then
 
     if CLIENT then
 
-        local time_elapsed = std.time.elapsed
-
         local frame_time = 0
         local fps = 0
 
@@ -1220,7 +1223,7 @@ if std_metatable == nil then
 
         local last_pre_render = 0
 
-        dreamwork.engine.hookCatch( "PreRender", function()
+        engine.hookCatch( "PreRender", function()
             local elapsed_time = time_elapsed( nil, true )
 
             if last_pre_render ~= 0 then
@@ -1339,8 +1342,57 @@ do
 end
 
 if math.randomseed == 0 then
-    math.randomseed = std.time.now( "ms", false )
+    math.randomseed = time.now( "ms", false )
     logger:info( "Random seed was re-synchronized with milliseconds since the Unix epoch." )
+end
+
+-- Content Watcher
+do
+
+    logger:info( "Content Watcher - Started with %d game(s) and %d addon(s).", engine.GameCount, engine.AddonCount )
+
+    ---@param game_info dreamwork.engine.GameInfo
+    engine.hookCatch( "GameMounted", function( game_info )
+        logger:debug( "Content Watcher - Game '%s' (AppID: %d) was mounted.", game_info.folder, game_info.depot )
+    end )
+
+    ---@param game_info dreamwork.engine.GameInfo
+    engine.hookCatch( "GameUnmounted", function( game_info )
+        logger:debug( "Content Watcher - Game '%s' (AppID: %d) was unmounted.", game_info.folder, game_info.depot )
+    end )
+
+    ---@param addon_info dreamwork.engine.AddonInfo
+    engine.hookCatch( "AddonMounted", function( addon_info )
+        logger:debug( "Content Watcher - Addon '%s' (WorkshopID: %d) was mounted.", addon_info.title, addon_info.wsid )
+    end )
+
+    ---@param addon_info dreamwork.engine.AddonInfo
+    engine.hookCatch( "AddonUnmounted", function( addon_info )
+        logger:debug( "Content Watcher - Addon '%s' (WorkshopID: %d) was unmounted.", addon_info.title, addon_info.wsid )
+    end )
+
+    local changes_timeout = std.Timer( 0.5, 1, dreamwork.PREFIX .. "::ContentWatcher" )
+
+    local function perform_synchronization()
+        logger:debug( "Content Watcher - Changes in game content detected, synchronization started..." )
+
+        local start_time = time_elapsed( "ms", false )
+        local game_changes, addon_changes = engine.SyncContent()
+
+        if game_changes == 0 and addon_changes == 0 then
+            logger:debug( "Content Watcher - No changes were detected, synchronization skipped." )
+        else
+            logger:debug( "Content Watcher - Synchronization finished with %d game(s) and %d addon(s) in %d ms.", game_changes, addon_changes, time_elapsed( "ms", false ) - start_time )
+        end
+    end
+
+    changes_timeout:attach( perform_synchronization )
+    perform_synchronization()
+
+    engine.hookCatch( "GameContentChanged", function()
+        changes_timeout:start()
+    end )
+
 end
 
 dofile( "std/sqlite.lua" )
@@ -1387,7 +1439,11 @@ do
 
     std.lookupbinary = lookupbinary
 
-    local sv_allowcslua = SERVER and std.console.Variable.get( "sv_allowcslua", "boolean" )
+    local sv_allowcslua
+
+    if SERVER then
+        sv_allowcslua = std.console.Variable.get( "sv_allowcslua", "boolean" )
+    end
 
     --- [SHARED AND MENU]
     ---
