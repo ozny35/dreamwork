@@ -12,6 +12,9 @@ end
 
 local string = std.string
 
+local math = std.math
+local math_max = math.max
+
 local gc_setTableRules = std.debug.gc.setTableRules
 local time_elapsed = std.time.elapsed
 local table_eject = std.table.eject
@@ -172,11 +175,9 @@ do
 
     local timer_TimeLeft = timer.TimeLeft
     local string_sub = string.sub
-    local raw_get = std.raw.get
-
-    local math = std.math
-    local math_abs = math.abs
     local math_huge = math.huge
+    local math_abs = math.abs
+    local raw_get = std.raw.get
 
     ---@protected
     function Timer:__index( key )
@@ -194,18 +195,21 @@ do
         elseif key == "start_time" then
             return start_times[ self ] or 0
         elseif key == "repetition_index" then
-            if self.repetitions_total == -1 then
+            local repetitions = self.repetitions_total
+            if repetitions == 0 then
                 return repetition_indexes[ self ] or 0
             else
-                return self.repetitions_total - self.repetitions_remaining
+                return repetitions - self.repetitions_remaining
             end
         elseif key == "repetitions_total" then
             return repetitions_total[ self ] or 1
         elseif key == "repetitions_remaining" then
+            local repetitions = self.repetitions_total
             local name = names[ self ]
+
             if name == nil or self.state == 0 then
-                return self.repetitions_total
-            elseif repetitions_total[ self ] == -1 then
+                return repetitions
+            elseif repetitions == 0 then
                 return math_huge
             end
 
@@ -243,7 +247,7 @@ do
         elseif key == "time_remaining" then
             if self.state == 0 then
                 return self.time_total
-            elseif self.repetitions_total == -1 then
+            elseif self.repetitions_total == 0 then
                 return math_huge
             else
                 return self.time_total - self.time_elapsed
@@ -263,7 +267,6 @@ end
 do
 
     local tonumber = std.tonumber
-    local math_max = math.max
 
     ---@protected
     function Timer:__newindex( key, value )
@@ -299,7 +302,7 @@ do
 
     ---@param self dreamwork.std.Timer
     function timer_call( self )
-        if self.repetitions_total == -1 then
+        if self.repetitions_total == 0 then
             local repetition_index = self.repetition_index + 1
             repetition_indexes[ self ] = repetition_index
 
@@ -356,6 +359,7 @@ end
 
 do
 
+    local math_floor = math.floor
     local uuid_v7 = std.uuid.v7
 
     ---@protected
@@ -366,8 +370,17 @@ do
             names[ self ] = name
         end
 
-        intervals[ self ] = interval or 0
-        repetitions_total[ self ] = repetition_count or 1
+        if interval == nil then
+            intervals[ self ] = 0
+        else
+            intervals[ self ] = math_max( 0, interval )
+        end
+
+        if repetition_count == nil then
+            repetitions_total[ self ] = 1
+        else
+            repetitions_total[ self ] = math_max( 0, math_floor( repetition_count ) )
+        end
 
         states[ self ] = 0
         callbacks[ self ] = {}
@@ -481,15 +494,13 @@ do
     --- Starts/restarts the timer object.
     ---
     function Timer:start()
-        local repetitions = self.repetitions_total
-
         local name = names[ self ]
         if name ~= nil then
             if timer_Exists( name ) then
-                timer_Adjust( name, self.interval, repetitions )
+                timer_Adjust( name, self.interval, self.repetitions_total )
                 timer_Start( name )
             else
-                timer_Create( name, self.interval, repetitions, function()
+                timer_Create( name, self.interval, self.repetitions_total, function()
                     return timer_call( self )
                 end )
             end

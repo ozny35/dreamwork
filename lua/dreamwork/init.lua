@@ -1073,25 +1073,25 @@ do
 end
 
 if dreamwork.TickTimer0_05 == nil then
-    local timer = std.Timer( 0.05, -1, dreamwork.PREFIX .. "::TickTimer0_05" )
+    local timer = std.Timer( 0.05, 0, dreamwork.PREFIX .. "::TickTimer0_05" )
     dreamwork.TickTimer0_05 = timer
     timer:start()
 end
 
 if dreamwork.TickTimer0_1 == nil then
-    local timer = std.Timer( 0.1, -1, dreamwork.PREFIX .. "::TickTimer0_1" )
+    local timer = std.Timer( 0.1, 0, dreamwork.PREFIX .. "::TickTimer0_1" )
     dreamwork.TickTimer0_1 = timer
     timer:start()
 end
 
 if dreamwork.TickTimer0_25 == nil then
-    local timer = std.Timer( 0.25, -1, dreamwork.PREFIX .. "::TickTimer0_25" )
+    local timer = std.Timer( 0.25, 0, dreamwork.PREFIX .. "::TickTimer0_25" )
     dreamwork.TickTimer0_25 = timer
     timer:start()
 end
 
 if dreamwork.TickTimer1 == nil then
-    local timer = std.Timer( 1, -1, dreamwork.PREFIX .. "::TickTimer1" )
+    local timer = std.Timer( 1, 0, dreamwork.PREFIX .. "::TickTimer1" )
     dreamwork.TickTimer1 = timer
     timer:start()
 end
