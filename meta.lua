@@ -786,8 +786,8 @@ do
 
 end
 
----@alias dreamwork.std.console.Variable.type "boolean" | "number" | "string"
----@alias dreamwork.std.console.Variable.value boolean | number | string
+---@alias dreamwork.std.console.Variable.type "boolean" | "string" | "integer" | "float" | "number"
+---@alias dreamwork.std.console.Variable.value boolean | number | string | integer
 
 do
 

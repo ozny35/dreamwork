@@ -628,8 +628,8 @@ do
 
     local engine_consoleVariableGet = engine.consoleVariableGet
 
+    local raw_tonumber = std.raw.tonumber
     local toboolean = std.toboolean
-    local tonumber = std.tonumber
     local tostring = std.tostring
 
     local CONVAR = debug.findmetatable( "ConVar" ) or {}
@@ -640,7 +640,9 @@ do
     local getString = CONVAR.GetString
     local getFloat = CONVAR.GetFloat
     local getBool = CONVAR.GetBool
+    local getInt = CONVAR.GetInt
 
+    local math_floor = std.math.floor
     local raw_type = raw.type
 
     ---@type table<dreamwork.std.console.Variable, ConVar>
@@ -720,8 +722,10 @@ do
         ---@type table<dreamwork.std.console.Variable.type, boolean>
         local supported_types = {
             boolean = true,
+            integer = true,
             number = true,
-            string = true
+            string = true,
+            float = true
         }
 
         setmetatable( types, {
@@ -761,18 +765,25 @@ do
 
     end
 
+    ---@type table<string, boolean>
+    local number_types = {
+        integer = true,
+        number = true,
+        float = true
+    }
+
     ---@type table<dreamwork.std.console.Variable, dreamwork.std.console.Variable.value>
     local defaults = {}
 
     setmetatable( defaults, {
         __index = function( _, variable )
-            local type = types[ variable ]
+            local cvar_type = types[ variable ]
 
             local cvar = variable2convar[ variable ]
             if cvar == nil then
-                if type == "number" then
+                if number_types[ cvar_type ] then
                     return 0
-                elseif type == "boolean" then
+                elseif cvar_type == "boolean" then
                     return false
                 end
 
@@ -780,11 +791,16 @@ do
             end
 
             local str_default = getDefault( cvar )
-            if type == "number" then
-                local float_default = tonumber( str_default, 10 )
+            if number_types[ cvar_type ] then
+                local float_default = raw_tonumber( str_default, 10 ) or 0
+
+                if cvar_type == "integer" then
+                    float_default = math_floor( float_default )
+                end
+
                 defaults[ variable ] = float_default
                 return float_default
-            elseif type == "boolean" then
+            elseif cvar_type == "boolean" then
                 local bool_default = toboolean( str_default )
                 defaults[ variable ] = bool_default
                 return bool_default
@@ -807,10 +823,14 @@ do
             end
 
             local type = types[ variable ]
-            if type == "number" then
+            if type == "float" or type == "number" then
                 local float_value = getFloat( cvar )
                 values[ variable ] = float_value
                 return float_value
+            elseif type == "integer" then
+                local integer_value = getInt( cvar )
+                values[ variable ] = integer_value
+                return integer_value
             elseif type == "boolean" then
                 local bool_value = getBool( cvar )
                 values[ variable ] = bool_value
@@ -904,13 +924,18 @@ do
     ---@protected
     function Variable:__newindex( str_key, value )
         if str_key == "value" then
-            local str_type = types[ self ]
-            if str_type == "boolean" then
+            local cvar_type = types[ self ]
+            if cvar_type == "boolean" then
                 local bool_value = toboolean( value )
                 engine_consoleCommandRun( names[ self ], bool_value and "1" or "0" )
                 values[ self ] = bool_value
-            elseif str_type == "number" then
-                local float_value = tonumber( value, 10 )
+            elseif number_types[ cvar_type ] then
+                local float_value = raw_tonumber( value, 10 ) or 0.0
+
+                if cvar_type == "integer" then
+                    float_value = math_floor( float_value )
+                end
+
                 engine_consoleCommandRun( names[ self ], string_format( "%f", float_value ) )
                 values[ self ] = float_value
             else
@@ -936,8 +961,8 @@ do
             local str_name = options.name
             names[ self ] = str_name
 
-            local str_type = options.type or "string"
-            types[ self ] = str_type
+            local cvar_type = options.type or "string"
+            types[ self ] = cvar_type
 
             local cvar = engine_consoleVariableGet( str_name )
             if cvar == nil then
@@ -947,23 +972,23 @@ do
                 local str_default = options.default
 
                 if str_default == nil then
-                    if str_type == "boolean" then
+                    if cvar_type == "boolean" then
                         str_default = false
-                    elseif str_type == "number" then
+                    elseif number_types[ cvar_type ] then
                         str_default = 0
                     else
                         str_default = ""
                     end
                 end
 
-                local ok, err = arg( str_default, "default", str_type )
+                local ok, err = arg( str_default, "default", cvar_type )
                 if not ok then
                     error( err, 3 )
                 end
 
-                if str_type == "boolean" then
+                if cvar_type == "boolean" then
                     str_default = str_default and "1" or "0"
-                elseif str_type == "number" then
+                elseif number_types[ cvar_type ] then
                     str_default = tostring( str_default ) or "0"
                 end
 
@@ -980,10 +1005,20 @@ do
 
                 flags[ self ] = int32_flags
 
-                local int32_min = options.min
+                local int32_min = options.min or 0
+
+                if cvar_type == "integer" then
+                    int32_min = math_floor( int32_min )
+                end
+
                 mins[ self ] = int32_min
 
-                local int32_max = options.max
+                local int32_max = options.max or 0
+
+                if cvar_type == "integer" then
+                    int32_max = math_floor( int32_max )
+                end
+
                 maxs[ self ] = int32_max
 
                 cvar = engine_consoleVariableCreate( str_name, str_default, int32_flags, str_description, int32_min, int32_max )
@@ -1031,9 +1066,9 @@ do
     --- Gets a `console.Variable` object by its name.
     ---
     ---@param str_name string The name of the console variable.
-    ---@param str_type dreamwork.std.console.Variable.type The type of the console variable.
+    ---@param cvar_type dreamwork.std.console.Variable.type The type of the console variable.
     ---@return dreamwork.std.console.Variable | nil variable The `console.Variable` object.
-    function VariableClass.get( str_name, str_type )
+    function VariableClass.get( str_name, cvar_type )
         local variable = variables[ str_name ]
         if variable == nil then
             if not engine_consoleVariableExists( str_name ) then
@@ -1042,12 +1077,12 @@ do
 
             return VariableClass( {
                 name = str_name,
-                type = str_type,
-                default = ( str_type == "boolean" or str_type == "number" ) and 0 or "",
+                type = cvar_type,
+                default = ( cvar_type == "boolean" or number_types[ cvar_type ] ) and 0 or "",
             } )
         end
 
-        variable.type = str_type
+        variable.type = cvar_type
         return variable
     end
 
@@ -1058,15 +1093,17 @@ do
     ---@param name string The name of the console variable.
     ---@param value dreamwork.std.console.Variable.value The value to set.
     function VariableClass.set( name, value )
-        local str_type = raw_type( value )
-        if str_type == "boolean" then
+        local cvar_type = raw_type( value )
+        if cvar_type == "boolean" then
             engine_consoleCommandRun( name, value and "1" or "0" )
-        elseif str_type == "string" then
+        elseif cvar_type == "string" then
             engine_consoleCommandRun( name, value )
-        elseif str_type == "number" then
-            engine_consoleCommandRun( name, string_format( "%f", tonumber( value, 10 ) ) )
+        elseif cvar_type == "float" or cvar_type == "number" then
+            engine_consoleCommandRun( name, string_format( "%f", raw_tonumber( value, 10 ) or 0.0 ) )
+        elseif cvar_type == "integer" then
+            engine_consoleCommandRun( name, string_format( "%d", raw_tonumber( value, 10 ) or 0 ) )
         else
-            error( "invalid value type, must be boolean, string or number.", 2 )
+            error( "invalid value type, must be boolean, string, integer, float or number.", 2 )
         end
     end
 
@@ -1087,11 +1124,26 @@ do
 
     --- [SHARED AND MENU]
     ---
-    --- Gets the value of the `console.Variable` object as a number.
+    --- Gets the value of the `console.Variable` object as an integer.
+    ---
+    ---@param name string The name of the console variable.
+    ---@return integer value The value of the `console.Variable` object.
+    function VariableClass.getInteger( name )
+        local object = engine_consoleVariableGet( name )
+        if object == nil then
+            return 0
+        else
+            return getInt( object )
+        end
+    end
+
+    --- [SHARED AND MENU]
+    ---
+    --- Gets the value of the `console.Variable` object as a float/double.
     ---
     ---@param name string The name of the console variable.
     ---@return number value The value of the `console.Variable` object.
-    function VariableClass.getNumber( name )
+    function VariableClass.getFloat( name )
         local object = engine_consoleVariableGet( name )
         if object == nil then
             return 0.0
@@ -1099,6 +1151,8 @@ do
             return getFloat( object )
         end
     end
+
+    VariableClass.getNumber = VariableClass.getFloat
 
     --- [SHARED AND MENU]
     ---
@@ -1226,7 +1280,7 @@ do
     --- Gets the minimum value of the `console.Variable` object.
     ---
     ---@param name string The name of the console variable.
-    ---@return number
+    ---@return number minimum The minimum value of the `console.Variable` object.
     function VariableClass.getMin( name )
         local object = engine_consoleVariableGet( name )
         if object == nil then
@@ -1241,7 +1295,7 @@ do
     --- Gets the maximum value of the `console.Variable` object.
     ---
     ---@param name string The name of the console variable.
-    ---@return number
+    ---@return number maximum The maximum value of the `console.Variable` object.
     function VariableClass.getMax( name )
         local object = engine_consoleVariableGet( name )
         if object == nil then
@@ -1256,7 +1310,8 @@ do
     --- Returns the minimum and maximum values of the `console.Variable` object.
     ---
     ---@param name string The name of the console variable.
-    ---@return number, number
+    ---@return number minimum The minimum value of the `console.Variable` object.
+    ---@return number maximum The maximum value of the `console.Variable` object.
     function VariableClass.getBounds( name )
         local object = engine_consoleVariableGet( name )
         if object == nil then
@@ -1400,8 +1455,8 @@ do
 
         if cvar_type == "boolean" then
             old_value, new_value = str_old == "1", str_new == "1"
-        elseif cvar_type == "number" then
-            old_value, new_value = tonumber( str_old, 10 ), tonumber( str_new, 10 )
+        elseif number_types[ cvar_type ] then
+            old_value, new_value = raw_tonumber( str_old, 10 ) or 0, raw_tonumber( str_new, 10 ) or 0
         else
             old_value, new_value = str_old, str_new
         end
