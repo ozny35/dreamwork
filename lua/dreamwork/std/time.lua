@@ -341,8 +341,8 @@ end
 ---
 --- Returns the current time in the specified unit.
 ---
----@param unit? dreamwork.std.time.Unit The unit to return the current time in, seconds by default.
----@param as_float? boolean Whether to return the timestamp as a float.
+---@param unit? dreamwork.std.time.Unit The unit to return the current time in, `s` by default.
+---@param as_float? boolean Whether to return the timestamp as a float, `false` by default.
 ---@return integer timestamp The current timestamp in the specified unit.
 local function now( unit, as_float )
     local timestamp = os_time()
