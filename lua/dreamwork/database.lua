@@ -352,7 +352,7 @@ do
             if sqlite.query( "pragma wal_checkpoint(TRUNCATE)" ) == false then
                 dreamwork.Logger:error( "Failed to truncate WAL journal: %s", sqlite.getLastError() )
             end
-        end )
+        end, 1 )
     end
 
     local migrations = {

@@ -106,12 +106,12 @@ if std.CLIENT then
         dreamwork.engine.hookCatch( "PlayerStartVoice", function( entity )
             if entity ~= client.entity then return end
             voice_chat_state = true
-        end )
+        end, 1 )
 
         dreamwork.engine.hookCatch( "PlayerEndVoice", function( entity )
             if entity ~= client.entity then return end
             voice_chat_state = false
-        end )
+        end, 1 )
 
         function client.getVoiceChat()
             return voice_chat_state

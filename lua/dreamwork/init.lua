@@ -1238,10 +1238,6 @@ if std_metatable == nil then
 
 end
 
-dofile( "std/fs.lua" )
-
-dofile( "std/audio_stream.lua" )
-
 do
 
     local setTimeout = std.setTimeout
@@ -1354,22 +1350,22 @@ do
     ---@param game_info dreamwork.engine.GameInfo
     engine.hookCatch( "GameMounted", function( game_info )
         logger:debug( "Content Watcher - Game '%s' (AppID: %d) was mounted.", game_info.folder, game_info.depot )
-    end )
+    end, 1 )
 
     ---@param game_info dreamwork.engine.GameInfo
     engine.hookCatch( "GameUnmounted", function( game_info )
         logger:debug( "Content Watcher - Game '%s' (AppID: %d) was unmounted.", game_info.folder, game_info.depot )
-    end )
+    end, 1 )
 
     ---@param addon_info dreamwork.engine.AddonInfo
     engine.hookCatch( "AddonMounted", function( addon_info )
         logger:debug( "Content Watcher - Addon '%s' (WorkshopID: %d) was mounted.", addon_info.title, addon_info.wsid )
-    end )
+    end, 1 )
 
     ---@param addon_info dreamwork.engine.AddonInfo
     engine.hookCatch( "AddonUnmounted", function( addon_info )
         logger:debug( "Content Watcher - Addon '%s' (WorkshopID: %d) was unmounted.", addon_info.title, addon_info.wsid )
-    end )
+    end, 1 )
 
     local changes_timeout = std.Timer( 0.5, 1, dreamwork.PREFIX .. "::ContentWatcher" )
 
@@ -1467,6 +1463,9 @@ do
     std.loadbinary = loadbinary
 
 end
+
+dofile( "std/game.hooks.lua" )
+dofile( "std/audio_stream.lua" )
 
 -- https://github.com/willox/gmbc
 if loadbinary( "gmbc" ) then

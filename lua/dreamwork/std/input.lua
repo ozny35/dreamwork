@@ -193,7 +193,7 @@ if std.CLIENT_MENU then
                 if key_code == nil then return end
 
                 captures:pop():setResult( key_code )
-            end )
+            end, 1 )
 
             --- [CLIENT AND MENU]
             ---

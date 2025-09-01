@@ -164,7 +164,7 @@ if std.CLIENT and server.Tick == nil then
     --- Called once every processed server frame during lag.
     ---
     local Tick = Hook( "server.Tick" )
-    engine_hookCatch( "Think", Tick )
+    engine_hookCatch( "Think", Tick, 1 )
     server.Tick = Tick
 
 end
@@ -189,7 +189,7 @@ if std.MENU then
     --- Called when the game details are updated.
     ---
     local GameDetails = std.Hook( "server.GameDetails" )
-    engine_hookCatch( "GameDetails", GameDetails )
+    engine_hookCatch( "GameDetails", GameDetails, 1 )
     server.GameDetails = GameDetails
 
 end
@@ -499,7 +499,7 @@ if std.SERVER then
 
         engine_hookCatch( "GetGameDescription", function()
             return title
-        end )
+        end, 1 )
 
         --- [SERVER]
         ---

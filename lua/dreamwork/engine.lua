@@ -70,8 +70,8 @@ if engine.hookCatch == nil then
         ---
         ---@param event_name string
         ---@param fn dreamwork.std.Hook | fun( ... ): ...
-        ---@param priority integer | nil
-        function engine.hookCatch( event_name, fn, priority )
+        ---@param index integer
+        function engine.hookCatch( event_name, fn, index )
             local lst = engine_hooks[ event_name ]
             if lst == nil then
                 lst = {}
@@ -87,11 +87,7 @@ if engine.hookCatch == nil then
                 engine_hooks[ event_name ] = lst
             end
 
-            if priority == nil then
-                table_insert( lst, #lst + 1, fn )
-            else
-                table_insert( lst, math_clamp( priority, 1, #lst + 1 ), fn )
-            end
+            lst[ index ] = fn
         end
 
     end

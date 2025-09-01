@@ -29,7 +29,7 @@ if window.SizeChanged == nil then
         width, height = new_width, new_height
         window.width, window.height = new_width, new_height
         SizeChanged( new_width, new_height, old_width, old_height )
-    end )
+    end, 1 )
 
 end
 
