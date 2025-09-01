@@ -520,11 +520,13 @@ do
         for index = 1, arg_count, 1 do
             local value = args[ index ]
             if index > 1 then
-                value = string_byteTrim( value, 0x2F, 1 )
+                -- TODO: recheck direction
+                value = string_byteTrim( value, 0x2F, false )
             end
 
             if index < arg_count then
-                value = string_byteTrim( value, 0x2F, -1 )
+                -- TODO: recheck direction
+                value = string_byteTrim( value, 0x2F, true )
             end
 
             args[ index ] = value

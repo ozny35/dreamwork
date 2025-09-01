@@ -1342,6 +1342,10 @@ if math.randomseed == 0 then
     logger:info( "Random seed was re-synchronized with milliseconds since the Unix epoch." )
 end
 
+dofile( "std/sqlite.lua" )
+dofile( "database.lua" )
+dofile( "std/fs.lua" )
+
 -- Content Watcher
 do
 
@@ -1387,12 +1391,9 @@ do
 
     engine.hookCatch( "GameContentChanged", function()
         changes_timeout:start()
-    end )
+    end, 1 )
 
 end
-
-dofile( "std/sqlite.lua" )
-dofile( "database.lua" )
 
 local loadbinary
 do

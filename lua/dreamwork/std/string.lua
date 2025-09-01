@@ -467,8 +467,13 @@ local function byteSplit( str, split_byte, start_position, end_position, str_len
         end_position = math_min( end_position, str_length )
     end
 
-    local split_position = start_position - 1
     local segments, segment_count = {}, 0
+
+    if start_position > end_position then
+        return segments, segment_count
+    end
+
+    local split_position = start_position - 1
 
     while true do
         local uint8 = string_byte( str, start_position, start_position )
