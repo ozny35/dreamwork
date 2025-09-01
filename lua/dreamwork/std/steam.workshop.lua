@@ -603,7 +603,7 @@ if std.CLIENT_MENU then
             if file_path == nil then
                 f:setError( "failed to download icon file for '" .. wsid_str .. "', unknown error." )
             else
-                f:setResult( "/garrysmod/" .. file_path )
+                f:setResult( "/workspace/" .. file_path )
             end
         end )
 
@@ -741,7 +741,7 @@ do
                     f:setResult( new_path )
                 end
             else
-                f:setResult( "/garrysmod/" .. file_path )
+                f:setResult( "/workspace/" .. file_path )
             end
         end )
 

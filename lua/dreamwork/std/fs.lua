@@ -1,7 +1,9 @@
 local _G = _G
+local dreamwork = _G.dreamwork
 
 ---@class dreamwork.std
-local std = _G.dreamwork.std
+local std = dreamwork.std
+local engine = dreamwork.engine
 
 local CLIENT, SERVER, MENU = std.CLIENT, std.SERVER, std.MENU
 
@@ -34,6 +36,7 @@ local string_len = string.len
 local string_byte = string.byte
 local string_match = string.match
 local string_hasByte = string.hasByte
+local string_byteTrim = string.byteTrim
 
 local time = std.time
 local time_now = time.now
@@ -58,9 +61,9 @@ std.fs = fs
 ---@field size integer The size of the file in bytes.
 ---@field time integer The last modified time of the file.
 ---@field parent dreamwork.std.Directory | nil The parent directory. **READ-ONLY**
----@field private mount_path string | nil The local mount_path in intenal game directory.
----@field private mount_point string | nil The name of the intenal game directory.
----@field index integer The index of the file.
+---@field mount_path string | nil The local mount_path in intenal game directory. **READ-ONLY**
+---@field mount_point string | nil The name of the intenal game directory. **READ-ONLY**
+---@field index integer The index of the file. **READ-ONLY**
 local File = class.base( "File", false )
 
 ---@class dreamwork.std.FileClass : dreamwork.std.File
@@ -81,13 +84,15 @@ function File:__index( key )
     if mount_point == nil then
         if key == "size" then
             return string_len( self.content )
+        else
+            return 0
         end
     else
 
         local mount_path = self.mount_path or self.name
 
         if key == "size" then
-            return file_Size( mount_path, mount_point )
+            return file_Size( mount_path, mount_point ) or 0
         elseif key == "time" then
             return file_Time( mount_path, mount_point )
         elseif key == "content" then
@@ -133,12 +138,12 @@ end
 
 ---@class dreamwork.std.Directory : dreamwork.std.Object
 ---@field __class dreamwork.std.DirectoryClass
----@field name string The name of the directory.
----@field path string The full path of the directory.
----@field parent dreamwork.std.Directory | nil The parent directory.
----@field mount_point string | nil The name of the intenal game directory.
----@field mount_path string | nil The local path in intenal game directory.
----@field content table<string | integer, dreamwork.std.File | dreamwork.std.Directory> The content of the directory.
+---@field name string The name of the directory. **READ-ONLY**
+---@field path string The full path of the directory. **READ-ONLY**
+---@field parent dreamwork.std.Directory | nil The parent directory. **READ-ONLY**
+---@field mount_point string | nil The name of the intenal game directory. **READ-ONLY**
+---@field mount_path string | nil The local path in intenal game directory. **READ-ONLY**
+---@field content table<string | integer, dreamwork.std.File | dreamwork.std.Directory> The content of the directory. **READ-ONLY**
 ---@field writeable boolean If `true`, the directory is directly writeable.
 local Directory = class.base( "Directory", false )
 
@@ -203,6 +208,7 @@ function Directory:__init( name, mount_point, mount_path )
     update_path( self, nil )
 end
 
+---@param value dreamwork.std.File | dreamwork.std.Directory
 function Directory:add( value )
     local metatable = debug_getmetatable( value )
     if not ( metatable == Directory or metatable == File ) then
@@ -244,6 +250,7 @@ function Directory:add( value )
     update_path( value, self )
 end
 
+---@param name string
 function Directory:delete( name )
     local content = self.content
 
@@ -569,6 +576,71 @@ do
         return self
     end
 
+
+    --- [SHARED AND MENU]
+    ---
+    --- Checks if a file or directory exists by given path.
+    ---
+    ---@param path_to string The path to the file or directory.
+    ---@param check_is_directory boolean? `true` to check if the path is a directory, `false` otherwise.
+    ---@param check_is_file boolean? `true` to check if the path is a file, `false` otherwise.
+    ---@return boolean exists Returns `true` if the file or directory exists, otherwise `false`.
+    function Directory:exists( path_to, check_is_directory, check_is_file )
+        local segments, segment_count = string_byteSplit( path_to, 0x2F --[[ '/' ]] )
+
+        for i = 1, segment_count, 1 do
+            local name = segments[ i ]
+
+            local content_value = self.content[ name ]
+
+            if content_value == nil then
+                ---@cast self dreamwork.std.Directory
+
+                local mount_point = self.mount_point
+                if mount_point == nil then
+                    return false
+                end
+
+                local file_path
+
+                local mount_path = self.mount_path
+                if mount_path == nil then
+                    file_path = self.path .. "/" .. name
+                else
+                    file_path = mount_path .. "/" .. name
+                end
+
+                if file_Exists( file_path, mount_point ) then
+                    if check_is_directory then
+                        if check_is_file then
+                            return true
+                        else
+                            return file_IsDir( file_path, mount_point )
+                        end
+                    elseif check_is_file then
+                        return not file_IsDir( file_path, mount_point )
+                    else
+                        return true
+                    end
+                else
+                    return false
+                end
+            elseif debug_getmetatable( content_value ) == File then
+                if i == segment_count then
+                    ---@diagnostic disable-next-line: cast-type-mismatch
+                    ---@cast content_value dreamwork.std.File
+                    return true
+                else
+                    return false
+                end
+            else
+                self = content_value
+            end
+        end
+
+        return false
+    end
+
 end
 
 ---@param file_callback nil | fun( file: dreamwork.std.File )
@@ -602,16 +674,64 @@ function Directory:foreach( file_callback, directory_callback )
     end
 end
 
+---@param prefix? string
+---@param is_last? boolean
+---@return string
+function Directory:visualize( prefix, is_last )
+    local lines = {}
+
+    local name = self.name
+    local content = self.content
+    local content_length = #content
+
+    if name == "" then
+        name = "root"
+    end
+
+    local next_prefix
+    if prefix == nil then
+        lines[ 1 ] = name
+        next_prefix = " "
+    else
+        lines[ 1 ] = prefix .. ( is_last and "╚═ " or "╠═ " ) .. name
+        local spaces = ( is_last and "    " or " " )
+        next_prefix = prefix .. ( is_last and spaces or "║  " .. spaces )
+    end
+
+    for i = 1, content_length, 1 do
+        table.insert( lines, next_prefix .. "║  " )
+
+        local child = content[ i ]
+        if debug_getmetatable( child ) == File then
+            ---@cast child dreamwork.std.File
+            table.insert( lines, next_prefix .. string.format( "╠═ %s [%.2fKB]", child.name, child.size / 1024 ) )
+        else
+            ---@cast child dreamwork.std.Directory
+            table.insert( lines, child:visualize( next_prefix, i == content_length ) )
+        end
+    end
+
+    return table.concat( lines, "\n" )
+end
+
 local root = DirectoryClass( "", "BASE_PATH" )
+
+---@param game_info dreamwork.engine.GameInfo
+engine.hookCatch( "GameMounted", function( game_info )
+    local game_folder = game_info.folder
+    root:add( DirectoryClass( game_folder, game_folder ) )
+end, 2 )
+
+---@param game_info dreamwork.engine.GameInfo
+engine.hookCatch( "GameUnmounted", function( game_info )
+    root:delete( game_info.folder )
+end, 2 )
 
 do
 
     local garrysmod = DirectoryClass( "garrysmod", "MOD" )
     garrysmod.writeable = MENU
     root:add( garrysmod )
-
-    local download = DirectoryClass( "download", "DOWNLOAD" )
-    garrysmod:add( download )
 
     local data = DirectoryClass( "data", "DATA" )
     data.writeable = true
@@ -624,6 +744,9 @@ do
     local workspace = DirectoryClass( "workspace", "GAME" )
     root:add( workspace )
 
+    local download = DirectoryClass( "download", "DOWNLOAD" )
+    workspace:add( download )
+
     local lua = DirectoryClass( "lua", ( SERVER and "lsv" or ( CLIENT and "lcl" or ( MENU and "LuaMenu" or "LUA" ) ) ) )
     workspace:add( lua )
 
@@ -631,57 +754,124 @@ end
 
 do
 
-    -- TODO: add mounted content detector that creates directories here
     local mnt = DirectoryClass( "mnt" )
     root:add( mnt )
 
+    ---@param addon_info dreamwork.engine.AddonInfo
+    engine.hookCatch( "AddonMounted", function( addon_info )
+        local addon_title = addon_info.title
+        mnt:add( DirectoryClass( addon_title, addon_title ) )
+    end, 2 )
+
+    ---@param addon_info dreamwork.engine.AddonInfo
+    engine.hookCatch( "AddonUnmounted", function( addon_info )
+        mnt:delete( addon_info.title )
+    end, 2 )
+
 end
+
+std.setTimeout( function()
+    print( "\n" .. root:visualize() )
+end, 3 )
 
 local path = std.path
 local path_resolve = path.resolve
-
--- TODO: REPLACE THIS CRAP
-local function perform_path( ... )
-    return "fuck", "GAME"
-end
-
--- TODO: path.unpack and path.pack for garrysmod filesystem
+local path_getName = path.getName
+local path_getDirectory = path.getDirectory
 
 --- [SHARED AND MENU]
 ---
 --- Checks if a file or directory exists by given path.
+---
 ---@param file_path string The path to the file.
 ---@return boolean exists Returns `true` if the file or directory exists, otherwise `false`.
 function fs.exists( file_path )
-    return file_Exists( perform_path( path_resolve( file_path ), false, 2 ) )
+    local resolved_path = path_resolve( file_path )
+
+    local resolved_length = string_len( resolved_path )
+    if string_byte( resolved_path, resolved_length, resolved_length ) == 0x2F --[[ '/' ]] then
+        resolved_path, resolved_length = string_byteTrim( resolved_path, 0x2F, true, resolved_length )
+    end
+
+    local sub_directory_path = path_getDirectory( resolved_path, false )
+    if sub_directory_path == nil then
+        return false
+    end
+
+    local sub_directory = root:getDirectory( sub_directory_path )
+    if sub_directory == nil then
+        return false
+    end
+
+    return sub_directory:exists( path_getName( resolved_path, true ), false, false )
 end
 
 --- [SHARED AND MENU]
 ---
 --- Checks if a directory exists and is not a file by given path.
+---
 ---@param directory_path string The path to the directory.
 ---@return boolean exists Returns `true` if the directory exists and is not a file, otherwise `false`.
 function fs.isExistingDirectory( directory_path )
-    return file_IsDir( perform_path( path_resolve( directory_path ), false, 2 ) )
+    local resolved_path = path_resolve( directory_path )
+
+    local resolved_length = string_len( resolved_path )
+    if string_byte( resolved_path, resolved_length, resolved_length ) == 0x2F --[[ '/' ]] then
+        resolved_path, resolved_length = string_byteTrim( resolved_path, 0x2F, true, resolved_length )
+    end
+
+    local sub_directory_path = path_getDirectory( resolved_path, false )
+    if sub_directory_path == nil then
+        return false
+    end
+
+    local sub_directory = root:getDirectory( sub_directory_path )
+    if sub_directory == nil then
+        return false
+    end
+
+    return sub_directory:exists( path_getName( resolved_path, true ), true, false )
 end
 
 --- [SHARED AND MENU]
 ---
 --- Checks if a file exists and is not a directory by given path.
+---
 ---@param file_path string The path to the fs.
 ---@return boolean exists Returns `true` if the file exists and is not a directory, otherwise `false`.
 function fs.isExistingFile( file_path )
-    local local_path, game_path = perform_path( path_resolve( file_path ), false, 2 )
-    return file_Exists( local_path, game_path ) and not file_IsDir( local_path, game_path )
+    local resolved_path = path_resolve( file_path )
+
+    local resolved_length = string_len( resolved_path )
+    if string_byte( resolved_path, resolved_length, resolved_length ) == 0x2F --[[ '/' ]] then
+        resolved_path, resolved_length = string_byteTrim( resolved_path, 0x2F, true, resolved_length )
+    end
+
+    local sub_directory_path = path_getDirectory( resolved_path, false )
+    if sub_directory_path == nil then
+        return false
+    end
+
+    local sub_directory = root:getDirectory( sub_directory_path )
+    if sub_directory == nil then
+        return false
+    end
+
+    return sub_directory:exists( path_getName( resolved_path, true ), false, true )
+end
+
+local function perform_path( absolute_path, write_mode, path_type )
+    return "fuck", "GAME"
 end
 
 --- [SHARED AND MENU]
 ---
 --- Returns the last modified time of a file or directory by given path.
+---
 ---@param file_path string The path to the file or directory.
 ---@return integer unix_time The last modified time of the file or directory.
 function fs.getLastWriteTime( file_path )
-    return file_Time( perform_path( path_resolve( file_path ), false, 2 ) )
+    return file_Time( perform_path( path_resolve( file_path ), false, nil ) )
 end
 
 --- [SHARED AND MENU]
@@ -691,7 +881,7 @@ end
 ---@return table files The list of files.
 ---@return table directories The list of directories.
 function fs.find( file_path )
-    return file_Find( perform_path( path_resolve( file_path ), false, 2 ) )
+    return file_Find( perform_path( path_resolve( file_path ), false, nil ) )
 end
 
 local function do_tralling_slash( str )

@@ -301,7 +301,7 @@ do
         local info = debug_getinfo( location, "S" )
         if info.what == "main" then
             ---@diagnostic disable-next-line: redundant-return-value
-            return "/garrysmod/" .. string_gsub( string_gsub( string_sub( info.source, 2 ), "^(.-)(lua/.*)$", gsub_formatter ), "^(.-)([%w_]+/gamemode/.*)$", gsub_formatter ), nil
+            return "/workspace/" .. string_gsub( string_gsub( string_sub( info.source, 2 ), "^(.-)(lua/.*)$", gsub_formatter ), "^(.-)([%w_]+/gamemode/.*)$", gsub_formatter ), nil
         end
     end
 
