@@ -754,18 +754,18 @@ end
 
 do
 
-    local mnt = DirectoryClass( "mnt" )
-    root:add( mnt )
+    local addons = DirectoryClass( "addons" )
+    root:add( addons )
 
     ---@param addon_info dreamwork.engine.AddonInfo
     engine.hookCatch( "AddonMounted", function( addon_info )
         local addon_title = addon_info.title
-        mnt:add( DirectoryClass( addon_title, addon_title ) )
+        addons:add( DirectoryClass( addon_title, addon_title ) )
     end, 2 )
 
     ---@param addon_info dreamwork.engine.AddonInfo
     engine.hookCatch( "AddonUnmounted", function( addon_info )
-        mnt:delete( addon_info.title )
+        addons:delete( addon_info.title )
     end, 2 )
 
 end
