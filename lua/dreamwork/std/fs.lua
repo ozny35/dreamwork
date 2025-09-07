@@ -510,7 +510,8 @@ function Directory:count()
 end
 
 ---@param deep_scan boolean
-function Directory:scan( deep_scan )
+---@param callback nil | fun( directory: dreamwork.std.Directory )
+function Directory:scan( deep_scan, callback )
     local mount_point = mount_points[ self ]
     if mount_point == nil then
         return
@@ -553,12 +554,16 @@ function Directory:scan( deep_scan )
         end
     end
 
+    if callback ~= nil then
+        callback( self )
+    end
+
     if deep_scan then
         for i = 1, descendant_counts[ self ], 1 do
             local directory = children[ i ]
             if is_directory_object[ directory ] then
                 ---@cast directory dreamwork.std.Directory
-                directory:scan( deep_scan )
+                directory:scan( deep_scan, callback )
             end
         end
     end
