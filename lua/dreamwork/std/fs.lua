@@ -6,6 +6,7 @@ local std = dreamwork.std
 local engine = dreamwork.engine
 
 local CLIENT, SERVER, MENU = std.CLIENT, std.SERVER, std.MENU
+local setmetatable = std.setmetatable
 
 -- TODO: https://wiki.facepunch.com/gmod/resource
 -- TODO: https://wiki.facepunch.com/gmod/Global.AddCSLuaFile
@@ -26,6 +27,7 @@ local FILE_Close = FILE.Close
 
 local debug = std.debug
 local debug_getmetatable = debug.getmetatable
+local gc_setTableRules = debug.gc.setTableRules
 
 local table = std.table
 local table_concat = table.concat
@@ -38,12 +40,17 @@ local string_match = string.match
 local string_hasByte = string.hasByte
 local string_byteTrim = string.byteTrim
 
+local class = std.class
+
 local time = std.time
 local time_now = time.now
 
-local class = std.class
-
 local raw = std.raw
+local raw_set = raw.set
+local raw_index = raw.index
+
+local path = std.path
+local path_resolve = path.resolve
 
 --- [SHARED AND MENU]
 ---
@@ -53,25 +60,200 @@ local raw = std.raw
 local fs = std.fs or {}
 std.fs = fs
 
--- TODO: make classes private and add dynamic __index and __newindex for operations
-
 ---@class dreamwork.std.File : dreamwork.std.Object
 ---@field __class dreamwork.std.FileClass
 ---@field name string The name of the file. **READ-ONLY**
+---@field size integer The size of the file in bytes. **READ-ONLY**
+---@field time integer The last modified time of the file. **READ-ONLY**
 ---@field path string The path to the file. **READ-ONLY**
----@field content string The content of the file.
----@field size integer The size of the file in bytes.
----@field time integer The last modified time of the file.
 ---@field parent dreamwork.std.Directory | nil The parent directory. **READ-ONLY**
----@field mount_path string | nil The local mount_path in intenal game directory. **READ-ONLY**
----@field mount_point string | nil The name of the intenal game directory. **READ-ONLY**
----@field index integer The index of the file. **READ-ONLY**
-local File = class.base( "File", false )
+local File = class.base( "File", true )
 
----@class dreamwork.std.FileClass : dreamwork.std.File
----@field __base dreamwork.std.File
----@overload fun( name: string, mount_point: string | nil, mount_path: string | nil ): dreamwork.std.File
-local FileClass = class.create( File )
+---@class dreamwork.std.Directory : dreamwork.std.Object
+---@field __class dreamwork.std.DirectoryClass
+---@field name string The name of the directory. **READ-ONLY**
+---@field size integer The size of the directory in bytes. **READ-ONLY**
+---@field time integer The last modified time of the directory. **READ-ONLY**
+---@field path string The full path of the directory. **READ-ONLY**
+---@field writeable boolean If `true`, the directory is directly writeable.
+---@field parent dreamwork.std.Directory | nil The parent directory. **READ-ONLY**
+local Directory = class.base( "Directory", true )
+
+---@type table<dreamwork.std.File | dreamwork.std.Directory, string>
+local names = {}
+
+do
+
+    local invalid_characters = {
+        [ 0x22 ] = true,
+        [ 0x27 ] = true,
+        [ 0x2A ] = true,
+        [ 0x2F ] = true,
+        [ 0x5C ] = true,
+        [ 0x7C ] = true,
+        [ 0x7F ] = true
+    }
+
+    for i = 0, 31, 1 do
+        invalid_characters[ i ] = true
+    end
+
+    for i = 58, 63, 1 do
+        invalid_characters[ i ] = true
+    end
+
+    setmetatable( names, {
+        __newindex = function( self, object, name )
+            for index = 1, string_len( name ), 1 do
+                if invalid_characters[ string_byte( name, index, index ) ] then
+                    error( string.format( "directory or file name contains invalid character \\%X at index %d", string_byte( name, index, index ), index ), 2 )
+                end
+            end
+
+            raw_set( self, object, name )
+        end,
+        __mode = "k"
+    } )
+
+end
+
+---@type table<dreamwork.std.File | dreamwork.std.Directory, string>
+local paths = {}
+
+setmetatable( paths, {
+    ---@param object dreamwork.std.File | dreamwork.std.Directory
+    __index = function( self, object )
+        local object_path = "/" .. names[ object ]
+        raw_set( self, object, object_path )
+        return object_path
+    end,
+    __mode = "k"
+} )
+
+---@type table<dreamwork.std.File | dreamwork.std.Directory, dreamwork.std.Directory>
+local parents = {}
+gc_setTableRules( parents, true, false )
+
+---@type table<dreamwork.std.Directory, table<string | integer, dreamwork.std.File | dreamwork.std.Directory>>
+local descendants = {}
+
+setmetatable( descendants, {
+    __index = function( self, object )
+        ---@type table<string | integer, dreamwork.std.File | dreamwork.std.Directory>
+        local directory_children = {}
+        raw_set( self, object, directory_children )
+        return directory_children
+    end,
+    __mode = "k"
+} )
+
+---@type table<dreamwork.std.Directory, integer>
+local descendant_counts = {}
+
+setmetatable( descendant_counts, {
+    __index = function( self, object )
+        return 0
+    end,
+    __mode = "k"
+} )
+
+---@type table<dreamwork.std.File | dreamwork.std.Directory, integer>
+local indexes = {}
+gc_setTableRules( indexes, true, false )
+
+---@type table<dreamwork.std.Directory, string>
+local mount_points = {}
+gc_setTableRules( mount_points, true, false )
+
+---@type table<dreamwork.std.Directory, string>
+local mount_paths = {}
+gc_setTableRules( mount_paths, true, false )
+
+---@type table<dreamwork.std.File | dreamwork.std.Directory, integer>
+local sizes = {}
+
+setmetatable( sizes, {
+    ---@param object dreamwork.std.File | dreamwork.std.Directory
+    __index = function( self, object )
+        local object_size
+
+        local mount_point = mount_points[ object ]
+        if mount_point == nil or debug_getmetatable( object ) == Directory then
+            object_size = 0
+        else
+            object_size = file_Size( mount_paths[ object ] or "", mount_point )
+        end
+
+        raw_set( self, object, object_size )
+        return object_size
+    end,
+    __mode = "k"
+} )
+
+---@type table<dreamwork.std.File | dreamwork.std.Directory, integer>
+local times = {}
+
+setmetatable( times, {
+    ---@param object dreamwork.std.File | dreamwork.std.Directory
+    __index = function( self, object )
+        local object_time
+
+        local mount_point = mount_points[ object ]
+        if mount_point == nil then
+            object_time = time_now()
+        else
+            object_time = file_Time( mount_paths[ object ] or "", mount_point )
+        end
+
+        raw_set( self, object, object_time )
+        return object_time
+    end,
+    __mode = "k"
+} )
+
+---@type table<dreamwork.std.File | dreamwork.std.Directory, boolean>
+local is_directory_object = {}
+gc_setTableRules( is_directory_object, true, false )
+
+---@type table<string, boolean>
+local writeable_mounts = {
+    ["DATA"] = true
+}
+
+---@type table<string, boolean>
+local deletable_mounts = {
+    ["MOD"] = MENU
+}
+
+---@protected
+---@param name string
+---@param mount_point string | nil
+---@param mount_path string | nil
+function File:__init( name, mount_point, mount_path )
+    names[ self ] = name
+    is_directory_object[ self ] = false
+    mount_paths[ self ] = mount_path
+    mount_points[ self ] = mount_point
+end
+
+---@protected
+---@param key string
+---@return any
+function File:__index( key )
+    if key == "name" then
+        return names[ self ]
+    elseif key == "size" then
+        return sizes[ self ]
+    elseif key == "time" then
+        return times[ self ]
+    elseif key == "path" then
+        return paths[ self ]
+    elseif key == "parent" then
+        return parents[ self ]
+    else
+        return raw_index( File, key )
+    end
+end
 
 ---@protected
 ---@return string
@@ -79,110 +261,69 @@ function File:__tostring()
     return string.format( "File: %p [%s][%s][%d bytes]", self, self.path, time.toDuration( time_now() - self.time ), self.size )
 end
 
----@protected
-function File:__index( key )
-    local mount_point = self.mount_point
-
-    if mount_point == nil then
-        if key == "size" then
-            return string_len( self.content )
-        else
-            return 0
-        end
-    else
-
-        local mount_path = self.mount_path or self.name
-
-        if key == "size" then
-            return file_Size( mount_path, mount_point ) or 0
-        elseif key == "time" then
-            return file_Time( mount_path, mount_point )
-        elseif key == "content" then
-            local handler = file_Open( mount_path, "rb", mount_point )
-            if handler == nil then
-                return -1
-            else
-                return FILE_Read( handler )
-            end
-        end
-
-    end
-
-    return raw.index( File, key )
-end
-
----@protected
----@param name string
----@param mount_point string | nil
----@param mount_path string | nil
-function File:__init( name, mount_point, mount_path )
-    if string_hasByte( name, 0x2F --[[ '/' ]] ) then
-        error( "file name cannot contain '/'", 3 )
-    end
-
-    self.name = name
-    self.path = "/" .. name
-
-    if mount_point == nil then
-        self.time = time_now()
-        self.content = ""
-        return
-    end
-
-    self.mount_point = mount_point
-
-    if mount_path == nil then
-        mount_path = name
-    end
-
-    self.mount_path = mount_path
-end
-
----@class dreamwork.std.Directory : dreamwork.std.Object
----@field __class dreamwork.std.DirectoryClass
----@field name string The name of the directory. **READ-ONLY**
----@field path string The full path of the directory. **READ-ONLY**
----@field parent dreamwork.std.Directory | nil The parent directory. **READ-ONLY**
----@field mount_point string | nil The name of the intenal game directory. **READ-ONLY**
----@field mount_path string | nil The local path in intenal game directory. **READ-ONLY**
----@field content table<string | integer, dreamwork.std.File | dreamwork.std.Directory> The content of the directory. **READ-ONLY**
----@field writeable boolean If `true`, the directory is directly writeable.
----@field time integer The last modified time of the directory. **READ-ONLY**
----@field size integer The size of the directory in bytes. **READ-ONLY**
-local Directory = class.base( "Directory", false )
-
----@class dreamwork.std.DirectoryClass : dreamwork.std.Directory
----@field __base dreamwork.std.Directory
----@overload fun( name: string, mount_point: string | nil, mount_path: string | nil ): dreamwork.std.Directory
-local DirectoryClass = class.create( Directory )
-
----@param value dreamwork.std.File | dreamwork.std.Directory
+---@param object dreamwork.std.File | dreamwork.std.Directory
 ---@param parent dreamwork.std.Directory | nil
-local function update_path( value, parent )
-    local name = value.name
-
+local function update_path( object, parent )
     if parent == nil then
-        value.path = "/" .. name
+        paths[ object ] = "/" .. names[ object ]
     else
 
-        local parent_path = parent.path
+        local parent_path = paths[ parent ]
 
         local uint8_1, uint8_2 = string_byte( parent_path, 1, 2 )
         if uint8_1 == 0x2F --[[ '/' ]] and uint8_2 == nil then
-            value.path = parent_path .. name
+            paths[ object ] = parent_path .. names[ object ]
         else
-            value.path = parent_path .. "/" .. name
+            paths[ object ] = parent_path .. "/" .. names[ object ]
         end
 
     end
 
-    if debug_getmetatable( value ) == Directory then
-        ---@cast value dreamwork.std.Directory
+    if is_directory_object[ object ] then
+        ---@cast object dreamwork.std.Directory
 
-        local content = value.content
-        for index = 1, #content, 1 do
-            update_path( content[ index ], value )
+        local descendant_list = descendants[ object ]
+        for index = 1, descendant_counts[ object ], 1 do
+            update_path( descendant_list[ index ], object )
         end
+    end
+end
+
+---@param name string
+---@param mount_point string | nil
+---@param mount_path string | nil
+---@protected
+function Directory:__init( name, mount_point, mount_path )
+    names[ self ] = name
+    is_directory_object[ self ] = true
+    mount_paths[ self ] = mount_path
+    mount_points[ self ] = mount_point
+    update_path( self, nil )
+end
+
+---@protected
+---@param key string
+---@return any
+function Directory:__index( key )
+    if key == "name" then
+        return names[ self ]
+    elseif key == "size" then
+        return sizes[ self ]
+    elseif key == "time" then
+        return times[ self ]
+    elseif key == "path" then
+        return paths[ self ]
+    elseif key == "writeable" then
+        local mount_point = mount_points[ self ]
+        if mount_point == nil then
+            return false
+        else
+            return writeable_mounts[ mount_point ] == true
+        end
+    elseif key == "parent" then
+        return parents[ self ]
+    else
+        return raw_index( Directory, key )
     end
 end
 
@@ -192,44 +333,28 @@ function Directory:__tostring()
     return string.format( "Directory: %p [%s][%s][%d bytes][%d files][%d directories]", self, self.path, time.toDuration( time_now() - self.time ), self.size, self:contains() )
 end
 
----@param name string
----@param mount_point string | nil
----@param mount_path string | nil
----@protected
-function Directory:__init( name, mount_point, mount_path )
-    if string_hasByte( name, 0x2F --[[ '/' ]] ) then
-        error( "directory name cannot contain '/'", 3 )
-    end
+---@class dreamwork.std.FileClass : dreamwork.std.File
+---@field __base dreamwork.std.File
+---@overload fun( name: string, mount_point: string | nil, mount_path: string | nil ): dreamwork.std.File
+local FileClass = class.create( File )
 
-    self.name = name
-
-    self.mount_path = mount_path
-
-    if mount_point == nil then
-        self.time = time_now( "s", false )
-    else
-        self.time = file_Time( mount_path or "", mount_point )
-        self.mount_point = mount_point
-    end
-
-    self.writeable = false
-    self.content = {}
-    self.size = 0
-
-    update_path( self, nil )
-end
+---@class dreamwork.std.DirectoryClass : dreamwork.std.Directory
+---@field __base dreamwork.std.Directory
+---@overload fun( name: string, mount_point: string | nil, mount_path: string | nil ): dreamwork.std.Directory
+local DirectoryClass = class.create( Directory )
 
 ---@param child dreamwork.std.File | dreamwork.std.Directory
 function Directory:add( child )
     local metatable = debug_getmetatable( child )
+
     if not ( metatable == Directory or metatable == File ) then
         error( "new child must be a File or a Directory", 2 )
     end
 
-    local name = child.name
-    local content = self.content
+    local name = names[ child ]
+    local children = descendants[ self ]
 
-    local previous = content[ name ]
+    local previous = children[ name ]
     if previous ~= nil then
         if previous == child then
             return
@@ -238,8 +363,8 @@ function Directory:add( child )
         end
     end
 
-    local child_time, time_sync = child.time, true
-    local child_size = child.size
+    local child_time, time_sync = times[ child ], true
+    local child_size = sizes[ child ]
     local directory = self
 
     while directory ~= nil do
@@ -247,92 +372,94 @@ function Directory:add( child )
             error( "child directory cannot be parent", 2 )
         end
 
-        directory.size = directory.size + child_size
+        sizes[ directory ] = sizes[ directory ] + child_size
 
         if time_sync then
-            if child_time > directory.time then
-                directory.time = child_time
+            if child_time > times[ directory ] then
+                times[ directory ] = child_time
             else
                 time_sync = false
             end
         end
 
-        directory = directory.parent
+        directory = parents[ directory ]
     end
 
-    child.parent = self
+    parents[ child ] = self
 
-    local index = #content + 1
-    child.index = index
+    local index = descendant_counts[ self ] + 1
+    descendant_counts[ self ] = index
 
-    content[ index ] = child
-    content[ name ] = child
+    indexes[ child ] = index
+
+    children[ index ] = child
+    children[ name ] = child
 
     update_path( child, self )
 end
 
 ---@param name string
 function Directory:delete( name )
-    local content = self.content
+    local children = descendants[ self ]
+    local child = children[ name ]
 
-    local child = content[ name ]
     if child == nil then
         return
     end
 
-    content[ name ] = nil
-    child.parent = nil
+    children[ name ] = nil
+    parents[ child ] = nil
 
-    for index = #content, 1, -1 do
-        if content[ index ] == child then
-            table_remove( content, index )
-            break
-        end
-    end
+    table_remove( children, indexes[ child ] )
+    indexes[ child ] = nil
 
     update_path( child, nil )
 end
 
+---@param wildcard string | nil
 ---@return dreamwork.std.File[], integer, dreamwork.std.Directory[], integer
-function Directory:contents()
-    local content = self.content
+function Directory:contents( wildcard )
+    local children = descendants[ self ]
 
-    local files, file_count = {}, 0
     local directories, directory_count = {}, 0
+    local files, file_count = {}, 0
 
-    for index = 1, #content, 1 do
+    for index = 1, descendant_counts[ self ], 1 do
         ---@type dreamwork.std.File | dreamwork.std.Directory
-        local object = content[ index ]
-
-        local metatable = debug_getmetatable( object )
-        if metatable == File then
-            file_count = file_count + 1
-            files[ file_count ] = object
-        elseif metatable == Directory then
+        local object = children[ index ]
+        if is_directory_object[ object ] then
             directory_count = directory_count + 1
             directories[ directory_count ] = object
+        else
+            file_count = file_count + 1
+            files[ file_count ] = object
         end
     end
 
-    local mount_point = self.mount_point
+    local mount_point = mount_points[ self ]
 
     if mount_point == nil then
-        return files, file_count,
-            directories, directory_count
+        return files, file_count, directories, directory_count
+    end
+
+    if wildcard == nil then
+        wildcard = "*"
+    elseif string_hasByte( wildcard, 0x2F --[[ '/' ]] ) then
+        error( "wildcard cannot contain '/'", 2 )
     end
 
     local fs_files, fs_directories
 
-    local mount_path = self.mount_path
+    local mount_path = mount_paths[ self ]
     if mount_path == nil then
-        fs_files, fs_directories = file_Find( "*", mount_point )
+        fs_files, fs_directories = file_Find( wildcard, mount_point )
     else
-        fs_files, fs_directories = file_Find( mount_path .. "/*", mount_point )
+        fs_files, fs_directories = file_Find( mount_path .. "/" .. wildcard, mount_point )
     end
 
     for index = 1, #fs_files, 1 do
         local file_name = fs_files[ index ]
-        if content[ file_name ] == nil then
+        if children[ file_name ] == nil then
             file_count = file_count + 1
 
             local file_object
@@ -350,7 +477,7 @@ function Directory:contents()
 
     for index = 1, #fs_directories, 1 do
         local directory_name = fs_directories[ index ]
-        if content[ directory_name ] == nil and string_byte( directory_name, 1, 1 ) ~= 0x2F --[[ '/' ]] then
+        if children[ directory_name ] == nil and string_byte( directory_name, 1, 1 ) ~= 0x2F --[[ '/' ]] then
             directory_count = directory_count + 1
 
             local directory_object
@@ -366,26 +493,24 @@ function Directory:contents()
         end
     end
 
-    return files, file_count,
-        directories, directory_count
+    return files, file_count, directories, directory_count
 end
 
 ---@return integer, integer
 function Directory:contains()
-    local content = self.content
+    local children = descendants[ self ]
 
     local file_count, directory_count = 0, 0
 
-    for index = 1, #content, 1 do
-        local metatable = debug_getmetatable( content[ index ] )
-        if metatable == File then
-            file_count = file_count + 1
-        elseif metatable == Directory then
+    for index = 1, descendant_counts[ self ], 1 do
+        if is_directory_object[ children[ index ] ] then
             directory_count = directory_count + 1
+        else
+            file_count = file_count + 1
         end
     end
 
-    local mount_point = self.mount_point
+    local mount_point = mount_points[ self ]
 
     if mount_point == nil then
         return file_count, directory_count
@@ -393,7 +518,7 @@ function Directory:contains()
 
     local fs_files, fs_directories
 
-    local mount_path = self.mount_path
+    local mount_path = mount_paths[ self ]
     if mount_path == nil then
         fs_files, fs_directories = file_Find( "*", mount_point )
     else
@@ -402,14 +527,14 @@ function Directory:contains()
 
     for index = 1, #fs_files, 1 do
         local file_name = fs_files[ index ]
-        if content[ file_name ] == nil then
+        if children[ file_name ] == nil then
             file_count = file_count + 1
         end
     end
 
     for index = 1, #fs_directories, 1 do
         local directory_name = fs_directories[ index ]
-        if content[ directory_name ] == nil then
+        if children[ directory_name ] == nil then
             directory_count = directory_count + 1
         end
     end
@@ -417,230 +542,37 @@ function Directory:contains()
     return file_count, directory_count
 end
 
---- [SHARED AND MENU]
----
---- Returns a list of files and directories by given path.
----
----@param searchable? string The string to search for, or `nil` to return ALL files in the directory.
----@return dreamwork.std.File[], integer, dreamwork.std.Directory[], integer
-function Directory:find( searchable )
-    if searchable == nil then
-        return self:contents()
-    end
-
-    local files, file_count, directories, directory_count = self:contents()
-
-    ---@type dreamwork.std.File[], integer
-    local found_files, found_files_count = {}, 0
-
-    for index = 1, file_count, 1 do
-        local file = files[ index ]
-        if string_match( file.name, searchable, 1 ) ~= nil then
-            found_files_count = found_files_count + 1
-            found_files[ found_files_count ] = file
-        end
-    end
-
-    ---@type dreamwork.std.Directory[], integer
-    local found_directories, found_directories_count = {}, 0
-
-    for index = 1, directory_count, 1 do
-        local directory = directories[ index ]
-        if string_match( directory.name, searchable, 1 ) ~= nil then
-            found_directories_count = found_directories_count + 1
-            found_directories[ found_directories_count ] = directory
-        end
-    end
-
-    return found_files, found_files_count,
-        found_directories, found_directories_count
-end
-
 do
 
     local string_byteSplit = string.byteSplit
 
-    --- [SHARED AND MENU]
-    ---
-    --- Returns a file object by given path.
-    ---
-    ---@param path_to_file string The path to the file.
-    ---@return dreamwork.std.File | nil file The file object, or `nil` if not found.
-    function Directory:getFile( path_to_file )
-        local segments, segment_count = string_byteSplit( path_to_file, 0x2F --[[ '/' ]] )
-
-        for i = 1, segment_count, 1 do
-            local name = segments[ i ]
-
-            local content_value = self.content[ name ]
-
-            if content_value == nil then
-                ---@cast self dreamwork.std.Directory
-
-                local mount_point = self.mount_point
-
-                if mount_point == nil then
-                    return nil
-                end
-
-                local fs_files, fs_directories
-
-                local mount_path = self.mount_path
-                if mount_path == nil then
-                    fs_files, fs_directories = file_Find( "*", mount_point )
-                else
-                    fs_files, fs_directories = file_Find( mount_path .. "/*", mount_point )
-                end
-
-                for j = 1, #fs_files, 1 do
-                    local file_name = fs_files[ j ]
-                    if file_name == name then
-                        local file_object
-
-                        if mount_path == nil then
-                            file_object = FileClass( file_name, mount_point, file_name )
-                        else
-                            file_object = FileClass( file_name, mount_point, mount_path .. "/" .. file_name )
-                        end
-
-                        self:add( file_object )
-                        return file_object
-                    end
-                end
-
-                if i == segment_count then
-                    return nil
-                end
-
-                for j = 1, #fs_directories, 1 do
-                    local directory_name = fs_directories[ j ]
-                    if directory_name == name then
-                        local directory_object
-
-                        if mount_path == nil then
-                            directory_object = DirectoryClass( directory_name, mount_point, directory_name )
-                        else
-                            directory_object = DirectoryClass( directory_name, mount_point, mount_path .. "/" .. directory_name )
-                        end
-
-                        self:add( directory_object )
-                        self = directory_object
-                    end
-                end
-            elseif debug_getmetatable( content_value ) == File then
-                if i == segment_count then
-                    ---@diagnostic disable-next-line: cast-type-mismatch
-                    ---@cast content_value dreamwork.std.File
-                    return content_value
-                else
-                    return nil
-                end
-            else
-                self = content_value
-            end
-        end
-
-        return nil
-    end
-
-    --- [SHARED AND MENU]
-    ---
-    --- Returns a directory object by given path.
-    ---
-    ---@param path_to_directory string The path to the directory.
-    ---@return dreamwork.std.Directory | nil directory The directory object, or `nil` if not found.
-    function Directory:getDirectory( path_to_directory )
-        local segments, segment_count = string_byteSplit( path_to_directory, 0x2F --[[ '/' ]] )
-
-        for i = 1, segment_count, 1 do
-            local name = segments[ i ]
-
-            local content_value = self.content[ name ]
-            if content_value == nil then
-                ---@cast self dreamwork.std.Directory
-
-                local mount_point = self.mount_point
-
-                if mount_point == nil then
-                    return nil
-                end
-
-                local _, fs_directories
-
-                local mount_path = self.mount_path
-                if mount_path == nil then
-                    _, fs_directories = file_Find( "*", mount_point )
-                else
-                    _, fs_directories = file_Find( mount_path .. "/*", mount_point )
-                end
-
-                for j = 1, #fs_directories, 1 do
-                    local directory_name = fs_directories[ j ]
-                    if directory_name == name then
-                        local directory_object
-
-                        if mount_path == nil then
-                            directory_object = DirectoryClass( directory_name, mount_point, directory_name )
-                        else
-                            directory_object = DirectoryClass( directory_name, mount_point, mount_path .. "/" .. directory_name )
-                        end
-
-                        self:add( directory_object )
-                        self = directory_object
-                    end
-                end
-            elseif debug_getmetatable( content_value ) == File then
-                return nil
-            else
-                self = content_value
-            end
-        end
-
-        ---@cast self dreamwork.std.Directory
-        return self
-    end
-
     ---@param path_to string
-    function Directory:get( path_to )
-        local segments, segment_count = string_byteSplit( path_to, 0x2F --[[ '/' ]] )
+    ---@param start_position integer
+    function Directory:get( path_to, start_position )
+        local segments, segment_count = string_byteSplit( path_to, 0x2F --[[ '/' ]], start_position )
 
         for i = 1, segment_count, 1 do
             local name = segments[ i ]
+            local content_value = descendants[ self ][ name ]
 
-            local content_value = self.content[ name ]
             if content_value == nil then
                 ---@cast self dreamwork.std.Directory
 
-                local mount_point = self.mount_point
-
+                local mount_point = mount_points[ self ]
                 if mount_point == nil then
-                    return nil
+                    return nil, false
                 end
 
                 local fs_files, fs_directories
 
-                local mount_path = self.mount_path
+                local mount_path = mount_paths[ self ]
                 if mount_path == nil then
-                    fs_files, fs_directories = file_Find( "*", mount_point )
+                    fs_files, fs_directories = file_Find( name, mount_point )
                 else
-                    fs_files, fs_directories = file_Find( mount_path .. "/*", mount_point )
+                    fs_files, fs_directories = file_Find( mount_path .. "/" .. name, mount_point )
                 end
 
-                for j = 1, #fs_files, 1 do
-                    local file_name = fs_files[ j ]
-                    if file_name == name then
-                        local file_object
-
-                        if mount_path == nil then
-                            file_object = FileClass( file_name, mount_point, file_name )
-                        else
-                            file_object = FileClass( file_name, mount_point, mount_path .. "/" .. file_name )
-                        end
-
-                        self:add( file_object )
-                        return file_object
-                    end
-                end
+                local directory_missing = true
 
                 for j = 1, #fs_directories, 1 do
                     local directory_name = fs_directories[ j ]
@@ -654,88 +586,54 @@ do
                         end
 
                         self:add( directory_object )
-                        self = directory_object
-                    end
-                end
-            elseif debug_getmetatable( content_value ) == File then
-                if i == segment_count then
-                    ---@diagnostic disable-next-line: cast-type-mismatch
-                    ---@cast content_value dreamwork.std.File
-                    return content_value
-                else
-                    return nil
-                end
-            else
-                self = content_value
-            end
-        end
 
-        ---@cast self dreamwork.std.Directory
-        return self
-    end
-
-    --- [SHARED AND MENU]
-    ---
-    --- Checks if a file or directory exists by given path.
-    ---
-    ---@param path_to string The path to the file or directory.
-    ---@param check_is_directory boolean? `true` to check if the path is a directory, `false` otherwise.
-    ---@param check_is_file boolean? `true` to check if the path is a file, `false` otherwise.
-    ---@return boolean exists Returns `true` if the file or directory exists, otherwise `false`.
-    function Directory:exists( path_to, check_is_directory, check_is_file )
-        local segments, segment_count = string_byteSplit( path_to, 0x2F --[[ '/' ]] )
-
-        for i = 1, segment_count, 1 do
-            local name = segments[ i ]
-
-            local content_value = self.content[ name ]
-
-            if content_value == nil then
-                ---@cast self dreamwork.std.Directory
-
-                local mount_point = self.mount_point
-                if mount_point == nil then
-                    return false
-                end
-
-                local file_path
-
-                local mount_path = self.mount_path
-                if mount_path == nil then
-                    file_path = self.path .. "/" .. name
-                else
-                    file_path = mount_path .. "/" .. name
-                end
-
-                if file_Exists( file_path, mount_point ) then
-                    if check_is_directory then
-                        if check_is_file then
-                            return true
+                        if i == segment_count then
+                            return directory_object, true
                         else
-                            return file_IsDir( file_path, mount_point )
+                            self = directory_object
+                            directory_missing = false
                         end
-                    elseif check_is_file then
-                        return not file_IsDir( file_path, mount_point )
-                    else
-                        return true
                     end
-                else
-                    return false
+                end
+
+                if directory_missing then
+                    for j = 1, #fs_files, 1 do
+                        local file_name = fs_files[ j ]
+                        if file_name == name then
+                            local file_object
+
+                            if mount_path == nil then
+                                file_object = FileClass( file_name, mount_point, file_name )
+                            else
+                                file_object = FileClass( file_name, mount_point, mount_path .. "/" .. file_name )
+                            end
+
+                            self:add( file_object )
+
+                            if i == segment_count then
+                                return file_object, false
+                            else
+                                return nil, false
+                            end
+                        end
+                    end
                 end
             elseif debug_getmetatable( content_value ) == File then
                 if i == segment_count then
                     ---@diagnostic disable-next-line: cast-type-mismatch
                     ---@cast content_value dreamwork.std.File
-                    return true
+                    return content_value, false
                 else
-                    return false
+                    return nil, false
                 end
+            elseif i == segment_count then
+                return content_value, true
             else
                 self = content_value
             end
         end
 
-        return false
+        return nil, false
     end
 
 end
@@ -744,7 +642,6 @@ end
 ---@param directory_callback nil | fun( directory: dreamwork.std.Directory )
 function Directory:foreach( file_callback, directory_callback )
     local files, file_count, directories, directory_count = self:contents()
-    local content = self.content
 
     if file_callback == nil then
         if directory_callback == nil then
@@ -754,20 +651,20 @@ function Directory:foreach( file_callback, directory_callback )
         for index = 1, file_count, 1 do
             ---@type dreamwork.std.File
             ---@diagnostic disable-next-line: param-type-mismatch
-            file_callback( content[ files[ index ].name ] )
+            file_callback( files[ index ] )
         end
     end
 
     for index = 1, directory_count, 1 do
         ---@type dreamwork.std.Directory
         ---@diagnostic disable-next-line: assign-type-mismatch
-        local directory = content[ directories[ index ].name ]
-
-        directory:foreach( file_callback, directory_callback )
+        local directory = directories[ index ]
 
         if directory_callback ~= nil then
             directory_callback( directory )
         end
+
+        directory:foreach( file_callback, directory_callback )
     end
 end
 
@@ -777,8 +674,7 @@ end
 function Directory:visualize( prefix, is_last )
     local lines, line_count = {}, 1
 
-    local content = self.content
-    local content_length = #content
+    local children = descendants[ self ]
 
     local next_prefix
     if prefix == nil then
@@ -791,19 +687,21 @@ function Directory:visualize( prefix, is_last )
         next_prefix = prefix .. ( is_last and spaces or "║  " .. spaces )
     end
 
-    for i = 1, content_length, 1 do
+    local children_length = descendant_counts[ self ]
+
+    for i = 1, children_length, 1 do
         line_count = line_count + 1
         lines[ line_count ] = next_prefix .. "║  "
 
         line_count = line_count + 1
 
-        local child = content[ i ]
+        local child = children[ i ]
         if debug_getmetatable( child ) == File then
             ---@cast child dreamwork.std.File
-            lines[ line_count ] = next_prefix .. string.format( "%s %s", i == content_length and "╚═ " or "╠═ ", child )
+            lines[ line_count ] = next_prefix .. string.format( "%s %s", i == children_length and "╚═ " or "╠═ ", child )
         else
             ---@cast child dreamwork.std.Directory
-            lines[ line_count ] = child:visualize( next_prefix, i == content_length )
+            lines[ line_count ] = child:visualize( next_prefix, i == children_length )
         end
     end
 
@@ -826,11 +724,9 @@ end, 2 )
 do
 
     local garrysmod = DirectoryClass( "garrysmod", "MOD" )
-    garrysmod.writeable = MENU
     root:add( garrysmod )
 
     local data = DirectoryClass( "data", "DATA" )
-    data.writeable = true
     garrysmod:add( data )
 
 end
@@ -865,13 +761,6 @@ do
 
 end
 
--- std.setTimeout( function()
---     print( "\n" .. root:visualize() )
--- end, 1 )
-
-local path = std.path
-local path_resolve = path.resolve
-
 --- [SHARED AND MENU]
 ---
 --- Checks if a file or directory exists by given path.
@@ -886,7 +775,7 @@ function fs.exists( file_path )
         resolved_path, resolved_length = string_byteTrim( resolved_path, 0x2F, true, resolved_length )
     end
 
-    return root:get( resolved_path ) ~= nil
+    return root:get( resolved_path, 2 ) ~= nil
 end
 
 --- [SHARED AND MENU]
@@ -903,7 +792,8 @@ function fs.isExistingDirectory( directory_path )
         resolved_path, resolved_length = string_byteTrim( resolved_path, 0x2F, true, resolved_length )
     end
 
-    return debug_getmetatable( root:get( resolved_path ) ) == Directory
+    local directory_object, is_directory = root:get( resolved_path, 2 )
+    return directory_object ~= nil and is_directory
 end
 
 --- [SHARED AND MENU]
@@ -920,7 +810,8 @@ function fs.isExistingFile( file_path )
         resolved_path, resolved_length = string_byteTrim( resolved_path, 0x2F, true, resolved_length )
     end
 
-    return debug_getmetatable( root:get( resolved_path ) ) == File
+    local file_object, is_directory = root:get( resolved_path, 2 )
+    return file_object ~= nil and not is_directory
 end
 
 --- [SHARED AND MENU]
@@ -937,56 +828,12 @@ function fs.time( file_path )
         resolved_path, resolved_length = string_byteTrim( resolved_path, 0x2F, true, resolved_length )
     end
 
-    local object = root:get( resolved_path )
+    local object = root:get( resolved_path, 2 )
     if object == nil then
         return 0
     else
         return object.time
     end
-end
-
---- [SHARED AND MENU]
----
---- Returns a list of files and directories by given path.
----
----@param file_path string The path to the file or directory.
----@param searchable? string The pattern to search for, or `nil` to return ALL files and directories in the directory.
-function fs.find( file_path, searchable )
-    local resolved_path = path_resolve( file_path )
-
-    local resolved_length = string_len( resolved_path )
-    if string_byte( resolved_path, resolved_length, resolved_length ) == 0x2F --[[ '/' ]] then
-        resolved_path, resolved_length = string_byteTrim( resolved_path, 0x2F, true, resolved_length )
-    end
-
-    local object = root:get( resolved_path )
-    if object == nil then
-        return {}, 0, {}, 0
-    elseif debug_getmetatable( object ) == File then
-        ---@cast object dreamwork.std.File
-        return { object.path }, 1, {}, 0
-    end
-
-    ---@cast object dreamwork.std.Directory
-
-    local file_objects, file_count, directory_objects, directory_count = object:find( searchable )
-    local files, directories = {}, {}
-
-    for index = 1, file_count, 1 do
-        files[ index ] = file_objects[ index ].path
-    end
-
-    for index = 1, directory_count, 1 do
-        directories[ index ] = directory_objects[ index ].path
-    end
-
-    return files, file_count,
-        directories, directory_count
-end
-
----@async
-function fs.iterator( file_path )
-
 end
 
 --- [SHARED AND MENU]
@@ -1003,12 +850,82 @@ function fs.size( file_path )
         resolved_path, resolved_length = string_byteTrim( resolved_path, 0x2F, true, resolved_length )
     end
 
-    local object = root:get( resolved_path )
+    local object = root:get( resolved_path, 2 )
     if object == nil then
         return 0
     else
         return object.size
     end
+end
+
+--- [SHARED AND MENU]
+---
+--- Returns a list of files and directories by given path.
+---
+---@param file_path string The path to the file or directory.
+---@param searchable? string The pattern to search for, or `nil` to return ALL files and directories in the directory.
+function fs.find( file_path, searchable )
+    -- local resolved_path = path_resolve( file_path )
+
+    -- local resolved_length = string_len( resolved_path )
+    -- if string_byte( resolved_path, resolved_length, resolved_length ) == 0x2F --[[ '/' ]] then
+    --     resolved_path, resolved_length = string_byteTrim( resolved_path, 0x2F, true, resolved_length )
+    -- end
+
+    -- local object, is_directory = root:get( resolved_path, 2 )
+    -- if object == nil then
+    --     return {}, 0, {}, 0
+    -- elseif is_directory then
+    --     ---@cast object dreamwork.std.Directory
+
+    --     local file_objects, file_count, directory_objects, directory_count = object:find( searchable )
+    --     local files, directories = {}, {}
+
+    --     for index = 1, file_count, 1 do
+    --         files[ index ] = file_objects[ index ].path
+    --     end
+
+    --     for index = 1, directory_count, 1 do
+    --         directories[ index ] = directory_objects[ index ].path
+    --     end
+
+    --     return files, file_count,
+    --         directories, directory_count
+    -- else
+    --     ---@cast object dreamwork.std.File
+    --     return { object.path }, 1, {}, 0
+    -- end
+end
+
+do
+
+    local futures_yield = std.futures.yield
+
+    ---@param file_object dreamwork.std.File
+    ---@async
+    local function iterate_file( file_object )
+        return futures_yield( file_object.path, false )
+    end
+
+    ---@param directory_object dreamwork.std.Directory
+    ---@async
+    local function iterate_directory( directory_object )
+        return futures_yield( directory_object.path, true )
+    end
+
+    ---@async
+    function fs.iterator( file_path )
+        local directory_object, is_directory = root:get( path_resolve( file_path ), 2 )
+
+        if directory_object == nil or not is_directory then
+            return
+        end
+
+        ---@cast directory_object dreamwork.std.Directory
+
+        directory_object:foreach( iterate_file, iterate_directory )
+    end
+
 end
 
 local function do_tralling_slash( str )

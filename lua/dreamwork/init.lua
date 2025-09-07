@@ -116,20 +116,20 @@ do
 
 end
 
-std.assert = std.assert or _G.assert
-std.select = std.select or _G.select
-std.print = std.print or _G.print
+std.assert = _G.assert
+std.select = _G.select
+std.print = _G.print
 
-std.tostring = std.tostring or _G.tostring
+std.tostring = _G.tostring
 
-std.getmetatable = std.getmetatable or _G.getmetatable
-std.setmetatable = std.setmetatable or _G.setmetatable
+std.getmetatable = _G.getmetatable
+std.setmetatable = _G.setmetatable
 
-std.getfenv = std.getfenv or _G.getfenv -- removed in Lua 5.2
-std.setfenv = std.setfenv or _G.setfenv -- removed in Lua 5.2
+std.getfenv = _G.getfenv -- removed in Lua 5.2
+std.setfenv = _G.setfenv -- removed in Lua 5.2
 
-std.xpcall = std.xpcall or _G.xpcall
-std.pcall = std.pcall or _G.pcall
+std.xpcall = _G.xpcall
+std.pcall = _G.pcall
 
 local CLIENT, SERVER, MENU = std.CLIENT, std.SERVER, std.MENU
 
@@ -1316,6 +1316,7 @@ do
         "MAKE A MOVE ♪",
         "v" .. version,
         "Hello World!",
+        "all_the_same",
         "Star Glide ♪",
         "Once Again ♪",
         "Without Us ♪",
@@ -1398,8 +1399,8 @@ end
 local loadbinary
 do
 
+    local file_isExistingFile = std.fs.isExistingFile
     local require = _G.require or debug.fempty
-    local file_exists = std.fs.exists
 
     local isEdge = std.JIT_VERSION_INT ~= 20004
     local is32 = std.JIT_ARCH == "x86"
@@ -1420,13 +1421,13 @@ do
         end
 
         local filePath = head .. name .. tail
-        if file_exists( filePath ) then
+        if file_isExistingFile( filePath ) then
             return true, "/" .. filePath
         end
 
         if isEdge and is32 and tail == "_linux.dll" then
             filePath = head .. name .. "_linux32.dll"
-            if file_exists( filePath ) then
+            if file_isExistingFile( filePath ) then
                 return true, "/" .. filePath
             end
         end
@@ -1447,7 +1448,6 @@ do
     --- Loads a binary module
     ---@param name string The binary module name, for example: "chttp"
     ---@return boolean success true if the binary module is installed
-    ---@protected
     function loadbinary( name )
         if lookupbinary( name ) then
             if sv_allowcslua ~= nil and sv_allowcslua.value then
@@ -1815,11 +1815,51 @@ end
 
     -- TODO
 
-    concept
+    concepts
 
     local utf8 = require( "utf8" )
     local custom_utf8 = require( "package.utf8" )
 
-    local ... = dofile( "./path.to.lua", ... ) -- as compile file
+    local ... = dofile( "./path.to.lua", ... )
+
+
+                            gmod <--------\
+                            /\          ||
+                            ||          ||
+    [ LAYER 1 ] - dreamwork.std -> dreamwork.engine
+        /\
+    [ LAYER 2 ] - package with __package object
+        /\
+    [ LAYER 3 ] - file/module with __dir and __file objects
+
+    {
+
+        dependencies:
+            cool_lib: >= 1.0.0
+
+    }
+
+    local cool_lib = require( "cool_lib" )
+
+    dofile( "file.lua" ) - ./file.lua
+
+    dofile( "/garrysmod/gamemodes/sandbox/file.lua" )
+
+
+
+
+    Addon 1:
+
+        MY_LIST = {}
+
+
+    Addon 2:
+
+        local addon1 = require( "addon1" )
+
+        local lst = addon1.MY_LIST
+
+        lst[ #lst + 1 ] = "addon2"
+
 
 ]]
