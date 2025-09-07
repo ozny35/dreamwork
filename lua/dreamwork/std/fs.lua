@@ -26,7 +26,6 @@ local FILE_Read, FILE_Write = FILE.Read, FILE.Write
 local FILE_Close = FILE.Close
 
 local debug = std.debug
-local debug_getmetatable = debug.getmetatable
 local gc_setTableRules = debug.gc.setTableRules
 
 local table = std.table
@@ -161,6 +160,10 @@ setmetatable( descendant_counts, {
 local indexes = {}
 gc_setTableRules( indexes, true, false )
 
+---@type table<dreamwork.std.File | dreamwork.std.Directory, boolean>
+local is_directory_object = {}
+gc_setTableRules( is_directory_object, true, false )
+
 ---@type table<dreamwork.std.Directory, string>
 local mount_points = {}
 gc_setTableRules( mount_points, true, false )
@@ -178,7 +181,7 @@ setmetatable( sizes, {
         local object_size
 
         local mount_point = mount_points[ object ]
-        if mount_point == nil or debug_getmetatable( object ) == Directory then
+        if mount_point == nil or is_directory_object[ object ] then
             object_size = 0
         else
             object_size = file_Size( mount_paths[ object ] or "", mount_point )
@@ -210,10 +213,6 @@ setmetatable( times, {
     end,
     __mode = "k"
 } )
-
----@type table<dreamwork.std.File | dreamwork.std.Directory, boolean>
-local is_directory_object = {}
-gc_setTableRules( is_directory_object, true, false )
 
 ---@type table<string, boolean>
 local writeable_mounts = {
@@ -330,7 +329,7 @@ end
 ---@protected
 ---@return string
 function Directory:__tostring()
-    return string.format( "Directory: %p [%s][%s][%d bytes][%d files][%d directories]", self, self.path, time.toDuration( time_now() - self.time ), self.size, self:contains() )
+    return string.format( "Directory: %p [%s][%s][%d bytes][%d files][%d directories]", self, self.path, time.toDuration( time_now() - self.time ), self.size, self:count() )
 end
 
 ---@class dreamwork.std.FileClass : dreamwork.std.File
@@ -345,9 +344,7 @@ local DirectoryClass = class.create( Directory )
 
 ---@param child dreamwork.std.File | dreamwork.std.Directory
 function Directory:add( child )
-    local metatable = debug_getmetatable( child )
-
-    if not ( metatable == Directory or metatable == File ) then
+    if is_directory_object[ child ] == nil then
         error( "new child must be a File or a Directory", 2 )
     end
 
@@ -497,10 +494,9 @@ function Directory:contents( wildcard )
 end
 
 ---@return integer, integer
-function Directory:contains()
-    local children = descendants[ self ]
-
+function Directory:count()
     local file_count, directory_count = 0, 0
+    local children = descendants[ self ]
 
     for index = 1, descendant_counts[ self ], 1 do
         if is_directory_object[ children[ index ] ] then
@@ -510,36 +506,62 @@ function Directory:contains()
         end
     end
 
-    local mount_point = mount_points[ self ]
+    return file_count, directory_count
+end
 
+---@param deep_scan boolean
+function Directory:scan( deep_scan )
+    local mount_point = mount_points[ self ]
     if mount_point == nil then
-        return file_count, directory_count
+        return
     end
 
-    local fs_files, fs_directories
+    local children = descendants[ self ]
 
     local mount_path = mount_paths[ self ]
     if mount_path == nil then
-        fs_files, fs_directories = file_Find( "*", mount_point )
+        local fs_files, fs_directories = file_Find( "*", mount_point )
+
+        for i = 1, #fs_files, 1 do
+            local file_name = fs_files[ i ]
+            if children[ file_name ] == nil then
+                self:add( FileClass( file_name, mount_point, file_name ) )
+            end
+        end
+
+        for i = 1, #fs_directories, 1 do
+            local directory_name = fs_directories[ i ]
+            if children[ directory_name ] == nil then
+                self:add( DirectoryClass( directory_name, mount_point, directory_name ) )
+            end
+        end
     else
-        fs_files, fs_directories = file_Find( mount_path .. "/*", mount_point )
-    end
+        local fs_files, fs_directories = file_Find( mount_path .. "/*", mount_point )
 
-    for index = 1, #fs_files, 1 do
-        local file_name = fs_files[ index ]
-        if children[ file_name ] == nil then
-            file_count = file_count + 1
+         for i = 1, #fs_files, 1 do
+            local file_name = fs_files[ i ]
+            if children[ file_name ] == nil then
+                self:add( FileClass( file_name, mount_point, mount_path .. "/" .. file_name ) )
+            end
+        end
+
+        for i = 1, #fs_directories, 1 do
+            local directory_name = fs_directories[ i ]
+            if children[ directory_name ] == nil then
+                self:add( DirectoryClass( directory_name, mount_point, mount_path .. "/" .. directory_name ) )
+            end
         end
     end
 
-    for index = 1, #fs_directories, 1 do
-        local directory_name = fs_directories[ index ]
-        if children[ directory_name ] == nil then
-            directory_count = directory_count + 1
+    if deep_scan then
+        for i = 1, descendant_counts[ self ], 1 do
+            local directory = children[ i ]
+            if is_directory_object[ directory ] then
+                ---@cast directory dreamwork.std.Directory
+                directory:scan( deep_scan )
+            end
         end
     end
-
-    return file_count, directory_count
 end
 
 do
@@ -563,73 +585,45 @@ do
                     return nil, false
                 end
 
-                local fs_files, fs_directories
-
                 local mount_path = mount_paths[ self ]
                 if mount_path == nil then
-                    fs_files, fs_directories = file_Find( name, mount_point )
+                    mount_path = name
                 else
-                    fs_files, fs_directories = file_Find( mount_path .. "/" .. name, mount_point )
+                    mount_path = mount_path .. "/" .. name
                 end
 
-                local directory_missing = true
-
-                for j = 1, #fs_directories, 1 do
-                    local directory_name = fs_directories[ j ]
-                    if directory_name == name then
-                        local directory_object
-
-                        if mount_path == nil then
-                            directory_object = DirectoryClass( directory_name, mount_point, directory_name )
-                        else
-                            directory_object = DirectoryClass( directory_name, mount_point, mount_path .. "/" .. directory_name )
-                        end
-
+                if file_Exists( mount_path, mount_point ) then
+                    if file_IsDir( mount_path, mount_point ) then
+                        local directory_object = DirectoryClass( name, mount_point, mount_path )
                         self:add( directory_object )
 
                         if i == segment_count then
                             return directory_object, true
                         else
                             self = directory_object
-                            directory_missing = false
                         end
+                    elseif i == segment_count then
+                        local file_object = FileClass( name, mount_point, mount_path )
+                        self:add( file_object )
+                        return file_object, false
+                    else
+                        return nil, false
                     end
-                end
-
-                if directory_missing then
-                    for j = 1, #fs_files, 1 do
-                        local file_name = fs_files[ j ]
-                        if file_name == name then
-                            local file_object
-
-                            if mount_path == nil then
-                                file_object = FileClass( file_name, mount_point, file_name )
-                            else
-                                file_object = FileClass( file_name, mount_point, mount_path .. "/" .. file_name )
-                            end
-
-                            self:add( file_object )
-
-                            if i == segment_count then
-                                return file_object, false
-                            else
-                                return nil, false
-                            end
-                        end
-                    end
-                end
-            elseif debug_getmetatable( content_value ) == File then
-                if i == segment_count then
-                    ---@diagnostic disable-next-line: cast-type-mismatch
-                    ---@cast content_value dreamwork.std.File
-                    return content_value, false
                 else
                     return nil, false
                 end
+            elseif is_directory_object[ content_value ] then
+                if i == segment_count then
+                    ---@diagnostic disable-next-line: cast-type-mismatch
+                    ---@cast content_value dreamwork.std.File
+                    return content_value, true
+                else
+                    self = content_value
+                end
             elseif i == segment_count then
-                return content_value, true
+                return content_value, false
             else
-                self = content_value
+                return nil, false
             end
         end
 
@@ -696,12 +690,12 @@ function Directory:visualize( prefix, is_last )
         line_count = line_count + 1
 
         local child = children[ i ]
-        if debug_getmetatable( child ) == File then
-            ---@cast child dreamwork.std.File
-            lines[ line_count ] = next_prefix .. string.format( "%s %s", i == children_length and "╚═ " or "╠═ ", child )
-        else
+        if is_directory_object[ child ] then
             ---@cast child dreamwork.std.Directory
             lines[ line_count ] = child:visualize( next_prefix, i == children_length )
+        else
+            ---@cast child dreamwork.std.File
+            lines[ line_count ] = next_prefix .. string.format( "%s %s", i == children_length and "╚═ " or "╠═ ", child )
         end
     end
 
@@ -760,6 +754,10 @@ do
     workspace:add( map )
 
 end
+
+std.setTimeout( function()
+    print( root:visualize() )
+end, 3 )
 
 --- [SHARED AND MENU]
 ---
