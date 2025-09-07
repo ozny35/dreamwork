@@ -85,7 +85,6 @@ do
 
     local invalid_characters = {
         [ 0x22 ] = true,
-        [ 0x27 ] = true,
         [ 0x2A ] = true,
         [ 0x2F ] = true,
         [ 0x5C ] = true,
@@ -105,7 +104,7 @@ do
         __newindex = function( self, object, name )
             for index = 1, string_len( name ), 1 do
                 if invalid_characters[ string_byte( name, index, index ) ] then
-                    error( string.format( "directory or file name contains invalid character \\%X at index %d", string_byte( name, index, index ), index ), 2 )
+                    error( string.format( "directory or file name contains invalid character \\%X at index %d in '%s'", string_byte( name, index, index ), index, name ), 2 )
                 end
             end
 
@@ -184,7 +183,7 @@ setmetatable( sizes, {
         if mount_point == nil or is_directory_object[ object ] then
             object_size = 0
         else
-            object_size = file_Size( mount_paths[ object ] or "", mount_point )
+            object_size = file_Size( mount_paths[ object ] or "", mount_point ) or 0
         end
 
         raw_set( self, object, object_size )
@@ -510,8 +509,8 @@ function Directory:count()
 end
 
 ---@param deep_scan boolean
----@param callback nil | fun( directory: dreamwork.std.Directory )
-function Directory:scan( deep_scan, callback )
+---@param callback nil | fun( directory: dreamwork.std.Directory, callback_value: any )
+function Directory:scan( deep_scan, callback, callback_value )
     local mount_point = mount_points[ self ]
     if mount_point == nil then
         return
@@ -555,7 +554,7 @@ function Directory:scan( deep_scan, callback )
     end
 
     if callback ~= nil then
-        callback( self )
+        callback( self, callback_value )
     end
 
     if deep_scan then
@@ -563,7 +562,7 @@ function Directory:scan( deep_scan, callback )
             local directory = children[ i ]
             if is_directory_object[ directory ] then
                 ---@cast directory dreamwork.std.Directory
-                directory:scan( deep_scan, callback )
+                directory:scan( deep_scan, callback, callback_value )
             end
         end
     end
@@ -574,7 +573,7 @@ do
     local string_byteSplit = string.byteSplit
 
     ---@param path_to string
-    ---@param start_position integer
+    ---@param start_position integer | nil
     function Directory:get( path_to, start_position )
         local segments, segment_count = string_byteSplit( path_to, 0x2F --[[ '/' ]], start_position )
 
@@ -759,10 +758,6 @@ do
     workspace:add( map )
 
 end
-
-std.setTimeout( function()
-    print( root:visualize() )
-end, 3 )
 
 --- [SHARED AND MENU]
 ---
