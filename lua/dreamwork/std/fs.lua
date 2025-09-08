@@ -341,88 +341,90 @@ local FileClass = class.create( File )
 ---@overload fun( name: string, mount_point: string | nil, mount_path: string | nil ): dreamwork.std.Directory
 local DirectoryClass = class.create( Directory )
 
----@param child dreamwork.std.File | dreamwork.std.Directory
-function Directory:add( child )
-    if is_directory_object[ child ] == nil then
-        error( "new child must be a File or a Directory", 2 )
+---@param directory dreamwork.std.Directory
+---@param descendant dreamwork.std.File | dreamwork.std.Directory
+local function insert( directory, descendant )
+    if is_directory_object[ descendant ] == nil then
+        error( "new descendant must be a File or a Directory", 2 )
     end
 
-    local name = names[ child ]
-    local children = descendants[ self ]
+    local name = names[ descendant ]
+    local descendants_lst = descendants[ directory ]
 
-    local previous = children[ name ]
+    local previous = descendants_lst[ name ]
     if previous ~= nil then
-        if previous == child then
+        if previous == descendant then
             return
         else
             error( "file or directory with the same name already exists", 2 )
         end
     end
 
-    local child_time, time_sync = times[ child ], true
-    local child_size = sizes[ child ]
-    local directory = self
+    local child_time, time_sync = times[ descendant ], true
+    local child_size = sizes[ descendant ]
+    local parent = directory
 
-    while directory ~= nil do
-        if directory == child then
-            error( "child directory cannot be parent", 2 )
+    while parent ~= nil do
+        if parent == descendant then
+            error( "descendant directory cannot be parent", 2 )
         end
 
-        sizes[ directory ] = sizes[ directory ] + child_size
+        sizes[ parent ] = sizes[ parent ] + child_size
 
         if time_sync then
-            if child_time > times[ directory ] then
-                times[ directory ] = child_time
+            if child_time > times[ parent ] then
+                times[ parent ] = child_time
             else
                 time_sync = false
             end
         end
 
-        directory = parents[ directory ]
+        parent = parents[ parent ]
     end
 
-    parents[ child ] = self
+    parents[ descendant ] = directory
 
-    local index = descendant_counts[ self ] + 1
-    descendant_counts[ self ] = index
+    local index = descendant_counts[ directory ] + 1
+    descendant_counts[ directory ] = index
 
-    indexes[ child ] = index
+    indexes[ descendant ] = index
 
-    children[ index ] = child
-    children[ name ] = child
+    descendants_lst[ index ] = descendant
+    descendants_lst[ name ] = descendant
 
-    update_path( child, self )
+    update_path( descendant, directory )
 end
 
+---@param directory dreamwork.std.Directory
 ---@param name string
-function Directory:delete( name )
-    local children = descendants[ self ]
-    local child = children[ name ]
+local function eject( directory, name )
+    local descendants_lst = descendants[ directory ]
 
-    if child == nil then
+    local descendant = descendants_lst[ name ]
+    if descendant == nil then
         return
     end
 
-    children[ name ] = nil
-    parents[ child ] = nil
+    descendants_lst[ name ] = nil
+    parents[ descendant ] = nil
 
-    table_remove( children, indexes[ child ] )
-    indexes[ child ] = nil
+    table_remove( descendants_lst, indexes[ descendant ] )
+    indexes[ descendant ] = nil
 
-    update_path( child, nil )
+    update_path( descendant, nil )
 end
 
 ---@param wildcard string | nil
 ---@return dreamwork.std.File[], integer, dreamwork.std.Directory[], integer
-function Directory:contents( wildcard )
-    local children = descendants[ self ]
+function Directory:find( wildcard )
+    local descendants_lst = descendants[ self ]
 
     local directories, directory_count = {}, 0
     local files, file_count = {}, 0
 
     for index = 1, descendant_counts[ self ], 1 do
         ---@type dreamwork.std.File | dreamwork.std.Directory
-        local object = children[ index ]
+        local object = descendants_lst[ index ]
         if is_directory_object[ object ] then
             directory_count = directory_count + 1
             directories[ directory_count ] = object
@@ -455,7 +457,7 @@ function Directory:contents( wildcard )
 
     for index = 1, #fs_files, 1 do
         local file_name = fs_files[ index ]
-        if children[ file_name ] == nil then
+        if descendants_lst[ file_name ] == nil then
             file_count = file_count + 1
 
             local file_object
@@ -467,13 +469,13 @@ function Directory:contents( wildcard )
             end
 
             files[ file_count ] = file_object
-            self:add( file_object )
+            insert( self, file_object )
         end
     end
 
     for index = 1, #fs_directories, 1 do
         local directory_name = fs_directories[ index ]
-        if children[ directory_name ] == nil and string_byte( directory_name, 1, 1 ) ~= 0x2F --[[ '/' ]] then
+        if descendants_lst[ directory_name ] == nil and string_byte( directory_name, 1, 1 ) ~= 0x2F --[[ '/' ]] then
             directory_count = directory_count + 1
 
             local directory_object
@@ -485,7 +487,7 @@ function Directory:contents( wildcard )
             end
 
             directories[ directory_count ] = directory_object
-            self:add( directory_object )
+            insert( self, directory_object )
         end
     end
 
@@ -495,10 +497,10 @@ end
 ---@return integer, integer
 function Directory:count()
     local file_count, directory_count = 0, 0
-    local children = descendants[ self ]
+    local descendants_lst = descendants[ self ]
 
     for index = 1, descendant_counts[ self ], 1 do
-        if is_directory_object[ children[ index ] ] then
+        if is_directory_object[ descendants_lst[ index ] ] then
             directory_count = directory_count + 1
         else
             file_count = file_count + 1
@@ -516,7 +518,7 @@ function Directory:scan( deep_scan, callback, callback_value )
         return
     end
 
-    local children = descendants[ self ]
+    local descendants_lst = descendants[ self ]
 
     local mount_path = mount_paths[ self ]
     if mount_path == nil then
@@ -524,15 +526,15 @@ function Directory:scan( deep_scan, callback, callback_value )
 
         for i = 1, #fs_files, 1 do
             local file_name = fs_files[ i ]
-            if children[ file_name ] == nil then
-                self:add( FileClass( file_name, mount_point, file_name ) )
+            if descendants_lst[ file_name ] == nil then
+                insert( self, FileClass( file_name, mount_point, file_name ) )
             end
         end
 
         for i = 1, #fs_directories, 1 do
             local directory_name = fs_directories[ i ]
-            if children[ directory_name ] == nil then
-                self:add( DirectoryClass( directory_name, mount_point, directory_name ) )
+            if descendants_lst[ directory_name ] == nil then
+                insert( self, DirectoryClass( directory_name, mount_point, directory_name ) )
             end
         end
     else
@@ -540,15 +542,15 @@ function Directory:scan( deep_scan, callback, callback_value )
 
          for i = 1, #fs_files, 1 do
             local file_name = fs_files[ i ]
-            if children[ file_name ] == nil then
-                self:add( FileClass( file_name, mount_point, mount_path .. "/" .. file_name ) )
+            if descendants_lst[ file_name ] == nil then
+                insert( self, FileClass( file_name, mount_point, mount_path .. "/" .. file_name ) )
             end
         end
 
         for i = 1, #fs_directories, 1 do
             local directory_name = fs_directories[ i ]
-            if children[ directory_name ] == nil then
-                self:add( DirectoryClass( directory_name, mount_point, mount_path .. "/" .. directory_name ) )
+            if descendants_lst[ directory_name ] == nil then
+                insert( self, DirectoryClass( directory_name, mount_point, mount_path .. "/" .. directory_name ) )
             end
         end
     end
@@ -559,7 +561,7 @@ function Directory:scan( deep_scan, callback, callback_value )
 
     if deep_scan then
         for i = 1, descendant_counts[ self ], 1 do
-            local directory = children[ i ]
+            local directory = descendants_lst[ i ]
             if is_directory_object[ directory ] then
                 ---@cast directory dreamwork.std.Directory
                 directory:scan( deep_scan, callback, callback_value )
@@ -599,7 +601,7 @@ do
                 if file_Exists( mount_path, mount_point ) then
                     if file_IsDir( mount_path, mount_point ) then
                         local directory_object = DirectoryClass( name, mount_point, mount_path )
-                        self:add( directory_object )
+                        insert( self, directory_object )
 
                         if i == segment_count then
                             return directory_object, true
@@ -608,7 +610,7 @@ do
                         end
                     elseif i == segment_count then
                         local file_object = FileClass( name, mount_point, mount_path )
-                        self:add( file_object )
+                        insert( self, file_object )
                         return file_object, false
                     else
                         return nil, false
@@ -639,7 +641,7 @@ end
 ---@param file_callback nil | fun( file: dreamwork.std.File )
 ---@param directory_callback nil | fun( directory: dreamwork.std.Directory )
 function Directory:foreach( file_callback, directory_callback )
-    local files, file_count, directories, directory_count = self:contents()
+    local files, file_count, directories, directory_count = self:find()
 
     if file_callback == nil then
         if directory_callback == nil then
@@ -669,10 +671,10 @@ end
 ---@param prefix? string
 ---@param is_last? boolean
 ---@return string
-function Directory:visualize( prefix, is_last )
+function Directory:toStringTree( prefix, is_last )
     local lines, line_count = {}, 1
 
-    local children = descendants[ self ]
+    local descendants_lst = descendants[ self ]
 
     local next_prefix
     if prefix == nil then
@@ -693,17 +695,17 @@ function Directory:visualize( prefix, is_last )
 
         line_count = line_count + 1
 
-        local child = children[ i ]
-        if is_directory_object[ child ] then
-            ---@cast child dreamwork.std.Directory
-            lines[ line_count ] = child:visualize( next_prefix, i == children_length )
+        local descendant = descendants_lst[ i ]
+        if is_directory_object[ descendant ] then
+            ---@cast descendant dreamwork.std.Directory
+            lines[ line_count ] = descendant:toStringTree( next_prefix, i == children_length )
         else
-            ---@cast child dreamwork.std.File
-            lines[ line_count ] = next_prefix .. string.format( "%s %s", i == children_length and "╚═ " or "╠═ ", child )
+            ---@cast descendant dreamwork.std.File
+            lines[ line_count ] = next_prefix .. string.format( "%s %s", i == children_length and "╚═ " or "╠═ ", descendant )
         end
     end
 
-    return table.concat( lines, "\n", 1, line_count )
+    return table_concat( lines, "\n", 1, line_count )
 end
 
 local root = DirectoryClass( "", "BASE_PATH" )
@@ -711,69 +713,85 @@ local root = DirectoryClass( "", "BASE_PATH" )
 ---@param game_info dreamwork.engine.GameInfo
 engine.hookCatch( "GameMounted", function( game_info )
     local game_folder = game_info.folder
-    root:add( DirectoryClass( game_folder, game_folder ) )
+    insert( root, DirectoryClass( game_folder, game_folder ) )
 end, 2 )
 
 ---@param game_info dreamwork.engine.GameInfo
 engine.hookCatch( "GameUnmounted", function( game_info )
-    root:delete( game_info.folder )
+    eject( root, game_info.folder )
 end, 2 )
 
 do
 
     local garrysmod = DirectoryClass( "garrysmod", "MOD" )
-    root:add( garrysmod )
+    insert( root, garrysmod )
 
     local data = DirectoryClass( "data", "DATA" )
-    garrysmod:add( data )
+    insert( garrysmod, data )
 
 end
 
 do
 
     local workspace = DirectoryClass( "workspace", "GAME" )
-    root:add( workspace )
+    insert( root, workspace )
 
     local addons = DirectoryClass( "addons" )
-    workspace:add( addons )
+    insert( workspace, addons )
 
     ---@param addon_info dreamwork.engine.AddonInfo
     engine.hookCatch( "AddonMounted", function( addon_info )
         local addon_title = addon_info.title
-        addons:add( DirectoryClass( addon_title, addon_title ) )
+        insert( addons, DirectoryClass( addon_title, addon_title ) )
     end, 2 )
 
     ---@param addon_info dreamwork.engine.AddonInfo
     engine.hookCatch( "AddonUnmounted", function( addon_info )
-        addons:delete( addon_info.title )
+        eject( addons, addon_info.title )
     end, 2 )
 
     local download = DirectoryClass( "download", "DOWNLOAD" )
-    workspace:add( download )
+    insert( workspace, download )
 
     local lua = DirectoryClass( "lua", ( SERVER and "lsv" or ( CLIENT and "lcl" or ( MENU and "LuaMenu" or "LUA" ) ) ) )
-    workspace:add( lua )
+    insert( workspace, lua )
 
     local map = DirectoryClass( "map", "BSP" )
-    workspace:add( map )
+    insert( workspace, map )
 
 end
 
+-- TODO: efsw support
+-- TODO: fs hooks
+
 --- [SHARED AND MENU]
 ---
---- Checks if a file or directory exists by given path.
+--- Returns the file or directory by given path as a `dreamwork.std.File` or `dreamwork.std.Directory` object.
 ---
----@param file_path string The path to the file.
----@return boolean exists Returns `true` if the file or directory exists, otherwise `false`.
-function fs.exists( file_path )
-    local resolved_path = path_resolve( file_path )
+---@param path_to string The path to the file or directory.
+---@return dreamwork.std.File | dreamwork.std.Directory | nil object The file or directory.
+---@return boolean is_directory Returns `true` if the object is a directory, otherwise `false`.
+local function get( path_to )
+    local resolved_path = path_resolve( path_to )
 
     local resolved_length = string_len( resolved_path )
     if string_byte( resolved_path, resolved_length, resolved_length ) == 0x2F --[[ '/' ]] then
         resolved_path, resolved_length = string_byteTrim( resolved_path, 0x2F, true, resolved_length )
     end
 
-    return root:get( resolved_path, 2 ) ~= nil
+    return root:get( resolved_path, 2 )
+end
+
+fs.get = get
+
+--- [SHARED AND MENU]
+---
+--- Checks if a file or directory exists by given path.
+---
+---@param path_to string The path to the file or directory.
+---@return boolean exists Returns `true` if the file or directory exists, otherwise `false`.
+function fs.exists( path_to )
+    return get( path_to ) ~= nil
 end
 
 --- [SHARED AND MENU]
@@ -783,14 +801,7 @@ end
 ---@param directory_path string The path to the directory.
 ---@return boolean exists Returns `true` if the directory exists and is not a file, otherwise `false`.
 function fs.isExistingDirectory( directory_path )
-    local resolved_path = path_resolve( directory_path )
-
-    local resolved_length = string_len( resolved_path )
-    if string_byte( resolved_path, resolved_length, resolved_length ) == 0x2F --[[ '/' ]] then
-        resolved_path, resolved_length = string_byteTrim( resolved_path, 0x2F, true, resolved_length )
-    end
-
-    local directory_object, is_directory = root:get( resolved_path, 2 )
+    local directory_object, is_directory = get( directory_path )
     return directory_object ~= nil and is_directory
 end
 
@@ -801,14 +812,7 @@ end
 ---@param file_path string The path to the fs.
 ---@return boolean exists Returns `true` if the file exists and is not a directory, otherwise `false`.
 function fs.isExistingFile( file_path )
-    local resolved_path = path_resolve( file_path )
-
-    local resolved_length = string_len( resolved_path )
-    if string_byte( resolved_path, resolved_length, resolved_length ) == 0x2F --[[ '/' ]] then
-        resolved_path, resolved_length = string_byteTrim( resolved_path, 0x2F, true, resolved_length )
-    end
-
-    local file_object, is_directory = root:get( resolved_path, 2 )
+    local file_object, is_directory = get( file_path )
     return file_object ~= nil and not is_directory
 end
 
@@ -819,14 +823,7 @@ end
 ---@param file_path string The path to the file or directory.
 ---@return integer unix_time The last modified time of the file or directory.
 function fs.time( file_path )
-    local resolved_path = path_resolve( file_path )
-
-    local resolved_length = string_len( resolved_path )
-    if string_byte( resolved_path, resolved_length, resolved_length ) == 0x2F --[[ '/' ]] then
-        resolved_path, resolved_length = string_byteTrim( resolved_path, 0x2F, true, resolved_length )
-    end
-
-    local object = root:get( resolved_path, 2 )
+    local object = get( file_path )
     if object == nil then
         return 0
     else
@@ -841,14 +838,7 @@ end
 ---@param file_path string The path to the file or directory.
 ---@return integer size The size of the file or directory in bytes.
 function fs.size( file_path )
-    local resolved_path = path_resolve( file_path )
-
-    local resolved_length = string_len( resolved_path )
-    if string_byte( resolved_path, resolved_length, resolved_length ) == 0x2F --[[ '/' ]] then
-        resolved_path, resolved_length = string_byteTrim( resolved_path, 0x2F, true, resolved_length )
-    end
-
-    local object = root:get( resolved_path, 2 )
+    local object = get( file_path )
     if object == nil then
         return 0
     else
@@ -858,41 +848,24 @@ end
 
 --- [SHARED AND MENU]
 ---
---- Returns a list of files and directories by given path.
+--- Returns the list of files and directories in a directory by given path.
 ---
----@param file_path string The path to the file or directory.
----@param searchable? string The pattern to search for, or `nil` to return ALL files and directories in the directory.
-function fs.find( file_path, searchable )
-    -- local resolved_path = path_resolve( file_path )
-
-    -- local resolved_length = string_len( resolved_path )
-    -- if string_byte( resolved_path, resolved_length, resolved_length ) == 0x2F --[[ '/' ]] then
-    --     resolved_path, resolved_length = string_byteTrim( resolved_path, 0x2F, true, resolved_length )
-    -- end
-
-    -- local object, is_directory = root:get( resolved_path, 2 )
-    -- if object == nil then
-    --     return {}, 0, {}, 0
-    -- elseif is_directory then
-    --     ---@cast object dreamwork.std.Directory
-
-    --     local file_objects, file_count, directory_objects, directory_count = object:find( searchable )
-    --     local files, directories = {}, {}
-
-    --     for index = 1, file_count, 1 do
-    --         files[ index ] = file_objects[ index ].path
-    --     end
-
-    --     for index = 1, directory_count, 1 do
-    --         directories[ index ] = directory_objects[ index ].path
-    --     end
-
-    --     return files, file_count,
-    --         directories, directory_count
-    -- else
-    --     ---@cast object dreamwork.std.File
-    --     return { object.path }, 1, {}, 0
-    -- end
+--- Can be used for file search by setting `searchable` to a wildcard string.
+---
+---@param directory_path string The path to the directory.
+---@param wildcard? string The wildcard to search for.
+---@return dreamwork.std.File[] files The list of files in the directory.
+---@return integer file_count The number of files in the directory.
+---@return dreamwork.std.Directory[] directories The list of directories in the directory.
+---@return integer directory_count The number of directories in the directory.
+function fs.find( directory_path, wildcard )
+    local directory_object, is_directory = get( directory_path )
+    if directory_object == nil or not is_directory then
+        return {}, 0, {}, 0
+    else
+        ---@cast directory_object dreamwork.std.Directory
+        return directory_object:find( wildcard )
+    end
 end
 
 do
@@ -912,16 +885,12 @@ do
     end
 
     ---@async
-    function fs.iterator( file_path )
-        local directory_object, is_directory = root:get( path_resolve( file_path ), 2 )
-
-        if directory_object == nil or not is_directory then
-            return
+    function fs.iterator( directory_path )
+        local directory_object, is_directory = get( directory_path )
+        if directory_object ~= nil and is_directory then
+            ---@cast directory_object dreamwork.std.Directory
+            directory_object:foreach( iterate_file, iterate_directory )
         end
-
-        ---@cast directory_object dreamwork.std.Directory
-
-        directory_object:foreach( iterate_file, iterate_directory )
     end
 
 end
