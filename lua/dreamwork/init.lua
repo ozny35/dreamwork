@@ -117,10 +117,15 @@ do
 end
 
 std.assert = _G.assert
-std.select = _G.select
-std.print = _G.print
 
-std.tostring = _G.tostring
+local print = _G.print
+std.print = print
+
+local select = _G.select
+std.select = select
+
+local tostring = _G.tostring
+std.tostring = tostring
 
 std.getmetatable = _G.getmetatable
 std.setmetatable = _G.setmetatable
@@ -414,6 +419,23 @@ end
 
 -- Alias for lazy developers
 std.tobool = std.toboolean
+
+--- [SHARED AND MENU]
+---
+--- If `value` has a metamethod `__tocolor`, calls it with `value` as argument and returns its result.
+---
+--- Otherwise, returns `nil`.
+---
+---@param value any The valueect to convert to a color.
+---@return dreamwork.std.Color | nil clr The color value of `value`, or `nil` if `value` cannot be converted to a color.
+function std.tocolor( value )
+    local fn = debug_getmetavalue( value, "__tocolor" )
+    if fn == nil then
+        return nil
+    else
+        return fn( value )
+    end
+end
 
 --- [SHARED AND MENU]
 ---
@@ -742,23 +764,6 @@ local string_format = string.format
 
 do
 
-    local print = std.print
-
-    --- [SHARED AND MENU]
-    ---
-    --- Prints a formatted string to the console.
-    ---
-    --- Basically the same as `print( string.format( str, ... ) )`
-    ---@param str any
-    ---@param ... any
-    function std.printf( str, ... )
-        return print( string_format( str, ... ) )
-    end
-
-end
-
-do
-
     local string_byte = string.byte
 
     --- [SHARED AND MENU]
@@ -825,7 +830,9 @@ do
 
         st = os_clock() - st
         debug.gc.restart()
-        std.printf( "%d iterations of %s, took %f sec.", iter, name, st )
+
+        print( string_format( "%d iterations of %s, took %f sec.", iter, name, st ) )
+
         return st
     end
 
@@ -838,10 +845,9 @@ do
     local coroutine_running = coroutine.running
     local debug_getinfo = debug.getinfo
     local string_rep = string.rep
-    local tostring = std.tostring
 
     ---@diagnostic disable-next-line: undefined-field
-    local ErrorNoHalt = _G.ErrorNoHalt or std.print
+    local ErrorNoHalt = _G.ErrorNoHalt or print
 
     ---@diagnostic disable-next-line: undefined-field
     local ErrorNoHaltWithStack = _G.ErrorNoHaltWithStack
@@ -970,6 +976,88 @@ dofile( "std/bigint.lua" )
 dofile( "engine.lua" )
 
 local engine = dreamwork.engine
+
+do
+
+    local patched_print
+
+    local Msg = _G.Msg
+    if Msg == nil then
+        patched_print = print
+    else
+
+        local string_len = string.len
+        local string_sub = string.sub
+        local math_min = math.min
+
+        local queue = std.Queue()
+        local buffer_size = 4095
+
+        engine.hookCatch( "Tick", function()
+            if queue:isEmpty() then
+                buffer_size = 4095
+            else
+                Msg( queue:pop() )
+            end
+        end, ( CLIENT or MENU ) and 3 or 2 )
+
+        --- [SHARED AND MENU]
+        ---
+        --- Prints the given arguments to the console.
+        ---
+        ---@param ... any The arguments to print.
+        function patched_print( ... )
+            local args, arg_count = { ... }, select( "#", ... )
+
+            for i = 1, arg_count, 1 do
+                local arg_str = tostring( args[ i ] )
+                args[ i ] = arg_str
+            end
+
+            local str = table_concat( args, "\t", 1, arg_count ) .. "\n"
+            local pointer, str_length = 1, string_len( str )
+
+            while str_length ~= 0 do
+                local segment_length = math_min( 4095, str_length )
+
+                if buffer_size == 0 then
+                    queue:push( string_sub( str, pointer, pointer + segment_length ) )
+                else
+
+                    local output_size = math_min( buffer_size, segment_length )
+                    buffer_size = buffer_size - output_size
+
+                    Msg( string_sub( str, pointer, pointer + output_size ) )
+
+                    local remainder = segment_length - output_size
+                    if remainder ~= 0 then
+                        queue:push( string_sub( str, pointer + output_size, pointer + segment_length ) )
+                    end
+
+                end
+
+                str_length = str_length - segment_length
+                pointer = pointer + segment_length
+            end
+        end
+
+        ---@diagnostic disable-next-line: duplicate-set-field
+        std.print = patched_print
+
+    end
+
+    --- [SHARED AND MENU]
+    ---
+    --- Prints a formatted string to the console.
+    ---
+    --- Basically the same as `print( string.format( fmt, ... ) )`
+    ---@param fmt string The format string.
+    ---@param ... any The arguments to format/interpolate.
+    function std.printf( fmt, ... )
+        return patched_print( string_format( fmt, ... ) )
+    end
+
+end
 
 dofile( "std/game.lua" )
 
@@ -1590,7 +1678,7 @@ do
     ---@param ... integer The indices of arguments to return.
     ---@return fun( ... ): ... fjn
     function std.junction( ... )
-        local out_arg_count = std.select( '#', ... )
+        local out_arg_count = select( '#', ... )
         local out_args = { ... }
 
         local in_arg_count = 0
@@ -1658,7 +1746,7 @@ dofile( "std/steam.workshop.lua" )
 
 dofile( "std/addon.lua" )
 
-if std.CLIENT_MENU then
+if ( CLIENT or MENU ) then
     dofile( "std/window.lua" )
     dofile( "std/menu.lua" )
     dofile( "std/client.lua" )
@@ -1697,7 +1785,7 @@ if glua_system ~= nil then
 
     end
 
-    if std.CLIENT_MENU then
+    if ( CLIENT or MENU ) then
 
         local system_HasFocus = glua_system.HasFocus
         if system_HasFocus ~= nil then
