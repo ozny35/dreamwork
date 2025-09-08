@@ -206,22 +206,22 @@ do
 
     --- [SHARED AND MENU]
     ---
-    --- Returns the value at the front of the queue or the back if `fromBack` is `true`.
+    --- Returns the value at the front of the queue or the back if `from_tail` is `true`.
     ---
-    ---@param fromBack? boolean If `true`, returns the value at the back of the queue.
+    ---@param from_tail? boolean If `true`, returns the value at the back of the queue.
     ---@return any value The value at the front of the queue.
-    function Queue:peek( fromBack )
-        return self[ fromBack and ( self.back + 1 ) or self.front ]
+    function Queue:peek( from_tail )
+        return self[ from_tail and self.front or ( self.back + 1 ) ]
     end
 
     --- [SHARED AND MENU]
     ---
-    --- Appends a value to the end of the queue or the front if `toFront` is `true`.
+    --- Appends a value to the end of the queue or the front if `to_head` is `true`.
     ---
     ---@param value any The value to append.
-    ---@param toFront? boolean If `true`, appends the value to the front of the queue.
-    function Queue:push( value, toFront )
-        if toFront then
+    ---@param to_head? boolean If `true`, appends the value to the front of the queue.
+    function Queue:push( value, to_head )
+        if to_head then
             local back = self.back
             self[ back ] = value
             self.back = back - 1
@@ -234,31 +234,31 @@ do
 
     --- [SHARED AND MENU]
     ---
-    --- Removes and returns the value at the back of the queue or the front if `fromBack` is `true`.
+    --- Removes and returns the value at the back of the queue or the front if `from_tail` is `true`.
     ---
-    ---@param fromBack? boolean If `true`, removes and returns the value at the front of the queue.
-    ---@return any value The value at the back of the queue or the front if `fromBack` is `true`.
-    function Queue:pop( fromBack )
+    ---@param from_tail? boolean If `true`, removes and returns the value at the front of the queue.
+    ---@return any value The value at the back of the queue or the front if `from_tail` is `true`.
+    function Queue:pop( from_tail )
         local back, front = self.back, self.front
         if back == front then return nil end
 
         local value
 
-        if fromBack then
-
-            back = back + 1
-            self.back = back
-
-            value = self[ back ]
-            self[ back ] = nil -- unreference the value
-
-        else
+        if from_tail then
 
             value = self[ front ]
             self[ front ] = nil -- unreference the value
 
             front = front - 1
             self.front = front
+
+        else
+
+            back = back + 1
+            self.back = back
+
+            value = self[ back ]
+            self[ back ] = nil -- unreference the value
 
         end
 
@@ -275,12 +275,12 @@ do
     ---
     --- Returns an iterator for the queue.
     ---
-    ---@param fromBack? boolean If `true`, returns an iterator for the back of the queue.
-    ---@return fun( queue: dreamwork.std.Queue, fromBack: boolean ): any iterator The iterator function.
+    ---@param from_tail? boolean If `true`, returns an iterator for the back of the queue.
+    ---@return fun( queue: dreamwork.std.Queue, from_tail: boolean ): any iterator The iterator function.
     ---@return dreamwork.std.Queue queue The queue being iterated over.
-    ---@return boolean fromBack `true` if the iterator is for the back of the queue.
-    function Queue:iterator( fromBack )
-        return self.pop, self, fromBack == true
+    ---@return boolean from_tail `true` if the iterator is for the back of the queue.
+    function Queue:iterator( from_tail )
+        return self.pop, self, from_tail == true
     end
 
     --- [SHARED AND MENU]
