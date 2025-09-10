@@ -147,7 +147,7 @@ path.getDirectory = getDirectory
 function path.getExtension( file_path, keep_dot )
     for index = string_len( file_path ), 1, -1 do
         local byte = string_byte( file_path, index )
-        if byte == 0x2F --[[ / ]] then
+        if byte == 0x2F --[[ / ]] or byte == 0x5C --[[ \ ]] then
             break
         elseif byte == 0x2E --[[ . ]] then
             if not keep_dot then
