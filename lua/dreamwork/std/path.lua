@@ -465,7 +465,7 @@ local function normalize( file_path )
         if uint8_2 == nil and uint8_1 == 0x2E --[[ . ]] then
             table_remove( parts, index )
             length = length - 1
-elseif uint8_3 == nil and uint8_1 == 0x2E --[[ . ]] and uint8_2 == 0x2E --[[ . ]] then
+        elseif uint8_3 == nil and uint8_1 == 0x2E --[[ . ]] and uint8_2 == 0x2E --[[ . ]] then
             table_remove( parts, index )
             length = length - 1
             skip = skip + 1
