@@ -22,12 +22,23 @@ path.sep = "/"
 
 --- [SHARED AND MENU]
 ---
+--- Normalizes the slashes in the file path.
+---
+---@param file_path string The file path.
+---@return string new_file_path The new file path.
+function path.normalizeSlashes( file_path )
+    return string_gsub( file_path, "[/\\]+", "/" )
+end
+
+--- [SHARED AND MENU]
+---
 --- Check to see if the file path is absolute.
 ---
 ---@param file_path string The file path.
 ---@return boolean is_abs `true` if the file path is absolute, `false` otherwise.
 function path.isAbsolute( file_path )
-    return string_byte( file_path, 1 ) == 0x2F --[[ / ]]
+    local byte = string_byte( file_path, 1 )
+    return byte == 0x2F or byte == 0x5C --[[ / or \ ]]
 end
 
 --- [SHARED AND MENU]
@@ -37,7 +48,8 @@ end
 ---@param file_path string The file path.
 ---@return boolean is_rel `true` if the file path is relative, `false` otherwise.
 function path.isRelative( file_path )
-    return string_byte( file_path, 1 ) ~= 0x2F --[[ / ]]
+    local byte = string_byte( file_path, 1 )
+    return byte ~= 0x2F and byte ~= 0x5C --[[ / or \ ]]
 end
 
 local equals
@@ -54,6 +66,8 @@ if std.WINDOWS or std.OSX then
     ---@param file_path2 string The second file path.
     ---@return boolean is_equal `true` if the paths are equal, `false` otherwise.
     function equals( file_path1, file_path2 )
+        file_path1 = path.normalizeSlashes( file_path1 )
+        file_path2 = path.normalizeSlashes( file_path2 )
         return string_lower( file_path1 ) == string_lower( file_path2 )
     end
 
@@ -67,6 +81,8 @@ else
     ---@param file_path2 string The second file path.
     ---@return boolean is_equal `true` if the paths are equal, `false` otherwise.
     function equals( file_path1, file_path2 )
+        file_path1 = path.normalizeSlashes( file_path1 )
+        file_path2 = path.normalizeSlashes( file_path2 )
         return file_path1 == file_path2
     end
 
@@ -82,6 +98,8 @@ path.equals = equals
 ---@param keep_extension? boolean `true` to keep the extension, `false` otherwise
 ---@return string file_name The name of the file.
 function path.getName( file_path, keep_extension )
+    file_path = path.normalizeSlashes( file_path )
+
     if keep_extension then
         for index = string_len( file_path ), 1, -1 do
             if string_byte( file_path, index ) == 0x2F --[[ / ]] then
@@ -124,6 +142,8 @@ end
 ---@param keep_trailing_slash? boolean `true` to keep the trailing slash, `false` otherwise.
 ---@return string | nil directory The directory of the file, or `nil` if the file path is invalid.
 local function getDirectory( file_path, keep_trailing_slash )
+    file_path = path.normalizeSlashes( file_path )
+    
     for index = string_len( file_path ), 1, -1 do
         if string_byte( file_path, index ) == 0x2F --[[ / ]] then
             if not keep_trailing_slash then
@@ -133,6 +153,7 @@ local function getDirectory( file_path, keep_trailing_slash )
             return string_sub( file_path, 1, index )
         end
     end
+    return nil
 end
 
 path.getDirectory = getDirectory
@@ -145,15 +166,16 @@ path.getDirectory = getDirectory
 ---@param keep_dot? boolean `true` to keep the dot, `false` otherwise.
 ---@return string extension The extension of the file.
 function path.getExtension( file_path, keep_dot )
+    file_path = path.normalizeSlashes( file_path )
+
     for index = string_len( file_path ), 1, -1 do
         local byte = string_byte( file_path, index )
-        if byte == 0x2F --[[ / ]] or byte == 0x5C --[[ \ ]] then
+        if byte == 0x2F --[[ / ]] then
             break
         elseif byte == 0x2E --[[ . ]] then
             if not keep_dot then
                 index = index + 1
             end
-
             return string_sub( file_path, index )
         end
     end
@@ -170,6 +192,8 @@ end
 ---@return string directory The directory from the file path.
 ---@return string file_name The file from the file path.
 local function split( file_path, keep_trailing_slash )
+    file_path = path.normalizeSlashes( file_path )
+
     for index = string_len( file_path ), 1, -1 do
         if string_byte( file_path, index ) == 0x2F --[[ / ]] then
             return string_sub( file_path, 1, keep_trailing_slash and index or ( index - 1 ) ), string_sub( file_path, index + 1 )
@@ -190,6 +214,8 @@ path.split = split
 ---@return string file_name The file name from the file path.
 ---@return string extension The extension from the file path.
 local function splitExtension( file_path, keep_dot )
+    file_path = path.normalizeSlashes( file_path )
+
     for index = string_len( file_path ), 1, -1 do
         local byte = string_byte( file_path, index )
         if byte == 0x2F --[[ / ]] then
@@ -212,6 +238,7 @@ path.splitExtension = splitExtension
 ---@param file_name string The new file name.
 ---@return string new_file_path The new file path.
 function path.replaceName( file_path, file_name )
+    file_path = path.normalizeSlashes( file_path )
     return split( file_path, true ) .. file_name
 end
 
@@ -223,12 +250,15 @@ end
 ---@param dir_name string The new directory.
 ---@return string new_file_path The new file path.
 function path.replaceDirectory( file_path, dir_name )
-    if string_byte( dir_name, string_len( dir_name ) ) ~= 0x2F --[[ / ]] then
-        dir_name = dir_name .. "/"
+    file_path = path.normalizeSlashes( file_path )
+    dir_name = path.normalizeSlashes( dir_name )
+    
+    if string_byte( dir, string_len( dir ) ) ~= 0x2F --[[ / ]] then
+        dir = dir .. "/"
     end
 
     local _, file_name = split( file_path, false )
-    return dir_name .. file_name
+    return dir .. file_name
 end
 
 --- [SHARED AND MENU]
@@ -239,6 +269,7 @@ end
 ---@param ext_name string The new extension.
 ---@return string new_file_path The new file path.
 function path.replaceExtension( file_path, ext_name )
+    file_path = path.normalizeSlashes( file_path )
     return splitExtension( file_path, false ) .. "." .. ext_name
 end
 
@@ -260,6 +291,7 @@ end
 ---@param file_path string The file path.
 ---@return string new_file_path The new file path.
 function path.ensureTrailingSlash( file_path )
+    file_path = path.normalizeSlashes(file_path)
     if string_byte( file_path, string_len( file_path ) ) == 0x2F --[[ / ]] then
         return file_path
     else
@@ -285,6 +317,7 @@ end
 ---@param file_path string The file path.
 ---@return string new_file_path The new file path.
 function path.ensureLeadingSlash( file_path )
+    file_path = path.normalizeSlashes(file_path)
     if string_byte( file_path, 1 ) == 0x2F --[[ / ]] then
         return file_path
     else
@@ -318,6 +351,7 @@ end
 ---@param file_path string The file path.
 ---@return dreamwork.std.path.Data data The parsed file path data.
 function path.parse( file_path )
+    file_path = path.normalizeSlashes( file_path )
     local is_abs = string_byte( file_path, 1 ) == 0x2F --[[ / ]]
     local directory, base = split( file_path, true )
     local name, ext = splitExtension( base, true )
@@ -405,6 +439,7 @@ local string_byteSplit = string.byteSplit
 ---@param file_path string The file path.
 ---@return string new_file_path The normalized file path.
 local function normalize( file_path )
+    file_path = path.normalizeSlashes( file_path )
     local path_length = string_len( file_path )
 
     if path_length == 0 then
@@ -430,7 +465,7 @@ local function normalize( file_path )
         if uint8_2 == nil and uint8_1 == 0x2E --[[ . ]] then
             table_remove( parts, index )
             length = length - 1
-        elseif uint8_3 == nil and uint8_1 == 0x2E --[[ . ]] and uint8_2 == 0x2E --[[ . ]] then
+elseif uint8_3 == nil and uint8_1 == 0x2E --[[ . ]] and uint8_2 == 0x2E --[[ . ]] then
             table_remove( parts, index )
             length = length - 1
             skip = skip + 1
@@ -487,6 +522,7 @@ path.normalize = normalize
 ---@param file_path string The file path.
 ---@return string file_path The resolved file path.
 function path.resolve( file_path )
+    file_path = path.normalizeSlashes( file_path )
     if string_byte( file_path, 1, 1 ) == 0x2F --[[ / ]] then
         return normalize( file_path )
     else
@@ -549,6 +585,8 @@ do
     ---@param to string The to file path.
     ---@return string relative_path The relative path.
     function path.relative( from, to )
+        from = path.normalizeSlashes( from )
+        to = path.normalizeSlashes( to )
         local from_path, to_path = normalize( from ), normalize( to )
 
         if equals( from_path, to_path ) then
